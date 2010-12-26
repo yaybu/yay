@@ -1,3 +1,4 @@
+import types
 
 import yaml
 
@@ -41,6 +42,7 @@ class Config(object):
                 else:
                     #FIXME: switch on action to work out when to append/remove/chain/etc
                     target[key] = value
+        recurse(config, self._raw)
 
     def get(self):
         return Resolver(self._raw).resolve()
