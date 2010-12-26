@@ -40,8 +40,14 @@ class Config(object):
                 if isinstance(value, dict):
                     recurse(value, target.setdefault(key, {}))
                 else:
-                    #FIXME: switch on action to work out when to append/remove/chain/etc
-                    target[key] = value
+                    #FIXME: Break this out into some kind of registry
+                    if action == "append":
+                        target[key] += value
+                    elif action == "assign":
+                        target[key] = value
+                    else:
+                        raise KeyError("Unknown action '%s'" % action)
+
         recurse(config, self._raw)
 
     def get(self):
