@@ -45,6 +45,8 @@ class Config(object):
                         target[key] += value
                     elif action == "assign":
                         target[key] = value
+                    elif action == "remove":
+                        target[key] = [x for x in target[key] if x not in value]
                     else:
                         raise KeyError("Unknown action '%s'" % action)
 
@@ -62,3 +64,4 @@ def load(stream, special_term='yay'):
     c = Config(special_term)
     c.load(stream)
     return c.get()
+
