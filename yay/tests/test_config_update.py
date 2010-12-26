@@ -19,3 +19,12 @@ class TestConfigUpdate(unittest.TestCase):
         self.failUnlessEqual(c._raw['bar'], 2)
         self.failUnlessEqual(c._raw['qux'], 1)
 
+    def test_nested_map_update(self):
+        c = Config()
+        c.update(OrderedDict(foo=OrderedDict(foo=1, bar=2), bar=2))
+        c.update(OrderedDict(foo=OrderedDict(foo=2, baz=3), baz=3))
+
+        self.failUnlessEqual(c._raw['foo']['foo'], 2)
+        self.failUnlessEqual(c._raw['foo']['bar'], 2)
+        self.failUnlessEqual(c._raw['foo']['baz'], 3)
+        self.failUnlessEqual(c._raw['baz'], 3)

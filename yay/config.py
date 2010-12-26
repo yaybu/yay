@@ -37,7 +37,7 @@ class Config(object):
                 else:
                     action = "assign"
 
-                if value is types.DictionaryType:
+                if isinstance(value, dict):
                     recurse(value, target.setdefault(key, {}))
                 else:
                     #FIXME: switch on action to work out when to append/remove/chain/etc
