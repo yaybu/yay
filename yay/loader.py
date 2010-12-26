@@ -3,7 +3,7 @@ from yaml.reader import Reader
 from yaml.scanner import Scanner
 from yaml.parser import Parser
 from yaml.composer import Composer
-from yaml.constructor import Constructor as BaseConstructor
+from yaml.constructor import SafeConstructor
 from yaml.resolver import Resolver
 
 from yaml.nodes import MappingNode
@@ -13,7 +13,7 @@ try:
 except ImportError:
     from ordereddict import OrderedDict
 
-class Constructor(BaseConstructor):
+class Constructor(SafeConstructor):
 
     def construct_mapping(self, node, deep=False):
         if not isinstance(node, MappingNode):
@@ -30,6 +30,7 @@ class Constructor(BaseConstructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
+
         return mapping
 
     def construct_yaml_map(self, node):
@@ -37,6 +38,11 @@ class Constructor(BaseConstructor):
         yield data
         value = self.construct_mapping(node)
         data.update(value)
+
+Constructor.add_constructor(
+        u'tag:yaml.org,2002:map',
+        Constructor.construct_yaml_map)
+
 
 class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
