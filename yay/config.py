@@ -17,7 +17,6 @@ class Config(object):
         self._raw = {}
 
     def load_uri(self, uri):
-        #FIXME: Eventually support pluggable URI backends, for now treat everything as a file
         self.load(self.openers.open(uri))
 
     def load(self, stream):
@@ -42,11 +41,19 @@ class Config(object):
                     action = "assign"
 
                 if isinstance(value, dict):
+                    if not isinstance(target, dict):
+                        # Underlying config has something other than a dict. I.E we changed type in a child overlay
+                        # Need to think more carefully about what to do here. Is this an error, or should we force the type
+                        # to change (I think we should force the type to change)
+                        raise ValueError("%s\n%s\n%s" % (key, target, value))
                     recurse(value, target.setdefault(key, {}))
                 else:
                     target[key] = self.actions.run(action, target.get(key, None), value)
 
         recurse(config, self._raw)
+
+    def clear(self):
+        self._raw = {}
 
     def get(self):
         return Resolver(self._raw).resolve()
