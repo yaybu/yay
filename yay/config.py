@@ -58,7 +58,7 @@ class Config(object):
     def get(self):
         return Resolver(self._raw).resolve()
 
-def load_uri(stream, special_term='yay'):
+def load_uri(uri, special_term='yay'):
     c = Config(special_term)
     c.load_uri(uri)
     return c.get()
