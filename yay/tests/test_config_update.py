@@ -6,12 +6,16 @@ class TestConfigUpdate(unittest.TestCase):
 
     def test_simple_update(self):
         c = Config()
-
-        o = OrderedDict()
-        o['foo'] = '1'
-        o['bar'] = '2'
-        o['baz'] = '3'
-
-        c.update(o)
+        c.update(OrderedDict(foo=1, bar=2, baz=3))
 
         self.failUnless('foo' in c._raw.keys())
+
+    def test_simple_replace(self):
+        c = Config()
+        c.update(OrderedDict(foo=1, bar=2, baz=3))
+        c.update(OrderedDict(foo=3, qux=1))
+
+        self.failUnlessEqual(c._raw['foo'], 3)
+        self.failUnlessEqual(c._raw['bar'], 2)
+        self.failUnlessEqual(c._raw['qux'], 1)
+
