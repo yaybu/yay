@@ -5,18 +5,20 @@ import yaml
 from yay.loader import Loader
 from yay.resolver import Resolver
 from yay.ordereddict import OrderedDict
+from yay.openers import Openers
 from yay.actions import Actions
 
 class Config(object):
 
     def __init__(self, special_term='yay'):
         self.special_term = special_term
+        self.openers = Openers()
         self.actions = Actions()
         self._raw = {}
 
     def load_uri(self, uri):
         #FIXME: Eventually support pluggable URI backends, for now treat everything as a file
-        self.load(open(uri))
+        self.load(self.openers.open(uri))
 
     def load(self, stream):
         data = yaml.load(stream, Loader=Loader)
