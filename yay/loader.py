@@ -8,10 +8,7 @@ from yaml.resolver import Resolver
 
 from yaml.nodes import MappingNode
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+from yay.ordereddict import OrderedDict
 
 class Constructor(SafeConstructor):
 
