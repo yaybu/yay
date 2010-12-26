@@ -5,11 +5,13 @@ import yaml
 from yay.loader import Loader
 from yay.resolver import Resolver
 from yay.ordereddict import OrderedDict
+from yay.actions import Actions
 
 class Config(object):
 
     def __init__(self, special_term='yay'):
         self.special_term = special_term
+        self.actions = Actions()
         self._raw = {}
 
     def load_uri(self, uri):
@@ -40,15 +42,7 @@ class Config(object):
                 if isinstance(value, dict):
                     recurse(value, target.setdefault(key, {}))
                 else:
-                    #FIXME: Break this out into some kind of registry
-                    if action == "append":
-                        target[key] += value
-                    elif action == "assign":
-                        target[key] = value
-                    elif action == "remove":
-                        target[key] = [x for x in target[key] if x not in value]
-                    else:
-                        raise KeyError("Unknown action '%s'" % action)
+                    target[key] = self.actions.run(action, target.get(key, None), value)
 
         recurse(config, self._raw)
 
