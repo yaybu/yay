@@ -1,5 +1,7 @@
 
 import urllib
+import StringIO
+import os
 
 class IOpener(object):
 
@@ -41,7 +43,7 @@ class MemOpener(IOpener):
     data = {}
 
     def open(self, uri):
-        return StringIO.StringIO(data[uri])
+        return StringIO.StringIO(self.data[uri])
 
     @classmethod
     def add(cls, uri, data):

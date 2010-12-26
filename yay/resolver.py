@@ -13,6 +13,7 @@ class Resolver(object):
             return self.resolve_dict(value, label)
         elif isinstance(value, list):
             return self.resolve_list(value, label)
+        return value
 
     def resolve_string(self, value, label=""):
         encountered = set()
