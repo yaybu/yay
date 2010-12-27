@@ -13,7 +13,7 @@ class Config(object):
     def __init__(self, special_term='yay'):
         self.special_term = special_term
         self.openers = Openers()
-        self.actions = Actions()
+        self.actions = Actions(self)
         self._raw = {}
 
     def load_uri(self, uri):

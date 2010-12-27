@@ -1,6 +1,7 @@
 
 import unittest
 import doctest
+
 from yay.config import Config
 from yay.openers import MemOpener
 
@@ -11,6 +12,7 @@ class TestConfig(Config):
 
 documentation = [
     'extends.rst',
+    'actions.rst',
     ]
 
 globs = {
