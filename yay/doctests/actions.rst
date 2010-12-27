@@ -34,3 +34,7 @@ And you will now see::
     >>> config.get()["qux1"]
     {'qux': 3, 'foo': 1, 'quux': 4}
 
+And the original structure is unmodified::
+
+    >>> config.get()["foo"]["bar"]["baz"][1]
+    {'qux': 3, 'quux': 4}

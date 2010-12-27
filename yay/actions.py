@@ -1,4 +1,6 @@
 
+import copy
+
 class IAction(object):
 
     def run(self, mgr, current_value, action_data, *action_args):
@@ -74,5 +76,5 @@ class Copy(IAction):
             else:
                 obj = obj[i]
 
-        return obj
+        return copy.deepcopy(obj)
 
