@@ -50,27 +50,33 @@ class Assign(IAction):
         return action_data
 
 
-class Append(IAction):
+class AppendResolver(IResolvable):
     """ Append some values to an existing list """
 
-    name = "append"
-
-    def run(self, current_value, action_data, *action_args):
+    def resolve(self, data):
         # FIXME: Ensure that current value is a list
         # FIXME: Ensure that action data is a list
-        return current_value + action_data
+        return self.current_value + self.action_data
+
+class Append(ResolvableAction):
+
+    name = "append"
+    resolvable = AppendResolver
 
 
-class Remove(IAction):
+class RemoveResolver(IResolvable):
     """ Remove a set of values from an existing list """
 
-    name = "remove"
-
-    def run(self, current_value, action_data, *action_args):
+    def resolve(self, data):
         # FIXME: Ensure action_data is a list or supports __contains__
-        if current_value is None:
+        if self.current_value is None:
             return []
-        return [x for x in current_value if x not in action_data]
+        return [x for x in self.current_value if x not in self.action_data]
+
+class Remove(ResolvableAction):
+
+    name = "remove"
+    resolvable = RemoveResolver
 
 
 class CopyResolver(IResolvable):

@@ -21,7 +21,7 @@ class Resolver(object):
         self._raw = raw
 
     def resolve_resolvable(self, resolvable):
-        return resolvable.resolve(self._raw)
+        return self.resolve_value(resolvable.resolve(self._raw))
 
     def resolve_value(self, value, label=""):
         if isinstance(value, basestring):

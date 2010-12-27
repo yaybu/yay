@@ -37,7 +37,7 @@ class TestConfigUpdate(unittest.TestCase):
         c = Config()
         c.update(data)
 
-        self.failUnlessEqual(c._raw['foo'], [1,2,3,4,5,6])
+        self.failUnlessEqual(c._raw['foo'].resolve({}), [1,2,3,4,5,6])
 
     def test_list_remove(self):
         data = OrderedDict()
@@ -47,5 +47,5 @@ class TestConfigUpdate(unittest.TestCase):
         c = Config()
         c.update(data)
 
-        self.failUnlessEqual(c._raw['foo'], [])
+        self.failUnlessEqual(c._raw['foo'].resolve({}), [])
 
