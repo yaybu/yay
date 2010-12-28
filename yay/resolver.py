@@ -1,5 +1,5 @@
 
-class IResolvable(object):
+class Resolvable(object):
     """ Something that we dont want to do until the Resolver().resolve() stage """
     #FIXME: There is a bit of conflation between resolver and actions that needs ironing out
     #FIXME: This is no longer an interface
@@ -10,7 +10,7 @@ class IResolvable(object):
 
     def resolve(self, data):
         #FIXME: needs cycle detection
-        while isinstance(self.current_value, IResolvable):
+        while isinstance(self.current_value, Resolvable):
             self.current_value = self.current_value.resolve(data)
 
 class Resolver(object):
@@ -30,7 +30,7 @@ class Resolver(object):
             return self.resolve_dict(value, label)
         elif isinstance(value, list):
             return self.resolve_list(value, label)
-        elif isinstance(value, IResolvable):
+        elif isinstance(value, Resolvable):
             return self.resolve_resolvable(value)
         return value
 

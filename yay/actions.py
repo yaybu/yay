@@ -1,6 +1,6 @@
 
 import copy
-from yay.resolver import IResolvable
+from yay.resolver import Resolvable
 
 class IAction(object):
 
@@ -50,7 +50,7 @@ class Assign(IAction):
         return action_data
 
 
-class AppendResolver(IResolvable):
+class AppendResolver(Resolvable):
     """ Append some values to an existing list """
 
     def resolve(self, data):
@@ -64,7 +64,7 @@ class Append(ResolvableAction):
     resolvable = AppendResolver
 
 
-class RemoveResolver(IResolvable):
+class RemoveResolver(Resolvable):
     """ Remove a set of values from an existing list """
 
     def resolve(self, data):
@@ -79,7 +79,7 @@ class Remove(ResolvableAction):
     resolvable = RemoveResolver
 
 
-class CopyResolver(IResolvable):
+class CopyResolver(Resolvable):
 
     def resolve(self, data):
         # Make sure full chain is resolved
