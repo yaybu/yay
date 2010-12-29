@@ -84,9 +84,9 @@ class Lookup(Node):
     """
     I delay a lookup until resolve time
     """
-    def __init__(self, value, xformer):
+    def __init__(self, root, value):
         super(Lookup, self).__init__(value)
-        self.xformer = xformer
+        self.root = root
 
     def resolve(self):
         # This is derived from string.py Formatter so lookup language
@@ -94,10 +94,10 @@ class Lookup(Node):
         # field name parser is written in C and available as
         #   str._formatter_field_name_split()
         first, rest = self.value.resolve()._formatter_field_name_split()
-        obj = self.xformer.root.get(first, None)
+        obj = self.root.get(first, None)
         for is_attr, i in rest:
             obj = obj.get(i)
-        return obj
+        return obj.resolve()
 
 class Copy(Node):
     """
@@ -106,7 +106,7 @@ class Copy(Node):
     I am a replacing node and do not care about data i am overlaying
     """
     def resolve(self):
-        return copy.deepcopy(self.value)        
+        return copy.deepcopy(self.value.resolve()) 
         
 
 class Append(Node):
@@ -129,7 +129,7 @@ class TreeTransformer(object):
 
     def __init__(self):
         self.action_map = {
-            "copy": lambda value: Copy(Lookup(value, self)),
+            "copy": lambda value: Copy(Lookup(self, value)),
             "assign": lambda value: Boxed(value),
             "append": lambda value: Append(value),
             "remove": lambda value: Remove(value),

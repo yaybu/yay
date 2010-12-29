@@ -21,3 +21,12 @@ class TestListOperations(unittest.TestCase):
         r.chain = l
 
         self.failUnlessEqual(r.resolve(), [1, 3])
+
+class TestLookup(unittest.TestCase):
+
+    def test_lookup(self):
+        d = Dictionary()
+        d.set("foo", Boxed(1))
+        l = Lookup(d, Boxed("foo"))
+ 
+        self.failUnlessEqual(l.resolve(), 1)
