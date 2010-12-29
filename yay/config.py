@@ -6,7 +6,6 @@ import yaml
 from yay.loader import Loader
 from yay.ordereddict import OrderedDict
 from yay.openers import Openers
-from yay.resolver import Resolvable
 
 class Node(object):
     __slots__ = ("chain", "value")
@@ -113,12 +112,13 @@ class Copy(Node):
 class Append(Node):
 
     def apply(self, existing):
-        return existing + self.value
+        return existing + [x.resolve() for x in self.value]
 
 class Remove(Node):
 
     def apply(self, existing):
-        return [x for x in existing if x not in self.value]
+        resolved = [x.resolve() for x in self.value]
+        return [x for x in existing if x not in resolved]
 
 
 class TreeTransformer(object):
