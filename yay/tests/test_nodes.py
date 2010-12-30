@@ -17,7 +17,7 @@ class TestListOperations(unittest.TestCase):
 
     def test_list_remove(self):
         l = List([Boxed(1), Boxed(2), Boxed(3)])
-        r = Remove([Boxed(2)])
+        r = Remove(List([Boxed(2)]))
         r.chain = l
 
         self.failUnlessEqual(r.resolve(), [1, 3])

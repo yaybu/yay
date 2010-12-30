@@ -88,15 +88,36 @@ class Lookup(Node):
         super(Lookup, self).__init__(value)
         self.root = root
 
+    def split(self, strng):
+        return strng._formatter_field_name_split()
+
+    def join(self, first, rest):
+        parts = [first]
+        for is_attr, i in rest:
+            if is_attr:
+                parts.append(".%s" % i)
+            else:
+                parts.append("[%s]" % i)
+        return "".join(parts)
+
     def resolve(self):
         # This is derived from string.py Formatter so lookup language
         # is consistent
         # field name parser is written in C and available as
         #   str._formatter_field_name_split()
+        handled = []
+
         first, rest = self.value.resolve()._formatter_field_name_split()
         obj = self.root.get(first, None)
+        if not obj:
+            raise KeyError("Unable to find '%s'" % self.join(first, handled))
+
         for is_attr, i in rest:
+            handled.append((is_attr, i))
             obj = obj.get(i)
+            if not obj:
+                raise KeyError("Unable to find '%s'" % self.join(first, handled))
+
         return obj.resolve()
 
 class Copy(Node):
@@ -112,13 +133,14 @@ class Copy(Node):
 class Append(Node):
 
     def apply(self, existing):
-        return existing + [x.resolve() for x in self.value]
+        if existing:
+            existing = []
+        return existing + self.value.resolve()
 
 class Remove(Node):
 
     def apply(self, existing):
-        resolved = [x.resolve() for x in self.value]
-        return [x for x in existing if x not in resolved]
+        return [x for x in existing if x not in self.value.resolved()]
 
 
 class TreeTransformer(object):
@@ -128,19 +150,22 @@ class TreeTransformer(object):
     """
 
     def __init__(self):
+        self.root = Dictionary()
         self.action_map = {
-            "copy": lambda value: Copy(Lookup(self, value)),
-            "assign": lambda value: Boxed(value),
+            "copy": lambda value: Copy(Lookup(self.root, value)),
+            "assign": lambda value: value if isinstance(value, Node) else Boxed(value),
             "append": lambda value: Append(value),
             "remove": lambda value: Remove(value),
             }
 
     def visit(self, container, value):
         assert not isinstance(value, Node)
+
         if isinstance(value, (dict, OrderedDict)):
             return self.visit_dict(container, value)
         if isinstance(value, list):
             return self.visit_list(value, container)
+
         return Boxed(value)
 
     def visit_list(self, value, container):
@@ -179,7 +204,6 @@ class TreeTransformer(object):
         return container
 
     def transform(self, config):
-        self.root = Dictionary()
         for c in config.loaded:
             self.visit_dict(self.root, c)
         return self.root.resolve()
