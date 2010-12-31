@@ -25,7 +25,7 @@ class TestListOperations(unittest.TestCase):
 class TestLookup(unittest.TestCase):
 
     def test_lookup(self):
-        d = Dictionary()
+        d = Dictionary(None)
         d.set("foo", Boxed(1))
         l = Lookup(d, Boxed("foo"))
  

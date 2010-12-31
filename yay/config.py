@@ -18,16 +18,10 @@ class Node(object):
     def apply(self, data):
         pass
 
-    def resolve_child(self, child):
-        r = child
-        while isinstance(r, Node):
-            r = r.resolve()
-        return r
-
     def resolve(self):
         data = None
         if self.chain:
-            data = self.resolve_child(self.chain)
+            data = self.chain.resolve()
         return self.apply(data)
 
 
@@ -44,12 +38,9 @@ class Dictionary(Node):
     """
     I represent a dictionary that will be manufactured out of multiple components
     at resolve time
-
-    We absolutely cannot have 2 Dictionary nodes for the same path, if we would one
-    would replace another. That is why we override resolve(), not apply(), and ignore
-    previous data
     """
-    def __init__(self):
+    def __init__(self, predecessor):
+        self.predecessor = predecessor
         self.value = {}
 
     def set(self, key, val):
@@ -57,12 +48,22 @@ class Dictionary(Node):
         self.value[key] = val
 
     def get(self, key, default=None):
-        return self.value.get(key, default)
+        if key in self.value:
+            return self.value.get(key)
+        if self.predecessor:
+            return self.predecessor.get(key, default)
+        return default
+
+    def keys(self):
+        keys = set(self.value.keys())
+        if self.predecessor:
+            keys.update(self.predecessor.keys())
+        return list(keys)
 
     def resolve(self):
         data = {}
-        for key, val in self.value.iteritems():
-            data[key] = self.resolve_child(val)
+        for key in self.keys():
+            data[key] = self.get(key).resolve()
         return data
 
 
@@ -70,8 +71,8 @@ class List(Node):
     """ 
     I am a list that hasnt been created yet
     """
-    def get(self, idx):
-        return None
+    def get(self, idx, default=None):
+        return Lookup(self, Boxed(str(idx))) # Dirty hack
 
     def resolve(self):
         data = []
@@ -114,7 +115,11 @@ class Lookup(Node):
 
         for is_attr, i in rest:
             handled.append((is_attr, i))
-            obj = obj.get(i)
+            if isinstance(obj, List):
+                # SAD TIMES SAD TIMES
+                obj = obj.resolve()[i]
+            else:
+                obj = obj.get(i)
             if not obj:
                 raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
@@ -140,7 +145,7 @@ class Append(Node):
 class Remove(Node):
 
     def apply(self, existing):
-        return [x for x in existing if x not in self.value.resolved()]
+        return [x for x in existing if x not in self.value.resolve()]
 
 
 class TreeTransformer(object):
@@ -150,7 +155,7 @@ class TreeTransformer(object):
     """
 
     def __init__(self):
-        self.root = Dictionary()
+        self.root = None
         self.action_map = {
             "copy": lambda value: Copy(Lookup(self.root, value)),
             "assign": lambda value: value if isinstance(value, Node) else Boxed(value),
@@ -158,42 +163,40 @@ class TreeTransformer(object):
             "remove": lambda value: Remove(value),
             }
 
-    def visit(self, container, value):
-        assert not isinstance(value, Node)
+    def visit(self, existing_value, new_value):
+        assert not isinstance(new_value, Node)
 
-        if isinstance(value, (dict, OrderedDict)):
-            return self.visit_dict(container, value)
-        if isinstance(value, list):
-            return self.visit_list(value, container)
+        if isinstance(new_value, (dict, OrderedDict)):
+            return self.visit_dict(existing_value, new_value)
+        if isinstance(new_value, list):
+            return self.visit_list(new_value, existing_value)
 
-        return Boxed(value)
+        return Boxed(new_value)
 
-    def visit_list(self, value, container):
+    def visit_list(self, new_value, existing_value):
         data = []
-        for v in value:
-            data.append(self.visit(container, v))
+        for v in new_value:
+            data.append(self.visit(None, v))
         return List(data)
  
-    def visit_dict(self, container=None, value=None):
+    def visit_dict(self, existing_value, new_value):
         # This feels wrong. I think the approach is fine but the ownership and control flow is a bit of a soggy biscuit
         # Revisit when less ill.
 
-        if not container:
-            container = Dictionary()
+        container = Dictionary(existing_value)
 
-        if not isinstance(container, Dictionary):
-            # FIXME: Think about when better. container used to be something else but isnt now??
-            container = Dictionary()
-
-        for key, value in value.iteritems():
+        for key, value in new_value.iteritems():
             action = "assign"
             if "." in key:
                 key, action = key.split(".")
 
-            existing = container.get(key, None)
+            if existing_value and existing_value.get(key, None):
+                existing = existing_value.get(key)
+            else:
+                existing = None
 
             # Put the value in a simple box so it can be stored in our tree
-            boxed = self.visit(existing, value)
+            boxed = self.visit(existing_value, value)
 
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed)
@@ -203,10 +206,8 @@ class TreeTransformer(object):
 
         return container
 
-    def transform(self, config):
-        for c in config.loaded:
-            self.visit_dict(self.root, c)
-        return self.root.resolve()
+    def update(self, config):
+        self.root = self.visit_dict(self.root, config)
 
 class Config(object):
 
@@ -214,6 +215,7 @@ class Config(object):
         self.special_term = special_term
         self.openers = Openers()
         self.loaded = []
+        self.tt = TreeTransformer()
 
     def load_uri(self, uri):
         self.load(self.openers.open(uri))
@@ -232,14 +234,13 @@ class Config(object):
         """
         Recursively update config with a dict
         """
-        self.loaded.append(config)
+        self.tt.update(config)
 
     def clear(self):
         self.loaded = []
 
     def get(self):
-        return TreeTransformer().transform(self)
-
+        return self.tt.root.resolve()
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
