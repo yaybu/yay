@@ -44,7 +44,7 @@ class Dictionary(Node):
         self.value = {}
 
     def set(self, key, val):
-        val.chain = self.value.get("key", None)
+        #val.chain = self.value.get("key", None)
         self.value[key] = val
 
     def get(self, key, default=None):
@@ -129,7 +129,7 @@ class Copy(Node):
     """
     def resolve(self):
         return copy.deepcopy(self.value.resolve())
-        
+
 
 class Append(Node):
 
@@ -194,16 +194,16 @@ class TreeTransformer(object):
             if "." in key:
                 key, action = key.split(".")
 
-            if existing_value and existing_value.get(key, None):
-                existing = existing_value.get(key)
-            else:
-                existing = None
+            existing = container.get(key, None)
 
             # Put the value in a simple box so it can be stored in our tree
             boxed = self.visit(existing, value)
 
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed)
+
+            # Make sure that Appends are hooked up to correct List
+            boxed.chain = existing
 
             # And add it to the dictionary (which will automatically chain nodes)
             container.set(key, boxed)
