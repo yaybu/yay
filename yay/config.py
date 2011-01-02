@@ -72,7 +72,7 @@ class List(Node):
     I am a list that hasnt been created yet
     """
     def get(self, idx, default=None):
-        return self.resolve()[int(idx)]
+        return Boxed(self.resolve()[int(idx)])
 
     def resolve(self):
         data = []
@@ -134,7 +134,7 @@ class Copy(Node):
 class Append(Node):
 
     def get(self, idx, default=None):
-        return self.resolve()[int(idx)]
+        return Boxed(self.resolve()[int(idx)])
 
     def apply(self, existing):
         if not existing:
@@ -144,7 +144,7 @@ class Append(Node):
 class Remove(Node):
 
     def get(self, idx, default=None):
-        return self.resolve()[int(idx)]
+        return Boxed(self.resolve()[int(idx)])
 
     def apply(self, existing):
         if not existing:
