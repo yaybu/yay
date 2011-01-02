@@ -10,7 +10,7 @@ class TestListOperations(unittest.TestCase):
 
     def test_list_append(self):
         l = List([Boxed(1), Boxed(2), Boxed(3)])
-        a = Append([Boxed(4), Boxed(5)])
+        a = Append(List([Boxed(4), Boxed(5)]))
         a.chain = l
 
         self.failUnlessEqual(a.resolve(), [1,2,3,4,5])

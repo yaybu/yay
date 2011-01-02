@@ -72,7 +72,7 @@ class List(Node):
     I am a list that hasnt been created yet
     """
     def get(self, idx, default=None):
-        return Lookup(self, Boxed(str(idx))) # Dirty hack
+        return self.resolve()[int(idx)]
 
     def resolve(self):
         data = []
@@ -115,11 +115,7 @@ class Lookup(Node):
 
         for is_attr, i in rest:
             handled.append((is_attr, i))
-            if isinstance(obj, List):
-                # SAD TIMES SAD TIMES
-                obj = obj.resolve()[i]
-            else:
-                obj = obj.get(i)
+            obj = obj.get(i)
             if not obj:
                 raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
@@ -132,19 +128,27 @@ class Copy(Node):
     I am a replacing node and do not care about data i am overlaying
     """
     def resolve(self):
-        return copy.deepcopy(self.value.resolve()) 
+        return copy.deepcopy(self.value.resolve())
         
 
 class Append(Node):
 
+    def get(self, idx, default=None):
+        return self.resolve()[int(idx)]
+
     def apply(self, existing):
-        if existing:
+        if not existing:
             existing = []
         return existing + self.value.resolve()
 
 class Remove(Node):
 
+    def get(self, idx, default=None):
+        return self.resolve()[int(idx)]
+
     def apply(self, existing):
+        if not existing:
+            return []
         return [x for x in existing if x not in self.value.resolve()]
 
 
@@ -157,7 +161,7 @@ class TreeTransformer(object):
     def __init__(self):
         self.root = None
         self.action_map = {
-            "copy": lambda value: Copy(Lookup(self.root, value)),
+            "copy": lambda value: Copy(Lookup(self, value)),
             "assign": lambda value: value if isinstance(value, Node) else Boxed(value),
             "append": lambda value: Append(value),
             "remove": lambda value: Remove(value),
@@ -178,7 +182,7 @@ class TreeTransformer(object):
         for v in new_value:
             data.append(self.visit(None, v))
         return List(data)
- 
+
     def visit_dict(self, existing_value, new_value):
         # This feels wrong. I think the approach is fine but the ownership and control flow is a bit of a soggy biscuit
         # Revisit when less ill.
@@ -196,7 +200,7 @@ class TreeTransformer(object):
                 existing = None
 
             # Put the value in a simple box so it can be stored in our tree
-            boxed = self.visit(existing_value, value)
+            boxed = self.visit(existing, value)
 
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed)
@@ -208,6 +212,9 @@ class TreeTransformer(object):
 
     def update(self, config):
         self.root = self.visit_dict(self.root, config)
+
+    def get(self, key, default=None):
+        return self.root.get(key, default)
 
 class Config(object):
 
