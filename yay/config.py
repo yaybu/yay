@@ -6,6 +6,7 @@ import yaml
 from yay.loader import Loader
 from yay.ordereddict import OrderedDict
 from yay.openers import Openers
+from yay.resolver import Resolver
 
 class Node(object):
     __slots__ = ("chain", "value")
@@ -255,7 +256,7 @@ class Config(object):
         self.tt.root = None
 
     def get(self):
-        return self.tt.root.resolve()
+        return Resolver(self.tt.root.resolve()).resolve()
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
