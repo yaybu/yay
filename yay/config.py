@@ -101,7 +101,7 @@ class Lookup(Node):
                 parts.append("[%s]" % i)
         return "".join(parts)
 
-    def resolve(self):
+    def semi_resolve(self):
         # This is derived from string.py Formatter so lookup language
         # is consistent
         # field name parser is written in C and available as
@@ -119,7 +119,13 @@ class Lookup(Node):
             if not obj:
                 raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
-        return obj.resolve()
+        return obj
+
+    def get(self, idx, default):
+        return self.semi_resolve().get(idx, default)
+
+    def resolve(self):
+        return self.semi_resolve().resolve()
 
 class Copy(Node):
     """
@@ -127,6 +133,9 @@ class Copy(Node):
 
     I am a replacing node and do not care about data i am overlaying
     """
+    def get(self, idx, default=None):
+        return self.value.get(idx, default)
+
     def resolve(self):
         return copy.deepcopy(self.value.resolve())
 
