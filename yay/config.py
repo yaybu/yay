@@ -230,7 +230,6 @@ class Config(object):
     def __init__(self, special_term='yay'):
         self.special_term = special_term
         self.openers = Openers()
-        self.loaded = []
         self.tt = TreeTransformer()
 
     def load_uri(self, uri):
@@ -253,7 +252,7 @@ class Config(object):
         self.tt.update(config)
 
     def clear(self):
-        self.loaded = []
+        self.tt.root = None
 
     def get(self):
         return self.tt.root.resolve()
