@@ -1,0 +1,6 @@
+bin
+eggs
+develop-eggs
+dist
+parts
+*.egg-info
