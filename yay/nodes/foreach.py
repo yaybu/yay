@@ -1,4 +1,4 @@
-# Copyright 2010-2011 Isotoma Limited
+# Copyright 2011 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,18 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed
+from yay.nodes import Node, Lookup, Boxed
 
-class Sequence(Node):
-    """ 
-    I am a list that hasnt been created yet
-    """
-    def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+class ForEach(object):
+
+    def __init__(self, root, value, args):
+        self.root = root
+        self.value = value
+
+        lookup, alias = args.split(" as ")
+        self.lookup = Lookup(self.root, Boxed(lookup.strip()))
+        self.alias = alias.strip()
 
     def resolve(self):
-        data = []
-        for val in self.value:
-            data.append(val.resolve())
-        return data
+        resolved = []
+        for item in self.lookup.semi_resolve():
+            resolved.append(self.value.resolve())
+        return resolved
 
+            

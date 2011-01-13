@@ -27,7 +27,7 @@ class Composer(object):
             "assign": lambda value, args: value if isinstance(value, Node) else Boxed(value),
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
-            "foreach": lambda value, args: Boxed(value),
+            "foreach": lambda value, args: ForEach(self, value, args),
             }
 
     def visit(self, existing_value, new_value):
