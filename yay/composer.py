@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.ordereddict import OrderedDict
 from yay.nodes import *
 
 class Composer(object):
@@ -33,7 +32,7 @@ class Composer(object):
     def visit(self, existing_value, new_value):
         assert not isinstance(new_value, Node)
 
-        if isinstance(new_value, (dict, OrderedDict)):
+        if isinstance(new_value, dict):
             return self.visit_dict(existing_value, new_value)
         if isinstance(new_value, list):
             return self.visit_list(new_value, existing_value)
