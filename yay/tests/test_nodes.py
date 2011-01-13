@@ -1,5 +1,5 @@
 import unittest
-from yay.config import *
+from yay.nodes import *
 
 class TestListOperations(unittest.TestCase):
 
