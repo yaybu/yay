@@ -44,13 +44,13 @@ class Composer(object):
         data = []
         for v in new_value:
             data.append(self.visit(None, v))
-        return List(data)
+        return Sequence(data)
 
     def visit_dict(self, existing_value, new_value):
         # This feels wrong. I think the approach is fine but the ownership and control flow is a bit of a soggy biscuit
         # Revisit when less ill.
 
-        container = Dictionary(existing_value)
+        container = Mapping(existing_value)
 
         for key, value in new_value.iteritems():
             action = "assign"
