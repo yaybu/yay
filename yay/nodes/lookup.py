@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node
+from yay.nodes import Node, Filter
 
 class Lookup(Node):
     """
@@ -48,7 +48,10 @@ class Lookup(Node):
 
         for is_attr, i in rest:
             handled.append((is_attr, i))
-            obj = obj.get(context, i)
+            if not is_attr:
+                obj = Filter(obj, i).resolve(context)
+            else:
+                obj = obj.get(context, i)
             if not obj:
                 raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
