@@ -23,10 +23,11 @@ class Composer(object):
     def __init__(self):
         self.root = None
         self.action_map = {
-            "copy": lambda value: Copy(Lookup(self, value)),
-            "assign": lambda value: value if isinstance(value, Node) else Boxed(value),
-            "append": lambda value: Append(value),
-            "remove": lambda value: Remove(value),
+            "copy": lambda value, args: Copy(Lookup(self, value)),
+            "assign": lambda value, args: value if isinstance(value, Node) else Boxed(value),
+            "append": lambda value, args: Append(value),
+            "remove": lambda value, args: Remove(value),
+            "foreach": lambda value, args: Boxed(value),
             }
 
     def visit(self, existing_value, new_value):
@@ -58,7 +59,7 @@ class Composer(object):
 
             action_args = None
             if " " in action:
-                action_args = action.split(" ", 1)
+                action, action_args = action.split(" ", 1)
 
             existing = container.get(key, None)
 
