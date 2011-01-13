@@ -61,7 +61,8 @@ class Composer(object):
             if " " in action:
                 action, action_args = action.split(" ", 1)
 
-            existing = container.get(key, None)
+            # FIXME: context-driven traversal is different from non-resolving dict-lookup
+            existing = container.get(None, key, None)
 
             # Put the value in a simple box so it can be stored in our tree
             boxed = self.visit(existing, value)
