@@ -54,7 +54,11 @@ class Composer(object):
         for key, value in new_value.iteritems():
             action = "assign"
             if "." in key:
-                key, action = key.split(".")
+                key, action = key.split(".", 1)
+
+            action_args = None
+            if " " in action:
+                action_args = action.split(" ", 1)
 
             existing = container.get(key, None)
 
@@ -62,7 +66,7 @@ class Composer(object):
             boxed = self.visit(existing, value)
 
             # Further box the value based on the kind of action it is
-            boxed = self.action_map[action](boxed)
+            boxed = self.action_map[action](boxed, action_args)
 
             # Make sure that Appends are hooked up to correct List
             boxed.chain = existing
