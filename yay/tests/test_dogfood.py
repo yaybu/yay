@@ -25,7 +25,6 @@ class TestDogfood(unittest.TestCase):
             for snack in list(os.path.splitext(os.path.basename(x))[0] for x in glob.glob(os.path.join(dogfood_path, "*.in"))):
                 name, func = cls.get_test_method(snack)
                 attrs[name] = func
-            print attrs
             return type.__new__(cls, name, bases, attrs)
 
         @classmethod
@@ -60,5 +59,3 @@ class TestDogfood(unittest.TestCase):
         for key in k1:
             self.failUnlessEqual(value1[key], value2[key])
 
-print TestDogfood
-print dir(TestDogfood)
