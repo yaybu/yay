@@ -1,0 +1,64 @@
+
+import unittest
+import doctest
+import os
+import glob
+
+import yaml
+
+from yay.config import Config
+from yay.openers import MemOpener
+
+dogfood_path = os.path.join(os.path.dirname(__file__), "dogfood")
+
+class TestConfig(Config):
+
+    def load_uri(self, uri):
+        return super(TestConfig, self).load_uri("file:///" + os.path.join(dogfood_path, uri))
+
+
+class TestDogfood(unittest.TestCase):
+
+    class __metaclass__(type):
+        def __new__(cls, name, bases, attrs):
+            # Generate a testcase for each .in file in the dogfood directory
+            for snack in list(os.path.splitext(os.path.basename(x))[0] for x in glob.glob(os.path.join(dogfood_path, "*.in"))):
+                name, func = cls.get_test_method(snack)
+                attrs[name] = func
+            print attrs
+            return type.__new__(cls, name, bases, attrs)
+
+        @classmethod
+        def get_test_method(cls, snack):
+            name = "test_%s" % snack
+            load_from = os.path.join(dogfood_path, snack+".in")
+            compare_to = os.path.join(dogfood_path, snack+".out")
+            def _(self):
+               self.failUnlessEqual(self.load(load_from), yaml.load(open(compare_to)))
+            _.__name__ = name
+            return name, _
+
+    def load(self, path):
+        c = TestConfig()
+        c.load_uri(path)
+        return c.get()
+
+    def failUnlessEqual(self, value1, value2):
+        if not isinstance(value1, dict) or not isinstance(value2, dict):
+            super(TestDogfood, self).failUnlessEqual(value1, value2)
+            return
+
+        k1 = frozenset(value1.keys())
+        k2 = frozenset(value2.keys())
+
+        if k1.difference(k2):
+            raise KeyError("Dictionary 1 contains keys dictionary 2 does not (%s)" % ", ".join(k1.difference(k2)))
+
+        if k2.difference(k1):
+            raise KeyError("Dictionary 2 contains keys dictionary 1 does not (%s)" % ", ".join(k2.difference(k1)))
+
+        for key in k1:
+            self.failUnlessEqual(value1[key], value2[key])
+
+print TestDogfood
+print dir(TestDogfood)

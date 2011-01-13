@@ -1,0 +1,23 @@
+foo-list:
+  - name: john
+    age: 25
+  - name: simon
+    age: 41
+  - name: sandra
+    age: 47
+  - name: alice
+    age: 18
+  - name: bardrone
+    age: 3
+
+bar:
+   max-age: 40
+
+baz:
+  - nameage: john25
+    agename: 25john
+  - nameage: alice18
+    agename: 18alice
+  - nameage: bardrone3
+    agename: 3bardrone
+
