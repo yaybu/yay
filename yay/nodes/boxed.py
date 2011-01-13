@@ -19,6 +19,22 @@ class Boxed(Node):
     A Boxed variable is an unmodified and uninteresting value that
     is wrapped simply so we can put it in our graph
     """
+
+    def resolve_string(self, context, value):
+        encountered = set()
+        previous = None
+        while value != previous:
+            if value in encountered:
+                raise ValueError("Cycle encountered (%s)" % label)
+            encountered.add(value)
+
+            previous = value
+            value = value.format(context)
+
+        return value
+
     def resolve(self, context):
+        if isinstance(self.value, basestring):
+            return self.resolve_string(context, self.value)
         return self.value
 

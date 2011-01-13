@@ -16,7 +16,6 @@ import yaml
 
 from yay.loader import Loader
 from yay.openers import Openers
-from yay.resolver import Resolver
 from yay.composer import Composer
 from yay.context import RootContext
 
@@ -50,7 +49,7 @@ class Config(object):
         self.tt.root = None
 
     def get(self):
-        return Resolver(self.tt.root.resolve(RootContext(self.tt.root))).resolve()
+        return self.tt.root.resolve(RootContext(self.tt.root))
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)

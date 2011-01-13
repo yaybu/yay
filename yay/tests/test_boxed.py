@@ -1,8 +1,10 @@
 import unittest
-from yay.resolver import Resolver
+from yay.nodes.boxed import Boxed
 
 class TestResolver(unittest.TestCase):
+    pass
 
+class Old:
     def test_string(self):
         r = Resolver({
             "foo": "123",
