@@ -28,6 +28,9 @@ class TestSequenceOperations(unittest.TestCase):
 
 class TestLookup(unittest.TestCase):
 
+    def setUp(self):
+        self.ctx = Context(None, None)
+
     def test_lookup(self):
         d = Mapping(None)
         d.set("foo", Boxed(1))

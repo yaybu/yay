@@ -29,7 +29,7 @@ class Mapping(Node):
 
     def get(self, context, key, default=None):
         if key in self.value:
-            return self.value.get(context, key)
+            return self.value[key]
         if self.predecessor:
             return self.predecessor.get(context, key, default)
         return default
@@ -43,6 +43,6 @@ class Mapping(Node):
     def resolve(self, context):
         data = {}
         for key in self.keys():
-            data[key] = self.get(context, key).resolve(context)
+            data[key] = self.get(context, key, None).resolve(context)
         return data
 

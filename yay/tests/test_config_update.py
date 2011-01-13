@@ -29,6 +29,15 @@ class TestConfigUpdate(unittest.TestCase):
         self.failUnlessEqual(c.get()['foo']['baz'], 3)
         self.failUnlessEqual(c.get()['baz'], 3)
 
+    def test_list(self):
+        data = OrderedDict()
+        data["foo"] = [1, 2, 3]
+
+        c = Config()
+        c.update(data)
+
+        self.failUnlessEqual(c.get()['foo'], [1, 2, 3])
+
     def test_list_append(self):
         data = OrderedDict()
         data["foo"] = [1,2,3]

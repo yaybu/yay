@@ -80,7 +80,7 @@ class Composer(object):
     def update(self, config):
         self.root = self.visit_dict(self.root, config)
 
-    def get(self, key, default=None):
-        return self.root.get(key, default)
+    def get(self, context, key, default=None):
+        return self.root.get(context, key, default)
 
 
