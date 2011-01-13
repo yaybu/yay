@@ -27,11 +27,11 @@ class Mapping(Node):
         #val.chain = self.value.get("key", None)
         self.value[key] = val
 
-    def get(self, key, default=None):
+    def get(self, context, key, default=None):
         if key in self.value:
-            return self.value.get(key)
+            return self.value.get(context, key)
         if self.predecessor:
-            return self.predecessor.get(key, default)
+            return self.predecessor.get(context, key, default)
         return default
 
     def keys(self):
@@ -40,9 +40,9 @@ class Mapping(Node):
             keys.update(self.predecessor.keys())
         return list(keys)
 
-    def resolve(self):
+    def resolve(self, context):
         data = {}
         for key in self.keys():
-            data[key] = self.get(key).resolve()
+            data[key] = self.get(context, key).resolve(context)
         return data
 

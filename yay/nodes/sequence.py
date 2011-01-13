@@ -18,12 +18,12 @@ class Sequence(Node):
     """ 
     I am a list that hasnt been created yet
     """
-    def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+    def get(self, context, idx, default=None):
+        return Boxed(self.resolve(context)[int(idx)])
 
-    def resolve(self):
+    def resolve(self, context):
         data = []
         for val in self.value:
-            data.append(val.resolve())
+            data.append(val.resolve(context))
         return data
 

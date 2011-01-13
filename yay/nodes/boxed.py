@@ -19,6 +19,6 @@ class Boxed(Node):
     A Boxed variable is an unmodified and uninteresting value that
     is wrapped simply so we can put it in our graph
     """
-    def resolve(self):
+    def resolve(self, context):
         return self.value
 

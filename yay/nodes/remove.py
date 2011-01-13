@@ -16,12 +16,12 @@ from yay.nodes import Node
 
 class Remove(Node):
 
-    def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+    def get(self, context, idx, default=None):
+        return Boxed(self.resolve(context)[int(idx)])
 
-    def apply(self, existing):
+    def apply(self, context, existing):
         if not existing:
             return []
-        return [x for x in existing if x not in self.value.resolve()]
+        return [x for x in existing if x not in self.value.resolve(context)]
 
 

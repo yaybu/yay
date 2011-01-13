@@ -20,12 +20,12 @@ class Node(object):
         # Premature typing optimisation
         self.value = value
 
-    def apply(self, data):
+    def apply(self, context, data):
         pass
 
-    def resolve(self):
+    def resolve(self, context):
         data = None
         if self.chain:
-            data = self.chain.resolve()
-        return self.apply(data)
+            data = self.chain.resolve(context)
+        return self.apply(context, data)
 

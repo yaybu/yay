@@ -16,11 +16,11 @@ from yay.nodes import Node
 
 class Append(Node):
 
-    def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+    def get(self, context, idx, default=None):
+        return Boxed(self.resolve(context)[int(idx)])
 
-    def apply(self, existing):
+    def apply(self, context, existing):
         if not existing:
             existing = []
-        return existing + self.value.resolve()
+        return existing + self.value.resolve(context)
 

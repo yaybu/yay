@@ -13,23 +13,27 @@
 # limitations under the License.
 
 from yay.nodes import Node, Lookup, Boxed
-from yay.context import Context
 
-class ForEach(object):
+class RootContext(object):
 
-    def __init__(self, root, value, args):
+    def __init__(self, root):
         self.root = root
-        self.value = value
+    def get(self, key, default):
+        return self.root.get(self, key, default)
 
-        lookup, alias = args.split(" as ")
-        self.lookup = Lookup(self.root, Boxed(lookup.strip()))
-        self.alias = alias.strip()
+class Context(object):
 
-    def resolve(self, context):
-        resolved = []
-        for item in self.lookup.semi_resolve(context):
-            newctx = Context(context, {self.alias: item})
-            resolved.append(self.value.resolve(newctx))
-        return resolved
+    def __init__(self, parent, variables):
+        self.parent = parent
+        self.variables = variables if variables else {}
 
-            
+    def get(self, key, default=None):
+        if key in self.variables:
+            return self.variables[key]
+
+        if self.parent:
+            return self.parent.get(key, default)
+
+        return default
+
+        

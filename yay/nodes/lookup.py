@@ -34,29 +34,29 @@ class Lookup(Node):
                 parts.append("[%s]" % i)
         return "".join(parts)
 
-    def semi_resolve(self):
+    def semi_resolve(self, context):
         # This is derived from string.py Formatter so lookup language
         # is consistent
         # field name parser is written in C and available as
         #   str._formatter_field_name_split()
         handled = []
 
-        first, rest = self.value.resolve()._formatter_field_name_split()
-        obj = self.root.get(first, None)
+        first, rest = self.value.resolve(context)._formatter_field_name_split()
+        obj = self.root.get(context, first, None)
         if not obj:
             raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
         for is_attr, i in rest:
             handled.append((is_attr, i))
-            obj = obj.get(i)
+            obj = obj.get(context, i)
             if not obj:
                 raise KeyError("Unable to find '%s'" % self.join(first, handled))
 
         return obj
 
-    def get(self, idx, default):
-        return self.semi_resolve().get(idx, default)
+    def get(self, context, idx, default):
+        return self.semi_resolve(context).get(context, idx, default)
 
-    def resolve(self):
-        return self.semi_resolve().resolve()
+    def resolve(self, context):
+        return self.semi_resolve(context).resolve(context)
 
