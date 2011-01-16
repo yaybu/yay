@@ -22,6 +22,8 @@ class Actions(object):
     def boxed_int(self, str, words, tokens):
         return nodes.Boxed(int(tokens[0]))
     def concatenation(self, str, words, tokens):
+        if len(tokens) == 1:
+            return tokens[0]
         return nodes.Concatenation(*tokens)
 
 actions = Actions()
@@ -98,9 +100,9 @@ expression << (
 
 bracketed_expression = Suppress("{") + expression + Suppress("}")
 
-templated_string = OneOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
+templated_string = ZeroOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
 templated_string.setParseAction(actions.concatenation)
 
-print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")
-
+#print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
+print templated_string.parseString("foo bar baz")[0]
 #print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])

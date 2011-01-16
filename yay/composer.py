@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yay.nodes import *
+from yay.parser import templated_string
 
 class Composer(object):
     """
@@ -37,7 +38,8 @@ class Composer(object):
             return self.visit_dict(existing_value, new_value)
         if isinstance(new_value, list):
             return self.visit_list(new_value, existing_value)
-
+        if isinstance(new_value, basestring):
+            return Boxed(templated_string.parseString(new_value)[0])
         return Boxed(new_value)
 
     def visit_list(self, new_value, existing_value):
