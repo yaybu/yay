@@ -29,3 +29,5 @@ class Node(object):
             data = self.chain.resolve(context)
         return self.apply(context, data)
 
+    def __str__(self):
+        return repr(self)

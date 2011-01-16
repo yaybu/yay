@@ -71,3 +71,15 @@ class Access(Node):
 
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)
+
+
+class Concatenation(Node):
+    def __init__(self, *args):
+        self.args = args
+
+    def resolve(self, context):
+        return "".join(arg.resolve(context) for arg in self.args)
+
+    def __repr__(self):
+        return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
+

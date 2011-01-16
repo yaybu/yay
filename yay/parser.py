@@ -12,10 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.pyparsing import Forward, Group, Keyword, Optional, Word, \
-    ZeroOrMore, oneOf, alphas, nums, alphanums, Combine, Suppress
+from yay.pyparsing import *
 
 from yay import nodes
+
+class Actions(object):
+    def boxed(self, str, words, tokens):
+        return nodes.Boxed(tokens[0])
+    def boxed_int(self, str, words, tokens):
+        return nodes.Boxed(int(tokens[0]))
+    def concatenation(self, str, words, tokens):
+        return nodes.Concatenation(*tokens)
+
+actions = Actions()
 
 AND = Keyword("and")
 OR = Keyword("or")
@@ -24,7 +33,7 @@ BINOP = oneOf("= != < > <= >=")
 
 identifier = Word(alphanums+"_")
 arithSign = Word("+-",exact=1)
-intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(lambda s, w, t: nodes.Boxed(int(t[0])))
+intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(actions.boxed_int)
 
 expression = Forward()
 
@@ -86,4 +95,12 @@ expression << (
     fullExpression
     )
 
-print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
+
+bracketed_expression = Suppress("{") + expression + Suppress("}")
+
+templated_string = OneOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
+templated_string.setParseAction(actions.concatenation)
+
+print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")
+
+#print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
