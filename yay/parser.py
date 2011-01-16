@@ -100,9 +100,12 @@ expression << (
 
 bracketed_expression = Suppress("{") + expression + Suppress("}")
 
-templated_string = ZeroOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
+templated_string = (
+    bracketed_expression |
+    ZeroOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
+    )
 templated_string.setParseAction(actions.concatenation)
 
 #print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
-print templated_string.parseString("foo bar baz")[0]
+print templated_string.parseString("{foo.bar.baz}")[0]
 #print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])

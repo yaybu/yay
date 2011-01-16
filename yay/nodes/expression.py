@@ -63,11 +63,20 @@ class Access(Node):
         self.container = container
         self.access = access
 
-    def resolve(self, context):
-        access = context.resolve()
+    def get(self, context, idx, default=None):
+        sr = self.semi_resolve(context)
+        return sr.get(context, idx, default)
+
+    def semi_resolve(self, context):
         if self.container:
-            return self.container.get(context, access)
-        return context.get(access)
+            return self.container.get(context, self.access)
+        return context.get(self.access)
+
+    def resolve(self, context):
+        return self.semi_resolve(context).resolve(context)
+
+    #def get(self, context, key, default=None):
+    #    self.resolve(context).get(context, key, default)
 
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)

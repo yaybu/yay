@@ -24,7 +24,7 @@ class Composer(object):
     def __init__(self):
         self.root = None
         self.action_map = {
-            "copy": lambda value, args: Copy(Lookup(self, value)),
+            "copy": lambda value, args: Copy(value),
             "assign": lambda value, args: value if isinstance(value, Node) else Boxed(value),
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
@@ -39,7 +39,7 @@ class Composer(object):
         if isinstance(new_value, list):
             return self.visit_list(new_value, existing_value)
         if isinstance(new_value, basestring):
-            return Boxed(templated_string.parseString(new_value)[0])
+            return templated_string.parseString(new_value)[0]
         return Boxed(new_value)
 
     def visit_list(self, new_value, existing_value):

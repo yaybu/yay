@@ -18,7 +18,7 @@ class RootContext(object):
 
     def __init__(self, root):
         self.root = root
-    def get(self, key, default):
+    def get(self, key, default=None):
         return self.root.get(self, key, default)
 
 class Context(object):
