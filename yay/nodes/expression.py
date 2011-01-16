@@ -57,11 +57,17 @@ class GreaterThanEqual(Comparison):
     def resolve(self, context):
         return self.left.resolve(context) >= self.right.resolve(context)
 
+
 class Access(Node):
     def __init__(self, container, access):
         self.container = container
         self.access = access
+
     def resolve(self, context):
-        self.container.get(context, access)
+        access = context.resolve()
+        if self.container:
+            return self.container.get(context, access)
+        return context.get(access)
+
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)

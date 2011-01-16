@@ -22,3 +22,4 @@ from yay.nodes.filter import Filter
 from yay.nodes.lookup import Lookup
 from yay.nodes.copy import Copy
 from yay.nodes.foreach import ForEach
+from yay.nodes.expression import *

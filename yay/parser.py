@@ -15,7 +15,7 @@
 from yay.pyparsing import Forward, Group, Keyword, Optional, Word, \
     ZeroOrMore, oneOf, alphas, nums, alphanums, Combine, Suppress
 
-from yay.nodes import expression as nodes
+from yay import nodes
 
 AND = Keyword("and")
 OR = Keyword("or")
@@ -24,7 +24,7 @@ BINOP = oneOf("= != < > <= >=")
 
 identifier = Word(alphanums+"_")
 arithSign = Word("+-",exact=1)
-intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(lambda s, w, t: int(t[0]))
+intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(lambda s, w, t: nodes.Boxed(int(t[0])))
 
 expression = Forward()
 
