@@ -43,7 +43,7 @@ def filter_bin_comparison_action(s, w, t):
 filter_bin_comparison = Group(expression + BINOP + expression)
 filter_bin_comparison.setParseAction(filter_bin_comparison_action)
 
-filterCondition = Group(
+filterCondition = (
     filter_bin_comparison |
     ( "(" + filterExpression + ")" )
     )
@@ -60,9 +60,14 @@ def filter_expression_action(s, w, t):
 filterExpression << filterCondition + ZeroOrMore((AND|OR) + filterExpression)
 filterExpression.setParseAction(filter_expression_action)
 
+def index_access_action(s, w, t):
+    return nodes.Access(None, int(t[0]))
+indexAccess = intNum.copy()
+indexAccess.setParseAction(index_access_action)
+
 listAccess = Suppress("[") + (
     filterExpression |
-    intNum
+    indexAccess
     ) + Suppress("]")
 
 def full_expression_action(s, w, t):
@@ -76,7 +81,7 @@ fullExpression = identifier + ZeroOrMore(
     )
 fullExpression.setParseAction(full_expression_action)
 
-expression << Group(
+expression << (
     intNum |
     fullExpression
     )
