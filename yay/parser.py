@@ -86,4 +86,4 @@ expression << (
     fullExpression
     )
 
-print repr(fullExpression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
+print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])

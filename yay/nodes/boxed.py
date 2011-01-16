@@ -38,3 +38,6 @@ class Boxed(Node):
             return self.resolve_string(context, self.value)
         return self.value
 
+    def __repr__(self):
+        return "Boxed(%s)" % self.value
+
