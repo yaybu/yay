@@ -65,14 +65,20 @@ listAccess = Suppress("[") + (
     intNum
     ) + Suppress("]")
 
+def full_expression_action(s, w, t):
+    node = None
+    for token in t:
+        node = nodes.Access(node, token)
+    return node
 fullExpression = identifier + ZeroOrMore(
     listAccess |
     Suppress(".") + identifier
     )
+fullExpression.setParseAction(full_expression_action)
 
 expression << Group(
     intNum |
     fullExpression
     )
 
-print fullExpression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")
+print repr(fullExpression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])

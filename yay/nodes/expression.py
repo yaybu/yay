@@ -18,6 +18,8 @@ class Comparison(Node):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+    def __repr__(self):
+        return "%s(%s, %s)" % (self.__class__.__name__, self.left, self.right)
 
 class And(Comparison):
     def resolve(self, context):
@@ -55,4 +57,11 @@ class GreaterThanEqual(Comparison):
     def resolve(self, context):
         return self.left.resolve(context) >= self.right.resolve(context)
 
-
+class Access(Node):
+    def __init__(self, container, access):
+        self.container = container
+        self.access = access
+    def resolve(self, context):
+        self.container.get(context, access)
+    def __repr__(self):
+        return "Access(%s, %s)" % (self.container, self.access)
