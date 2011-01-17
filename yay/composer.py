@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from yay.nodes import *
-from yay.parser import templated_string
+from yay.parser import templated_string, as_statement
 
 class Composer(object):
     """
@@ -28,7 +28,7 @@ class Composer(object):
             "assign": lambda value, args: value if isinstance(value, Node) else Boxed(value),
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
-            "foreach": lambda value, args: ForEach(self, value, args),
+            "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
             }
 
     def visit(self, existing_value, new_value):
