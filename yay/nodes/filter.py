@@ -18,3 +18,6 @@ class Filter(Node):
             filtered.append(r)
 
         return filtered
+
+    def __repr__(self):
+        return "Filter(%s, %s)" % (self.value, self.filter_expression)

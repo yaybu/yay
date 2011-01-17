@@ -67,7 +67,7 @@ def filter_expression_action(s, w, t):
         elif t[i] == "or":
             node = nodes.Or(node, t[i+1])
         i += 1
-    return node
+    return nodes.Filter(None, node)
 filterExpression << filterCondition + ZeroOrMore((AND|OR) + filterExpression)
 filterExpression.setParseAction(filter_expression_action)
 
@@ -111,4 +111,4 @@ as_statement = fullExpression + Suppress("as") + identifier
 #print as_statement.parseString("foolist[foo.age < bar.maxage] as person")
 #print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
 #print templated_string.parseString("{foo.bar.baz}")[0]
-#print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
+print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
