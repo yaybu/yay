@@ -49,6 +49,8 @@ class Config(object):
         self.tt.root = None
 
     def get(self):
+        if not self.tt.root:
+            return {}
         return self.tt.root.resolve(RootContext(self.tt.root))
 
 def load_uri(uri, special_term='yay'):

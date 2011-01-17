@@ -32,4 +32,4 @@ class ForEach(object):
             resolved.append(self.value.resolve(newctx))
         return resolved
 
-            
+

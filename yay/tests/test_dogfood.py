@@ -39,6 +39,7 @@ class TestDogfood(unittest.TestCase):
 
     def load(self, path):
         c = TestConfig()
+        self.failUnlessEqual(c.get(), {})
         c.load_uri(path)
         return c.get()
 
