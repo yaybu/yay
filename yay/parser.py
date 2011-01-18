@@ -107,10 +107,17 @@ expression << (
 
 bracketed_expression = Suppress("{") + expression + Suppress("}")
 
-templated_string = (
+
+def ugh(s, w, t):
+    if not t or not t[0]:
+        return []
+    return actions.boxed(s, w, t)
+myrol = restOfLine.copy().setParseAction(ugh)
+
+templated_string = ZeroOrMore(
     bracketed_expression |
-    ZeroOrMore(SkipTo("{").setParseAction(actions.boxed) + bracketed_expression) + restOfLine.setParseAction(actions.boxed)
-    )
+    SkipTo("{").setParseAction(actions.boxed)
+    ) + myrol
 templated_string.setParseAction(actions.concatenation)
 
 as_statement = fullExpression + Suppress("as") + identifier
@@ -118,6 +125,8 @@ as_statement = fullExpression + Suppress("as") + identifier
 #print as_statement.parseString("foolist[foo.age < bar.maxage] as person")
 #print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
 #print templated_string.parseString("{foo.bar.baz}")[0]
-print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
-print fullExpression.parseString("foo.bar")
-print templated_string.parseString("{foo.bar}")
+#print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
+#print fullExpression.parseString("foo.bar")
+print templated_string.parseString("{foo.bar}{foo.dizzle}")
+print templated_string.parseString("ee{foo.bar}ee{foo.dizzle}")
+print templated_string.parseString("{foo.bar}{foo.dizzle}eeee")

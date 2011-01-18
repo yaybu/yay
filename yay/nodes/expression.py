@@ -93,7 +93,7 @@ class Concatenation(Node):
         self.args = args
 
     def resolve(self, context):
-        return "".join(arg.resolve(context) for arg in self.args)
+        return "".join(str(arg.resolve(context)) for arg in self.args)
 
     def __repr__(self):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
