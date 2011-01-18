@@ -1,4 +1,4 @@
-foo-list:
+foolist:
   - name: john
     age: 25
   - name: simon
@@ -11,7 +11,7 @@ foo-list:
     age: 3
 
 bar:
-   max-age: 40
+   maxage: 40
 
 baz:
   - nameage: john25
