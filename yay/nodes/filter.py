@@ -19,5 +19,7 @@ class Filter(Node):
 
         return filtered
 
+    semi_resolve = resolve
+
     def __repr__(self):
         return "Filter(%s, %s)" % (self.container, self.filter_expression)
