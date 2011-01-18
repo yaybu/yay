@@ -90,7 +90,7 @@ def full_expression_action(s, w, t):
         else:
             token.container = node
             node = token
-    return t[-1]
+    return node
 
 fullExpression = identifier + ZeroOrMore(
     full_list_access |
@@ -119,3 +119,5 @@ as_statement = fullExpression + Suppress("as") + identifier
 #print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
 #print templated_string.parseString("{foo.bar.baz}")[0]
 print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
+print fullExpression.parseString("foo.bar")
+print templated_string.parseString("{foo.bar}")
