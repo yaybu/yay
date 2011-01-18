@@ -27,3 +27,6 @@ class Sequence(Node):
             data.append(val.resolve(context))
         return data
 
+    def __iter__(self):
+        return iter(self.value)
+

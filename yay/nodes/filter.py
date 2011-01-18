@@ -7,19 +7,20 @@ class Filter(Node):
         self.container = container
         self.filter_expression = filter_expression
 
-    def resolve(self, context):
-        resolved = self.container.resolve(context)
-        if not isinstance(resolved, list):
-            raise ValueError("Expected sequence, got '%s'" % resolved)
+    def semi_resolve(self, context):
+        if not hasattr(self.container, "semi_resolve"):
+            raise ValueError("Expected sequence, got '%s'" % self.container)
+
+        resolved = self.container.semi_resolve(context)
 
         filtered = []
         for r in resolved:
-            #FIXME: Do some filtering here!
             filtered.append(r)
 
         return filtered
 
-    semi_resolve = resolve
+    def resolve(self, context):
+        return list(f.resolve(context) for f in self.semi_resolve(context))
 
     def __repr__(self):
         return "Filter(%s, %s)" % (self.container, self.filter_expression)
