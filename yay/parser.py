@@ -33,7 +33,7 @@ OR = Keyword("or")
 IN = Keyword("in")
 BINOP = oneOf("= != < > <= >=")
 
-identifier = Word(alphanums+"_")
+identifier = Word(alphanums+"_") | Keyword("@")
 arithSign = Word("+-",exact=1)
 intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(actions.boxed_int)
 

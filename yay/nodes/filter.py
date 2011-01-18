@@ -1,5 +1,6 @@
 
 from yay.nodes import Node
+from yay.context import Context
 
 class Filter(Node):
 
@@ -15,7 +16,8 @@ class Filter(Node):
 
         filtered = []
         for r in resolved:
-            if self.filter_expression.resolve(context):
+            newctx = Context(context, {"@": r})
+            if self.filter_expression.resolve(newctx):
                 filtered.append(r)
 
         return filtered

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Lookup, Boxed
+from yay.nodes import Node
 
 class RootContext(object):
 
