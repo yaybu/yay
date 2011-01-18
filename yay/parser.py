@@ -67,26 +67,33 @@ def filter_expression_action(s, w, t):
         elif t[i] == "or":
             node = nodes.Or(node, t[i+1])
         i += 1
-    return nodes.Filter(None, node)
+    return node
 filterExpression << filterCondition + ZeroOrMore((AND|OR) + filterExpression)
 filterExpression.setParseAction(filter_expression_action)
 
-def index_access_action(s, w, t):
-    return nodes.Access(None, int(t[0]))
-indexAccess = intNum.copy()
-indexAccess.setParseAction(index_access_action)
 
-listAccess = Suppress("[") + (
-    filterExpression |
-    indexAccess
-    ) + Suppress("]")
+full_list_access = Suppress("[") + filterExpression + Suppress("]")
+full_list_access.setParseAction(lambda s, w, t: nodes.Filter(None, t[0]))
+
+
+def index_access_action(s, w, t):
+    return nodes.Access(None, t[0])
+listAccess = Suppress("[") + intNum + Suppress("]")
+listAccess.setParseAction(index_access_action)
+
 
 def full_expression_action(s, w, t):
     node = None
     for token in t:
-        node = nodes.Access(node, token)
-    return node
+        if not isinstance(token, nodes.Node):
+            node = nodes.Access(node, token)
+        else:
+            token.container = node
+            node = token
+    return t[-1]
+
 fullExpression = identifier + ZeroOrMore(
+    full_list_access |
     listAccess |
     Suppress(".") + identifier
     )

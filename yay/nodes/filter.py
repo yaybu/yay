@@ -3,12 +3,12 @@ from yay.nodes import Node
 
 class Filter(Node):
 
-    def __init__(self, value, filter_expression):
-        self.value = value
+    def __init__(self, container, filter_expression):
+        self.container = container
         self.filter_expression = filter_expression
 
     def resolve(self, context):
-        resolved = self.value.resolve(context)
+        resolved = self.container.resolve(context)
         if not isinstance(resolved, list):
             raise ValueError("Expected sequence, got '%s'" % resolved)
 
@@ -20,4 +20,4 @@ class Filter(Node):
         return filtered
 
     def __repr__(self):
-        return "Filter(%s, %s)" % (self.value, self.filter_expression)
+        return "Filter(%s, %s)" % (self.container, self.filter_expression)
