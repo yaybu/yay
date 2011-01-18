@@ -15,7 +15,8 @@ class Filter(Node):
 
         filtered = []
         for r in resolved:
-            filtered.append(r)
+            if self.filter_expression.resolve(context):
+                filtered.append(r)
 
         return filtered
 
