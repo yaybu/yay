@@ -43,7 +43,7 @@ class UrlOpener(IOpener):
 
 class MemOpener(IOpener):
 
-    """ 
+    """
     This is purely a testing stub.
 
     It has a class-shared dictionary called 'data', where keys are uris and

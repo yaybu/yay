@@ -35,7 +35,7 @@ BINOP = oneOf("= != < > <= >=")
 
 identifier = Word(alphanums+"_") | Keyword("@")
 arithSign = Word("+-",exact=1)
-intNum = Combine( Optional(arithSign) + Word( nums ) ).setParseAction(actions.boxed_int)
+intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(actions.boxed_int)
 
 expression = Forward()
 

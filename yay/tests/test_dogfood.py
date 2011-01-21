@@ -11,6 +11,7 @@ from yay.openers import MemOpener
 
 dogfood_path = os.path.join(os.path.dirname(__file__), "dogfood")
 
+
 class TestConfig(Config):
 
     def load_uri(self, uri):

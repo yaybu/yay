@@ -15,7 +15,7 @@
 from yay.nodes import Node, Boxed
 
 class Sequence(Node):
-    """ 
+    """
     I am a list that hasnt been created yet
     """
     def get(self, context, idx, default=None):

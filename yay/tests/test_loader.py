@@ -9,6 +9,7 @@ foo:
     bar.append: 2
 """
 
+
 class TestLoader(unittest.TestCase):
 
     def test_loader(self):

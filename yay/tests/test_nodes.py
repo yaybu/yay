@@ -2,6 +2,7 @@ import unittest
 from yay.nodes import *
 from yay.context import Context
 
+
 class TestSequenceOperations(unittest.TestCase):
 
     def setUp(self):
@@ -17,7 +18,7 @@ class TestSequenceOperations(unittest.TestCase):
         a = Append(Sequence([Boxed(4), Boxed(5)]))
         a.chain = l
 
-        self.failUnlessEqual(a.resolve(self.ctx), [1,2,3,4,5])
+        self.failUnlessEqual(a.resolve(self.ctx), [1, 2, 3, 4, 5])
 
     def test_Sequence_remove(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
@@ -48,6 +49,6 @@ class TestLookup(unittest.TestCase):
         d = Mapping(None)
         d.set("foo", Boxed(1))
         l = Lookup(d, Boxed("foo"))
- 
+
         self.failUnlessEqual(l.resolve(self.ctx), 1)
 
