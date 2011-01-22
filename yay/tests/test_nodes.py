@@ -23,19 +23,19 @@ class TestSequenceOperations(unittest.TestCase):
     def setUp(self):
         self.ctx = Context(None, None)
 
-    def test_Sequence(self):
+    def test_sequence(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
 
         self.failUnlessEqual(l.resolve(self.ctx), [1, 2, 3])
 
-    def test_Sequence_append(self):
+    def test_sequence_append(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
         a = Append(Sequence([Boxed(4), Boxed(5)]))
         a.chain = l
 
         self.failUnlessEqual(a.resolve(self.ctx), [1, 2, 3, 4, 5])
 
-    def test_Sequence_remove(self):
+    def test_sequence_remove(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
         r = Remove(Sequence([Boxed(2)]))
         r.chain = l
