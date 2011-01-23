@@ -15,7 +15,6 @@
 
 import unittest
 from yay.config import Config
-from yay.ordereddict import OrderedDict
 
 class TestConfigUpdate(unittest.TestCase):
 
