@@ -12,14 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yaml.error import MarkedYAMLError
+from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
+    MappingStartEvent, MappingEndEvent, AliasEvent, StreamEndEvent
+
 from yay.nodes import *
 from yay.parser import templated_string, as_statement
 
+
+class ComposerError(MarkedYAMLError):
+    pass
+
+
 class Composer(object):
-    """
-    I turn the 'parse trees' (repr'd as ordered dictionarys and other
-    primitives) into a compile tree
-    """
 
     def __init__(self):
         self.root = None
@@ -30,31 +35,106 @@ class Composer(object):
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
             }
+        self.dirty = False
 
-    def visit(self, existing_value, new_value):
-        assert not isinstance(new_value, Node)
+    def compose(self, previous):
+        # Drop the STREAM-START event.
+        self.get_event()
 
-        if isinstance(new_value, dict):
-            return self.visit_dict(existing_value, new_value)
-        if isinstance(new_value, list):
-            return self.visit_list(new_value, existing_value)
-        if isinstance(new_value, basestring):
-            return templated_string.parseString(new_value)[0]
-        return Boxed(new_value)
+        # Compose a document if the stream is not empty.
+        document = None
+        if not self.check_event(StreamEndEvent):
+            self.get_event() # Drop DOCUMENT-START
+            document = self.compose_node(previous)
+            self.get_event() # Drop DOCUMENT-END
 
-    def visit_list(self, new_value, existing_value):
+        # Ensure that the stream contains no more documents.
+        if not self.check_event(StreamEndEvent):
+            event = self.get_event()
+            raise ComposerError("expected a single document in the stream",
+                    document.start_mark, "but found another document",
+                    event.start_mark)
+
+        # Drop the STREAM-END event.
+        self.get_event()
+
+        return document
+
+    def compose_node(self, previous):
+        if self.check_event(AliasEvent):
+            raise ComposerError(None, None, "found alias, these arent supported in yay", event.start_mark)
+
+        node = None
+
+        if self.check_event(ScalarEvent):
+            node = self.compose_scalar(previous)
+        elif self.check_event(SequenceStartEvent):
+            node = self.compose_sequence(previous)
+        elif self.check_event(MappingStartEvent):
+            node = self.compose_mapping(previous)
+
+        if not node:
+            event = self.peek_event()
+            raise ComposerError(None, None, "unexpected event in stream", event.start_mark)
+
+        return node
+
+    def compose_scalar(self, previous):
+        event = self.get_event()
+
+        if isinstance(event.value, basestring):
+            #Icky - this needs to move *beneath* this layer of code
+            node = templated_string.parseString(event.value)[0]
+        else:
+            node = Boxed(event.value)
+
+        node.start_mark = event.start_mark
+        node.end_mark = event.end_mark
+
+        return node
+
+    def compose_sequence(self, previous):
+        start = self.get_event()
+
         data = []
-        for v in new_value:
-            data.append(self.visit(None, v))
-        return Sequence(data)
+        while not self.check_event(SequenceEndEvent):
+            data.append(self.compose_node(None))
 
-    def visit_dict(self, existing_value, new_value):
-        # This feels wrong. I think the approach is fine but the ownership and control flow is a bit of a soggy biscuit
-        # Revisit when less ill.
+        end = self.get_event()
 
-        container = Mapping(existing_value)
+        node = Sequence(data)
+        node.start_mark = start.start_mark
+        node.end_mark = end.end_mark
 
-        for key, value in new_value.iteritems():
+        return node
+
+    def handle_special_term(self, previous):
+        key_event = self.peek_event()
+        if key_event.value != self.special_term:
+            return previous
+        self.get_event()
+
+        special_term = self.compose_node(None).resolve(None)
+
+        for extend in special_term.get("extends", []):
+            data = self.openers.open(extend)
+            previous = self.__class__(data, special_term=self.special_term).compose(previous)
+
+        return previous
+
+
+    def compose_mapping(self, previous):
+        start = self.get_event()
+
+        if not self.dirty:
+            previous = self.handle_special_term(previous)
+            self.dirty = True
+
+        container = Mapping(previous)
+        while not self.check_event(MappingEndEvent):
+            key_event = self.get_event()
+            key = key_event.value
+
             action = "assign"
             if "." in key:
                 key, action = key.split(".", 1)
@@ -66,8 +146,8 @@ class Composer(object):
             # FIXME: context-driven traversal is different from non-resolving dict-lookup
             existing = container.get(None, key, None)
 
-            # Put the value in a simple box so it can be stored in our tree
-            boxed = self.visit(existing, value)
+            # Grab scalar value
+            boxed = self.compose_node(existing)
 
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed, action_args)
@@ -78,12 +158,11 @@ class Composer(object):
             # And add it to the dictionary (which will automatically chain nodes)
             container.set(key, boxed)
 
+        end = self.get_event()
+
+        container.start_mark = start.start_mark
+        container.end_mark = end.end_mark
+
         return container
-
-    def update(self, config):
-        self.root = self.visit_dict(self.root, config)
-
-    def get(self, context, key, default=None):
-        return self.root.get(context, key, default)
 
 

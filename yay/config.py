@@ -16,7 +16,6 @@ import yaml
 
 from yay.loader import Loader
 from yay.openers import Openers
-from yay.composer import Composer
 from yay.context import RootContext
 
 class Config(object):
@@ -24,34 +23,22 @@ class Config(object):
     def __init__(self, special_term='yay'):
         self.special_term = special_term
         self.openers = Openers()
-        self.tt = Composer()
+        self.clear()
 
     def load_uri(self, uri):
         self.load(self.openers.open(uri))
 
     def load(self, stream):
-        data = yaml.load(stream, Loader=Loader)
-
-        special = data.get(self.special_term, None)
-        if special:
-            for uri in special.get('extends', []):
-                self.load_uri(uri)
-
-        self.update(data)
-
-    def update(self, config):
-        """
-        Recursively update config with a dict
-        """
-        self.tt.update(config)
+        data = Loader(stream, special_term=self.special_term).compose(self.mapping)
+        self.mapping = data
 
     def clear(self):
-        self.tt.root = None
+        self.mapping = None
 
     def get(self):
-        if not self.tt.root:
+        if not self.mapping:
             return {}
-        return self.tt.root.resolve(RootContext(self.tt.root))
+        return self.mapping.resolve(RootContext(self.mapping))
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
