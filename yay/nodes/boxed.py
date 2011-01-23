@@ -34,9 +34,26 @@ class Boxed(Node):
         return value
 
     def resolve(self, context):
-        if isinstance(self.value, basestring):
-            return self.resolve_string(context, self.value)
-        return self.value
+        value = self.value
+
+        if not isinstance(value, basestring):
+            return value
+
+        value = self.resolve_string(context, value)
+
+        if value.lower() in ("yes", "true", "on"):
+            return True
+        if value.lower() in ("no", "false", "off"):
+            return False
+
+        try:
+            value = int(value)
+        except ValueError:
+            pass
+
+        #FIXME: could still be a float or a timestamp
+
+        return value
 
     def get(self, context, key, default=None):
         return Boxed(self.value.get(key, default))
