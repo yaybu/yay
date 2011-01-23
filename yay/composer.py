@@ -111,7 +111,7 @@ class Composer(object):
     def handle_special_term(self, previous):
         key_event = self.peek_event()
         if key_event.value != self.special_term:
-            return
+            return previous
         self.get_event()
 
         special_term = self.compose_node(None).resolve(None)
