@@ -25,10 +25,6 @@ class ComposerError(MarkedYAMLError):
 
 
 class Composer(object):
-    """
-    I turn the 'parse trees' (repr'd as ordered dictionarys and other
-    primitives) into a compile tree
-    """
 
     def __init__(self):
         self.root = None
@@ -39,6 +35,7 @@ class Composer(object):
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
             }
+        self.dirty = False
 
     def compose(self, previous):
         # Drop the STREAM-START event.
@@ -111,8 +108,27 @@ class Composer(object):
 
         return node
 
+    def handle_special_term(self, previous):
+        key_event = self.peek_event()
+        if key_event.value != self.special_term:
+            return
+        self.get_event()
+
+        special_term = self.compose_node(None).resolve(None)
+
+        for extend in special_term.get("extends", []):
+            data = self.openers.open(extend)
+            previous = self.__class__(data, special_term=self.special_term).compose(previous)
+
+        return previous
+
+
     def compose_mapping(self, previous):
         start = self.get_event()
+
+        if not self.dirty:
+            previous = self.handle_special_term(previous)
+            self.dirty = True
 
         container = Mapping(previous)
         while not self.check_event(MappingEndEvent):

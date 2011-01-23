@@ -16,11 +16,15 @@ from yaml.reader import Reader
 from yaml.scanner import Scanner
 from yaml.parser import Parser
 
+from yay.openers import Openers
 from yay.composer import Composer
 
 class Loader(Reader, Scanner, Parser, Composer):
 
-    def __init__(self, stream):
+    def __init__(self, stream, special_term='yay'):
+        self.special_term = special_term
+        self.openers = Openers()
+
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)

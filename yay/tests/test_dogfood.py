@@ -52,10 +52,15 @@ class TestDogfood(unittest.TestCase):
             return name, _
 
     def load(self, path):
-        c = TestConfig()
-        self.failUnlessEqual(c.get(), {})
-        c.load_uri(path)
-        return c.get()
+        oldpath = os.getcwd()
+        os.chdir(dogfood_path)
+        try:
+            c = TestConfig()
+            self.failUnlessEqual(c.get(), {})
+            c.load_uri(path)
+            return c.get()
+        finally:
+            os.chdir(oldpath)
 
     def failUnlessEqual(self, value1, value2):
         if not isinstance(value1, dict) or not isinstance(value2, dict):

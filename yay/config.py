@@ -29,13 +29,7 @@ class Config(object):
         self.load(self.openers.open(uri))
 
     def load(self, stream):
-        data = Loader(stream).compose(self.mapping)
-
-        special = data.get(self.special_term, None)
-        if special:
-            for uri in special.get('extends', []):
-                self.load_uri(uri)
-
+        data = Loader(stream, special_term=self.special_term).compose(self.mapping)
         self.mapping = data
 
     def clear(self):
