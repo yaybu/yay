@@ -5,6 +5,8 @@ Changelog for yay
 --------
 
  - Lots more unittests for expression evaluation and expression parsing
+ - Refactor composer - now sits directly on top of parser and pulls events from parser
+ - Drop dependency on OrderedDict
 
 0.0.1
 -----
