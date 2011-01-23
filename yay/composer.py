@@ -40,7 +40,7 @@ class Composer(object):
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
             }
 
-    def compose(self):
+    def compose(self, previous):
         # Drop the STREAM-START event.
         self.get_event()
 
@@ -48,7 +48,7 @@ class Composer(object):
         document = None
         if not self.check_event(StreamEndEvent):
             self.get_event() # Drop DOCUMENT-START
-            document = self.compose_node()
+            document = self.compose_node(previous)
             self.get_event() # Drop DOCUMENT-END
 
         # Ensure that the stream contains no more documents.
@@ -63,18 +63,18 @@ class Composer(object):
 
         return document
 
-    def compose_node(self):
+    def compose_node(self, previous):
         if self.check_event(AliasEvent):
             raise ComposerError(None, None, "found alias, these arent supported in yay", event.start_mark)
 
         node = None
 
         if self.check_event(ScalarEvent):
-            node = self.compose_scalar()
+            node = self.compose_scalar(previous)
         elif self.check_event(SequenceStartEvent):
-            node = self.compose_sequence()
+            node = self.compose_sequence(previous)
         elif self.check_event(MappingStartEvent):
-            node = self.compose_mapping()
+            node = self.compose_mapping(previous)
 
         if not node:
             event = self.peek_event()
@@ -82,7 +82,7 @@ class Composer(object):
 
         return node
 
-    def compose_scalar(self):
+    def compose_scalar(self, previous):
         event = self.get_event()
 
         if isinstance(event.value, basestring):
@@ -96,12 +96,12 @@ class Composer(object):
 
         return node
 
-    def compose_sequence(self):
+    def compose_sequence(self, previous):
         start = self.get_event()
 
         data = []
         while not self.check_event(SequenceEndEvent):
-            data.append(self.compose_node())
+            data.append(self.compose_node(None))
 
         end = self.get_event()
 
@@ -111,10 +111,10 @@ class Composer(object):
 
         return node
 
-    def compose_mapping(self):
+    def compose_mapping(self, previous):
         start = self.get_event()
 
-        container = Mapping(None) #existing_value
+        container = Mapping(previous)
         while not self.check_event(MappingEndEvent):
             key_event = self.get_event()
             key = key_event.value
@@ -131,7 +131,7 @@ class Composer(object):
             existing = container.get(None, key, None)
 
             # Grab scalar value
-            boxed = self.compose_node()
+            boxed = self.compose_node(existing)
 
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed, action_args)
