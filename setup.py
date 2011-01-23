@@ -7,7 +7,7 @@ setup(
     name='yay',
     description='An extensible config file format',
     long_description = open("README.rst").read() + "\n" + \
-                        open("HISTORY.rst").read(),
+                        open("CHANGES").read(),
     version=version,
     url='http://pypi.python.org/pypi/yay',
     classifiers = [

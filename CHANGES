@@ -1,0 +1,22 @@
+Changelog for yay
+=================
+
+0.0.2dev
+--------
+
+ - Lots more unittests for expression evaluation and expression parsing
+
+0.0.1
+-----
+
+ - This is still pre-release, no API or language stability guarantees
+ - Variable resolving is now done in expression tree without a seperate resolve stage
+ - Uses pyparsing to parse {foo[bar][@.baz > 5]} type syntax
+
+0.0.0
+-----
+
+ - This is a pre-alpha release to experiment with what we can and can't do.
+ - New PyYAML Loader subclass for getting ordered maps without ugly !!omap markup
+ - Resolves {} markup within YAML nodes
+ - Lazily evaluates .copy, .append and .remove instructions
