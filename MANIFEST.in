@@ -1,1 +1,4 @@
 include *.rst
+include CHANGES
+recursive-include yay/tests/dogfood *
+recursive-include yay/doctests/ *.rst
