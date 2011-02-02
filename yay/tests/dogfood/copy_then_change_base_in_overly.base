@@ -2,5 +2,5 @@ foo:
   bar:
     - baz
     - qux
-zop.copy: '{foo.bar}'
+zop.copy: ${foo.bar}
 

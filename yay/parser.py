@@ -105,7 +105,7 @@ expression << (
     )
 
 
-bracketed_expression = Suppress("{") + expression + Suppress("}")
+bracketed_expression = Suppress("${") + expression + Suppress("}")
 
 
 def ugh(s, w, t):
@@ -116,7 +116,7 @@ myrol = restOfLine.copy().setParseAction(ugh)
 
 templated_string = ZeroOrMore(
     bracketed_expression |
-    SkipTo("{").setParseAction(actions.boxed)
+    SkipTo("${").setParseAction(actions.boxed)
     ) + myrol
 templated_string.setParseAction(actions.concatenation)
 
