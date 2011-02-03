@@ -4,7 +4,9 @@ Changelog for yay
 0.0.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- {foo} can be interpreted as a map by YAML. For now, we will use ${foo} to avoid this
+
+- Function calls to python are implemented - there is now range()
 
 
 0.0.3 (2011-01-24)
