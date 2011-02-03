@@ -75,3 +75,6 @@ class TestNodeExpressions(unittest.TestCase):
         c = GreaterThanEqual(a, b)
         self.failUnless(c.resolve(None))
 
+    def test_function(self):
+        r = Function(lambda x: x+5, [Boxed(5)])
+        self.failUnlessEqual(r.resolve(None), 10)

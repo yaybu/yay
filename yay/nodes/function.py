@@ -1,4 +1,4 @@
-# Copyright 2010-2011 Isotoma Limited
+# Copyright 2011 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes.node import Node
-from yay.nodes.boxed import Boxed
-from yay.nodes.append import Append
-from yay.nodes.mapping import Mapping
-from yay.nodes.remove import Remove
-from yay.nodes.sequence import Sequence
-from yay.nodes.filter import Filter
-from yay.nodes.lookup import Lookup
-from yay.nodes.copy import Copy
-from yay.nodes.foreach import ForEach
-from yay.nodes.function import Function
-from yay.nodes.expression import *
+class Function(object):
+
+    def __init__(self, function, args):
+        self.function = function
+        self.args = args
+
+    def resolve(self, context):
+        args = [arg.resolve(context) for arg in self.args]
+        return self.function(*args)
+
+
