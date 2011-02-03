@@ -18,8 +18,13 @@ class RootContext(object):
 
     def __init__(self, root):
         self.root = root
+        self.functions = {}
+
     def get(self, key, default=None):
         return self.root.get(self, key, default)
+
+    def call(self, func, args):
+        return self.functions[func](*args)
 
 class Context(object):
 
@@ -36,4 +41,5 @@ class Context(object):
 
         return default
 
-        
+    def call(self, func, args):
+        return self.parent.call(func, args)

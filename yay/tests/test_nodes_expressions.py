@@ -15,6 +15,7 @@
 
 import unittest
 from yay.nodes import *
+from yay.context import RootContext
 
 class TestNodeExpressions(unittest.TestCase):
 
@@ -76,5 +77,7 @@ class TestNodeExpressions(unittest.TestCase):
         self.failUnless(c.resolve(None))
 
     def test_function(self):
-        r = Function(lambda x: x+5, [Boxed(5)])
-        self.failUnlessEqual(r.resolve(None), 10)
+        context = RootContext({})
+        context.functions["foo"] = lambda x: x+5
+        r = Function("foo", [Boxed(5)])
+        self.failUnlessEqual(r.resolve(context), 10)

@@ -20,7 +20,7 @@ class Function(object):
 
     def resolve(self, context):
         args = [arg.resolve(context) for arg in self.args]
-        return self.function(*args)
+        return context.call(self.function, args)
 
     def __repr__(self):
         return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])
