@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import unittest
-from yay.parser import templated_string
+from yay.parser import templated_string, expression
 
 class TestTemplatedString(unittest.TestCase):
 
@@ -37,4 +37,18 @@ class TestTemplatedString(unittest.TestCase):
 
     def test_template_end_of_string(self):
         self.do("foo ${bar}", "Concat(Boxed(foo ), Access(None, bar))")
+
+class TestFunctionCall(unittest.TestCase):
+
+    def do(self, teststring, expect):
+        self.failUnlessEqual(
+            repr(expression.parseString(teststring)[0]),
+            expect
+            )
+
+    def test_parse_simple(self):
+        self.do("range(4, 5)", "Function(range, Boxed(4), Boxed(5))")
+
+    def test_parse_nested(self):
+        self.do("range(min(4, 5), 5)", "Function(range, Function(min, Boxed(4), Boxed(5)), Boxed(5))")
 

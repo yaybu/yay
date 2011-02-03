@@ -39,6 +39,12 @@ intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(actions.boxed_
 
 expression = Forward()
 
+def function_call_action(s, w, t):
+    return nodes.Function(t[0], t[1])
+function_identifier = Word(alphanums+"_")
+function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
+function_call.setParseAction(function_call_action)
+
 filterExpression = Forward()
 
 def filter_bin_comparison_action(s, w, t):
@@ -101,6 +107,7 @@ fullExpression.setParseAction(full_expression_action)
 
 expression << (
     intNum |
+    function_call |
     fullExpression
     )
 

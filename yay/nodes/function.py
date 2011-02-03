@@ -22,4 +22,5 @@ class Function(object):
         args = [arg.resolve(context) for arg in self.args]
         return self.function(*args)
 
-
+    def __repr__(self):
+        return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])
