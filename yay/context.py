@@ -20,6 +20,8 @@ class RootContext(object):
         self.root = root
         self.functions = {}
 
+        self.functions['range'] = range
+
     def get(self, key, default=None):
         return self.root.get(self, key, default)
 

@@ -1,0 +1,1 @@
+foo.foreach range(5) as i: foo${i}bar

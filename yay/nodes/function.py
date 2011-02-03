@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yay.nodes import Boxed
+
 class Function(object):
 
     def __init__(self, function, args):
@@ -21,6 +23,9 @@ class Function(object):
     def resolve(self, context):
         args = [arg.resolve(context) for arg in self.args]
         return context.call(self.function, args)
+
+    def semi_resolve(self, context):
+        return [Boxed(x) for x in self.resolve(context)]
 
     def __repr__(self):
         return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])
