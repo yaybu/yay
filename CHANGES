@@ -8,6 +8,7 @@ Changelog for yay
 
 - Function calls to python are implemented - there is now range()
 
+- There is now a foo.select key so switch statements can be used
 
 0.0.3 (2011-01-24)
 ------------------

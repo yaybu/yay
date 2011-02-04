@@ -17,7 +17,7 @@ from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
     MappingStartEvent, MappingEndEvent, AliasEvent, StreamEndEvent
 
 from yay.nodes import *
-from yay.parser import templated_string, as_statement
+from yay.parser import templated_string, as_statement, expression
 
 
 class ComposerError(MarkedYAMLError):
@@ -34,6 +34,7 @@ class Composer(object):
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
+            "select": lambda value, args: Select(value, expression.parseString(args)[0]),
             }
         self.dirty = False
 
