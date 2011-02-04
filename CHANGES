@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.4 (unreleased)
+0.0.4 (2011-02-04)
 ------------------
 
 - {foo} can be interpreted as a map by YAML. For now, we will use ${foo} to avoid this
