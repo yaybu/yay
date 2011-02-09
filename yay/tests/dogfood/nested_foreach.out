@@ -1,0 +1,33 @@
+
+project:
+    - name: monkeys
+      flavour: bob
+      environments:
+         - name: staging
+           host: ririn
+         - name: production
+           host: cloud
+    - name: badgers
+      flavour: george
+      environments:
+         - name: staging
+           host: ririn
+         - name: production
+           host: cloud
+
+test:
+    - name: monkeys
+      flavour: bob
+      env: staging
+
+    - name: monkeys
+      flavour: bob
+      env: production
+
+    - name: badgers
+      flavour: george
+      env: staging
+
+    - name: badgers
+      flavour: george
+      env: production
