@@ -72,7 +72,7 @@ class Composer(object):
         elif self.check_event(SequenceStartEvent):
             node = self.compose_sequence(previous)
         elif self.check_event(MappingStartEvent):
-            node = self.compose_mapping(previous)
+            node = self.compose_mapping_or_anonymous(previous)
 
         if not node:
             event = self.peek_event()
@@ -123,10 +123,33 @@ class Composer(object):
 
         return previous
 
-
-    def compose_mapping(self, previous):
+    def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
 
+        if self.peek_event().value.startswith("."):
+            value = self.compose_anonymous(previous)
+        else:
+            value = self.compose_mapping(previous)
+
+        end = self.get_event()
+
+        value.start_mark = start.start_mark
+        value.end_mark = end.end_mark
+
+        return value
+
+    def compose_anonymous(self, previous):
+        # An anonymous expression that doesnt bind to a keyword
+        key_event = self.get_event()
+        key = key_event.value[1:]
+
+        value = self.compose_node(None)
+
+        assert self.check_event(MappingEndEvent)
+
+        return value
+
+    def compose_mapping(self, previous):
         if not self.dirty:
             previous = self.handle_special_term(previous)
             self.dirty = True
@@ -159,11 +182,5 @@ class Composer(object):
             # And add it to the dictionary (which will automatically chain nodes)
             container.set(key, boxed)
 
-        end = self.get_event()
-
-        container.start_mark = start.start_mark
-        container.end_mark = end.end_mark
-
         return container
-
 
