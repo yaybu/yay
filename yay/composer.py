@@ -143,11 +143,15 @@ class Composer(object):
         key_event = self.get_event()
         key = key_event.value[1:]
 
+        action_args = None
+        if " " in key:
+            key, action_args = action.split(" ", 1)
+
         value = self.compose_node(None)
 
         assert self.check_event(MappingEndEvent)
 
-        return value
+        return self.action_map[key[1:]](value, action_args)
 
     def compose_mapping(self, previous):
         if not self.dirty:
