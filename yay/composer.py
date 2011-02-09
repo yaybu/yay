@@ -35,6 +35,7 @@ class Composer(object):
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
             "select": lambda value, args: Select(value, expression.parseString(args)[0]),
+            "flatten": lambda value, args: Flatten(value),
             }
         self.dirty = False
 

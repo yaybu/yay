@@ -15,7 +15,8 @@ project:
          - name: production
            host: cloud
 
-test.foreach project as project:
+test.flatten:
+  .foreach project as project:
     .foreach project.environments as env:
         name: ${project.name}
         flavour: ${project.flavour}

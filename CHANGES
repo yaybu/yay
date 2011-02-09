@@ -4,7 +4,9 @@ Changelog for yay
 0.0.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add support for nested foreach
+
+- At least for now, support a ruby style .flatten
 
 
 0.0.4 (2011-02-04)

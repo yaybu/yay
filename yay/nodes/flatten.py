@@ -1,4 +1,4 @@
-# Copyright 2010-2011 Isotoma Limited
+# Copyright 2011 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes.node import Node
-from yay.nodes.boxed import Boxed
-from yay.nodes.append import Append
-from yay.nodes.mapping import Mapping
-from yay.nodes.remove import Remove
-from yay.nodes.sequence import Sequence
-from yay.nodes.filter import Filter
-from yay.nodes.lookup import Lookup
-from yay.nodes.copy import Copy
-from yay.nodes.foreach import ForEach
-from yay.nodes.function import Function
-from yay.nodes.select import Select
-from yay.nodes.flatten import Flatten
-from yay.nodes.expression import *
+from yay.nodes import Node, Lookup, Boxed
+from yay.context import Context
+
+def flatten(lst):
+    for itm in lst:
+        if isinstance(itm, list):
+            for x in flatten(itm):
+               yield x
+        else:
+            yield itm
+
+class Flatten(object):
+
+    """ Inspired by Ruby's .flatten - flatten nested lists into a single one """
+
+    def __init__(self, value):
+        self.value = value
+
+    def resolve(self, context):
+        return list(flatten(self.value.resolve(context)))
+
+
