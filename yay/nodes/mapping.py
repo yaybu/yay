@@ -43,6 +43,10 @@ class Mapping(Node):
     def resolve(self, context):
         data = {}
         for key in self.keys():
+            try:
+                key = key.encode('ascii')
+            except UnicodeEncodeError:
+                pass
             data[key] = self.get(context, key, None).resolve(context)
         return data
 

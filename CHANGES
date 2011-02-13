@@ -4,7 +4,7 @@ Changelog for yay
 0.0.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Avoid unicode mapping keys where possible - they break **kwargs in Py2.x
 
 
 0.0.5 (2011-02-09)
