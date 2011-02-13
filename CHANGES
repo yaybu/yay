@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.6 (unreleased)
+0.0.6 (2011-02-13)
 ------------------
 
 - Avoid unicode mapping keys where possible - they break **kwargs in Py2.x

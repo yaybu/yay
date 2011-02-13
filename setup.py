@@ -1,6 +1,6 @@
 import os
 
-version = '0.0.6dev'
+version = '0.0.6'
 
 from setuptools import setup, find_packages
 setup(
