@@ -21,6 +21,8 @@ class Actions(object):
         return nodes.Boxed(tokens[0])
     def boxed_int(self, str, words, tokens):
         return nodes.Boxed(int(tokens[0]))
+    def boxed_octal(self, str, words, tokens):
+        return nodes.Boxed(int(tokens[0], 8))
     def concatenation(self, str, words, tokens):
         if len(tokens) == 1:
             return tokens[0]
@@ -35,6 +37,8 @@ BINOP = oneOf("= != < > <= >=")
 
 identifier = Word(alphanums+"_") | Keyword("@")
 arithSign = Word("+-",exact=1)
+
+octNum = Combine(Optional(arithSign) + Suppress("0") + Word(nums)).setParseAction(actions.boxed_octal)
 intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(actions.boxed_int)
 
 expression = Forward()
@@ -106,6 +110,7 @@ fullExpression = identifier + ZeroOrMore(
 fullExpression.setParseAction(full_expression_action)
 
 expression << (
+    octNum |
     intNum |
     function_call |
     fullExpression
