@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.7 (unreleased)
+0.0.7 (2011-02-16)
 ------------------
 
 - Numbers starting 0 are treated as base 8.
