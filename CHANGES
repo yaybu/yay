@@ -4,7 +4,7 @@ Changelog for yay
 0.0.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Replace 'foreach bar as foo' with 'foreach foo in bar'
 
 
 0.0.7 (2011-02-16)
