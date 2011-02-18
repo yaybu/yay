@@ -1,1 +1,1 @@
-foo.foreach range(5) as i: foo${i}bar
+foo.foreach i in range(5): foo${i}bar

@@ -21,8 +21,8 @@ class ForEach(object):
         self.root = root
         self.value = value
 
-        self.lookup = args[0]
-        self.alias = args[1].strip()
+        self.lookup = args[1]
+        self.alias = args[0].strip()
 
     def resolve(self, context):
         resolved = []

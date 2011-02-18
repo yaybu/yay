@@ -16,8 +16,8 @@ project:
            host: cloud
 
 test.flatten:
-  .foreach project as project:
-    .foreach project.environments as env:
+  .foreach project in project:
+    .foreach env in project.environments:
         name: ${project.name}
         flavour: ${project.flavour}
         env: ${env.name}

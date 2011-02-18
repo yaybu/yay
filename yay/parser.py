@@ -132,7 +132,7 @@ templated_string = ZeroOrMore(
     ) + myrol
 templated_string.setParseAction(actions.concatenation)
 
-as_statement = expression + Suppress("as") + identifier
+as_statement = identifier + Suppress("in") + expression
 
 #print as_statement.parseString("foolist[foo.age < bar.maxage] as person")
 #print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]

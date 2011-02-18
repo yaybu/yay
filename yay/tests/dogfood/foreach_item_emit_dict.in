@@ -13,7 +13,7 @@ foolist:
 bar:
    maxage: 40
 
-baz.foreach foolist[@.age < bar.maxage] as person:
+baz.foreach person in foolist[@.age < bar.maxage]:
   nameage: ${person.name}${person.age}
   agename: ${person.age}${person.name}
 
