@@ -128,7 +128,7 @@ myrol = restOfLine.copy().setParseAction(ugh)
 
 templated_string = ZeroOrMore(
     bracketed_expression |
-    SkipTo("${").setParseAction(actions.boxed)
+    SkipTo("${").leaveWhitespace().setParseAction(actions.boxed)
     ) + myrol
 templated_string.setParseAction(actions.concatenation)
 
