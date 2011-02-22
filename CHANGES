@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.10 (unreleased)
+0.0.10 (2011-02-22)
 -------------------
 
 - Don't chomp whitespace in bracketed_expression
