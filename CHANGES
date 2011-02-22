@@ -4,7 +4,7 @@ Changelog for yay
 0.0.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Don't chomp whitespace in templated_string
 
 
 0.0.8 (2011-02-18)
