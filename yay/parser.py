@@ -117,7 +117,7 @@ expression << (
     )
 
 
-bracketed_expression = Suppress("${") + expression + Suppress("}")
+bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
 
 
 def ugh(s, w, t):
