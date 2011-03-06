@@ -50,3 +50,6 @@ def load(stream, special_term='yay'):
     c.load(stream)
     return c.get()
 
+def dump(obj):
+    return yaml.dump(obj, default_flow_style=False)
+

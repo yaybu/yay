@@ -47,13 +47,16 @@ class Boxed(Node):
             return False
 
         try:
-            value = int(value)
+            return int(value)
         except ValueError:
             pass
 
         #FIXME: could still be a float or a timestamp
 
-        return value
+        try:
+            return value.encode('ascii')
+        except UnicodeEncodeError:
+            return value
 
     def get(self, context, key, default=None):
         return Boxed(self.value.get(key, default))
