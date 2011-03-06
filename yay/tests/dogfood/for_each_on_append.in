@@ -1,0 +1,18 @@
+
+foo:
+  - a
+  - b
+  - c
+
+foo.append:
+  - 1
+  - 2
+  - 3
+
+foo.append:
+  - x
+  - y
+  - z
+
+bar.foreach baz in foo: ${baz}
+
