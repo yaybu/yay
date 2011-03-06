@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node
+from yay.nodes import Node, Boxed, Sequence
 
 class Append(Node):
 
@@ -23,4 +23,7 @@ class Append(Node):
         if not existing:
             existing = []
         return existing + self.value.resolve(context)
+
+    def semi_resolve(self, context):
+        return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
 

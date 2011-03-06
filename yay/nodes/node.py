@@ -29,5 +29,8 @@ class Node(object):
             data = self.chain.resolve(context)
         return self.apply(context, data)
 
+    def semi_resolve(self, context):
+        return self
+
     def __str__(self):
         return repr(self)

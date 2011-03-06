@@ -73,13 +73,14 @@ class Access(Node):
         else:
             unresolved = context.get(self.access)
 
-        #if hasattr(unresolved, "semi_resolve"):
-        #    return unresolved.resolve(context)
+        if hasattr(unresolved, "semi_resolve"):
+            return unresolved.semi_resolve(context)
 
         return unresolved
 
     def resolve(self, context):
-        return self.semi_resolve(context).resolve(context)
+        sr = self.semi_resolve(context)
+        return sr.resolve(context)
 
     #def get(self, context, key, default=None):
     #    self.resolve(context).get(context, key, default)

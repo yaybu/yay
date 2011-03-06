@@ -14,10 +14,10 @@
 
 from yay.nodes.node import Node
 from yay.nodes.boxed import Boxed
-from yay.nodes.append import Append
 from yay.nodes.mapping import Mapping
-from yay.nodes.remove import Remove
 from yay.nodes.sequence import Sequence
+from yay.nodes.append import Append
+from yay.nodes.remove import Remove
 from yay.nodes.filter import Filter
 from yay.nodes.lookup import Lookup
 from yay.nodes.copy import Copy
