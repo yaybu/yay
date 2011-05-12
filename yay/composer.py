@@ -111,6 +111,9 @@ class Composer(object):
         return node
 
     def handle_special_term(self, previous):
+        if self.check_event(MappingEndEvent):
+            return previous
+
         key_event = self.peek_event()
         if key_event.value != self.special_term:
             return previous
@@ -127,7 +130,7 @@ class Composer(object):
     def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
 
-        if self.peek_event().value.startswith("."):
+        if not self.check_event(MappingEndEvent) and self.peek_event().value.startswith("."):
             value = self.compose_anonymous(previous)
         else:
             value = self.compose_mapping(previous)
