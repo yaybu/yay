@@ -10,7 +10,7 @@ Changelog for yay
 0.0.14 (2011-05-12)
 -------------------
 
-- Nothing changed yet.
+- Don't break on empty (e.g. {})
 
 
 0.0.13 (2011-03-06)
