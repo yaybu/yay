@@ -40,6 +40,18 @@ class Composer(object):
         self.dirty = False
 
     def compose(self, previous):
+        try:
+            return self._compose(previous)
+        except MarkedYAMLError, e:
+            raise SyntaxError(
+                e.problem,
+                self.name,
+                e.problem_mark.line,
+                e.problem_mark.column,
+                e.problem_mark.get_snippet()
+                )
+
+    def _compose(self, previous):
         # Drop the STREAM-START event.
         self.get_event()
 

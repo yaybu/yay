@@ -21,7 +21,8 @@ from yay.composer import Composer
 
 class Loader(Reader, Scanner, Parser, Composer):
 
-    def __init__(self, stream, special_term='yay'):
+    def __init__(self, stream, name="<Unknown>", special_term='yay'):
+        self.name = name
         self.special_term = special_term
         self.openers = Openers()
 

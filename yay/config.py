@@ -26,10 +26,10 @@ class Config(object):
         self.clear()
 
     def load_uri(self, uri):
-        self.load(self.openers.open(uri))
+        self.load(self.openers.open(uri), uri)
 
-    def load(self, stream):
-        data = Loader(stream, special_term=self.special_term).compose(self.mapping)
+    def load(self, stream, name="<Unknown>"):
+        data = Loader(stream, name=name, special_term=self.special_term).compose(self.mapping)
         self.mapping = data
 
     def clear(self):
