@@ -14,6 +14,7 @@
 
 from yay.nodes import Node
 
+
 class Comparison(Node):
     def __init__(self, left, right):
         self.left = left
@@ -71,11 +72,11 @@ class Access(Node):
         if self.container:
             unresolved = self.container.get(context, self.access)
             if unresolved is None:
-                raise KeyError("Container does not have field '%s'" % self.access)
+                self.error("Container does not have field '%s'" % self.access)
         else:
             unresolved = context.get(self.access)
             if unresolved is None:
-                raise KeyError("Container does not have field '%s'" % self.access)
+                self.error("Context does not have field '%s'" % self.access)
 
         if hasattr(unresolved, "semi_resolve"):
             return unresolved.semi_resolve(context)

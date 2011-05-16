@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from yay.errors import EvaluationError
+
+
 class Node(object):
     __slots__ = ("chain", "value")
     chain = None
@@ -32,5 +35,14 @@ class Node(object):
     def semi_resolve(self, context):
         return self
 
+    def error(self, message):
+        raise EvaluationError(
+            message,
+            "Unknown",  # File
+            0,          # Line
+            0,          # Column
+            None)       # Snippet
+
     def __str__(self):
         return repr(self)
+
