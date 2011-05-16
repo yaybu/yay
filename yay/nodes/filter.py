@@ -10,7 +10,7 @@ class Filter(Node):
 
     def semi_resolve(self, context):
         if not hasattr(self.container, "semi_resolve"):
-            raise ValueError("Expected sequence, got '%s'" % self.container)
+            self.error("Expected sequence, got '%s'" % self.container)
 
         resolved = self.container.semi_resolve(context)
 

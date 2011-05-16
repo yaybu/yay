@@ -44,7 +44,7 @@ class Lookup(Node):
         first, rest = self.value.resolve(context)._formatter_field_name_split()
         obj = self.root.get(context, first, None)
         if not obj:
-            raise KeyError("Unable to find '%s'" % self.join(first, handled))
+            self.error("Unable to find '%s'" % self.join(first, handled))
 
         for is_attr, i in rest:
             handled.append((is_attr, i))
@@ -53,7 +53,7 @@ class Lookup(Node):
             else:
                 obj = obj.get(context, i)
             if not obj:
-                raise KeyError("Unable to find '%s'" % self.join(first, handled))
+                self.error("Unable to find '%s'" % self.join(first, handled))
 
         return obj
 

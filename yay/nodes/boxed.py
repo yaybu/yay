@@ -25,7 +25,7 @@ class Boxed(Node):
         previous = None
         while value != previous:
             if value in encountered:
-                raise ValueError("Cycle encountered (%s)" % label)
+                self.error("Cycle encountered (%s)" % label)
             encountered.add(value)
 
             previous = value
