@@ -4,7 +4,11 @@ Changelog for yay
 0.0.15 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Raise an error if field access is invalid
+- Add a LanguageError for displaying helpful messages when yay files
+  are wrong
+- It is now a bug if we raise an error that doesn't descend from
+  yay.errors.Error
 
 
 0.0.14 (2011-05-12)
