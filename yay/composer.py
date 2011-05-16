@@ -18,6 +18,7 @@ from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
 
 from yay.nodes import *
 from yay.parser import templated_string, as_statement, expression
+from yay.errors import SyntaxError
 
 
 class ComposerError(MarkedYAMLError):
