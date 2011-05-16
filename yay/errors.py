@@ -32,6 +32,10 @@ class LanguageError(Error):
         error += "\nFile %s, line %d, column %d" % (self.file, self.line, self.column)
         if self.snippet:
             error += "\n%s" % self.snippet
+        return error
+
+    def __str__(self):
+        return self.get_string()
 
 
 class SyntaxError(LanguageError):
