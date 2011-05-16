@@ -70,8 +70,12 @@ class Access(Node):
     def semi_resolve(self, context):
         if self.container:
             unresolved = self.container.get(context, self.access)
+            if unresolved is None:
+                raise KeyError("Container does not have field '%s'" % self.access)
         else:
             unresolved = context.get(self.access)
+            if unresolved is None:
+                raise KeyError("Container does not have field '%s'" % self.access)
 
         if hasattr(unresolved, "semi_resolve"):
             return unresolved.semi_resolve(context)
