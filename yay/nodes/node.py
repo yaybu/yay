@@ -19,6 +19,11 @@ class Node(object):
     __slots__ = ("chain", "value")
     chain = None
 
+    name = "<Unknown>"
+    line = 0
+    column = 0
+    snippet = None
+
     def __init__(self, value=None):
         # Premature typing optimisation
         self.value = value
@@ -38,10 +43,10 @@ class Node(object):
     def error(self, message):
         raise EvaluationError(
             message,
-            "Unknown",  # File
-            0,          # Line
-            0,          # Column
-            None)       # Snippet
+            self.name,          # File
+            self.line,          # Line
+            self.column,        # Column
+            self.snippet)       # Snippet
 
     def __str__(self):
         return repr(self)
