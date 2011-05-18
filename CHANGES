@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.15 (unreleased)
+0.0.15 (2011-05-18)
 -------------------
 
 - Raise an error if field access is invalid
