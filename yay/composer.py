@@ -81,12 +81,18 @@ class Composer(object):
 
         node = None
 
+        peeked = self.peek_event()
+
         if self.check_event(ScalarEvent):
             node = self.compose_scalar(previous)
         elif self.check_event(SequenceStartEvent):
             node = self.compose_sequence(previous)
         elif self.check_event(MappingStartEvent):
             node = self.compose_mapping_or_anonymous(previous)
+
+        node.name = self.name
+        node.line = peeked.start_mark.line
+        node.column = peeked.start_mark.column
 
         if not node:
             event = self.peek_event()
@@ -103,9 +109,6 @@ class Composer(object):
         else:
             node = Boxed(event.value)
 
-        node.start_mark = event.start_mark
-        node.end_mark = event.end_mark
-
         return node
 
     def compose_sequence(self, previous):
@@ -118,8 +121,6 @@ class Composer(object):
         end = self.get_event()
 
         node = Sequence(data)
-        node.start_mark = start.start_mark
-        node.end_mark = end.end_mark
 
         return node
 
@@ -149,9 +150,6 @@ class Composer(object):
             value = self.compose_mapping(previous)
 
         end = self.get_event()
-
-        value.start_mark = start.start_mark
-        value.end_mark = end.end_mark
 
         return value
 
