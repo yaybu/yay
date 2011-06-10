@@ -1,0 +1,14 @@
+
+a.flatten:
+ - 1
+ - 2
+ - - 3
+ - - 4
+
+b.flatten:
+  .foreach x in a:
+    - ${x}
+
+c.foreach z in b:
+  ${z}
+

@@ -1,0 +1,11 @@
+
+a:
+ - 1
+ - 2
+
+b.foreach x in a:
+  ${x}
+
+c.foreach z in b:
+  ${z}
+

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Lookup, Boxed
+from yay.nodes import Node, Lookup, Boxed, Sequence
 from yay.context import Context
 
-class ForEach(object):
+class ForEach(Node):
 
     def __init__(self, root, value, args):
         self.root = root
@@ -24,11 +24,14 @@ class ForEach(object):
         self.lookup = args[1]
         self.alias = args[0].strip()
 
-    def resolve(self, context):
+    def semi_resolve(self, context):
         resolved = []
         for item in self.lookup.semi_resolve(context):
             newctx = Context(context, {self.alias: item})
             resolved.append(self.value.resolve(newctx))
-        return resolved
+        return Sequence(list(Boxed(x) for x in resolved))
+
+    def resolve(self, context):
+        return self.semi_resolve(context).resolve(context)
 
 

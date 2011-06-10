@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Lookup, Boxed
+from yay.nodes import Node, Lookup, Boxed, Sequence
 from yay.context import Context
 
 def flatten(lst):
@@ -23,14 +23,19 @@ def flatten(lst):
         else:
             yield itm
 
-class Flatten(object):
+class Flatten(Node):
 
     """ Inspired by Ruby's .flatten - flatten nested lists into a single one """
 
     def __init__(self, value):
         self.value = value
 
+    def semi_resolve(self, context):
+        return Sequence(list(Boxed(x) for x in flatten(self.value.resolve(context))))
+
     def resolve(self, context):
-        return list(flatten(self.value.resolve(context)))
+        val = self.semi_resolve(context).resolve(context)
+        print val
+        return val
 
 

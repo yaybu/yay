@@ -5,7 +5,9 @@ Changelog for yay
 -------------------
 
 - Allow index operations against filters
-
+- Fix iterating over Flatten() nodes
+- Fix iterating over ForEach() nodes
+- Add test for empty documents that got away
 
 0.0.15 (2011-05-18)
 -------------------
