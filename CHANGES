@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.16 (unreleased)
+0.0.16 (2011-06-10)
 -------------------
 
 - Add range tests, fixed range() as a ${} expansion
