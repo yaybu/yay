@@ -5,7 +5,7 @@ Changelog for yay
 -------------------
 
 - Fix appending to None
-
+- Fix list access where list has already been partially resolved
 
 0.0.16 (2011-06-10)
 -------------------

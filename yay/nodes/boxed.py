@@ -59,6 +59,9 @@ class Boxed(Node):
             return value
 
     def get(self, context, key, default=None):
+        if isinstance(self.value, list):
+            return Boxed(self.value[key.resolve(context)])
+
         return Boxed(self.value.get(key, default))
 
     def __repr__(self):

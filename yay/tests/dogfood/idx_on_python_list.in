@@ -1,0 +1,14 @@
+
+lookup: foo
+
+a:
+ - name: foo
+   list:
+     - value: 1
+     - value: 2
+     - value: 3
+
+b: ${a[@.name = lookup][0]}
+
+c: ${b.list[0].value}
+

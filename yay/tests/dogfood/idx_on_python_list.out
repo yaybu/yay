@@ -1,0 +1,19 @@
+
+lookup: foo
+
+a:
+ - name: foo
+   list:
+     - value: 1
+     - value: 2
+     - value: 3
+
+b:
+   name: foo
+   list:
+     - value: 1
+     - value: 2
+     - value: 3
+
+c: 1
+

@@ -25,5 +25,7 @@ class Append(Node):
         return existing + self.value.resolve(context)
 
     def semi_resolve(self, context):
+        if not self.chain:
+            return self.value
         return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
 
