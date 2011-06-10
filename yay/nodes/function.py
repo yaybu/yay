@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Boxed
+from yay.nodes import Node, Boxed
 
-class Function(object):
+class Function(Node):
 
     def __init__(self, function, args):
         self.function = function

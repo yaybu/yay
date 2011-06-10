@@ -4,6 +4,8 @@ Changelog for yay
 0.0.16 (unreleased)
 -------------------
 
+- Add range tests, fixed range() as a ${} expansion
+- Added sum() (but no syntax sugar)
 - Allow index operations against filters
 - Fix iterating over Flatten() nodes
 - Fix iterating over ForEach() nodes

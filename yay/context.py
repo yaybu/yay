@@ -14,6 +14,9 @@
 
 from yay.nodes import Node
 
+def sum(*args):
+    return reduce(lambda x, y: x+y, args)
+
 class RootContext(object):
 
     def __init__(self, root):
@@ -21,6 +24,7 @@ class RootContext(object):
         self.functions = {}
 
         self.functions['range'] = range
+        self.functions['sum'] = sum
 
     def get(self, key, default=None):
         return self.root.get(self, key, default)
