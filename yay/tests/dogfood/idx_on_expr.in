@@ -1,0 +1,13 @@
+
+lookup: a
+
+in:
+  - name: a
+    action: fight
+  - name: b
+    action: flee
+  - name: c
+    action: nap
+
+out: ${in[@.name = lookup][0]}
+

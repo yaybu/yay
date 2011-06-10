@@ -4,7 +4,7 @@ Changelog for yay
 0.0.16 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Allow index operations against filters
 
 
 0.0.15 (2011-05-18)

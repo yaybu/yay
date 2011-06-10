@@ -1,5 +1,5 @@
 
-from yay.nodes import Node
+from yay.nodes import Node, Sequence
 from yay.context import Context
 
 class Filter(Node):
@@ -20,7 +20,10 @@ class Filter(Node):
             if self.filter_expression.resolve(newctx):
                 filtered.append(r)
 
-        return filtered
+        return Sequence(filtered)
+
+    def get(self, context, idx):
+        return self.semi_resolve(context).get(context, idx.resolve(context))
 
     def resolve(self, context):
         return list(f.resolve(context) for f in self.semi_resolve(context))
