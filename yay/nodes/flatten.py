@@ -35,7 +35,6 @@ class Flatten(Node):
 
     def resolve(self, context):
         val = self.semi_resolve(context).resolve(context)
-        print val
         return val
 
 
