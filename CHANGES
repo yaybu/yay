@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.19 (unreleased)
+0.0.19 (2011-06-29)
 -------------------
 
 - Concept of a protected yay file, where any strings that end up containing
