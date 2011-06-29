@@ -19,16 +19,27 @@ from yay import nodes
 class Parser(object):
     def __init__(self, composer):
         self.composer = composer
+
+        if composer and composer.secret:
+            self.secret = True
+        else:
+            self.secret = False
+
         self.setup_parser()
 
-    def boxed(self, str, words, tokens):
-        return nodes.Boxed(tokens[0])
+    def box(self, value):
+        b = nodes.Boxed(value)
+        b.secret = self.secret
+        return b
+
+    def boxed_string(self, str, words, tokens):
+        return self.box(tokens[0])
 
     def boxed_int(self, str, words, tokens):
-        return nodes.Boxed(int(tokens[0]))
+        return self.box(int(tokens[0]))
 
     def boxed_octal(self, str, words, tokens):
-        return nodes.Boxed(int(tokens[0], 8))
+        return self.box(int(tokens[0], 8))
 
     def concatenation(self, str, words, tokens):
         if len(tokens) == 1:
@@ -75,7 +86,7 @@ class Parser(object):
     def ugh(self, s, w, t):
         if not t or not t[0]:
             return []
-        return self.boxed(s, w, t)
+        return self.boxed_string(s, w, t)
 
     def setup_parser(self):
         AND = Keyword("and")
@@ -135,7 +146,7 @@ class Parser(object):
 
         templated_string = ZeroOrMore(
             bracketed_expression |
-            SkipTo("${").leaveWhitespace().setParseAction(self.boxed)
+            SkipTo("${").leaveWhitespace().setParseAction(self.boxed_string)
             ) + myrol
         templated_string.setParseAction(self.concatenation)
 

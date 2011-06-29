@@ -109,7 +109,7 @@ class Composer(object):
             #Icky - this needs to move *beneath* this layer of code
             node = self.parser.templated_string.parseString(event.value)[0]
         else:
-            node = Boxed(event.value)
+            node = self.parser.box(event.value)
 
         return node
 
