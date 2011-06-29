@@ -67,6 +67,16 @@ class MemOpener(IOpener):
         cls.data = {}
 
 
+class Gpg(object):
+
+    def filter(self, fp):
+        data = fp.read()
+        p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE)
+        stdout, stderr = p.communicate(data)
+        stream = StringIO.StringIO(stdout)
+        stream.secret = True
+        return stream
+
 class Openers(object):
 
     def __init__(self):
@@ -75,13 +85,22 @@ class Openers(object):
             self.openers[cls.scheme] = cls()
 
     def open(self, uri):
+        fp = None
+
         for scheme, opener in self.openers.iteritems():
             if uri.startswith(scheme):
-                return opener.open(uri)
+                fp = opener.open(uri)
+                break
+        else:
+            # Support direct file paths that dont specify a scheme
+            if os.path.exists(uri):
+                fp = self.openers["file://"].open(uri)
 
-        # Support direct file paths that dont specify a scheme
-        if os.path.exists(uri):
-            return self.openers["file://"].open(uri)
+        if not fp:
+            raise ValueError("URI '%s' cannot be opened (unsupported scheme or missing local file)" % uri)
 
-        raise ValueError("URI '%s' cannot be opened (unsupported scheme or missing local file)" % uri)
+        if uri.endswith(".gpg"):
+            fp = Gpg().filter(fp)
+
+        return fp
 

@@ -26,7 +26,8 @@ class Config(object):
         self.clear()
 
     def load_uri(self, uri):
-        self.load(self.openers.open(uri), uri)
+        stream = self.openers.open(uri)
+        self.load(stream, uri, hasattr(stream, "secret") and stream.secret)
 
     def load(self, stream, name="<Unknown>", secret=False):
         l = Loader(stream, name=name, special_term=self.special_term, secret=secret)
@@ -46,8 +47,8 @@ def load_uri(uri, special_term='yay'):
     c.load_uri(uri)
     return c.get()
 
-def load(stream, special_term='yay'):
-    c = Config(special_term)
+def load(stream, special_term='yay', secret=False):
+    c = Config(special_term, secret)
     c.load(stream)
     return c.get()
 
