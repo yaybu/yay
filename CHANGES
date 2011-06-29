@@ -4,7 +4,9 @@ Changelog for yay
 0.0.19 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Concept of a protected yay file, where any strings that end up containing
+  secrets will be obscured
+- ProtectedString that handles concatenation of protected and unprocted strings
 
 
 0.0.18 (2011-06-10)
