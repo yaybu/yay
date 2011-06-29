@@ -44,7 +44,9 @@ class Parser(object):
     def concatenation(self, str, words, tokens):
         if len(tokens) == 1:
             return tokens[0]
-        return nodes.Concatenation(*tokens)
+        c = nodes.Concatenation(*tokens)
+        c.secret = self.secret
+        return c
 
     def function_call_action(self, s, w, t):
         return nodes.Function(t[0], t[1])

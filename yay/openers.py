@@ -15,6 +15,7 @@
 import urllib
 import StringIO
 import os
+import subprocess
 
 class IOpener(object):
 
@@ -71,7 +72,7 @@ class Gpg(object):
 
     def filter(self, fp):
         data = fp.read()
-        p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE)
+        p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         stdout, stderr = p.communicate(data)
         stream = StringIO.StringIO(stdout)
         stream.secret = True

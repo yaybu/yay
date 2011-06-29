@@ -40,12 +40,12 @@ class Boxed(Node):
         value = self.value
 
         if not isinstance(value, basestring):
-            if self.secret:
-                p = ProtectedString()
-                p.add_secret(value)
-                return p
-            else:
-                return value
+            return value
+
+        if self.secret:
+            p = ProtectedString()
+            p.add_secret(value)
+            return p
 
         if value.lower() in ("yes", "true", "on"):
             return True

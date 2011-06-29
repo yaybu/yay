@@ -139,7 +139,8 @@ class Composer(object):
 
         for extend in special_term.get("extends", []):
             data = self.openers.open(extend)
-            previous = self.__class__(data, special_term=self.special_term).compose(previous)
+            secret = hasattr(data, "secret") and data.secret
+            previous = self.__class__(data, special_term=self.special_term, secret=secret).compose(previous)
 
         return previous
 
