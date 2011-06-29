@@ -16,126 +16,133 @@ from yay.pyparsing import *
 
 from yay import nodes
 
-class Actions(object):
+class Parser(object):
+    def __init__(self, composer):
+        self.composer = composer
+        self.setup_parser()
+
     def boxed(self, str, words, tokens):
         return nodes.Boxed(tokens[0])
+
     def boxed_int(self, str, words, tokens):
         return nodes.Boxed(int(tokens[0]))
+
     def boxed_octal(self, str, words, tokens):
         return nodes.Boxed(int(tokens[0], 8))
+
     def concatenation(self, str, words, tokens):
         if len(tokens) == 1:
             return tokens[0]
         return nodes.Concatenation(*tokens)
 
-actions = Actions()
+    def function_call_action(self, s, w, t):
+        return nodes.Function(t[0], t[1])
 
-AND = Keyword("and")
-OR = Keyword("or")
-IN = Keyword("in")
-BINOP = oneOf("= != < > <= >=")
+    def filter_bin_comparison_action(self, s, w, t):
+        cls = {
+            "=": nodes.Equal,
+            "!=": nodes.NotEqual,
+            "<": nodes.LessThan,
+            "<=": nodes.LessThanEqual,
+            ">": nodes.GreaterThan,
+            ">=": nodes.GreaterThanEqual,
+            }[t[0][1]]
+        return cls(t[0][0], t[0][2])
 
-identifier = Word(alphanums+"_") | Keyword("@")
-arithSign = Word("+-",exact=1)
+    def filter_expression_action(self, s, w, t):
+        node = t[0]
+        for i in range(1, len(t)):
+            if t[i] == "and":
+                node = nodes.And(node, t[i+1])
+            elif t[i] == "or":
+                node = nodes.Or(node, t[i+1])
+            i += 1
+        return node
 
-octNum = Combine(Optional(arithSign) + Suppress("0") + Word(nums)).setParseAction(actions.boxed_octal)
-intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(actions.boxed_int)
+    def index_access_action(self, s, w, t):
+        return nodes.Access(None, t[0])
 
-expression = Forward()
+    def full_expression_action(self, s, w, t):
+        node = None
+        for token in t:
+            if not isinstance(token, nodes.Node):
+                node = nodes.Access(node, token)
+            else:
+                token.container = node
+                node = token
+        return node
 
-def function_call_action(s, w, t):
-    return nodes.Function(t[0], t[1])
-function_identifier = Word(alphanums+"_")
-function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
-function_call.setParseAction(function_call_action)
+    def ugh(self, s, w, t):
+        if not t or not t[0]:
+            return []
+        return self.boxed(s, w, t)
 
-filterExpression = Forward()
+    def setup_parser(self):
+        AND = Keyword("and")
+        OR = Keyword("or")
+        IN = Keyword("in")
+        BINOP = oneOf("= != < > <= >=")
 
-def filter_bin_comparison_action(s, w, t):
-    cls = {
-        "=": nodes.Equal,
-        "!=": nodes.NotEqual,
-        "<": nodes.LessThan,
-        "<=": nodes.LessThanEqual,
-        ">": nodes.GreaterThan,
-        ">=": nodes.GreaterThanEqual,
-        }[t[0][1]]
-    return cls(t[0][0], t[0][2])
-filter_bin_comparison = Group(expression + BINOP + expression)
-filter_bin_comparison.setParseAction(filter_bin_comparison_action)
+        identifier = Word(alphanums+"_") | Keyword("@")
+        arithSign = Word("+-",exact=1)
 
-filterCondition = (
-    filter_bin_comparison |
-    ( "(" + filterExpression + ")" )
-    )
+        octNum = Combine(Optional(arithSign) + Suppress("0") + Word(nums)).setParseAction(self.boxed_octal)
+        intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(self.boxed_int)
 
-def filter_expression_action(s, w, t):
-    node = t[0]
-    for i in range(1, len(t)):
-        if t[i] == "and":
-            node = nodes.And(node, t[i+1])
-        elif t[i] == "or":
-            node = nodes.Or(node, t[i+1])
-        i += 1
-    return node
-filterExpression << filterCondition + ZeroOrMore((AND|OR) + filterExpression)
-filterExpression.setParseAction(filter_expression_action)
+        expression = Forward()
 
+        function_identifier = Word(alphanums+"_")
+        function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
+        function_call.setParseAction(self.function_call_action)
 
-full_list_access = Suppress("[") + filterExpression + Suppress("]")
-full_list_access.setParseAction(lambda s, w, t: nodes.Filter(None, t[0]))
+        filterExpression = Forward()
 
+        filter_bin_comparison = Group(expression + BINOP + expression)
+        filter_bin_comparison.setParseAction(self.filter_bin_comparison_action)
 
-def index_access_action(s, w, t):
-    return nodes.Access(None, t[0])
-listAccess = Suppress("[") + intNum + Suppress("]")
-listAccess.setParseAction(index_access_action)
+        filterCondition = (
+            filter_bin_comparison |
+            ( "(" + filterExpression + ")" )
+        )
 
+        filterExpression << filterCondition + ZeroOrMore((AND|OR) + filterExpression)
+        filterExpression.setParseAction(self.filter_expression_action)
 
-def full_expression_action(s, w, t):
-    node = None
-    for token in t:
-        if not isinstance(token, nodes.Node):
-            node = nodes.Access(node, token)
-        else:
-            token.container = node
-            node = token
-    return node
+        full_list_access = Suppress("[") + filterExpression + Suppress("]")
+        full_list_access.setParseAction(lambda s, w, t: nodes.Filter(None, t[0]))
 
-fullExpression = identifier + ZeroOrMore(
-    full_list_access |
-    listAccess |
-    Suppress(".") + identifier
-    )
-fullExpression.setParseAction(full_expression_action)
-
-expression << (
-    octNum |
-    intNum |
-    function_call |
-    fullExpression
-    )
+        listAccess = Suppress("[") + intNum + Suppress("]")
+        listAccess.setParseAction(self.index_access_action)
 
 
-bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
+        fullExpression = identifier + ZeroOrMore(
+            full_list_access |
+            listAccess |
+            Suppress(".") + identifier
+            )
+        fullExpression.setParseAction(self.full_expression_action)
+
+        expression << (
+            octNum |
+            intNum |
+            function_call |
+            fullExpression
+            )
+
+        bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
+
+        myrol = restOfLine.copy().setParseAction(self.ugh)
+
+        templated_string = ZeroOrMore(
+            bracketed_expression |
+            SkipTo("${").leaveWhitespace().setParseAction(self.boxed)
+            ) + myrol
+        templated_string.setParseAction(self.concatenation)
+
+        as_statement = identifier + Suppress("in") + expression
 
 
-def ugh(s, w, t):
-    if not t or not t[0]:
-        return []
-    return actions.boxed(s, w, t)
-myrol = restOfLine.copy().setParseAction(ugh)
+        self.templated_string = templated_string
+        self.as_statement = as_statement
+        self.expression = expression
 
-templated_string = ZeroOrMore(
-    bracketed_expression |
-    SkipTo("${").leaveWhitespace().setParseAction(actions.boxed)
-    ) + myrol
-templated_string.setParseAction(actions.concatenation)
-
-as_statement = identifier + Suppress("in") + expression
-
-#print as_statement.parseString("foolist[foo.age < bar.maxage] as person")
-#print templated_string.parseString("foo bar {foo.ag} foo bar {foo.age} foo baz")[0]
-#print templated_string.parseString("{foo.bar.baz}")[0]
-#print repr(expression.parseString("foo.bar[foo.age < 12 and foo.badger > 5][0]")[0])
-#print fullExpression.parseString("foo.bar")

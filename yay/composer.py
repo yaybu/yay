@@ -17,7 +17,7 @@ from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
     MappingStartEvent, MappingEndEvent, AliasEvent, StreamEndEvent
 
 from yay.nodes import *
-from yay.parser import templated_string, as_statement, expression
+from yay.parser import Parser
 from yay.errors import SyntaxError
 
 
@@ -30,13 +30,14 @@ class Composer(object):
     def __init__(self, secret=False):
         self.secret = secret
         self.root = None
+        self.parser = Parser(self)
         self.action_map = {
             "copy": lambda value, args: Copy(value),
             "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
-            "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
-            "select": lambda value, args: Select(value, expression.parseString(args)[0]),
+            "foreach": lambda value, args: ForEach(self, value, self.parser.as_statement.parseString(args)),
+            "select": lambda value, args: Select(value, self.parser.expression.parseString(args)[0]),
             "flatten": lambda value, args: Flatten(value),
             }
         self.dirty = False
@@ -106,7 +107,7 @@ class Composer(object):
 
         if isinstance(event.value, basestring):
             #Icky - this needs to move *beneath* this layer of code
-            node = templated_string.parseString(event.value)[0]
+            node = self.parser.templated_string.parseString(event.value)[0]
         else:
             node = Boxed(event.value)
 

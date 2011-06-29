@@ -13,13 +13,15 @@
 # limitations under the License.
 
 import unittest
-from yay.parser import templated_string, expression
+from yay.parser import Parser
 
 class TestTemplatedString(unittest.TestCase):
 
     def do(self, teststring, expect):
+        p = Parser(None)
+
         self.failUnlessEqual(
-            repr(templated_string.parseString(teststring)[0]),
+            repr(p.templated_string.parseString(teststring)[0]),
             expect
             )
 
@@ -41,8 +43,10 @@ class TestTemplatedString(unittest.TestCase):
 class TestFunctionCall(unittest.TestCase):
 
     def do(self, teststring, expect):
+        p = Parser(None)
+
         self.failUnlessEqual(
-            repr(expression.parseString(teststring)[0]),
+            repr(p.expression.parseString(teststring)[0]),
             expect
             )
 
