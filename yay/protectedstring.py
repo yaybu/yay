@@ -39,10 +39,20 @@ class ProtectedString(unicode):
     def __init__(self, parts):
         self.parts = parts
 
+    def add(self, value):
+        if isinstance(value, ProtectedString):
+            self.parts.extend(value.parts)
+        else:
+            self.parts.append(ProtectedStringPart(value, False))
+
     def __str__(self):
         return "".join([str(p.protected) for p in self.parts])
 
     def __unicode__(self):
+        return u"".join([unicode(p.protected) for p in self.parts])
+
+    @property
+    def protected(self):
         return u"".join([unicode(p.protected) for p in self.parts])
 
     @property

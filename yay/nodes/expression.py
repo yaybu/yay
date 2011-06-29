@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yay.nodes import Node
+from yay.protectedstring import ProtectedString
 
 
 class Comparison(Node):
@@ -99,7 +100,20 @@ class Concatenation(Node):
         self.args = args
 
     def resolve(self, context):
-        return "".join(str(arg.resolve(context)) for arg in self.args)
+        resolved = [x.resolve(context) for x in self.args]
+
+        protected = False
+        for x in resolved:
+            if isinstance(x, ProtectedString):
+                protected = True
+
+        if protected:
+            p = ProtectedString()
+            for x in resolved:
+                p.add(x)
+            return p
+
+        return "".join(str(x) for x in resolved)
 
     def __repr__(self):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
