@@ -13,12 +13,15 @@
 # limitations under the License.
 
 from yay.nodes import Node
+from yay.protectedstring import ProtectedString
 
 class Boxed(Node):
     """
     A Boxed variable is an unmodified and uninteresting value that
     is wrapped simply so we can put it in our graph
     """
+
+    secret = False
 
     def resolve_string(self, context, value):
         encountered = set()
@@ -37,9 +40,12 @@ class Boxed(Node):
         value = self.value
 
         if not isinstance(value, basestring):
-            return value
-
-        value = self.resolve_string(context, value)
+            if self.secret:
+                p = ProtectedString()
+                p.add_secret(value)
+                return p
+            else:
+                return value
 
         if value.lower() in ("yes", "true", "on"):
             return True

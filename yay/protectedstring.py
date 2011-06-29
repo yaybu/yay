@@ -36,14 +36,19 @@ class ProtectedStringPart(object):
 class ProtectedString(unicode):
     """ I represent a string which contains sensitive parts """
 
-    def __init__(self, parts):
-        self.parts = parts
+    def __init__(self, parts=None):
+        self.parts = []
+        if parts:
+            self.parts.extend(parts)
 
     def add(self, value):
         if isinstance(value, ProtectedString):
             self.parts.extend(value.parts)
         else:
             self.parts.append(ProtectedStringPart(value, False))
+
+    def add_secret(self, value):
+        self.parts.append(ProtectedStringPart(value, True))
 
     def __str__(self):
         return "".join([str(p.protected) for p in self.parts])
