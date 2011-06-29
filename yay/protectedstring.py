@@ -33,7 +33,12 @@ class ProtectedStringPart(object):
         return self.value
 
 
-class ProtectedString(unicode):
+class _ProtectedString(object):
+    """ I exist purely to fudge around MRO """
+    pass
+
+
+class ProtectedString(_ProtectedString, basestring):
     """ I represent a string which contains sensitive parts """
 
     def __init__(self, parts=None):
