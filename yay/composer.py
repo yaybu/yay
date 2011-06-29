@@ -27,11 +27,12 @@ class ComposerError(MarkedYAMLError):
 
 class Composer(object):
 
-    def __init__(self):
+    def __init__(self, secret=False):
+        self.secret = secret
         self.root = None
         self.action_map = {
             "copy": lambda value, args: Copy(value),
-            "assign": lambda value, args: value if isinstance(value, Node) else Boxed(value),
+            "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, as_statement.parseString(args)),
