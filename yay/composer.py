@@ -62,7 +62,7 @@ class Composer(object):
         document = None
         if not self.check_event(StreamEndEvent):
             self.get_event() # Drop DOCUMENT-START
-            document = self.compose_node(previous)
+            document = self.compose_root_mapping(previous)
             self.get_event() # Drop DOCUMENT-END
 
         # Ensure that the stream contains no more documents.
@@ -204,16 +204,36 @@ class Composer(object):
         return key, boxed
 
     def compose_mapping(self, previous):
-        if not self.dirty:
-            previous = self.handle_special_term(previous)
-            self.dirty = True
-
         container = Mapping(previous)
         while not self.check_event(MappingEndEvent):
             key, value = self.compose_mapping_value(container)
-
-            # And add it to the dictionary (which will automatically chain nodes)
             container.set(key, value)
-
         return container
+
+    def compose_root_mapping(self, previous):
+        if not self.check_event(MappingStartEvent):
+            ev = self.get_event()
+            #raise ComposerError("Expected root mapping - am denied", ev.start_mark)
+            return previous
+
+        start = self.get_event()
+
+        previous = self.handle_special_term(previous)
+
+        previous = Mapping(previous)
+        while not self.check_event(MappingEndEvent):
+            key, value = self.compose_mapping_value(previous)
+            if key == ".include":
+                value.lock()
+                includes = value.resolve(None)
+
+                previous = self.handle_imports(previous, includes)
+                previous = Mapping(previous)
+
+            else:
+                previous.set(key, value)
+
+        end = self.get_event()
+
+        return previous
 
