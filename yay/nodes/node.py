@@ -42,11 +42,11 @@ class Node(object):
         return self
 
     def walk(self, context):
-        raise StopIteration
+        return iter([])
 
     def lock(self, context):
         self.locked = True
-        for child in self.walk():
+        for child in self.walk(context):
             child.lock(context)
 
     def error(self, message):

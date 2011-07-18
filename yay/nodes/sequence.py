@@ -32,5 +32,5 @@ class Sequence(Node):
 
     def walk(self, context):
         for val in self.value:
-            yield self.value
+            yield val
 
