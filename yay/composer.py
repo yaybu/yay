@@ -173,6 +173,36 @@ class Composer(object):
 
         return self.action_map[action](value, action_args)
 
+    def compose_mapping_value(self, container):
+        key_event = self.get_event()
+        key = key_event.value
+
+        action = "assign"
+        if "." in key:
+            key, action = key.split(".", 1)
+
+        action_args = None
+        if " " in action:
+            action, action_args = action.split(" ", 1)
+
+        # FIXME: context-driven traversal is different from non-resolving dict-lookup
+        existing = container.get(None, key, None)
+
+        # Grab scalar value
+        boxed = self.compose_node(existing)
+
+        # Further box the value based on the kind of action it is
+        boxed = self.action_map[action](boxed, action_args)
+
+        # Can't override a locked node
+        if existing and existing.locked:
+            boxed.error("%s is locked and cannot be overidden" % key)
+
+        # Make sure that Appends are hooked up to correct List
+        boxed.chain = existing
+
+        return key, boxed
+
     def compose_mapping(self, previous):
         if not self.dirty:
             previous = self.handle_special_term(previous)
@@ -180,35 +210,10 @@ class Composer(object):
 
         container = Mapping(previous)
         while not self.check_event(MappingEndEvent):
-            key_event = self.get_event()
-            key = key_event.value
-
-            action = "assign"
-            if "." in key:
-                key, action = key.split(".", 1)
-
-            action_args = None
-            if " " in action:
-                action, action_args = action.split(" ", 1)
-
-            # FIXME: context-driven traversal is different from non-resolving dict-lookup
-            existing = container.get(None, key, None)
-
-            # Grab scalar value
-            boxed = self.compose_node(existing)
-
-            # Further box the value based on the kind of action it is
-            boxed = self.action_map[action](boxed, action_args)
-
-            # Can't override a locked node
-            if existing and existing.locked:
-                boxed.error("%s is locked and cannot be overidden" % key)
-
-            # Make sure that Appends are hooked up to correct List
-            boxed.chain = existing
+            key, value = self.compose_mapping_value(container)
 
             # And add it to the dictionary (which will automatically chain nodes)
-            container.set(key, boxed)
+            container.set(key, value)
 
         return container
 
