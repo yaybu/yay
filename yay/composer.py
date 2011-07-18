@@ -16,6 +16,7 @@ from yaml.error import MarkedYAMLError
 from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
     MappingStartEvent, MappingEndEvent, AliasEvent, StreamEndEvent
 
+from yay.context import RootContext
 from yay.nodes import *
 from yay.parser import Parser
 from yay.errors import SyntaxError
@@ -224,8 +225,9 @@ class Composer(object):
         while not self.check_event(MappingEndEvent):
             key, value = self.compose_mapping_value(previous)
             if key == ".include":
-                value.lock()
-                includes = value.resolve(None)
+                context = RootContext(previous)
+                value.lock(context)
+                includes = value.resolve(context)
 
                 previous = self.handle_imports(previous, includes)
                 previous = Mapping(previous)
