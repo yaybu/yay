@@ -20,8 +20,13 @@ class Comparison(Node):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__, self.left, self.right)
+
+    def walk(self):
+        yield self.left
+        yield self.right
 
 class And(Comparison):
     def resolve(self, context):
@@ -91,6 +96,10 @@ class Access(Node):
     #def get(self, context, key, default=None):
     #    self.resolve(context).get(context, key, default)
 
+    def walk(self):
+        yield self.container
+        yield self.access
+
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)
 
@@ -114,6 +123,10 @@ class Concatenation(Node):
             return p
 
         return "".join(str(x) for x in resolved)
+
+    def walk(self):
+        for arg in self.args:
+            yield arg
 
     def __repr__(self):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)

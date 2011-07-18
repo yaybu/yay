@@ -24,4 +24,7 @@ class Remove(Node):
             return []
         return [x for x in existing if x not in self.value.resolve(context)]
 
+    def walk(self):
+        yield self.chain
+        yield self.value
 

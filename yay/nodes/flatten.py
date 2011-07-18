@@ -37,4 +37,6 @@ class Flatten(Node):
         val = self.semi_resolve(context).resolve(context)
         return val
 
+    def walk(self):
+        yield self.value
 
