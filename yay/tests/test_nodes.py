@@ -54,16 +54,3 @@ class TestMapping(unittest.TestCase):
 
         self.failUnlessEqual(d.get(None, "foo", None).value, 1)
 
-
-class TestLookup(unittest.TestCase):
-
-    def setUp(self):
-        self.ctx = Context(None, None)
-
-    def test_lookup(self):
-        d = Mapping(None)
-        d.set("foo", Boxed(1))
-        l = Lookup(d, Boxed("foo"))
-
-        self.failUnlessEqual(l.resolve(self.ctx), 1)
-

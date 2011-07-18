@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Lookup, Boxed, Sequence
-from yay.context import Context
+from yay.nodes import Node, Boxed, Sequence
 
 def flatten(lst):
     for itm in lst:
