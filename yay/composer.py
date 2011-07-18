@@ -92,13 +92,13 @@ class Composer(object):
         elif self.check_event(MappingStartEvent):
             node = self.compose_mapping_or_anonymous(previous)
 
-        node.name = self.name
-        node.line = peeked.start_mark.line
-        node.column = peeked.start_mark.column
-
         if not node:
             event = self.peek_event()
             raise ComposerError(None, None, "unexpected event in stream", event.start_mark)
+
+        node.name = self.name
+        node.line = peeked.start_mark.line
+        node.column = peeked.start_mark.column
 
         return node
 
