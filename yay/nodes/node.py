@@ -18,6 +18,7 @@ from yay.errors import EvaluationError
 class Node(object):
     __slots__ = ("chain", "value")
     chain = None
+    locked = False
 
     name = "<Unknown>"
     line = 0

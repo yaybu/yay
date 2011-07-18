@@ -198,6 +198,10 @@ class Composer(object):
             # Further box the value based on the kind of action it is
             boxed = self.action_map[action](boxed, action_args)
 
+            # Can't override a locked node
+            if existing and existing.locked:
+                boxed.error("%s is locked and cannot be overidden" % key)
+
             # Make sure that Appends are hooked up to correct List
             boxed.chain = existing
 
