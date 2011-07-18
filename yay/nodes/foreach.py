@@ -34,7 +34,7 @@ class ForEach(Node):
     def resolve(self, context):
         return self.semi_resolve(context).resolve(context)
 
-    def walk(self):
+    def walk(self, context):
         yield self.lookup
         yield self.value
 

@@ -31,7 +31,7 @@ class Filter(Node):
     def __repr__(self):
         return "Filter(%s, %s)" % (self.container, self.filter_expression)
 
-    def walk(self):
+    def walk(self, context):
         yield self.container
         yield self.filter_expression
 

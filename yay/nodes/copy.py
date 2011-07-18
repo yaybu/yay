@@ -29,6 +29,6 @@ class Copy(Node):
     def resolve(self, context):
         return copy.deepcopy(self.value.resolve(context))
 
-    def walk(self):
+    def walk(self, context):
         yield self.value
 

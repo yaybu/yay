@@ -41,13 +41,13 @@ class Node(object):
     def semi_resolve(self, context):
         return self
 
-    def walk(self):
+    def walk(self, context):
         raise StopIteration
 
-    def lock(self):
+    def lock(self, context):
         self.locked = True
         for child in self.walk():
-            child.lock()
+            child.lock(context)
 
     def error(self, message):
         raise EvaluationError(

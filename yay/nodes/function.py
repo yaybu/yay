@@ -30,7 +30,7 @@ class Function(Node):
     def __repr__(self):
         return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])
 
-    def walk(self):
+    def walk(self, context):
         for arg in self.args:
             yield arg
 

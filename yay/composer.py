@@ -16,11 +16,10 @@ from yaml.error import MarkedYAMLError
 from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
     MappingStartEvent, MappingEndEvent, AliasEvent, StreamEndEvent
 
-from yay.context import RootContext
 from yay.nodes import *
 from yay.parser import Parser
 from yay.errors import SyntaxError
-
+from yay.context import RootContext
 
 class ComposerError(MarkedYAMLError):
     pass

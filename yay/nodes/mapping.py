@@ -50,7 +50,7 @@ class Mapping(Node):
             data[key] = self.get(context, key, None).resolve(context)
         return data
 
-    def walk(self):
+    def walk(self, context):
         for itm in self.value.items():
             yield itm
         yield self.predecessor
