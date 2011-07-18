@@ -178,7 +178,7 @@ class Composer(object):
         key = key_event.value
 
         action = "assign"
-        if "." in key:
+        if "." in key and key != '.include':
             key, action = key.split(".", 1)
 
         action_args = None
