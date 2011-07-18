@@ -126,6 +126,13 @@ class Composer(object):
 
         return node
 
+    def handle_imports(self, previous, imports):
+        for extend in imports:
+            data = self.openers.open(extend)
+            secret = hasattr(data, "secret") and data.secret
+            previous = self.__class__(data, special_term=self.special_term, secret=secret).compose(previous)
+        return previous
+
     def handle_special_term(self, previous):
         if self.check_event(MappingEndEvent):
             return previous
@@ -137,12 +144,7 @@ class Composer(object):
 
         special_term = self.compose_node(None).resolve(None)
 
-        for extend in special_term.get("extends", []):
-            data = self.openers.open(extend)
-            secret = hasattr(data, "secret") and data.secret
-            previous = self.__class__(data, special_term=self.special_term, secret=secret).compose(previous)
-
-        return previous
+        return self.handle_imports(previous, special_term.get("extends", []))
 
     def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
