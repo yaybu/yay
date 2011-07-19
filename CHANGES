@@ -5,6 +5,7 @@ Changelog for yay
 -------------------
 
 - Remove spurious debug messages
+- Fix .import on a .foreach
 
 
 0.0.21 (2011-07-19)

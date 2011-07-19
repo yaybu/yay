@@ -224,14 +224,21 @@ class Composer(object):
         while not self.check_event(MappingEndEvent):
             key, value = self.compose_mapping_value(previous)
             if key == ".include":
-                if not isinstance(value, Sequence):
-                    value.error("Exepected a sequence and didnt get one")
-
-                for i in value.value:
+                if isinstance(value, Sequence):
+                    for i in value.value:
+                        context = RootContext(previous)
+                        i.lock(context)
+                        include = i.resolve(context)
+                        previous = self.handle_imports(previous, [include])
+                else:
                     context = RootContext(previous)
-                    i.lock(context)
-                    include = i.resolve(context)
-                    previous = self.handle_imports(previous, [include])
+                    value.lock(context)
+                    includes = value.resolve(context)
+
+                    if not isinstance(includes, list):
+                        value.error("Expected something that resolved to a sequence and didnt")
+
+                    previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
 

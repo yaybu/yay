@@ -36,5 +36,5 @@ class ForEach(Node):
 
     def walk(self, context):
         yield self.lookup
-        yield self.value
+        #yield self.value
 
