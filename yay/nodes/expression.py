@@ -98,7 +98,6 @@ class Access(Node):
 
     def walk(self, context):
         yield self.semi_resolve(context)
-        yield self.access
 
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)

@@ -47,6 +47,7 @@ class Node(object):
     def lock(self, context):
         self.locked = True
         for child in self.walk(context):
+            print self, child
             child.lock(context)
 
     def error(self, message):
