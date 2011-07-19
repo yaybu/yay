@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.21 (unreleased)
+0.0.21 (2011-07-19)
 -------------------
 
 - New .include directive that can use variables and appear anywhere in file
