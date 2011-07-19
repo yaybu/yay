@@ -27,3 +27,7 @@ class Select(Node):
     def resolve(self, context):
         return self.semi_resolve(context).resolve(context)
 
+    def walk(self, context):
+        yield self.key
+        yield self.semi_resolve(context)
+

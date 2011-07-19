@@ -18,6 +18,7 @@ from yay.errors import EvaluationError
 class Node(object):
     __slots__ = ("chain", "value")
     chain = None
+    locked = False
 
     name = "<Unknown>"
     line = 0
@@ -39,6 +40,15 @@ class Node(object):
 
     def semi_resolve(self, context):
         return self
+
+    def walk(self, context):
+        return iter([])
+
+    def lock(self, context):
+        self.locked = True
+        for child in self.walk(context):
+            print self, child
+            child.lock(context)
 
     def error(self, message):
         raise EvaluationError(

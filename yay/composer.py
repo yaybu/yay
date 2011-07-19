@@ -19,7 +19,7 @@ from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
 from yay.nodes import *
 from yay.parser import Parser
 from yay.errors import SyntaxError
-
+from yay.context import RootContext
 
 class ComposerError(MarkedYAMLError):
     pass
@@ -62,7 +62,7 @@ class Composer(object):
         document = None
         if not self.check_event(StreamEndEvent):
             self.get_event() # Drop DOCUMENT-START
-            document = self.compose_node(previous)
+            document = self.compose_root_mapping(previous)
             self.get_event() # Drop DOCUMENT-END
 
         # Ensure that the stream contains no more documents.
@@ -92,13 +92,13 @@ class Composer(object):
         elif self.check_event(MappingStartEvent):
             node = self.compose_mapping_or_anonymous(previous)
 
-        node.name = self.name
-        node.line = peeked.start_mark.line
-        node.column = peeked.start_mark.column
-
         if not node:
             event = self.peek_event()
             raise ComposerError(None, None, "unexpected event in stream", event.start_mark)
+
+        node.name = self.name
+        node.line = peeked.start_mark.line
+        node.column = peeked.start_mark.column
 
         return node
 
@@ -126,6 +126,13 @@ class Composer(object):
 
         return node
 
+    def handle_imports(self, previous, imports):
+        for extend in imports:
+            data = self.openers.open(extend)
+            secret = hasattr(data, "secret") and data.secret
+            previous = self.__class__(data, special_term=self.special_term, secret=secret).compose(previous)
+        return previous
+
     def handle_special_term(self, previous):
         if self.check_event(MappingEndEvent):
             return previous
@@ -137,12 +144,7 @@ class Composer(object):
 
         special_term = self.compose_node(None).resolve(None)
 
-        for extend in special_term.get("extends", []):
-            data = self.openers.open(extend)
-            secret = hasattr(data, "secret") and data.secret
-            previous = self.__class__(data, special_term=self.special_term, secret=secret).compose(previous)
-
-        return previous
+        return self.handle_imports(previous, special_term.get("extends", []))
 
     def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
@@ -171,38 +173,72 @@ class Composer(object):
 
         return self.action_map[action](value, action_args)
 
-    def compose_mapping(self, previous):
-        if not self.dirty:
-            previous = self.handle_special_term(previous)
-            self.dirty = True
+    def compose_mapping_value(self, container):
+        key_event = self.get_event()
+        key = key_event.value
 
+        action = "assign"
+        if "." in key and key != '.include':
+            key, action = key.split(".", 1)
+
+        action_args = None
+        if " " in action:
+            action, action_args = action.split(" ", 1)
+
+        # FIXME: context-driven traversal is different from non-resolving dict-lookup
+        existing = container.get(None, key, None)
+
+        # Grab scalar value
+        boxed = self.compose_node(existing)
+
+        # Further box the value based on the kind of action it is
+        boxed = self.action_map[action](boxed, action_args)
+
+        # Can't override a locked node
+        if existing and existing.locked:
+            boxed.error("%s is locked and cannot be overidden" % key)
+
+        # Make sure that Appends are hooked up to correct List
+        boxed.chain = existing
+
+        return key, boxed
+
+    def compose_mapping(self, previous):
         container = Mapping(previous)
         while not self.check_event(MappingEndEvent):
-            key_event = self.get_event()
-            key = key_event.value
-
-            action = "assign"
-            if "." in key:
-                key, action = key.split(".", 1)
-
-            action_args = None
-            if " " in action:
-                action, action_args = action.split(" ", 1)
-
-            # FIXME: context-driven traversal is different from non-resolving dict-lookup
-            existing = container.get(None, key, None)
-
-            # Grab scalar value
-            boxed = self.compose_node(existing)
-
-            # Further box the value based on the kind of action it is
-            boxed = self.action_map[action](boxed, action_args)
-
-            # Make sure that Appends are hooked up to correct List
-            boxed.chain = existing
-
-            # And add it to the dictionary (which will automatically chain nodes)
-            container.set(key, boxed)
-
+            key, value = self.compose_mapping_value(container)
+            container.set(key, value)
         return container
+
+    def compose_root_mapping(self, previous):
+        if not self.check_event(MappingStartEvent):
+            ev = self.get_event()
+            #raise ComposerError("Expected root mapping - am denied", ev.start_mark)
+            return previous
+
+        start = self.get_event()
+
+        previous = self.handle_special_term(previous)
+
+        previous = Mapping(previous)
+        while not self.check_event(MappingEndEvent):
+            key, value = self.compose_mapping_value(previous)
+            if key == ".include":
+                if not isinstance(value, Sequence):
+                    value.error("Exepected a sequence and didnt get one")
+
+                for i in value.value:
+                    context = RootContext(previous)
+                    i.lock(context)
+                    include = i.resolve(context)
+                    previous = self.handle_imports(previous, [include])
+
+                previous = Mapping(previous)
+
+            else:
+                previous.set(key, value)
+
+        end = self.get_event()
+
+        return previous
 

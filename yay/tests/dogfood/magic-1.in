@@ -1,0 +1,5 @@
+
+.include:
+  - magic-1.1
+  - ${foo}
+

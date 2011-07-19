@@ -30,3 +30,7 @@ class Sequence(Node):
     def __iter__(self):
         return iter(self.value)
 
+    def walk(self, context):
+        for val in self.value:
+            yield val
+

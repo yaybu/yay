@@ -29,3 +29,7 @@ class Append(Node):
             return self.value
         return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
 
+    def walk(self, context):
+        yield self.chain
+        yield self.value
+

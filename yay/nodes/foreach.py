@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Lookup, Boxed, Sequence
+from yay.nodes import Node, Boxed, Sequence
 from yay.context import Context
 
 class ForEach(Node):
@@ -34,4 +34,7 @@ class ForEach(Node):
     def resolve(self, context):
         return self.semi_resolve(context).resolve(context)
 
+    def walk(self, context):
+        yield self.lookup
+        yield self.value
 
