@@ -1,0 +1,6 @@
+test:
+  - magic-2.1
+
+.include:
+  .foreach itm in test: ${itm}
+
