@@ -32,6 +32,9 @@ class Parser(object):
         b.secret = self.secret
         return b
 
+    def dollar(self, str, words, tokens):
+        return self.box("$")
+
     def boxed_string(self, str, words, tokens):
         return self.box(tokens[0])
 
@@ -147,6 +150,7 @@ class Parser(object):
         myrol = restOfLine.copy().setParseAction(self.ugh)
 
         templated_string = ZeroOrMore(
+            Keyword("$$").setParseAction(self.dollar) |
             bracketed_expression |
             SkipTo("${").leaveWhitespace().setParseAction(self.boxed_string)
             ) + myrol
