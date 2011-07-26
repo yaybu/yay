@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.23 (unreleased)
+0.0.23 (2011-07-26)
 -------------------
 
 - $$ escapes $ - so $${foo} is treated as a string, not a variable lookup
