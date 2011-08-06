@@ -15,13 +15,11 @@
 
 import unittest
 from yay.nodes import *
-from yay.context import Context
 
 
 class TestSequenceOperations(unittest.TestCase):
 
-    def setUp(self):
-        self.ctx = Context(None, None)
+    ctx = None
 
     def test_sequence(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
@@ -45,8 +43,7 @@ class TestSequenceOperations(unittest.TestCase):
 
 class TestMapping(unittest.TestCase):
 
-    def setUp(self):
-        self.ctx = Context(None, None)
+    ctx = None
 
     def test_get_set(self):
         d = Mapping(None)

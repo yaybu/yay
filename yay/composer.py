@@ -19,7 +19,6 @@ from yaml.events import ScalarEvent, SequenceStartEvent, SequenceEndEvent, \
 from yay.nodes import *
 from yay.parser import Parser
 from yay.errors import SyntaxError
-from yay.context import RootContext
 
 class ComposerError(MarkedYAMLError):
     pass
@@ -226,12 +225,12 @@ class Composer(object):
             if key == ".include":
                 if isinstance(value, Sequence):
                     for i in value.value:
-                        context = RootContext(previous)
+                        context = None
                         i.lock(context)
                         include = i.resolve(context)
                         previous = self.handle_imports(previous, [include])
                 else:
-                    context = RootContext(previous)
+                    context = None
                     value.lock(context)
                     includes = value.resolve(context)
 

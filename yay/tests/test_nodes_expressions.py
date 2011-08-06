@@ -15,7 +15,6 @@
 
 import unittest
 from yay.nodes import *
-from yay.context import RootContext
 
 class TestNodeExpressions(unittest.TestCase):
 
