@@ -1,6 +1,5 @@
 
-from yay.nodes import Node, Sequence
-from yay.context import Context
+from yay.nodes import Node, Sequence, Context
 
 class Filter(Node):
 
@@ -19,8 +18,8 @@ class Filter(Node):
 
         filtered = []
         for r in resolved:
-            newctx = Context(context, {"@": r})
-            if self.filter_expression.resolve(newctx):
+            ctx = Context(self.filter_expression, {"@": r})
+            if ctx.resolve(context):
                 filtered.append(r)
 
         return Sequence(filtered)
