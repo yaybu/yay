@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed, Sequence
-from yay.context import Context
+from yay.nodes import Node, Boxed, Sequence, Context
 
 class ForEach(Node):
 
@@ -27,11 +26,11 @@ class ForEach(Node):
         self.alias = args[0].strip()
 
     def semi_resolve(self, context):
-        resolved = []
+        lst = []
         for item in self.lookup.semi_resolve(context):
-            newctx = Context(context, {self.alias: item})
-            resolved.append(self.value.resolve(newctx))
-        return Sequence(list(Boxed(x) for x in resolved))
+            #FIXME: We need to clone self.value as it gets reparented atm
+            lst.append(Context(self.value, {self.alias: item}))
+        return Sequence(lst)
 
     def resolve(self, context):
         return self.semi_resolve(context).resolve(context)
