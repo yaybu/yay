@@ -33,3 +33,6 @@ class Select(Node):
         yield self.key
         yield self.semi_resolve(context)
 
+    def clone(self):
+        return Select(self.options.clone(), self.key.clone())
+

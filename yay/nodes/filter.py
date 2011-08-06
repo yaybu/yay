@@ -37,3 +37,6 @@ class Filter(Node):
         yield self.container
         yield self.filter_expression
 
+    def clone(self):
+        return Filter(self.container.clone(), self.filter_expression.clone())
+

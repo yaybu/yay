@@ -38,3 +38,6 @@ class Sequence(Node):
         for val in self.value:
             yield val
 
+    def clone(self):
+        return Sequence([x.clone() for x in self.value])
+

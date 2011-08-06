@@ -31,3 +31,8 @@ class Append(Node):
         yield self.chain
         yield self.value
 
+    def clone(self):
+        a = Append(self.value.clone())
+        a.chain = self.chain.clone() if self.chain else None
+        return a
+

@@ -28,7 +28,7 @@ class Mapping(Node):
     def set(self, key, val):
         #val.chain = self.value.get("key", None)
         self.value[key] = val
-        val.set_parent(val)
+        val.set_parent(self)
 
     def get(self, context, key, default=None):
         if key in self.value:
@@ -57,4 +57,14 @@ class Mapping(Node):
         for itm in self.value.items():
             yield itm
         yield self.predecessor
+
+    def clone(self):
+        p = None
+        if self.predecessor:
+            p = self.predecessor.clone()
+
+        m = Mapping(p)
+        for k, v in self.value.items():
+            m.set(k, v.clone())
+        return m
 

@@ -29,3 +29,8 @@ class Remove(Node):
         yield self.chain
         yield self.value
 
+    def clone(self):
+        r = Remove(self.value.clone())
+        r.chain = self.chain.clone() if self.chain else None
+        return r
+

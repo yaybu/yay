@@ -44,3 +44,6 @@ class Function(Node):
         for arg in self.args:
             yield arg
 
+    def clone(self):
+        return Function(self.function, [x.clone() for x in self.args])
+

@@ -76,3 +76,6 @@ class Boxed(Node):
     def __repr__(self):
         return "Boxed(%s)" % self.value
 
+    def clone(self):
+        return Boxed(self.value)
+

@@ -26,9 +26,15 @@ class Copy(Node):
     def get(self, context, idx, default=None):
         return self.value.get(context, idx, default)
 
+    def semi_resolve(self, context):
+        return self.value.clone()
+
     def resolve(self, context):
-        return copy.deepcopy(self.value.resolve(context))
+        return self.value.clone().resolve(context)
 
     def walk(self, context):
         yield self.value
+
+    def clone(self):
+        return Clone(self.value.clone())
 

@@ -52,7 +52,8 @@ class Node(object):
         if self.parent:
             return self.parent.get_context(key)
         else:
-            return self.get(key)
+            print key
+            return self.get(None, key)
 
     def get_root(self):
         if self.parent:
@@ -67,6 +68,9 @@ class Node(object):
             self.line,          # Line
             self.column,        # Column
             self.snippet)       # Snippet
+
+    def clone(self):
+        raise NotImplementedError(self.clone)
 
     def __str__(self):
         return repr(self)

@@ -30,6 +30,9 @@ class Comparison(Node):
         yield self.left
         yield self.right
 
+    def clone(self):
+        return self.__class__(self.left.clone(), self.right.clone())
+
 class And(Comparison):
     def resolve(self, context):
         return self.left.resolve(context) and self.right.resolve(context)
@@ -106,6 +109,12 @@ class Access(Node):
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)
 
+    def clone(self):
+        c = None
+        if self.container:
+            c = self.container.clone()
+        return Access(c, self.access)
+
 
 class Concatenation(Node):
     def __init__(self, *args):
@@ -134,4 +143,7 @@ class Concatenation(Node):
 
     def __repr__(self):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
+
+    def clone(self):
+        return Concatenation([x.clone() for x in self.args])
 

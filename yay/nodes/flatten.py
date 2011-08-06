@@ -36,3 +36,6 @@ class Flatten(Node):
     def walk(self, context):
         yield self.value
 
+    def clone(self):
+        return Flatten(self.value.clone())
+

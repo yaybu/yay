@@ -28,8 +28,7 @@ class ForEach(Node):
     def semi_resolve(self, context):
         lst = []
         for item in self.lookup.semi_resolve(context):
-            #FIXME: We need to clone self.value as it gets reparented atm
-            lst.append(Context(self.value, {self.alias: item}))
+            lst.append(Context(self.value.clone(), {self.alias: item}))
         return Sequence(lst)
 
     def resolve(self, context):
@@ -38,4 +37,7 @@ class ForEach(Node):
     def walk(self, context):
         yield self.lookup
         #yield self.value
+
+    def clone(self):
+        return ForEach(self.root, self.value.clone(), [self.alias, self.lookup.clone()])
 

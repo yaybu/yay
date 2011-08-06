@@ -38,3 +38,6 @@ class Context(Node):
     def __repr__(self):
         return "Context(%s)" % self.value
 
+    def clone(self):
+        return Context(self.value.clone(), self.context)
+
