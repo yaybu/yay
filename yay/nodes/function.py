@@ -14,7 +14,16 @@
 
 from yay.nodes import Node, Boxed
 
+def sum(*args):
+    return reduce(lambda x, y: x+y, args)
+
+
 class Function(Node):
+
+    functions = {
+        "range": range,
+        "sum": sum,
+        }
 
     def __init__(self, function, args):
         self.function = function
@@ -23,7 +32,7 @@ class Function(Node):
 
     def resolve(self, context):
         args = [arg.resolve(context) for arg in self.args]
-        return context.call(self.function, args)
+        return self.functions[self.function](*args)
 
     def semi_resolve(self, context):
         return [Boxed(x) for x in self.resolve(context)]

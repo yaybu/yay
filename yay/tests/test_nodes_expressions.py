@@ -77,7 +77,6 @@ class TestNodeExpressions(unittest.TestCase):
         self.failUnless(c.resolve(None))
 
     def test_function(self):
-        context = RootContext({})
-        context.functions["foo"] = lambda x: x+5
-        r = Function("foo", [Boxed(5)])
-        self.failUnlessEqual(r.resolve(context), 10)
+        r = Function("sum", [Boxed(5), Boxed(5)])
+        self.failUnlessEqual(r.resolve(None), 10)
+
