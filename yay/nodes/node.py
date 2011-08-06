@@ -48,6 +48,12 @@ class Node(object):
         for child in self.walk(context):
             child.lock(context)
 
+    def get_context(self, key):
+        if self.parent:
+            return self.parent.get_context(key)
+        else:
+            return self.get(key)
+
     def get_root(self):
         if self.parent:
             return self.parent.get_root()
