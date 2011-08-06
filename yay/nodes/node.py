@@ -29,14 +29,8 @@ class Node(object):
         # Premature typing optimisation
         self.value = value
 
-    def apply(self, context, data):
-        pass
-
     def resolve(self, context):
-        data = None
-        if self.chain:
-            data = self.chain.resolve(context)
-        return self.apply(context, data)
+        raise NotImplementedError(self.resolve)
 
     def semi_resolve(self, context):
         return self

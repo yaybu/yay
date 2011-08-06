@@ -19,9 +19,10 @@ class Remove(Node):
     def get(self, context, idx, default=None):
         return Boxed(self.resolve(context)[int(idx)])
 
-    def apply(self, context, existing):
-        if not existing:
+    def resolve(self, context):
+        if not self.chain:
             return []
+        existing = self.chain.resolve(context)
         return [x for x in existing if x not in self.value.resolve(context)]
 
     def walk(self, context):

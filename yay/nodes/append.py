@@ -19,15 +19,13 @@ class Append(Node):
     def get(self, context, idx, default=None):
         return Boxed(self.resolve(context)[int(idx)])
 
-    def apply(self, context, existing):
-        if not existing:
-            existing = []
-        return existing + self.value.resolve(context)
-
     def semi_resolve(self, context):
         if not self.chain:
             return self.value
         return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
+
+    def resolve(self, context):
+        return self.semi_resolve(context).resolve(context)
 
     def walk(self, context):
         yield self.chain
