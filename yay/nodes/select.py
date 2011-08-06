@@ -18,7 +18,9 @@ class Select(Node):
 
     def __init__(self, options, key):
         self.options = options
+        options.set_parent(self)
         self.key = key
+        key.set_parent(self)
 
     def semi_resolve(self, context):
         key = self.key.resolve(context)

@@ -18,6 +18,10 @@ class Sequence(Node):
     """
     I am a list that hasnt been created yet
     """
+    def __init__(self, value):
+        self.value = value
+        [x.set_parent(self) for x in value]
+
     def get(self, context, idx, default=None):
         return Boxed(self.resolve(context)[int(idx)])
 

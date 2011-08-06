@@ -21,11 +21,14 @@ class Mapping(Node):
     """
     def __init__(self, predecessor):
         self.predecessor = predecessor
+        if predecessor:
+            predecessor.set_parent(self)
         self.value = {}
 
     def set(self, key, val):
         #val.chain = self.value.get("key", None)
         self.value[key] = val
+        val.set_parent(val)
 
     def get(self, context, key, default=None):
         if key in self.value:

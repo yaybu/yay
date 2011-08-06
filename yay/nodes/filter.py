@@ -6,7 +6,10 @@ class Filter(Node):
 
     def __init__(self, container, filter_expression):
         self.container = container
+        if container:
+            container.set_parent(self)
         self.filter_expression = filter_expression
+        filter_expression.set_parent(self)
 
     def semi_resolve(self, context):
         if not hasattr(self.container, "semi_resolve"):

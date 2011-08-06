@@ -26,9 +26,6 @@ class Flatten(Node):
 
     """ Inspired by Ruby's .flatten - flatten nested lists into a single one """
 
-    def __init__(self, value):
-        self.value = value
-
     def semi_resolve(self, context):
         return Sequence(list(Boxed(x) for x in flatten(self.value.resolve(context))))
 

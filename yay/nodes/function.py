@@ -19,6 +19,7 @@ class Function(Node):
     def __init__(self, function, args):
         self.function = function
         self.args = args
+        [x.set_parent(self) for x in args]
 
     def resolve(self, context):
         args = [arg.resolve(context) for arg in self.args]

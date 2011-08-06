@@ -18,6 +18,7 @@ from yay.errors import EvaluationError
 class Node(object):
     __slots__ = ("chain", "value")
     chain = None
+    parent = None
     locked = False
 
     name = "<Unknown>"
@@ -28,6 +29,10 @@ class Node(object):
     def __init__(self, value=None):
         # Premature typing optimisation
         self.value = value
+        value.set_parent(self)
+
+    def set_parent(self, parent):
+        self.parent = parent
 
     def resolve(self, context):
         raise NotImplementedError(self.resolve)

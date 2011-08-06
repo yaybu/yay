@@ -20,8 +20,10 @@ class ForEach(Node):
     def __init__(self, root, value, args):
         self.root = root
         self.value = value
+        value.set_parent(self)
 
         self.lookup = args[1]
+        self.lookup.set_parent(self)
         self.alias = args[0].strip()
 
     def semi_resolve(self, context):

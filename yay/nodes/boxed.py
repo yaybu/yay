@@ -21,6 +21,9 @@ class Boxed(Node):
     is wrapped simply so we can put it in our graph
     """
 
+    def __init__(self, value):
+        self.value = value
+
     secret = False
 
     def resolve_string(self, context, value):

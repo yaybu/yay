@@ -19,7 +19,9 @@ from yay.protectedstring import ProtectedString
 class Comparison(Node):
     def __init__(self, left, right):
         self.left = left
+        left.set_parent(self)
         self.right = right
+        right.set_parent(self)
 
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__, self.left, self.right)
@@ -68,6 +70,8 @@ class GreaterThanEqual(Comparison):
 class Access(Node):
     def __init__(self, container, access):
         self.container = container
+        if container:
+            container.set_parent(self)
         self.access = access
 
     def get(self, context, idx, default=None):
@@ -106,6 +110,7 @@ class Access(Node):
 class Concatenation(Node):
     def __init__(self, *args):
         self.args = args
+        [x.set_parent(self) for x in args]
 
     def resolve(self, context):
         resolved = [x.resolve(context) for x in self.args]
