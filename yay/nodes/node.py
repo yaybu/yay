@@ -48,6 +48,12 @@ class Node(object):
         for child in self.walk(context):
             child.lock(context)
 
+    def get_root(self):
+        if self.parent:
+            return self.parent.get_root()
+        else:
+            return self
+
     def error(self, message):
         raise EvaluationError(
             message,
