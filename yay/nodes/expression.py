@@ -84,7 +84,7 @@ class Access(Node):
             if unresolved is None:
                 self.error("Container does not have field '%s'" % self.access)
         else:
-            unresolved = context.get(self.access)
+            unresolved = self.get_context(self.access)
             if unresolved is None:
                 self.error("Context does not have field '%s'" % self.access)
 
