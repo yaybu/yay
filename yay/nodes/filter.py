@@ -10,8 +10,8 @@ class Filter(Node):
         self.filter_expression = filter_expression
         filter_expression.set_parent(self)
 
-    def semi_resolve(self):
-        resolved = self.container.semi_resolve()
+    def expand(self):
+        resolved = self.container.expand()
 
         filtered = []
         for r in resolved:
@@ -24,10 +24,10 @@ class Filter(Node):
         return Sequence(filtered)
 
     def get(self, idx):
-        return self.semi_resolve().get(idx)
+        return self.expand().get(idx)
 
     def resolve(self):
-        return self.semi_resolve().resolve()
+        return self.expand().resolve()
 
     def __repr__(self):
         return "Filter(%s, %s)" % (self.container, self.filter_expression)

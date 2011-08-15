@@ -19,13 +19,13 @@ class Append(Node):
     def get(self, idx, default=None):
         return Boxed(self.resolve()[int(idx)])
 
-    def semi_resolve(self):
+    def expand(self):
         if not self.chain:
             return self.value
-        return Sequence(list(iter(self.chain.semi_resolve())) + list(iter(self.value.semi_resolve())))
+        return Sequence(list(iter(self.chain.expand())) + list(iter(self.value.expand())))
 
     def resolve(self):
-        return self.semi_resolve().resolve()
+        return self.expand().resolve()
 
     def walk(self):
         yield self.chain

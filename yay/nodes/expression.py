@@ -78,10 +78,10 @@ class Access(Node):
         self.access = access
 
     def get(self, idx, default=None):
-        sr = self.semi_resolve()
+        sr = self.expand()
         return sr.get(idx, default)
 
-    def semi_resolve(self):
+    def expand(self):
         if self.container:
             unresolved = self.container.get(self.access)
             if unresolved is None:
@@ -91,17 +91,17 @@ class Access(Node):
             if unresolved is None:
                 self.error("Context does not have field '%s'" % self.access)
 
-        if hasattr(unresolved, "semi_resolve"):
-            return unresolved.semi_resolve()
+        if hasattr(unresolved, "expand"):
+            return unresolved.expand()
 
         return unresolved
 
     def resolve(self):
-        sr = self.semi_resolve()
+        sr = self.expand()
         return sr.resolve()
 
     def walk(self):
-        yield self.semi_resolve()
+        yield self.expand()
 
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)

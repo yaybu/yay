@@ -34,7 +34,7 @@ class Function(Node):
         args = [arg.resolve() for arg in self.args]
         return self.functions[self.function](*args)
 
-    def semi_resolve(self):
+    def expand(self):
         return [Boxed(x) for x in self.resolve()]
 
     def __repr__(self):

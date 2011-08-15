@@ -30,8 +30,8 @@ class Copy(Node):
     def get(self, idx, default=None):
         return self.value.get(idx, default)
 
-    def semi_resolve(self):
-        return self.value.semi_resolve()
+    def expand(self):
+        return self.value.expand()
 
     def resolve(self):
         return self.value.resolve()

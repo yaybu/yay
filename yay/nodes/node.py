@@ -37,7 +37,7 @@ class Node(object):
     def resolve(self):
         raise NotImplementedError(self.resolve)
 
-    def semi_resolve(self):
+    def expand(self):
         return self
 
     def walk(self):
@@ -52,7 +52,7 @@ class Node(object):
         if self.parent:
             return self.parent.get_context(key)
         else:
-            return self.semi_resolve().get(key)
+            return self.expand().get(key)
 
     def get_root(self):
         if self.parent:
