@@ -4,7 +4,10 @@ Changelog for yay
 0.0.24 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add '.with expression as foo:'
+- Add chain and nochain mode to foreach. chain is the default.
+- Major refactoring, context variable is no longer needed to resolve the graph
+- The 'semi_resolve' API is now more correctly named 'expand'
 
 
 0.0.23 (2011-07-26)
