@@ -155,7 +155,6 @@ resources for each item in that list. You would do something like this::
         MyCustomer-72
 
     resources.append:
-      .flatten:
         .foreach p in projectcodes:
             - Directory:
                   name: /var/local/sites/${p}
