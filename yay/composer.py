@@ -35,7 +35,8 @@ class Composer(object):
             "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
             "remove": lambda value, args: Remove(value),
-            "foreach": lambda value, args: ForEach(self, value, self.parser.as_statement.parseString(args)),
+            "foreach": lambda value, args: ForEach(self, value, self.parser.foreach_statement.parseString(args)),
+            "with": lambda value, args: With(value, *self.parser.as_statement.parseString(args)),
             "select": lambda value, args: Select(value, self.parser.expression.parseString(args)[0]),
             "flatten": lambda value, args: Flatten(value),
             }
