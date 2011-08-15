@@ -82,7 +82,8 @@ class Parser(object):
                 node = nodes.Access(node, token)
             else:
                 token.container = node
-                token.set_parent(self)
+                if node:
+                    node.set_parent(token)
                 node = token
 
         return node

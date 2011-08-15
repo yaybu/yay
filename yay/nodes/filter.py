@@ -11,24 +11,23 @@ class Filter(Node):
         filter_expression.set_parent(self)
 
     def semi_resolve(self, context):
-        if not hasattr(self.container, "semi_resolve"):
-            self.error("Expected sequence, got '%s'" % self.container)
-
         resolved = self.container.semi_resolve(context)
 
         filtered = []
         for r in resolved:
-            ctx = Context(self.filter_expression, {"@": r})
+            ctx = Context(self.filter_expression.clone(), {"@": r})
+            r.set_parent(ctx)
+            ctx.set_parent(self.parent)
             if ctx.resolve(context):
                 filtered.append(r)
 
         return Sequence(filtered)
 
     def get(self, context, idx):
-        return self.semi_resolve(context).get(context, idx.resolve(context))
+        return self.semi_resolve(context).get(context, idx)
 
     def resolve(self, context):
-        return list(f.resolve(context) for f in self.semi_resolve(context))
+        return self.semi_resolve(context).resolve(context)
 
     def __repr__(self):
         return "Filter(%s, %s)" % (self.container, self.filter_expression)

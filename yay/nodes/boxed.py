@@ -69,7 +69,7 @@ class Boxed(Node):
 
     def get(self, context, key, default=None):
         if isinstance(self.value, list):
-            return Boxed(self.value[key.resolve(context)])
+            return Boxed(self.value[key])
 
         return Boxed(self.value.get(key, default))
 
