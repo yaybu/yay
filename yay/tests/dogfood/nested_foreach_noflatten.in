@@ -1,0 +1,23 @@
+
+project:
+    - name: monkeys
+      flavour: bob
+      environments:
+         - name: staging
+           host: ririn
+         - name: production
+           host: cloud
+    - name: badgers
+      flavour: george
+      environments:
+         - name: staging
+           host: ririn
+         - name: production
+           host: cloud
+
+test.foreach project in project:
+    .foreach env in project.environments:
+        name: ${project.name}
+        flavour: ${project.flavour}
+        env: ${env.name}
+
