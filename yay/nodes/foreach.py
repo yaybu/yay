@@ -25,13 +25,27 @@ class ForEach(Node):
         self.lookup.set_parent(self)
         self.alias = args[0].strip()
 
+        if len(args) == 3:
+            self.mode = args[2]
+        else:
+            self.mode = "chain"
+
     def expand(self):
         lst = []
 
         for item in self.lookup.expand():
             c = Context(self.value.clone(), {self.alias: item})
             item.set_parent(c)
-            lst.append(c)
+
+            if self.mode == "nochain":
+                lst.append(c)
+            else:
+                c.set_parent(self)
+                val = c.resolve()
+                if isinstance(val, list):
+                    lst.extend(Boxed(v) for v in val)
+                else:
+                    lst.append(Boxed(val))
 
         sq = Sequence(lst)
         sq.set_parent(self.parent)
@@ -45,5 +59,5 @@ class ForEach(Node):
         #yield self.value
 
     def clone(self):
-        return ForEach(self.root, self.value.clone(), [self.alias, self.lookup.clone()])
+        return ForEach(self.root, self.value.clone(), [self.alias, self.lookup.clone(), self.mode])
 
