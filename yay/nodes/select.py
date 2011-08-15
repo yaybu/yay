@@ -22,16 +22,16 @@ class Select(Node):
         self.key = key
         key.set_parent(self)
 
-    def semi_resolve(self, context):
-        key = self.key.resolve(context)
-        return self.options.get(context, key)
+    def semi_resolve(self):
+        key = self.key.resolve()
+        return self.options.get(key)
 
-    def resolve(self, context):
-        return self.semi_resolve(context).resolve(context)
+    def resolve(self):
+        return self.semi_resolve().resolve()
 
-    def walk(self, context):
+    def walk(self):
         yield self.key
-        yield self.semi_resolve(context)
+        yield self.semi_resolve()
 
     def clone(self):
         return Select(self.options.clone(), self.key.clone())

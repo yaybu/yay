@@ -26,7 +26,7 @@ class Comparison(Node):
     def __repr__(self):
         return "%s(%s, %s)" % (self.__class__.__name__, self.left, self.right)
 
-    def walk(self, context):
+    def walk(self):
         yield self.left
         yield self.right
 
@@ -34,40 +34,40 @@ class Comparison(Node):
         return self.__class__(self.left.clone(), self.right.clone())
 
 class And(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) and self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() and self.right.resolve()
 
 class Or(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) or self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() or self.right.resolve()
 
 class In(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) in self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() in self.right.resolve()
 
 class Equal(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) == self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() == self.right.resolve()
 
 class NotEqual(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) != self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() != self.right.resolve()
 
 class LessThan(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) < self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() < self.right.resolve()
 
 class LessThanEqual(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) <= self.right.resolve(context)
+    def resolve(self,):
+        return self.left.resolve() <= self.right.resolve()
 
 class GreaterThan(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) > self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() > self.right.resolve()
 
 class GreaterThanEqual(Comparison):
-    def resolve(self, context):
-        return self.left.resolve(context) >= self.right.resolve(context)
+    def resolve(self):
+        return self.left.resolve() >= self.right.resolve()
 
 
 class Access(Node):
@@ -77,13 +77,13 @@ class Access(Node):
             container.set_parent(self)
         self.access = access
 
-    def get(self, context, idx, default=None):
-        sr = self.semi_resolve(context)
-        return sr.get(context, idx, default)
+    def get(self, idx, default=None):
+        sr = self.semi_resolve()
+        return sr.get(idx, default)
 
-    def semi_resolve(self, context):
+    def semi_resolve(self):
         if self.container:
-            unresolved = self.container.get(context, self.access)
+            unresolved = self.container.get(self.access)
             if unresolved is None:
                 self.error("Container does not have field '%s'" % self.access)
         else:
@@ -92,19 +92,16 @@ class Access(Node):
                 self.error("Context does not have field '%s'" % self.access)
 
         if hasattr(unresolved, "semi_resolve"):
-            return unresolved.semi_resolve(context)
+            return unresolved.semi_resolve()
 
         return unresolved
 
-    def resolve(self, context):
-        sr = self.semi_resolve(context)
-        return sr.resolve(context)
+    def resolve(self):
+        sr = self.semi_resolve()
+        return sr.resolve()
 
-    #def get(self, context, key, default=None):
-    #    self.resolve(context).get(context, key, default)
-
-    def walk(self, context):
-        yield self.semi_resolve(context)
+    def walk(self):
+        yield self.semi_resolve()
 
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)
@@ -121,8 +118,8 @@ class Concatenation(Node):
         self.args = args
         [x.set_parent(self) for x in args]
 
-    def resolve(self, context):
-        resolved = [x.resolve(context) for x in self.args]
+    def resolve(self):
+        resolved = [x.resolve() for x in self.args]
 
         protected = False
         for x in resolved:
@@ -137,7 +134,7 @@ class Concatenation(Node):
 
         return "".join(str(x) for x in resolved)
 
-    def walk(self, context):
+    def walk(self):
         for arg in self.args:
             yield arg
 

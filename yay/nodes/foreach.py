@@ -25,12 +25,10 @@ class ForEach(Node):
         self.lookup.set_parent(self)
         self.alias = args[0].strip()
 
-        print "ForEach", self.value, self.lookup, self.alias
-
-    def semi_resolve(self, context):
+    def semi_resolve(self):
         lst = []
 
-        for item in self.lookup.semi_resolve(context):
+        for item in self.lookup.semi_resolve():
             c = Context(self.value.clone(), {self.alias: item})
             item.set_parent(c)
             lst.append(c)
@@ -39,10 +37,10 @@ class ForEach(Node):
         sq.set_parent(self.parent)
         return sq
 
-    def resolve(self, context):
-        return self.semi_resolve(context).resolve(context)
+    def resolve(self):
+        return self.semi_resolve().resolve()
 
-    def walk(self, context):
+    def walk(self):
         yield self.lookup
         #yield self.value
 

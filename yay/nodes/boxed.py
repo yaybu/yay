@@ -26,20 +26,7 @@ class Boxed(Node):
 
     secret = False
 
-    def resolve_string(self, context, value):
-        encountered = set()
-        previous = None
-        while value != previous:
-            if value in encountered:
-                self.error("Cycle encountered (%s)" % label)
-            encountered.add(value)
-
-            previous = value
-            value = value.format(context)
-
-        return value
-
-    def resolve(self, context):
+    def resolve(self):
         value = self.value
 
         if not isinstance(value, basestring):
@@ -67,7 +54,7 @@ class Boxed(Node):
         except UnicodeEncodeError:
             return value
 
-    def get(self, context, key, default=None):
+    def get(self, key, default=None):
         if isinstance(self.value, list):
             return Boxed(self.value[key])
 

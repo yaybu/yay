@@ -29,11 +29,11 @@ class Context(Node):
             val = super(Context, self).get_context(key)
         return val
 
-    def semi_resolve(self, context):
-        return self.value.semi_resolve(context)
+    def semi_resolve(self):
+        return self.value.semi_resolve()
 
-    def resolve(self, context):
-        return self.value.resolve(context)
+    def resolve(self):
+        return self.value.resolve()
 
     def __repr__(self):
         return "Context(%s)" % self.value

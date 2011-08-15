@@ -34,25 +34,25 @@ class Node(object):
     def set_parent(self, parent):
         self.parent = parent
 
-    def resolve(self, context):
+    def resolve(self):
         raise NotImplementedError(self.resolve)
 
-    def semi_resolve(self, context):
+    def semi_resolve(self):
         return self
 
-    def walk(self, context):
+    def walk(self):
         return iter([])
 
-    def lock(self, context):
+    def lock(self):
         self.locked = True
-        for child in self.walk(context):
-            child.lock(context)
+        for child in self.walk():
+            child.lock()
 
     def get_context(self, key):
         if self.parent:
             return self.parent.get_context(key)
         else:
-            return self.semi_resolve(None).get(None, key)
+            return self.semi_resolve().get(key)
 
     def get_root(self):
         if self.parent:

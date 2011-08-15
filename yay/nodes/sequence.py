@@ -22,19 +22,19 @@ class Sequence(Node):
         self.value = value
         [x.set_parent(self) for x in value]
 
-    def get(self, context, idx, default=None):
-        return Boxed(self.resolve(context)[int(idx)])
+    def get(self, idx, default=None):
+        return Boxed(self.resolve()[int(idx)])
 
-    def resolve(self, context):
+    def resolve(self):
         data = []
         for val in self.value:
-            data.append(val.resolve(context))
+            data.append(val.resolve())
         return data
 
     def __iter__(self):
         return iter(self.value)
 
-    def walk(self, context):
+    def walk(self):
         for val in self.value:
             yield val
 

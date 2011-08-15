@@ -141,7 +141,7 @@ class Composer(object):
             return previous
         self.get_event()
 
-        special_term = self.compose_node(None).resolve(None)
+        special_term = self.compose_node(None).resolve()
 
         return self.handle_imports(previous, special_term.get("extends", []))
 
@@ -184,8 +184,7 @@ class Composer(object):
         if " " in action:
             action, action_args = action.split(" ", 1)
 
-        # FIXME: context-driven traversal is different from non-resolving dict-lookup
-        existing = container.get(None, key, None)
+        existing = container.get(key, None)
 
         # Grab scalar value
         boxed = self.compose_node(existing)
@@ -227,14 +226,12 @@ class Composer(object):
 
                 if isinstance(value, Sequence):
                     for i in value.value:
-                        context = None
-                        i.lock(context)
-                        include = i.resolve(context)
+                        i.lock()
+                        include = i.resolve()
                         previous = self.handle_imports(previous, [include])
                 else:
-                    context = None
-                    value.lock(context)
-                    includes = value.resolve(context)
+                    value.lock()
+                    includes = value.resolve()
 
                     if not isinstance(includes, list):
                         value.error("Expected something that resolved to a sequence and didnt")

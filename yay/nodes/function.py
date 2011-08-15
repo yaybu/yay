@@ -30,17 +30,17 @@ class Function(Node):
         self.args = args
         [x.set_parent(self) for x in args]
 
-    def resolve(self, context):
-        args = [arg.resolve(context) for arg in self.args]
+    def resolve(self):
+        args = [arg.resolve() for arg in self.args]
         return self.functions[self.function](*args)
 
-    def semi_resolve(self, context):
-        return [Boxed(x) for x in self.resolve(context)]
+    def semi_resolve(self):
+        return [Boxed(x) for x in self.resolve()]
 
     def __repr__(self):
         return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])
 
-    def walk(self, context):
+    def walk(self):
         for arg in self.args:
             yield arg
 

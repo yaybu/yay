@@ -16,16 +16,16 @@ from yay.nodes import Node
 
 class Remove(Node):
 
-    def get(self, context, idx, default=None):
-        return Boxed(self.resolve(context)[int(idx)])
+    def get(self, idx, default=None):
+        return Boxed(self.resolve()[int(idx)])
 
-    def resolve(self, context):
+    def resolve(self):
         if not self.chain:
             return []
-        existing = self.chain.resolve(context)
-        return [x for x in existing if x not in self.value.resolve(context)]
+        existing = self.chain.resolve()
+        return [x for x in existing if x not in self.value.resolve()]
 
-    def walk(self, context):
+    def walk(self):
         yield self.chain
         yield self.value
 

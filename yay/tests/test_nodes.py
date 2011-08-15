@@ -19,26 +19,24 @@ from yay.nodes import *
 
 class TestSequenceOperations(unittest.TestCase):
 
-    ctx = None
-
     def test_sequence(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
 
-        self.failUnlessEqual(l.resolve(self.ctx), [1, 2, 3])
+        self.failUnlessEqual(l.resolve(), [1, 2, 3])
 
     def test_sequence_append(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
         a = Append(Sequence([Boxed(4), Boxed(5)]))
         a.chain = l
 
-        self.failUnlessEqual(a.resolve(self.ctx), [1, 2, 3, 4, 5])
+        self.failUnlessEqual(a.resolve(), [1, 2, 3, 4, 5])
 
     def test_sequence_remove(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
         r = Remove(Sequence([Boxed(2)]))
         r.chain = l
 
-        self.failUnlessEqual(r.resolve(self.ctx), [1, 3])
+        self.failUnlessEqual(r.resolve(), [1, 3])
 
 
 class TestMapping(unittest.TestCase):
@@ -49,5 +47,5 @@ class TestMapping(unittest.TestCase):
         d = Mapping(None)
         d.set("foo", Boxed(1))
 
-        self.failUnlessEqual(d.get(None, "foo", None).value, 1)
+        self.failUnlessEqual(d.get("foo", None).value, 1)
 

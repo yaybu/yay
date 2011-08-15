@@ -27,16 +27,16 @@ class Copy(Node):
         self.value = value
         value.set_parent(self)
 
-    def get(self, context, idx, default=None):
-        return self.value.get(context, idx, default)
+    def get(self, idx, default=None):
+        return self.value.get(idx, default)
 
-    def semi_resolve(self, context):
-        return self.value.semi_resolve(context)
+    def semi_resolve(self):
+        return self.value.semi_resolve()
 
-    def resolve(self, context):
-        return self.value.resolve(context)
+    def resolve(self):
+        return self.value.resolve()
 
-    def walk(self, context):
+    def walk(self):
         yield self.value
 
     def clone(self):

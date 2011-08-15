@@ -16,18 +16,18 @@ from yay.nodes import Node, Boxed, Sequence
 
 class Append(Node):
 
-    def get(self, context, idx, default=None):
-        return Boxed(self.resolve(context)[int(idx)])
+    def get(self, idx, default=None):
+        return Boxed(self.resolve()[int(idx)])
 
-    def semi_resolve(self, context):
+    def semi_resolve(self):
         if not self.chain:
             return self.value
-        return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
+        return Sequence(list(iter(self.chain.semi_resolve())) + list(iter(self.value.semi_resolve())))
 
-    def resolve(self, context):
-        return self.semi_resolve(context).resolve(context)
+    def resolve(self):
+        return self.semi_resolve().resolve()
 
-    def walk(self, context):
+    def walk(self):
         yield self.chain
         yield self.value
 
