@@ -1,0 +1,6 @@
+
+foo: 123456
+
+baz.with foo as qux: ${qux}
+
+
