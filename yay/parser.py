@@ -73,7 +73,7 @@ class Parser(object):
         return node
 
     def index_access_action(self, s, w, t):
-        return nodes.Access(None, t[0])
+        return nodes.Access(None, t[0].value)
 
     def full_expression_action(self, s, w, t):
         node = None
@@ -82,7 +82,9 @@ class Parser(object):
                 node = nodes.Access(node, token)
             else:
                 token.container = node
+                token.set_parent(self)
                 node = token
+
         return node
 
     def ugh(self, s, w, t):

@@ -52,8 +52,7 @@ class Node(object):
         if self.parent:
             return self.parent.get_context(key)
         else:
-            print key
-            return self.get(None, key)
+            return self.semi_resolve(None).get(None, key)
 
     def get_root(self):
         if self.parent:

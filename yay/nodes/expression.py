@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node
+from yay.nodes import Node, Boxed
 from yay.protectedstring import ProtectedString
 
 
@@ -145,5 +145,5 @@ class Concatenation(Node):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
 
     def clone(self):
-        return Concatenation([x.clone() for x in self.args])
+        return Concatenation(*[x.clone() for x in self.args])
 

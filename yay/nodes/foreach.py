@@ -28,8 +28,11 @@ class ForEach(Node):
     def semi_resolve(self, context):
         lst = []
         for item in self.lookup.semi_resolve(context):
+            item.set_parent(self)
             lst.append(Context(self.value.clone(), {self.alias: item}))
-        return Sequence(lst)
+        sq = Sequence(lst)
+        sq.set_parent(self.parent)
+        return sq
 
     def resolve(self, context):
         return self.semi_resolve(context).resolve(context)

@@ -223,6 +223,8 @@ class Composer(object):
         while not self.check_event(MappingEndEvent):
             key, value = self.compose_mapping_value(previous)
             if key == ".include":
+                value.set_parent(previous)
+
                 if isinstance(value, Sequence):
                     for i in value.value:
                         context = None

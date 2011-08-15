@@ -23,18 +23,22 @@ class Copy(Node):
 
     I am a replacing node and do not care about data i am overlaying
     """
+    def __init__(self, value):
+        self.value = value
+        value.set_parent(self)
+
     def get(self, context, idx, default=None):
         return self.value.get(context, idx, default)
 
     def semi_resolve(self, context):
-        return self.value.clone()
+        return self.value.semi_resolve(context)
 
     def resolve(self, context):
-        return self.value.clone().resolve(context)
+        return self.value.resolve(context)
 
     def walk(self, context):
         yield self.value
 
     def clone(self):
-        return Clone(self.value.clone())
+        return self.value.clone()
 
