@@ -16,7 +16,6 @@ import yaml
 
 from yay.loader import Loader
 from yay.openers import Openers
-from yay.context import RootContext
 
 class Config(object):
 
@@ -40,7 +39,7 @@ class Config(object):
     def get(self):
         if not self.mapping:
             return {}
-        return self.mapping.resolve(RootContext(self.mapping))
+        return self.mapping.resolve()
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)

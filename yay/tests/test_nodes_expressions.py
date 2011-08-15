@@ -15,7 +15,6 @@
 
 import unittest
 from yay.nodes import *
-from yay.context import RootContext
 
 class TestNodeExpressions(unittest.TestCase):
 
@@ -23,61 +22,60 @@ class TestNodeExpressions(unittest.TestCase):
         for a in (True, False):
             for b in (True, False):
                 c = And(Boxed(a), Boxed(b))
-                self.failUnlessEqual(c.resolve(None), a and b)
+                self.failUnlessEqual(c.resolve(), a and b)
 
     def test_or(self):
         for a in (True, False):
             for b in (True, False):
                 c = Or(Boxed(a), Boxed(b))
-                self.failUnlessEqual(c.resolve(None), a or b)
+                self.failUnlessEqual(c.resolve(), a or b)
 
     def test_in(self):
         b = ["a", "b", "c", "d"]
         
         c = In(Boxed("a"), Boxed(b))
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
         c = In(Boxed("z"), Boxed(b))
-        self.failUnless(not c.resolve(None))
+        self.failUnless(not c.resolve())
 
     def test_equals(self):
         a = Boxed(5)
         b = Boxed(5)
         c = Equal(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_not_equals(self):
         a = Boxed(5)
         b = Boxed(4)
         c = NotEqual(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_lt(self):
         a = Boxed(3)
         b = Boxed(4)
         c = LessThan(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_lte(self):
         a = Boxed(3)
         b = Boxed(4)
         c = LessThanEqual(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_gt(self):
         a = Boxed(5)
         b = Boxed(4)
         c = GreaterThan(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_gte(self):
         a = Boxed(5)
         b = Boxed(4)
         c = GreaterThanEqual(a, b)
-        self.failUnless(c.resolve(None))
+        self.failUnless(c.resolve())
 
     def test_function(self):
-        context = RootContext({})
-        context.functions["foo"] = lambda x: x+5
-        r = Function("foo", [Boxed(5)])
-        self.failUnlessEqual(r.resolve(context), 10)
+        r = Function("sum", [Boxed(5), Boxed(5)])
+        self.failUnlessEqual(r.resolve(), 10)
+

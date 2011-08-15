@@ -18,6 +18,7 @@ from yay.errors import EvaluationError
 class Node(object):
     __slots__ = ("chain", "value")
     chain = None
+    parent = None
     locked = False
 
     name = "<Unknown>"
@@ -28,26 +29,36 @@ class Node(object):
     def __init__(self, value=None):
         # Premature typing optimisation
         self.value = value
+        value.set_parent(self)
 
-    def apply(self, context, data):
-        pass
+    def set_parent(self, parent):
+        self.parent = parent
 
-    def resolve(self, context):
-        data = None
-        if self.chain:
-            data = self.chain.resolve(context)
-        return self.apply(context, data)
+    def resolve(self):
+        raise NotImplementedError(self.resolve)
 
-    def semi_resolve(self, context):
+    def expand(self):
         return self
 
-    def walk(self, context):
+    def walk(self):
         return iter([])
 
-    def lock(self, context):
+    def lock(self):
         self.locked = True
-        for child in self.walk(context):
-            child.lock(context)
+        for child in self.walk():
+            child.lock()
+
+    def get_context(self, key):
+        if self.parent:
+            return self.parent.get_context(key)
+        else:
+            return self.expand().get(key)
+
+    def get_root(self):
+        if self.parent:
+            return self.parent.get_root()
+        else:
+            return self
 
     def error(self, message):
         raise EvaluationError(
@@ -56,6 +67,9 @@ class Node(object):
             self.line,          # Line
             self.column,        # Column
             self.snippet)       # Snippet
+
+    def clone(self):
+        raise NotImplementedError(self.clone)
 
     def __str__(self):
         return repr(self)

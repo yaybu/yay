@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yay.nodes.node import Node
+from yay.nodes.context import Context
 from yay.nodes.boxed import Boxed
 from yay.nodes.mapping import Mapping
 from yay.nodes.sequence import Sequence

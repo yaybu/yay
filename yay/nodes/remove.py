@@ -16,15 +16,21 @@ from yay.nodes import Node
 
 class Remove(Node):
 
-    def get(self, context, idx, default=None):
-        return Boxed(self.resolve(context)[int(idx)])
+    def get(self, idx, default=None):
+        return Boxed(self.resolve()[int(idx)])
 
-    def apply(self, context, existing):
-        if not existing:
+    def resolve(self):
+        if not self.chain:
             return []
-        return [x for x in existing if x not in self.value.resolve(context)]
+        existing = self.chain.resolve()
+        return [x for x in existing if x not in self.value.resolve()]
 
-    def walk(self, context):
+    def walk(self):
         yield self.chain
         yield self.value
+
+    def clone(self):
+        r = Remove(self.value.clone())
+        r.chain = self.chain.clone() if self.chain else None
+        return r
 

@@ -12,32 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed
+from yay.nodes import Node
 
-class Sequence(Node):
+class Context(Node):
     """
-    I am a list that hasnt been created yet
+    A way of capturing context in the graph
     """
-    def __init__(self, value):
-        self.value = value
-        [x.set_parent(self) for x in value]
 
-    def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+    def __init__(self, value, context):
+        super(Context, self).__init__(value)
+        self.context = context
+
+    def get_context(self, key):
+        val = self.context.get(key, None)
+        if not val:
+            val = super(Context, self).get_context(key)
+        return val
+
+    def expand(self):
+        return self.value.expand()
 
     def resolve(self):
-        data = []
-        for val in self.value:
-            data.append(val.resolve())
-        return data
+        return self.value.resolve()
 
-    def __iter__(self):
-        return iter(self.value)
-
-    def walk(self):
-        for val in self.value:
-            yield val
+    def __repr__(self):
+        return "Context(%s)" % self.value
 
     def clone(self):
-        return Sequence([x.clone() for x in self.value])
+        return Context(self.value.clone(), self.context)
 

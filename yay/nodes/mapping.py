@@ -21,17 +21,20 @@ class Mapping(Node):
     """
     def __init__(self, predecessor):
         self.predecessor = predecessor
+        if predecessor:
+            predecessor.set_parent(self)
         self.value = {}
 
     def set(self, key, val):
         #val.chain = self.value.get("key", None)
         self.value[key] = val
+        val.set_parent(self)
 
-    def get(self, context, key, default=None):
+    def get(self, key, default=None):
         if key in self.value:
             return self.value[key]
         if self.predecessor:
-            return self.predecessor.get(context, key, default)
+            return self.predecessor.get(key, default)
         return default
 
     def keys(self):
@@ -40,18 +43,28 @@ class Mapping(Node):
             keys.update(self.predecessor.keys())
         return list(keys)
 
-    def resolve(self, context):
+    def resolve(self):
         data = {}
         for key in self.keys():
             try:
                 key = key.encode('ascii')
             except UnicodeEncodeError:
                 pass
-            data[key] = self.get(context, key, None).resolve(context)
+            data[key] = self.get(key, None).resolve()
         return data
 
-    def walk(self, context):
+    def walk(self):
         for itm in self.value.items():
             yield itm
         yield self.predecessor
+
+    def clone(self):
+        p = None
+        if self.predecessor:
+            p = self.predecessor.clone()
+
+        m = Mapping(p)
+        for k, v in self.value.items():
+            m.set(k, v.clone())
+        return m
 

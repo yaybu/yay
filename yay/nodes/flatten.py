@@ -26,16 +26,16 @@ class Flatten(Node):
 
     """ Inspired by Ruby's .flatten - flatten nested lists into a single one """
 
-    def __init__(self, value):
-        self.value = value
+    def expand(self):
+        return Sequence(list(Boxed(x) for x in flatten(self.value.resolve())))
 
-    def semi_resolve(self, context):
-        return Sequence(list(Boxed(x) for x in flatten(self.value.resolve(context))))
-
-    def resolve(self, context):
-        val = self.semi_resolve(context).resolve(context)
+    def resolve(self):
+        val = self.expand().resolve()
         return val
 
-    def walk(self, context):
+    def walk(self):
         yield self.value
+
+    def clone(self):
+        return Flatten(self.value.clone())
 

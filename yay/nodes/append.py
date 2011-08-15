@@ -16,20 +16,23 @@ from yay.nodes import Node, Boxed, Sequence
 
 class Append(Node):
 
-    def get(self, context, idx, default=None):
-        return Boxed(self.resolve(context)[int(idx)])
+    def get(self, idx, default=None):
+        return Boxed(self.resolve()[int(idx)])
 
-    def apply(self, context, existing):
-        if not existing:
-            existing = []
-        return existing + self.value.resolve(context)
-
-    def semi_resolve(self, context):
+    def expand(self):
         if not self.chain:
             return self.value
-        return Sequence(list(iter(self.chain.semi_resolve(context))) + list(iter(self.value.semi_resolve(context))))
+        return Sequence(list(iter(self.chain.expand())) + list(iter(self.value.expand())))
 
-    def walk(self, context):
+    def resolve(self):
+        return self.expand().resolve()
+
+    def walk(self):
         yield self.chain
         yield self.value
+
+    def clone(self):
+        a = Append(self.value.clone())
+        a.chain = self.chain.clone() if self.chain else None
+        return a
 
