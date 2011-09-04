@@ -21,14 +21,24 @@ class ForEach(Node):
         self.value = value
         value.set_parent(self)
 
-        self.lookup = args[1]
-        self.lookup.set_parent(self)
-        self.alias = args[0].strip()
+        self.alias = args.pop(0).strip()
 
-        if len(args) == 3:
-            self.mode = args[2]
+        self.lookup = args.pop(0)
+        self.lookup.set_parent(self)
+
+        if len(args) and args[0] in ("chain", "nochain"):
+            self.mode = args.pop(0)
         else:
             self.mode = "chain"
+
+        if len(args):
+            if not args[0] != "if":
+                self.error("Exepect 'if', got '%s'" % args[0])
+            args.pop(0)
+            self.filter = args.pop(0)
+            self.filter.set_parent(self)
+        else:
+            self.filter = None
 
     def expand(self):
         lst = []
@@ -59,5 +69,9 @@ class ForEach(Node):
         #yield self.value
 
     def clone(self):
-        return ForEach(self.root, self.value.clone(), [self.alias, self.lookup.clone(), self.mode])
+        fe = ForEach(self.root, self.value.clone(), [self.alias, self.lookup.clone(), self.mode])
+        if self.filter:
+            fe.filter = self.filter.clone()
+            fe.filter.set_parent(fe)
+        return fe
 

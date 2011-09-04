@@ -159,9 +159,9 @@ class Parser(object):
             ) + myrol
         templated_string.setParseAction(self.concatenation)
 
-        foreachif = Optional(Keyword("if") + filterExpression
+        foreachif = Optional(Keyword("if") + filterExpression)
 
-        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain")) + foreach_if
+        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain")) + foreachif
         as_statement = expression + Suppress("as") + identifier
 
         self.templated_string = templated_string
