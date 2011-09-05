@@ -1,0 +1,7 @@
+nodes:
+  - name: foo
+  - name: baz
+  - name: 5
+
+test.foreach node in nodes if node.name = 5: ${node}
+

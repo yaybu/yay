@@ -162,6 +162,16 @@ resources for each item in that list. You would do something like this::
                   name: /var/local/sites/${p}/src
                   repository: svn://mysvnserver/${p}
 
+You can also have conditions::
+
+    fruit:
+        - name: apple
+          price: 5
+        - name: lime
+          price: 10
+
+    cheap.foreach f in fruit if f.price < 10: ${f}
+
 
 Recipe Patterns
 ===============
