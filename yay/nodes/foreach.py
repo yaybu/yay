@@ -45,6 +45,7 @@ class ForEach(Node):
 
         for item in self.lookup.expand():
             c = Context(self.value.clone(), {self.alias: item})
+            c.set_parent(self)
 
             if self.filter:
                 f = self.filter.clone()

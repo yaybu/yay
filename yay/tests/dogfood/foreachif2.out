@@ -1,0 +1,10 @@
+nodes:
+  - name: foo
+  - name: baz
+  - name: bar
+
+foo: foo
+
+test:
+  - name: foo
+
