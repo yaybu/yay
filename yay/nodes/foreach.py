@@ -32,8 +32,8 @@ class ForEach(Node):
             self.mode = "chain"
 
         if len(args):
-            if not args[0] != "if":
-                self.error("Exepect 'if', got '%s'" % args[0])
+            if args[0] != "if":
+                self.error("Expected 'if', got '%s'" % args[0])
             args.pop(0)
             self.filter = args.pop(0)
             self.filter.set_parent(self)
@@ -45,6 +45,13 @@ class ForEach(Node):
 
         for item in self.lookup.expand():
             c = Context(self.value.clone(), {self.alias: item})
+
+            if self.filter:
+                f = self.filter.clone()
+                f.set_parent(c)
+                if not f.resolve():
+                    continue
+
             item.set_parent(c)
 
             if self.mode == "nochain":
