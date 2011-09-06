@@ -1,0 +1,18 @@
+test:
+  foo:
+    sitename: www.foo.com
+  bar:
+    sitename: www.bar.com
+  baz:
+    sitename: www.baz.com
+
+out:
+  - foo
+  - bar
+  - baz
+
+out2:
+  - www.foo.com
+  - www.bar.com
+  - www.baz.com
+
