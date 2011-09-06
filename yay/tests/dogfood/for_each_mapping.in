@@ -8,5 +8,5 @@ test:
 
 out.foreach x in test: ${x}
 
-out2.foreach x in test: ${tet[y]}
+out2.foreach x in test: ${test[x].sitename}
 

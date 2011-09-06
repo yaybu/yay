@@ -69,5 +69,5 @@ class Mapping(Node):
         return m
 
     def __iter__(self):
-        return iter(Boxed(v) for v in self.keys())
+        return iter(Boxed(v) for v in sorted(self.keys()))
 

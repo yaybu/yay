@@ -7,12 +7,12 @@ test:
     sitename: www.baz.com
 
 out:
-  - foo
   - bar
   - baz
+  - foo
 
 out2:
-  - www.foo.com
   - www.bar.com
   - www.baz.com
+  - www.foo.com
 
