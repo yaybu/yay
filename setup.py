@@ -27,4 +27,9 @@ setup(
     install_requires = [
         "PyYAML",
     ],
+    extras_require = dict(
+        db = [
+            "SQLAlchemy",
+            ],
+        ),
 )
