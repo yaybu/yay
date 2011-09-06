@@ -13,12 +13,16 @@
 # limitations under the License.
 
 from StringIO import StringIO
+
+try:
+    from sqlalchemy import Column, String, Integer, create_engine
+    from sqlalchemy.ext.declarative import declarative_base
+    from sqlalchemy.orm import sessionmaker
+    has_sqlalchemy = True
+except ImportError:
+    has_sqlalchemy = False
+
 import yay
-
-from sqlalchemy import Column, String, Integer, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
 from yay.nodes import Node, Boxed, Sequence
 
 c = yay.load(StringIO("""
@@ -100,6 +104,9 @@ class Database(Node):
         return table
 
     def expand(self):
+        if not has_sqlalchemy:
+            self.error("You are attempting to use a database from Yay, but SQLAlchemy is not installed")
+
         tbl = self.build_table(self.config)
 
         #if not self.engine:
