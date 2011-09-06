@@ -25,23 +25,6 @@ except ImportError:
 import yay
 from yay.nodes import Node, Boxed, Sequence
 
-c = yay.load(StringIO("""
-database:
-    name: user
-    schema:
-      - name: id
-        type: integer
-        pk: True
-      - name: username
-        type: string
-      - name: password
-        type: string
-"""))
-
-
-
-Base = declarative_base()
-
 class Instance(Node):
 
     def __init__(self, value):
@@ -57,6 +40,7 @@ class Instance(Node):
 class Database(Node):
 
     engine = None
+    base = declarative_base()
 
     def __init__(self, config):
         self.config = config
@@ -100,14 +84,14 @@ class Database(Node):
         for c in config["schema"]:
             attrs[c["name"]] = self.build_column(c)
 
-        table = type(config["name"], (Base,), attrs)
+        table = type(config["name"], (self.base,), attrs)
         return table
 
     def expand(self):
         if not has_sqlalchemy:
             self.error("You are attempting to use a database from Yay, but SQLAlchemy is not installed")
 
-        tbl = self.build_table(self.config)
+        tbl = self.build_table(self.config.get("user"))
 
         #if not self.engine:
         #    self.engine = create_engine('sqlite:///:memory:', echo=True)
@@ -124,24 +108,4 @@ class Database(Node):
     def resolve(self):
         return self.expand().resolve()
 
-t = Database(c['database'])
-
-t.engine = create_engine('sqlite:///:memory:', echo=True)
-Session = sessionmaker(bind=t.engine)
-session = Session()
-
-
-T = t.build_table(t.config)
-
-Base.metadata.create_all(t.engine)
-
-session.add(T(username='john', password='password'))
-session.add(T(username='john', password='password'))
-session.add(T(username='john', password='password'))
-session.add(T(username='john', password='password'))
-session.add(T(username='john', password='password'))
-
-session.commit()
-
-print t.resolve()
 
