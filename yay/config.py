@@ -47,8 +47,8 @@ def load_uri(uri, special_term='yay'):
     return c.get()
 
 def load(stream, special_term='yay', secret=False):
-    c = Config(special_term, secret)
-    c.load(stream)
+    c = Config(special_term)
+    c.load(stream, secret)
     return c.get()
 
 def dump(obj):
