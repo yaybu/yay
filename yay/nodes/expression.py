@@ -76,20 +76,23 @@ class Access(Node):
         if container:
             container.set_parent(self)
         self.access = access
+        self.access.set_parent(self)
 
     def get(self, idx, default=None):
         sr = self.expand()
         return sr.get(idx, default)
 
     def expand(self):
+        key = self.access.resolve()
+
         if self.container:
-            unresolved = self.container.get(self.access)
+            unresolved = self.container.get(key)
             if unresolved is None:
-                self.error("Container does not have field '%s'" % self.access)
+                self.error("Container does not have field '%s'" % key)
         else:
-            unresolved = self.get_context(self.access)
+            unresolved = self.get_context(key)
             if unresolved is None:
-                self.error("Context does not have field '%s'" % self.access)
+                self.error("Context does not have field '%s'" % key)
 
         if hasattr(unresolved, "expand"):
             return unresolved.expand()
@@ -110,7 +113,7 @@ class Access(Node):
         c = None
         if self.container:
             c = self.container.clone()
-        return Access(c, self.access)
+        return Access(c, self.access.clone())
 
 
 class Concatenation(Node):

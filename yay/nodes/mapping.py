@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node
+from yay.nodes import Node, Boxed
 
 class Mapping(Node):
     """
@@ -67,4 +67,7 @@ class Mapping(Node):
         for k, v in self.value.items():
             m.set(k, v.clone())
         return m
+
+    def __iter__(self):
+        return iter(Boxed(v) for v in sorted(self.keys()))
 

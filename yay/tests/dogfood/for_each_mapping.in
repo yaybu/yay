@@ -1,0 +1,12 @@
+test:
+  foo:
+    sitename: www.foo.com
+  bar:
+    sitename: www.bar.com
+  baz:
+    sitename: www.baz.com
+
+out.foreach x in test: ${x}
+
+out2.foreach x in test: ${test[x].sitename}
+

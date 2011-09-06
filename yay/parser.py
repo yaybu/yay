@@ -76,13 +76,13 @@ class Parser(object):
         return node
 
     def index_access_action(self, s, w, t):
-        return nodes.Access(None, t[0].value)
+        return nodes.Access(None, t[0])
 
     def full_expression_action(self, s, w, t):
         node = None
         for token in t:
             if not isinstance(token, nodes.Node):
-                node = nodes.Access(node, token)
+                node = nodes.Access(node, nodes.Boxed(token))
             else:
                 token.container = node
                 if node:
@@ -130,7 +130,7 @@ class Parser(object):
         full_list_access = Suppress("[") + filterExpression + Suppress("]")
         full_list_access.setParseAction(lambda s, w, t: nodes.Filter(None, t[0]))
 
-        listAccess = Suppress("[") + intNum + Suppress("]")
+        listAccess = Suppress("[") + expression + Suppress("]")
         listAccess.setParseAction(self.index_access_action)
 
 

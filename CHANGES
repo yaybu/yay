@@ -4,6 +4,7 @@ Changelog for yay
 0.0.24 (unreleased)
 -------------------
 
+- Can now foreach over a mapping
 - Add ``.foreach x in y if x.z = a``
 - Add '.with expression as foo:'
 - Add chain and nochain mode to foreach. chain is the default.
