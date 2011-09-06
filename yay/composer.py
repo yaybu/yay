@@ -39,6 +39,7 @@ class Composer(object):
             "with": lambda value, args: With(value, *self.parser.as_statement.parseString(args)),
             "select": lambda value, args: Select(value, self.parser.expression.parseString(args)[0]),
             "flatten": lambda value, args: Flatten(value),
+            "database": lambda value, args: Database(value),
             }
         self.dirty = False
 

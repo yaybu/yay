@@ -36,7 +36,7 @@ class Instance(Node):
         return dict((k,getattr(self.value,k)) for k in self.value.__table__.columns.keys())
 
 
-class Table(Node):
+class Database(Node):
 
     engine = None
 
@@ -103,7 +103,7 @@ class Table(Node):
     def resolve(self):
         return self.expand().resolve()
 
-t = Table(c['database'])
+t = Database(c['database'])
 
 t.engine = create_engine('sqlite:///:memory:', echo=True)
 Session = sessionmaker(bind=t.engine)
