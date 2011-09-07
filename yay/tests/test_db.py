@@ -18,6 +18,11 @@ import yay
 from yay.config import Config
 from yay.nodes import Database
 
+from sqlalchemy import Column, String, Integer, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+
 dbyay = """
 metadata.database:
     connection: |
@@ -55,25 +60,23 @@ class TestDb(unittest.TestCase):
         self.config = Config()
         self.config.load(dbyay)
 
-        #t = Database(c['database'])
+        t = self.config.mapping.get('metadata')
 
-        #t.engine = create_engine('sqlite:///:memory:', echo=True)
-        #Session = sessionmaker(bind=t.engine)
-        #session = Session()
+        t.engine = create_engine('sqlite:///:memory:', echo=True)
+        Session = sessionmaker(bind=t.engine)
+        session = Session()
 
-        #T = t.build_table(t.config)
+        T = t.build_table(t.config)
 
-        #Base.metadata.create_all(t.engine)
+        Base.metadata.create_all(t.engine)
 
-        #session.add(T(username='john', password='password'))
-        #session.add(T(username='john', password='password'))
-        #session.add(T(username='john', password='password'))
-        #session.add(T(username='john', password='password'))
-        #session.add(T(username='john', password='password'))
+        session.add(T(username='john', password='password'))
+        session.add(T(username='john', password='password'))
+        session.add(T(username='john', password='password'))
+        session.add(T(username='john', password='password'))
+        session.add(T(username='john', password='password'))
 
-        #session.commit()
-
-        #print t.resolve()
+        session.commit()
 
     def test_list_all(self):
         self.config.get()
