@@ -20,7 +20,8 @@ from yay.nodes import Database
 
 dbyay = """
 metadata.database:
-    connection:| sqlite:///:memory:
+    connection: |
+        sqlite:///:memory:
     tables:
       - name: user
         fields:

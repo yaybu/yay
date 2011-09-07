@@ -93,8 +93,8 @@ class Database(Node):
 
         tbl = self.build_table(self.config.get("tables").resolve()[0])
 
-        #if not self.engine:
-        #    self.engine = create_engine('sqlite:///:memory:', echo=True)
+        if not self.engine:
+            self.engine = create_engine(self.config.get("connection").resolve(), echo=True)
         Session = sessionmaker(bind=self.engine)
         session = Session()
 
