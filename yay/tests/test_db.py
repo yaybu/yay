@@ -66,15 +66,17 @@ class TestDb(unittest.TestCase):
         Session = sessionmaker(bind=t.engine)
         session = Session()
 
-        T = t.build_table(t.config.get("tables").get(0).resolve())
+        User = t.build_table(t.config.get("tables").get(0).resolve())
+        Host = t.build_table(t.config.get("tables").get(1).resolve())
+        Service = t.build_table(t.config.get("tables").get(2).resolve())
 
         t.base.metadata.create_all(t.engine)
 
-        session.add(T(username='john', password='password'))
-        session.add(T(username='john', password='password'))
-        session.add(T(username='john', password='password'))
-        session.add(T(username='john', password='password'))
-        session.add(T(username='john', password='password'))
+        session.add(User(username='john', password='password'))
+        session.add(User(username='john', password='password'))
+        session.add(User(username='john', password='password'))
+        session.add(User(username='john', password='password'))
+        session.add(User(username='john', password='password'))
 
         session.commit()
 
