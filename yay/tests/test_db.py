@@ -91,6 +91,14 @@ class TestDb(unittest.TestCase):
 
         session.commit()
 
+        h = session.query(Host).first()
+        print h.services
+        print type(h.services)
+        print h.services[0]
+        print type(h.services[0])
+
+        self.fail()
+
     def test_list_all(self):
         self.config.get()
 

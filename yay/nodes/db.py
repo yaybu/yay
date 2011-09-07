@@ -18,6 +18,7 @@ try:
     from sqlalchemy import Column, ForeignKey, String, Integer, create_engine
     from sqlalchemy.ext.declarative import declarative_base
     from sqlalchemy.orm import sessionmaker, relationship
+    from sqlalchemy.orm.collections import InstrumentedList
     has_sqlalchemy = True
 except ImportError:
     has_sqlalchemy = False
@@ -25,12 +26,46 @@ except ImportError:
 import yay
 from yay.nodes import Node, Boxed, Sequence
 
+
+class InstanceList(Node):
+
+    """
+    I am a list of Instance nodes - i.e. a one-to-many relationship
+    """
+
+    def __init__(self, values):
+        self.values = values
+
+    def get(self, idx):
+        v = self.values[idx]
+
+        if isinstance(v, Database.base):
+            return Instance(v)
+
+        return Boxed(self.values[idx])
+
+    def resolve(self):
+        return list(self.__iter__())
+
+    def __iter__(self):
+        for i in range(len(self.values):
+            yield self.get(i)
+
+
 class Instance(Node):
 
     def __init__(self, value):
         self.value = value
 
     def get(self, key):
+        v = getattr(self.value, key)
+
+        if isinstance(v, Database.base):
+            return Instance(v)
+
+        if isinstance(v, InstrumentedList):
+            return InstanceList(v)
+
         return Boxed(getattr(self.value, key))
 
     def resolve(self):
