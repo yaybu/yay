@@ -82,6 +82,13 @@ class TestDb(unittest.TestCase):
         session.add(User(username='john', password='password'))
         session.add(User(username='john', password='password'))
 
+        h = Host(name="wonderflonium")
+        session.add(h)
+
+        s = Service(name="www.foo.com", branch="/trunk")
+        h.services.append(s)
+        session.add(s)
+
         session.commit()
 
     def test_list_all(self):
