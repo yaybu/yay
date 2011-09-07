@@ -66,9 +66,9 @@ class TestDb(unittest.TestCase):
         Session = sessionmaker(bind=t.engine)
         session = Session()
 
-        T = t.build_table(t.config)
+        T = t.build_table(t.config.get("tables").get(0).resolve())
 
-        Base.metadata.create_all(t.engine)
+        t.base.metadata.create_all(t.engine)
 
         session.add(T(username='john', password='password'))
         session.add(T(username='john', password='password'))
