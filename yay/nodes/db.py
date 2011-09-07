@@ -15,9 +15,9 @@
 from StringIO import StringIO
 
 try:
-    from sqlalchemy import Column, String, Integer, create_engine
+    from sqlalchemy import Column, ForeignKey, String, Integer, create_engine
     from sqlalchemy.ext.declarative import declarative_base
-    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.orm import sessionmaker, relationship
     has_sqlalchemy = True
 except ImportError:
     has_sqlalchemy = False
@@ -46,6 +46,9 @@ class Database(Node):
         self.config = config
 
     def build_column(self, columnspec):
+        if "relationship" in columnspec:
+            return relationship(columnspec["relationship"])
+
         types = dict(
             string=String,
             integer=Integer,
@@ -62,7 +65,12 @@ class Database(Node):
         else:
             primary_key = False
 
-        column = Column(T(), primary_key=primary_key)
+        args = [T()]
+
+        if "foreign_key" in columnspec:
+            args.append(ForeignKey(columnspec['foreign_key']))
+
+        column = Column(*args, primary_key=primary_key)
         return column
 
     def build_table(self, config):

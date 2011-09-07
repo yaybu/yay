@@ -36,6 +36,17 @@ metadata.database:
           - name: username
           - name: password
 
+      - name: service
+        fields:
+          - name: id
+            type: integer
+            pk: True
+          - name: name
+          - name: branch
+          - name: host_id
+            type: integer
+            foreign_key: host.id
+
       - name: host
         fields:
           - name: id
@@ -43,14 +54,7 @@ metadata.database:
             pk: True
           - name: name
           - name: services
-
-      - name: service
-        fields:
-          - name: id
-            type: integer
-            pk: True
-          - name: name
-            name: branch
+            relationship: service
 """
 
 
@@ -67,8 +71,8 @@ class TestDb(unittest.TestCase):
         session = Session()
 
         User = t.build_table(t.config.get("tables").get(0).resolve())
-        Host = t.build_table(t.config.get("tables").get(1).resolve())
-        Service = t.build_table(t.config.get("tables").get(2).resolve())
+        Service = t.build_table(t.config.get("tables").get(1).resolve())
+        Host = t.build_table(t.config.get("tables").get(2).resolve())
 
         t.base.metadata.create_all(t.engine)
 
