@@ -69,11 +69,11 @@ class Database(Node):
         if not "name" in config:
             self.error("Table name is not given")
 
-        if not "schema" in config:
-            self.error("Schema is missing from definition")
+        if not "fields" in config:
+            self.error("Field list is missing from definition")
 
-        if not isinstance(config["schema"], list):
-            self.error("Schema should be a list of column definitions")
+        if not isinstance(config["fields"], list):
+            self.error("Fiel list should be a list of column definitions")
 
         attrs = {}
         attrs['__tablename__'] = config['name']
@@ -81,7 +81,7 @@ class Database(Node):
             useexisting = True,
             )
 
-        for c in config["schema"]:
+        for c in config["fields"]:
             attrs[c["name"]] = self.build_column(c)
 
         table = type(config["name"], (self.base,), attrs)
@@ -91,7 +91,7 @@ class Database(Node):
         if not has_sqlalchemy:
             self.error("You are attempting to use a database from Yay, but SQLAlchemy is not installed")
 
-        tbl = self.build_table(self.config.get("user"))
+        tbl = self.build_table(self.config.get("tables").resolve()[0])
 
         #if not self.engine:
         #    self.engine = create_engine('sqlite:///:memory:', echo=True)
