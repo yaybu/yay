@@ -33,14 +33,15 @@ class InstanceList(Node):
     I am a list of Instance nodes - i.e. a one-to-many relationship
     """
 
-    def __init__(self, values):
+    def __init__(self, db, values):
+        self.db = db
         self.values = values
 
     def get(self, idx):
         v = self.values[idx]
 
-        if isinstance(v, Database.base):
-            return Instance(v)
+        if isinstance(v, self.db.base):
+            return Instance(self.db, v)
 
         return Boxed(self.values[idx])
 
@@ -54,17 +55,18 @@ class InstanceList(Node):
 
 class Instance(Node):
 
-    def __init__(self, value):
+    def __init__(self, db, value):
+        self.db = db
         self.value = value
 
     def get(self, key):
         v = getattr(self.value, key)
 
-        if isinstance(v, Database.base):
-            return Instance(v)
+        if isinstance(v, self.db.base):
+            return Instance(self.db, v)
 
         if isinstance(v, InstrumentedList):
-            return InstanceList(v)
+            return InstanceList(self.db, v)
 
         return Boxed(getattr(self.value, key))
 
@@ -82,7 +84,7 @@ class Table(Node):
         seq = []
 
         for instance in self.db.session.query(self.value).all():
-             seq.append(Instance(instance))
+             seq.append(Instance(self.db, instance))
 
         return Sequence(seq)
 

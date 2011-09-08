@@ -56,6 +56,10 @@ metadata.database:
             relationship: service
 """
 
+engine = create_engine('sqlite:///:memory:', echo=True)
+Session = sessionmaker(bind=engine)
+session = Session()
+
 
 class TestDb(unittest.TestCase):
 
@@ -65,15 +69,12 @@ class TestDb(unittest.TestCase):
 
         self.t = t = self.config.mapping.get('metadata')
 
-        t.engine = create_engine('sqlite:///:memory:', echo=True)
-        Session = sessionmaker(bind=t.engine)
-        session = Session()
-
         User = t.get("user").value
         Service = t.get("service").value
         Host = t.get("host").value
 
-        t.base.metadata.create_all(t.engine)
+        t.engine = engine
+        t.base.metadata.create_all(engine)
 
         session.add(User(username='john', password='password'))
         session.add(User(username='john', password='password'))
@@ -91,7 +92,7 @@ class TestDb(unittest.TestCase):
         session.commit()
 
     def tearDown(self):
-        self.t.engine = None
+        self.t.base.metadata.drop_all(self.t.engine)
 
     def test_foreach_host(self):
         self.config.load("""
