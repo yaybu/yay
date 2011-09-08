@@ -78,9 +78,9 @@ class Access(Node):
         self.access = access
         self.access.set_parent(self)
 
-    def get(self, idx, default=None):
+    def get(self, idx):
         sr = self.expand()
-        return sr.get(idx, default)
+        return sr.get(idx)
 
     def expand(self):
         key = self.access.resolve()

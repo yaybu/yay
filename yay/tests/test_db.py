@@ -64,15 +64,15 @@ class TestDb(unittest.TestCase):
         self.config = Config()
         self.config.load(dbyay)
 
-        t = self.config.mapping.get('metadata')
+        self.t = t = self.config.mapping.get('metadata')
 
         t.engine = create_engine('sqlite:///:memory:', echo=True)
         Session = sessionmaker(bind=t.engine)
         session = Session()
 
-        User = t.build_table(t.config.get("tables").get(0).resolve())
-        Service = t.build_table(t.config.get("tables").get(1).resolve())
-        Host = t.build_table(t.config.get("tables").get(2).resolve())
+        User = t.build_table(t.config.get("tables").get(0).resolve()).value
+        Service = t.build_table(t.config.get("tables").get(1).resolve()).value
+        Host = t.build_table(t.config.get("tables").get(2).resolve()).value
 
         t.base.metadata.create_all(t.engine)
 
@@ -91,13 +91,15 @@ class TestDb(unittest.TestCase):
 
         session.commit()
 
-        h = session.query(Host).first()
-        print h.services
-        print type(h.services)
-        print h.services[0]
-        print type(h.services[0])
+    def tearDown(self):
+        self.t.engine = None
 
-        self.fail()
+    def test_foreach_host(self):
+        self.config.load("""
+            test.foreach h in metadata.host: ${h.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ["wonderflonium"])
 
     def test_list_all(self):
         self.config.get()

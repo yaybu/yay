@@ -48,7 +48,7 @@ class InstanceList(Node):
         return list(self.__iter__())
 
     def __iter__(self):
-        for i in range(len(self.values):
+        for i in range(len(self.values)):
             yield self.get(i)
 
 
@@ -72,10 +72,26 @@ class Instance(Node):
         return dict((k,getattr(self.value,k)) for k in self.value.__table__.columns.keys())
 
 
+class Table(Node):
+
+    def __init__(self, db, value):
+        self.db = db
+        self.value = value
+
+    def expand(self):
+        seq = []
+
+        for instance in self.db.session.query(self.value).all():
+             seq.append(Instance(instance))
+
+        return Sequence(seq)
+
+
 class Database(Node):
 
     engine = None
     base = declarative_base()
+    _session = None
 
     def __init__(self, config):
         self.config = config
@@ -128,25 +144,27 @@ class Database(Node):
             attrs[c["name"]] = self.build_column(c)
 
         table = type(config["name"], (self.base,), attrs)
-        return table
+        return Table(self, table)
 
-    def expand(self):
+    def get(self, key):
+        for t in self.config.get("tables").resolve():
+            if t["name"] == key:
+                return self.build_table(t)
+
+    @property
+    def session(self):
+        if self._session:
+            return self._session
+
         if not has_sqlalchemy:
             self.error("You are attempting to use a database from Yay, but SQLAlchemy is not installed")
-
-        tbl = self.build_table(self.config.get("tables").resolve()[0])
 
         if not self.engine:
             self.engine = create_engine(self.config.get("connection").resolve(), echo=True)
         Session = sessionmaker(bind=self.engine)
-        session = Session()
+        self._session = Session()
 
-        seq = []
-
-        for instance in session.query(tbl).all():
-             seq.append(Instance(instance))
-
-        return Sequence(seq)
+        return self._session
 
     def resolve(self):
         return self.expand().resolve()
