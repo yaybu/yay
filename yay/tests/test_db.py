@@ -101,6 +101,14 @@ class TestDb(unittest.TestCase):
 
         self.failUnlessEqual(self.config.get()["test"], ["wonderflonium"])
 
+    def test_foreach_host_service(self):
+        self.config.load("""
+            test.foreach h in metadata.host:
+              .foreach s in h.services: ${s.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ["www.foo.com"])
+
     def test_list_all(self):
         self.config.get()
 
