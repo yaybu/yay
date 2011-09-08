@@ -98,6 +98,7 @@ class Database(Node):
 
     def __init__(self, config):
         self.config = config
+        self.tables = {}
 
     def build_column(self, columnspec):
         if "relationship" in columnspec:
@@ -150,9 +151,13 @@ class Database(Node):
         return Table(self, table)
 
     def get(self, key):
+        if key in self.tables:
+            return self.tables[key]
+
         for t in self.config.get("tables").resolve():
             if t["name"] == key:
-                return self.build_table(t)
+                tbl = self.tables[key] = self.build_table(t)
+                return tbl
 
     @property
     def session(self):
@@ -170,6 +175,6 @@ class Database(Node):
         return self._session
 
     def resolve(self):
-        return self.expand().resolve()
+        return {}
 
 
