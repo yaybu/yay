@@ -86,6 +86,9 @@ class Table(Node):
 
         return Sequence(seq)
 
+    def resolve(self):
+        return self.expand().resolve()
+
 
 class Database(Node):
 

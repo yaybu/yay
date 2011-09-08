@@ -70,9 +70,9 @@ class TestDb(unittest.TestCase):
         Session = sessionmaker(bind=t.engine)
         session = Session()
 
-        User = t.build_table(t.config.get("tables").get(0).resolve()).value
-        Service = t.build_table(t.config.get("tables").get(1).resolve()).value
-        Host = t.build_table(t.config.get("tables").get(2).resolve()).value
+        User = t.get("user").value
+        Service = t.get("service").value
+        Host = t.get("host").value
 
         t.base.metadata.create_all(t.engine)
 
