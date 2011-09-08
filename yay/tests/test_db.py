@@ -109,6 +109,24 @@ class TestDb(unittest.TestCase):
 
         self.failUnlessEqual(self.config.get()["test"], ["www.foo.com"])
 
+    def test_foreach_host_service_if(self):
+        self.config.load("""
+            branch: /trunk
+            test.foreach h in metadata.host:
+              .foreach s in h.services if s.branch=branch: ${s.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ["www.foo.com"])
+
+    def test_foreach_host_service_if_failing(self):
+        self.config.load("""
+            branch: /trun
+            test.foreach h in metadata.host:
+              .foreach s in h.services if s.branch=branch: ${s.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], [])
+
     def test_list_all(self):
         self.config.get()
 
