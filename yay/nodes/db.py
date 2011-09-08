@@ -92,13 +92,12 @@ class Table(Node):
 
 class Database(Node):
 
-    engine = None
-    base = declarative_base()
-    _session = None
-
     def __init__(self, config):
         self.config = config
         self.tables = {}
+        self.engine = None
+        self._session = None
+        self.base = declarative_base()
 
     def build_column(self, columnspec):
         if "relationship" in columnspec:

@@ -25,8 +25,7 @@ from sqlalchemy.orm import sessionmaker
 
 dbyay = """
 metadata.database:
-    connection: |
-        sqlite:///:memory:
+    connection: sqlite://
     tables:
       - name: user
         fields:
