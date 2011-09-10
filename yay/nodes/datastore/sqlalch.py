@@ -25,7 +25,7 @@ except ImportError:
 
 import yay
 from yay.nodes import Node, Boxed, Sequence
-
+from yay.nodes.datastore.bind import DataStore
 
 class InstanceList(Node):
 
@@ -92,7 +92,7 @@ class Table(Node):
         return self.expand().resolve()
 
 
-class Database(Node):
+class SQLAlchemy(DataStore):
 
     def __init__(self, config):
         self.config = config
@@ -174,8 +174,4 @@ class Database(Node):
         self._session = Session()
 
         return self._session
-
-    def resolve(self):
-        return {}
-
 

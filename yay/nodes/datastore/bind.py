@@ -13,16 +13,39 @@
 # limitations under the License.
 
 from yay.nodes import Node
-from yay.nodes.datastore.sqlalch import Database
+from yay.errors import ProgrammingError
+
+class DataStoreType(type):
+
+    stores = {}
+
+    def __new__(meta, class_name, bases, new_attrs):
+        cls = type.__new__(meta, class_name, bases, new_attrs)
+        name = new_attrs.get('__name__', class_name.lower())
+        if name in meta.stores:
+            raise ProgrammingError("Redefinition of DataStoreType '%s'" % name)
+        meta.stores[name] = cls
+        return cls
+
+
+class DataStore(object):
+    __metaclass__ = DataStoreType
+
 
 class Bind(Node):
 
     def __init__(self, config):
         self.config = config
-        self.backend = Database(config)
+        self.backend = None
+
+    def get_backend(self):
+        if not self.backend:
+            backend_type = self.config.get("type").resolve()
+            self.backend = DataStoreType.stores[backend_type](self.config)
+        return self.backend
 
     def get(self, key):
-        return self.backend.get(key)
+        return self.get_backend().get(key)
 
     def resolve(self):
         return {}
