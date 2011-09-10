@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 from StringIO import StringIO
 
 try:
@@ -33,15 +34,14 @@ class InstanceList(Node):
     I am a list of Instance nodes - i.e. a one-to-many relationship
     """
 
-    def __init__(self, db, values):
-        self.db = db
+    def __init__(self, values):
         self.values = values
 
     def get(self, idx):
         v = self.values[idx]
 
-        if isinstance(v, self.db.base):
-            return Instance(self.db, v)
+        if hasattr(v, "__tablename__"):
+            return Instance(v)
 
         return Boxed(self.values[idx])
 
@@ -55,18 +55,17 @@ class InstanceList(Node):
 
 class Instance(Node):
 
-    def __init__(self, db, value):
-        self.db = db
+    def __init__(self, value):
         self.value = value
 
     def get(self, key):
         v = getattr(self.value, key)
 
-        if isinstance(v, self.db.base):
-            return Instance(self.db, v)
+        if hasattr(v, "__tablename__"):
+            return Instance(v)
 
         if isinstance(v, InstrumentedList):
-            return InstanceList(self.db, v)
+            return InstanceList(v)
 
         return Boxed(getattr(self.value, key))
 
@@ -84,7 +83,7 @@ class Table(Node):
         seq = []
 
         for instance in self.db.session.query(self.value).all():
-             seq.append(Instance(self.db, instance))
+             seq.append(Instance(instance))
 
         return Sequence(seq)
 
@@ -137,7 +136,7 @@ class SQLAlchemy(DataStore):
             self.error("Field list is missing from definition")
 
         if not isinstance(config["fields"], list):
-            self.error("Fiel list should be a list of column definitions")
+            self.error("Field list should be a list of column definitions")
 
         attrs = {}
         attrs['__tablename__'] = config['name']
@@ -151,9 +150,24 @@ class SQLAlchemy(DataStore):
         table = type(config["name"], (self.base,), attrs)
         return Table(self, table)
 
+    def get_model(self, key):
+        model = self.config.get("model").resolve()
+        __import__(model)
+        m = sys.modules[model]
+        for k in dir(m):
+            v = getattr(m, k)
+            if hasattr(v, "__tablename__") and getattr(v, "__tablename__") == key:
+                return Table(self, v)
+        #raise NotFound("Table '%s' not defined in '%s'" % (key, model))
+        assert False
+
     def get(self, key):
         if key in self.tables:
             return self.tables[key]
+
+        if self.config.get("model"):
+            tbl = self.tables[key] = self.get_model(key)
+            return tbl
 
         for t in self.config.get("tables").resolve():
             if t["name"] == key:
