@@ -16,7 +16,6 @@
 import unittest
 import yay
 from yay.config import Config
-from yay.nodes import Database
 
 from sqlalchemy import Column, String, Integer, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,7 +23,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 dbyay = """
-metadata.database:
+metadata.bind:
     connection: sqlite://
     tables:
       - name: user
@@ -73,8 +72,8 @@ class TestDb(unittest.TestCase):
         Service = t.get("service").value
         Host = t.get("host").value
 
-        t.engine = engine
-        t.base.metadata.create_all(engine)
+        t.backend.engine = engine
+        t.backend.base.metadata.create_all(engine)
 
         session.add(User(username='john', password='password'))
         session.add(User(username='john', password='password'))
@@ -92,7 +91,7 @@ class TestDb(unittest.TestCase):
         session.commit()
 
     def tearDown(self):
-        self.t.base.metadata.drop_all(self.t.engine)
+        self.t.backend.base.metadata.drop_all(self.t.backend.engine)
 
     def test_foreach_host(self):
         self.config.load("""
