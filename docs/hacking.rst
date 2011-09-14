@@ -52,5 +52,50 @@ calls to :py:meth:`yay.nodes.Node.error` will raise an Exception with that metad
 Nodes
 -----
 
-Add a list of nodes here.
+.. automodule:: yay.nodes
+
+.. autoclass:: Node()
+   :members:
+
+.. autoclass:: Context()
+   :members:
+
+.. autoclass:: With()
+   :members:
+
+.. autoclass:: Boxed()
+   :members:
+
+.. autoclass:: Mapping()
+   :members:
+
+.. autoclass:: Sequence()
+   :members:
+
+.. autoclass:: Append()
+   :members:
+
+.. autoclass:: Remove()
+   :members:
+
+.. autoclass:: Filter()
+   :members:
+
+.. autoclass:: Copy()
+   :members:
+
+.. autoclass:: ForEach()
+   :members:
+
+.. autoclass:: Select()
+   :members:
+
+.. autoclass:: Flatten()
+   :members:
+
+.. autoclass:: Access()
+   :members:
+
+.. autoclass:: Bind()
+   :members:
 
