@@ -18,6 +18,10 @@ class Error(Exception):
         return self.args[0]
 
 
+class ProgrammingError(Error):
+    pass
+
+
 class LanguageError(Error):
 
     def __init__(self, description, file, line, column, snippet=None):
