@@ -24,7 +24,20 @@ def flatten(lst):
 
 class Flatten(Node):
 
-    """ Inspired by Ruby's .flatten - flatten nested lists into a single one """
+    """
+    Flatten nested lists into a single-dimension
+
+    This node will be added to the graph when the parser encounters the ``.flatten`` function::
+
+        example.flatten:
+          - - 1
+            - 2
+            - 3
+          - - a
+
+    It was added to yay to work around :py:class:`yay.nodes.ForEach` returning lists of lists
+    when they were nested. This has been resolved, so this node is probably deprecated.
+    """
 
     def expand(self):
         return Sequence(list(Boxed(x) for x in flatten(self.value.resolve())))

@@ -3,6 +3,17 @@ from yay.nodes import Node, Sequence, Context
 
 class Filter(Node):
 
+    """
+    Filter an iterable according to an XPath style selector
+
+    It will be created when the parser encounters something like::
+
+        example: ${foo[@.baz < 5]}
+
+    This will check every object in the sequence ``foo`` for a property
+    called ``baz`` with a value less than 5. The output is a sequence.
+    """
+
     def __init__(self, container, filter_expression):
         self.container = container
         if container:

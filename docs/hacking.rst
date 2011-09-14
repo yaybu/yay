@@ -57,12 +57,6 @@ Nodes
 .. autoclass:: Node()
    :members:
 
-.. autoclass:: Context()
-   :members:
-
-.. autoclass:: With()
-   :members:
-
 .. autoclass:: Boxed()
    :members:
 
@@ -70,6 +64,12 @@ Nodes
    :members:
 
 .. autoclass:: Sequence()
+   :members:
+
+.. autoclass:: Context()
+   :members:
+
+.. autoclass:: With()
    :members:
 
 .. autoclass:: Append()
@@ -94,6 +94,9 @@ Nodes
    :members:
 
 .. autoclass:: Access()
+   :members:
+
+.. autoclass:: Concatenation()
    :members:
 
 .. autoclass:: Bind()

@@ -34,6 +34,21 @@ class DataStore(object):
 
 class Bind(Node):
 
+    """
+    Configure access to an external data store such as a database for
+    access by Yay.
+
+    This node is added to the graph when the parser encounters a ``bind`` function::
+
+        mydb.bind:
+            type: somebackend
+            arg1: foo
+            arg2: bar
+
+    Bind finds an implementation of :py:class:`~yay.nodes.datastore.bind.DataStoreType`
+    that has a name of ``somebackend`` and passes all other configuration to it.
+    """
+
     def __init__(self, config):
         self.config = config
         self.backend = None
@@ -45,9 +60,17 @@ class Bind(Node):
         return self.backend
 
     def get(self, key):
+        """
+        If a node tries to traverse inside this node we ask the backend for that key
+        """
         return self.get_backend().get(key)
 
     def resolve(self):
+        """
+        If you try to resolve this node you get an empty mapping. Ideally you would
+        get your expanded DataStore, but it could be a massive database so we decided
+        not to bother.
+        """
         return {}
 
 

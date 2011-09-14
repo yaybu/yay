@@ -18,11 +18,7 @@ import copy
 from yay.nodes import Node
 
 class Copy(Node):
-    """
-    I resolve a node and deepcopy the outcome
 
-    I am a replacing node and do not care about data i am overlaying
-    """
     def __init__(self, value):
         self.value = value
         value.set_parent(self)

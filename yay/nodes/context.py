@@ -15,8 +15,12 @@
 from yay.nodes import Node
 
 class Context(Node):
+
     """
-    A way of capturing context in the graph
+    Add context to the graph.
+
+    Any children of this node will get different context to the parents
+    of this node as it implements ``get_context``.
     """
 
     def __init__(self, value, context):
@@ -24,6 +28,10 @@ class Context(Node):
         self.context = context
 
     def get_context(self, key):
+        """
+        If ``key`` is provided by this node return it, otherwise fall
+        back to default implementation.
+        """
         val = self.context.get(key, None)
         if not val:
             val = super(Context, self).get_context(key)
