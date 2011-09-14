@@ -15,9 +15,11 @@
 from yay.nodes import Node, Boxed
 
 class Sequence(Node):
+
     """
-    I am a list that hasnt been created yet
+    An ordered list of unresolved :py:class:`~yay.nodes.Node` objects.
     """
+
     def __init__(self, value):
         self.value = value
         [x.set_parent(self) for x in value]

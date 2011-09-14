@@ -15,10 +15,11 @@
 from yay.nodes import Node, Boxed
 
 class Mapping(Node):
+
     """
-    I represent a dictionary that will be manufactured out of multiple components
-    at resolve time
+    An unordered collection of key/value pairs
     """
+
     def __init__(self, predecessor):
         self.predecessor = predecessor
         if predecessor:

@@ -16,6 +16,11 @@ from yay.errors import EvaluationError
 
 
 class Node(object):
+
+    """
+    The base class for all things that can be inserted into the graph.
+    """
+
     __slots__ = ("chain", "value")
     chain = None
     parent = None
@@ -35,32 +40,56 @@ class Node(object):
         self.parent = parent
 
     def resolve(self):
+        """
+        Resolve an object into a simple type, like a string or a dictionary.
+
+        Node does not provide an implementation of this, all subclasses should
+        implemented it.
+        """
         raise NotImplementedError(self.resolve)
 
     def expand(self):
+        """
+        Generate a simplification of this object that can replace it in the graph
+        """
         return self
 
     def walk(self):
         return iter([])
 
     def lock(self):
+        """
+        Attempt to lock a node so any further changes to its value will cause errors.
+        """
         self.locked = True
         for child in self.walk():
             child.lock()
 
     def get_context(self, key):
+        """
+        Look up value of ``key`` and return it.
+
+        This doesn't do any resolving, the return value will be a subclass of Node.
+        """
         if self.parent:
             return self.parent.get_context(key)
         else:
             return self.expand().get(key)
 
     def get_root(self):
+        """
+        Find and return the root of this document.
+        """
         if self.parent:
             return self.parent.get_root()
         else:
             return self
 
     def error(self, message):
+        """
+        Raise an error message annotated with the line and column of the text that was
+        parsed to create this node
+        """
         raise EvaluationError(
             message,
             self.name,          # File
@@ -69,6 +98,9 @@ class Node(object):
             self.snippet)       # Snippet
 
     def clone(self):
+        """
+        Return a copy of this node.
+        """
         raise NotImplementedError(self.clone)
 
     def __str__(self):

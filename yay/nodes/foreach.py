@@ -16,6 +16,14 @@ from yay.nodes import Node, Boxed, Sequence, Context
 
 class ForEach(Node):
 
+    """
+    Represents an iteration over a sequence or other iterable node.
+
+    This will be added to the graph when the parser encounters the ``.foreach`` function::
+
+        example.foreach fruit in basket if fruit.price = 5: ${fruit.name}
+    """
+
     def __init__(self, root, value, args):
         self.root = root
         self.value = value
