@@ -98,6 +98,8 @@ to allow appending to predefined lists: append::
     resources.append:
         - baz
 
+You can also use ``.remove``, which works in a similar way.
+
 
 For Loops
 ~~~~~~~~~
@@ -167,11 +169,27 @@ be sorted alphabetically: mappings are generally unordered but we want
 the iteration order to be stable.
 
 
+Select
+~~~~~~
+
+The select statement is a way to have conditions in your configuration.
+
+Lets say ``host.distro`` contains your Ubuntu version and you want to install
+difference packages based on the distro. You could do something like::
+
+    packages.select:
+        karmic:
+          - python-setuptools
+        lucid:
+          - python-distribute
+          - python-zc.buildout
+
+
 With
 ~~~~
 
 If you have a complicated expression and you want to avoid typing it
-over and over again you can use the with expression.
+over and over again you can use the with expression::
 
     staff:
       john:
