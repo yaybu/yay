@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.24 (unreleased)
+0.0.24 (2011-10-22)
 -------------------
 
 - Can now foreach over a mapping
