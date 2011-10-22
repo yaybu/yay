@@ -16,6 +16,19 @@ from yay.nodes import Node, Boxed, Sequence
 
 class Append(Node):
 
+    """
+    Appends an iterable to a sequence
+
+    This gets added to the graph when the parser encounters an ``append`` function::
+
+        example.append:
+          - foo
+          - bar
+
+    If ``example`` hasn't been previously defined it behaves as if it is append
+    to an empty sequence.
+    """
+
     def get(self, idx, default=None):
         return Boxed(self.resolve()[int(idx)])
 

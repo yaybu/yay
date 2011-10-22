@@ -20,6 +20,12 @@ def sum(*args):
 
 class Function(Node):
 
+    """
+    Created when the parser encounters something that looks like a function call::
+
+        example.foreach i in range(5): ${i}
+    """
+
     functions = {
         "range": range,
         "sum": sum,

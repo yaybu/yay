@@ -71,6 +71,23 @@ class GreaterThanEqual(Comparison):
 
 
 class Access(Node):
+
+    """
+    A future lookup on another part of the graph.
+
+    This node is created when the parser encounters any source of lookup.
+    For example::
+
+        foo: ${bar.baz.qux}
+
+    This will create 3 Access nodes. The first will look up ``bar`` using
+    :py:meth:`.get_context`. The 2nd will lookup ``baz`` on the object returned
+    by the ``bar`` lookup. And so on.
+
+    The lookup won't actually happen until :py:meth:`.resolve` is called. This means
+    the graph can still continue to change as more data is loaded.
+    """
+
     def __init__(self, container, access):
         self.container = container
         if container:
@@ -117,11 +134,28 @@ class Access(Node):
 
 
 class Concatenation(Node):
+
+    """
+    This node concatenates multiple nodes together. It used used to do
+    variable expansion on literals.
+
+    It will be created when the parser encounters something like this:
+
+        foo: The ${animal} jumped over the ${object}
+    """
+
     def __init__(self, *args):
         self.args = args
         [x.set_parent(self) for x in args]
 
     def resolve(self):
+        """
+        If any of the nodes that are being concatenated are protected (because
+        Yay knows they were loaded from .yay.gpg) then this will return an
+        :py:class:`~yay.protected.ProtectedString` object.
+
+        If none of the nodes  are then it will return a string.
+        """
         resolved = [x.resolve() for x in self.args]
 
         protected = False

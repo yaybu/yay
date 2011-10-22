@@ -17,8 +17,9 @@ from yay.protectedstring import ProtectedString
 
 class Boxed(Node):
     """
-    A Boxed variable is an unmodified and uninteresting value that
-    is wrapped simply so we can put it in our graph
+    A Boxed node is some sort of literal and uninteresting value that
+    is wrapped simply so we can put it in the graph
+
     """
 
     def __init__(self, value):
@@ -27,6 +28,17 @@ class Boxed(Node):
     secret = False
 
     def resolve(self):
+        """
+        Boxed will do some simple and automatic processing of data when it
+        resolves.
+
+          * If it isn't a subclass of basestring it will be returned as is
+          * `yes`, `true` and `on` will become python True
+          * `no`, `false` and `off` will become python False
+          * If it can be cast to an ``int`` it will be.
+          * If it can be represented in ascii it will be
+          * Otherwise a unicode string is returned
+        """
         value = self.value
 
         if not isinstance(value, basestring):
@@ -55,6 +67,11 @@ class Boxed(Node):
             return value
 
     def get(self, key, default=None):
+        """
+        If the boxed value implements a list or dict like value access mechanism
+        a Boxed node will allow those inner values to be boxed on demand so Yay
+        can access them
+        """
         if isinstance(self.value, list):
             return Boxed(self.value[key])
 
