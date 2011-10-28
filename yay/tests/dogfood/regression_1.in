@@ -1,0 +1,9 @@
+
+someval: julian
+
+somelist: []
+
+somelist.append:
+    - ${someval}
+
+

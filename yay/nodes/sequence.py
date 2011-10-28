@@ -25,7 +25,8 @@ class Sequence(Node):
         [x.set_parent(self) for x in value]
 
     def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+        b = Boxed(self.resolve()[int(idx)])
+        return b
 
     def resolve(self):
         data = []

@@ -35,7 +35,9 @@ class Append(Node):
     def expand(self):
         if not self.chain:
             return self.value
-        return Sequence(list(iter(self.chain.expand())) + list(iter(self.value.expand())))
+        s = Sequence(list(iter(self.chain.expand())) + list(iter(self.value.expand())))
+        s.set_parent(self.parent)
+        return s
 
     def resolve(self):
         return self.expand().resolve()
