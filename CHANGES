@@ -4,7 +4,7 @@ Changelog for yay
 0.0.25 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix regression in .append
 
 
 0.0.24 (2011-10-22)
