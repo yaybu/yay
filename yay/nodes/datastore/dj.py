@@ -57,6 +57,7 @@ class Instance(Node):
         return BoxingFactory.box(getattr(self.value, key))
 
     def resolve(self):
+        from django.db import models
         mapping = {}
         for k in self.value._meta.get_all_field_names():
             if hasattr(self.value, k) and not isinstance(self.value._meta.get_field_by_name(k)[0], models.fields.related.ForeignKey):
@@ -69,17 +70,21 @@ class Table(Node):
     def __init__(self, value):
         self.value = value
 
-    def expand(self):
-        seq = []
+    def get(self, key):
+        try:
+            idx = int(key)
+        except ValueError:
+            return BoxingFactory.box(getattr(self.value, key))
 
-        for instance in self.value.objects.all():
-             seq.append(Instance(instance))
-
-        return Sequence(seq)
+        _all = self.value.objects.all()
+        return Instance(_all[idx])
 
     def resolve(self):
-        return self.expand().resolve()
+        return [Instance(x) for x in self.value.objects.all()]
 
+    def __iter__(self):
+        for i in range(self.value.objects.count()):
+            yield self.get(i)
 
 _horrible_cludge = False
 

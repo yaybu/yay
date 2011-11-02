@@ -73,3 +73,18 @@ class TestDjango(TestCase):
             """)
 
         self.failUnlessEqual(self.config.get()["test"], [])
+
+    def test_model_callable(self):
+        self.config.load("""
+            test.foreach p in metadata.Car.some_callable: ${p.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ['wheel','brake','badger'])
+
+    def test_model_callable_generator(self):
+        self.config.load("""
+            test.foreach p in metadata.Car.some_generator: ${p.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ['wheel','brake','badger'])
+

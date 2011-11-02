@@ -17,6 +17,9 @@ import inspect
 from yay.nodes import Node
 from yay.protectedstring import ProtectedString
 
+class Unboxable(Exception):
+    pass
+
 
 class BoxingFactory(object):
 
@@ -41,7 +44,7 @@ class BoxingFactory(object):
 def callable_boxer(val):
     """ Attempt to box callables """
     try:
-        inspect.getcallargs(val)
+        #inspect.getcallargs(val)
         return BoxingFactory.box(val())
     except TypeError:
         raise Unboxable("Cannot invoke callable that requires arguments")
