@@ -37,10 +37,6 @@ class InstanceList(Node):
 
     def get(self, idx):
         v = self.value.all()[idx]
-
-        if isinstance(v, models.Model):
-            return Instance(v)
-
         return BoxingFactory.box(v)
 
     def resolve(self):
@@ -49,6 +45,9 @@ class InstanceList(Node):
     def __iter__(self):
         for i in range(self.value.count()):
             yield self.get(i)
+
+if has_django_db:
+    BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
 
 
 class Instance(Node):
@@ -61,9 +60,6 @@ class Instance(Node):
 
     def get(self, key):
         v = getattr(self.value, key)
-
-        if isinstance(v, models.Model):
-            return Instance(v)
 
         if key in self.related or key in self.many_to_many:
             return InstanceList(v)
