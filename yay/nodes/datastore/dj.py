@@ -73,8 +73,8 @@ class Instance(Node):
     def resolve(self):
         mapping = {}
         for k in self.value._meta.get_all_field_names():
-            if hasattr(self.value, k):
-                mapping[k] =self.get(k).resolve()
+            if hasattr(self.value, k) and not isinstance(self.value._meta.get_field_by_name(k)[0], models.fields.related.ForeignKey):
+                mapping[k] = self.get(k).resolve()
         return mapping
 
 
