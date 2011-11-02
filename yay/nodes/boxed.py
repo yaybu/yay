@@ -12,8 +12,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import inspect
+
 from yay.nodes import Node
 from yay.protectedstring import ProtectedString
+
+class Unboxable(Exception):
+    pass
+
+
+class BoxingFactory(object):
+
+    """ Sometimes we need to box complicated types that we might have special
+    nodes for wrapping. The BoxingFactory will wrap any special nodes in the
+    right wrapper type before falling back to the Boxed() wrapping method. """
+
+    boxers = []
+
+    @classmethod
+    def register(cls, checker, boxer):
+        cls.boxers.append((checker, boxer))
+
+    @classmethod
+    def box(cls, value):
+        for checker, boxer in cls.boxers:
+            if checker(value):
+                return boxer(value)
+        return Boxed(value)
+
+
+def callable_boxer(val):
+    """ Attempt to box callables """
+    try:
+        #inspect.getcallargs(val)
+        return BoxingFactory.box(val())
+    except TypeError:
+        raise Unboxable("Cannot invoke callable that requires arguments")
+BoxingFactory.register(callable, callable_boxer)
+
 
 class Boxed(Node):
     """
@@ -66,16 +102,22 @@ class Boxed(Node):
         except UnicodeEncodeError:
             return value
 
-    def get(self, key, default=None):
+    def get(self, key):
         """
         If the boxed value implements a list or dict like value access mechanism
         a Boxed node will allow those inner values to be boxed on demand so Yay
         can access them
         """
         if isinstance(self.value, list):
-            return Boxed(self.value[key])
+            return BoxingFactory.box(self.value[key])
 
-        return Boxed(self.value.get(key, default))
+        if hasattr(self.value, "get"):
+            return BoxingFactory.box(self.value.get(key))
+
+        if hasattr(self.value, key):
+            return BoxingFactory.box(getattr(self.value, key))
+
+        self.error("Unable to find '%s'" % key)
 
     def __repr__(self):
         return "Boxed(%s)" % self.value

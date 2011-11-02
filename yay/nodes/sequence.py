@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed
+import inspect
+from yay.nodes import Node, BoxingFactory
 
 class Sequence(Node):
 
@@ -24,9 +25,10 @@ class Sequence(Node):
         self.value = value
         [x.set_parent(self) for x in value]
 
-    def get(self, idx, default=None):
-        b = Boxed(self.resolve()[int(idx)])
-        return b
+    def get(self, idx):
+        return self.value[int(idx)]
+        #b = BoxingFactory.box(self.resolve()[int(idx)])
+        #return b
 
     def resolve(self):
         data = []
@@ -43,4 +45,11 @@ class Sequence(Node):
 
     def clone(self):
         return Sequence([x.clone() for x in self.value])
+
+
+def box_generator(val):
+    return Sequence(list(BoxingFactory.box(itm) for itm in val))
+BoxingFactory.register(inspect.isgenerator, box_generator)
+
+BoxingFactory.register(lambda x: isinstance(x, list), box_generator)
 
