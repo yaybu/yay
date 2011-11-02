@@ -22,7 +22,7 @@ except ImportError:
 import inspect, sys
 
 import yay
-from yay.nodes import Node, Boxed, Sequence
+from yay.nodes import Node, BoxingFactory, Sequence
 from yay.nodes.datastore.bind import DataStore
 
 
@@ -41,7 +41,7 @@ class InstanceList(Node):
         if isinstance(v, models.Model):
             return Instance(v)
 
-        return Boxed(v)
+        return BoxingFactory.box(v)
 
     def resolve(self):
         return list(x.resolve() for x in self.__iter__())
@@ -68,7 +68,7 @@ class Instance(Node):
         if key in self.related or key in self.many_to_many:
             return InstanceList(v)
 
-        return Boxed(getattr(self.value, key))
+        return BoxingFactoy.box(getattr(self.value, key))
 
     def resolve(self):
         mapping = {}
