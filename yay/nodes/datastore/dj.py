@@ -19,7 +19,7 @@ try:
 except ImportError:
     has_django_db = False
 
-import inspect
+import inspect, sys
 
 import yay
 from yay.nodes import Node, Boxed, Sequence
@@ -41,13 +41,13 @@ class InstanceList(Node):
         if isinstance(v, models.Model):
             return Instance(v)
 
-        return Boxed(self.values[idx])
+        return Boxed(v)
 
     def resolve(self):
-        return list(self.__iter__())
+        return list(x.resolve() for x in self.__iter__())
 
     def __iter__(self):
-        for i in range(len(self.values)):
+        for i in range(self.value.count()):
             yield self.get(i)
 
 
@@ -57,7 +57,7 @@ class Instance(Node):
         self.value = value
 
         self.related = [x.get_accessor_name() for x in self.value._meta.get_all_related_objects()]
-        self.many_to_many = [x.get_accessor_name() for x in self.value._meta.get_all_related_many_to_manyobjects()]
+        self.many_to_many = [x.get_accessor_name() for x in self.value._meta.get_all_related_many_to_many_objects()]
 
     def get(self, key):
         v = getattr(self.value, key)
@@ -71,7 +71,11 @@ class Instance(Node):
         return Boxed(getattr(self.value, key))
 
     def resolve(self):
-        return dict((k,getattr(self.value,k)) for k in self.value.__table__.columns.keys())
+        mapping = {}
+        for k in self.value._meta.get_all_field_names():
+            if hasattr(self.value, k):
+                mapping[k] =self.get(k).resolve()
+        return mapping
 
 
 class Table(Node):
@@ -105,12 +109,12 @@ class DjangoStore(DataStore):
         if not key in dir(m):
             self.error("Model '%s' not defined in '%s'" % (key, model))
 
-        v = getattr(m, k)
+        v = getattr(m, key)
 
-        if not inspect.isclass(thing) or not issubclass(thing, models.Model):
+        if not inspect.isclass(v) or not issubclass(v, models.Model):
             self.error("'%s' is defined in '%s', but it isn't a Django model" % (key, model))
 
-        return Table(self, v)
+        return Table(v)
 
     def get(self, key):
         if key in self.tables:
