@@ -4,6 +4,51 @@ External DataStore Providers
 Yay has experimental support for external data sources. You can load them
 using ``.bind``.
 
+
+Using data from Django
+----------------------
+
+The expectation is that this feature will let you use yay within a Django
+project (perhaps with celery). It does not support using ``django.db`` outside
+of a Django project - you need a ``models.py`` and ``settings.py`` and the
+normal Django project scaffolding.
+
+You use ``.bind`` to expose your Django model::
+
+    mymodels.bind::
+        type: djangostore
+        model: myproject.models
+
+Any models defined in ``myprojects.models`` are now available in the
+``mymodels`` namespace. When the yay is fully transformed ``mymodels`` won't
+be. This is to stop your entire database getting serialized into YAML. However
+any values that you use will be fully expanded.
+
+If you were using this with Yaybu you could do things like this::
+
+    resources.foreach user in mymodels.UserProfile:
+        - Directory:
+            name: /home/${user.name}
+            owner: ${user.name}
+            group: staff
+
+You can define extra methods on your models and access them through Yay. For
+example, if we added this to our UserProfile model::
+
+    class UserProfile(models.Model):
+
+        @classmethod
+        def get_leavers(cls):
+            return cls.objects.filter(status="left")
+
+You can now use it like this::
+
+    resources.foreach user in mymodels.UserProfile.get_leavers:
+        - Directory:
+            name: /home/${user.name}
+            profile: remove
+
+
 Importing an existing SQLAlchemy model
 --------------------------------------
 
@@ -23,7 +68,7 @@ and role pairs, we can select all rows that have a particular role::
 
     match_role: admin
 
-    ssh_users.for u in metadata.users if u.role = match_role:
+    ssh_users.foreach u in metadata.users if u.role = match_role:
         username: ${u.name}
         homedir: /home/${u.name}
         fullname: ${u.firstname} ${u.surname}

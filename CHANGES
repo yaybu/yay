@@ -4,7 +4,8 @@ Changelog for yay
 0.0.26 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for a Django DataStore
+- Allow objects exposed from Python, including simple method calls
 
 
 0.0.25 (2011-10-28)
