@@ -12,15 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from django.conf import settings
-    if not settings.configured:
-        settings.configure(DATABASES={})
-    from django.db import models
-    has_django_db = True
-except ImportError:
-    has_django_db = False
-
 import inspect, sys
 
 import yay
@@ -63,7 +54,7 @@ class Instance(Node):
         if key in self.related or key in self.many_to_many:
             return InstanceList(v)
 
-        return BoxingFactoy.box(getattr(self.value, key))
+        return BoxingFactory.box(getattr(self.value, key))
 
     def resolve(self):
         mapping = {}
@@ -71,9 +62,6 @@ class Instance(Node):
             if hasattr(self.value, k) and not isinstance(self.value._meta.get_field_by_name(k)[0], models.fields.related.ForeignKey):
                 mapping[k] = self.get(k).resolve()
         return mapping
-
-if has_django_db:
-    BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
 
 
 class Table(Node):
@@ -93,9 +81,23 @@ class Table(Node):
         return self.expand().resolve()
 
 
+_horrible_cludge = False
+
 class DjangoStore(DataStore):
 
     def __init__(self, config):
+        try:
+            from django.conf import settings
+            from django.db import models
+
+            # Make sure our adaptor is registered....
+            global _horrible_cludge
+            if not _horrible_cludge:
+                BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
+                _horrible_cludge = True
+        except ImportError:
+            self.error("Django Models are not available as cannot import django")
+
         self.config = config
         self.tables = {}
 
@@ -109,6 +111,7 @@ class DjangoStore(DataStore):
 
         v = getattr(m, key)
 
+        from django.db import models
         if not inspect.isclass(v) or not issubclass(v, models.Model):
             self.error("'%s' is defined in '%s', but it isn't a Django model" % (key, model))
 
@@ -123,4 +126,8 @@ class DjangoStore(DataStore):
             return tbl
 
         self.error("'model' not specified")
+
+    def error(self, msg):
+        raise RuntimeError(msg)
+
 

@@ -7,38 +7,69 @@ settings.configure(
             'NAME': ':memory:',
             },
         },
+    INSTALLED_APPS=['yay.tests.dj'],
     TIME_ZONE = 'Europe/London',
     )
 
-from django.db import models
-import yay
-import StringIO
 from unittest import TestCase
 
-
-class Car(models.Model):
-    name = models.CharField(max_length=256, primary_key=True)
-
-class Part(models.Model):
-    name = models.CharField(max_length=256, primary_key=True)
-    car = models.ForeignKey(Car, related_name='parts')
-
+from yay.config import Config
+from yay.tests.dj.models import Car, Part
+from django.core.management.commands.syncdb import Command as syncdb
 
 class TestDjango(TestCase):
 
-   def test_hello(self):
-       c1 = Car(name="fred")
-       c1.save()
-       c2 = Car(name="bobby")
-       c2.save()
+    def setUp(self):
+        syncdb().handle_noargs()
 
-       p1 = Part(name="wheel", car=c1)
-       p1.save()
-       p2 = Part(name="brake", car=c1)
-       p2.save()
-       p3 = Part(name="badger", car=c2)
-       p3.save()
+        c1 = Car(name="fred")
+        c1.save()
+        c2 = Car(name="bobby")
+        c2.save()
 
-       print Car.objects.all()
-       print Part.objects.all()
+        p1 = Part(name="wheel", car=c1)
+        p1.save()
+        p2 = Part(name="brake", car=c1)
+        p2.save()
+        p3 = Part(name="badger", car=c2)
+        p3.save()
 
+        self.config = Config()
+        self.config.load("""
+            metadata.bind:
+                type: djangostore
+                model: yay.tests.dj.models
+            """)
+
+    def test_foreach_car(self):
+        self.config.load("""
+            test.foreach c in metadata.Car: ${c.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ["fred", "bobby"])
+
+    def test_foreach_car_parts(self):
+        self.config.load("""
+            test.foreach c in metadata.Car:
+              .foreach p in c.parts: ${p.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ['wheel', 'brake', 'badger'])
+
+    def test_foreach_car_parts_if(self):
+        self.config.load("""
+            x: badger
+            test.foreach c in metadata.Car:
+              .foreach p in c.parts if p.name=x: ${p.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], ["badger"])
+
+    def test_foreach_car_parts_if_failing(self):
+        self.config.load("""
+            x: badge
+            test.foreach c in metadata.Car:
+              .foreach p in c.parts if p.name=x: ${p.name}
+            """)
+
+        self.failUnlessEqual(self.config.get()["test"], [])
