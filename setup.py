@@ -28,8 +28,9 @@ setup(
         "PyYAML",
     ],
     extras_require = dict(
-        db = [
-            "SQLAlchemy",
+        test = [
+            'Django',
+            'SQLAlchemy',
             ],
         ),
 )

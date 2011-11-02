@@ -13,8 +13,10 @@
 # limitations under the License.
 
 try:
-    from django.db import models
     from django.conf import settings
+    if not settings.configured:
+        settings.configure(DATABASES={})
+    from django.db import models
     has_django_db = True
 except ImportError:
     has_django_db = False
@@ -46,9 +48,6 @@ class InstanceList(Node):
         for i in range(self.value.count()):
             yield self.get(i)
 
-if has_django_db:
-    BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
-
 
 class Instance(Node):
 
@@ -72,6 +71,9 @@ class Instance(Node):
             if hasattr(self.value, k) and not isinstance(self.value._meta.get_field_by_name(k)[0], models.fields.related.ForeignKey):
                 mapping[k] = self.get(k).resolve()
         return mapping
+
+if has_django_db:
+    BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
 
 
 class Table(Node):
