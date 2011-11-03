@@ -80,7 +80,7 @@ class Table(Node):
         return Instance(_all[idx])
 
     def resolve(self):
-        return [Instance(x) for x in self.value.objects.all()]
+        return [Instance(x).resolve() for x in self.value.objects.all()]
 
     def __iter__(self):
         for i in range(self.value.objects.count()):

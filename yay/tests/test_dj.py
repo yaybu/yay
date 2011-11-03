@@ -41,6 +41,13 @@ class TestDjango(TestCase):
                 model: yay.tests.dj.models
             """)
 
+    def test_all_cars(self):
+        self.config.load("""test: ${metadata.Car}""")
+        l = self.config.get()["test"]
+
+        self.failUnless(isinstance(l[0], dict))
+        self.failUnlessEqual(l[0]["name"], "fred")
+
     def test_foreach_car(self):
         self.config.load("""
             test.foreach c in metadata.Car: ${c.name}
