@@ -165,9 +165,12 @@ class SQLAlchemy(DataStore):
         if key in self.tables:
             return self.tables[key]
 
-        if self.config.get("model"):
-            tbl = self.tables[key] = self.get_model(key)
-            return tbl
+        try:
+            if self.config.get("model"):
+                tbl = self.tables[key] = self.get_model(key)
+                return tbl
+        except:
+            pass
 
         for t in self.config.get("tables").resolve():
             if t["name"] == key:

@@ -186,7 +186,10 @@ class Composer(object):
         if " " in action:
             action, action_args = action.split(" ", 1)
 
-        existing = container.get(key, None)
+        try:
+            existing = container.get(key)
+        except:
+            existing = None
 
         # Grab scalar value
         boxed = self.compose_node(existing)

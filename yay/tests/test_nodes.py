@@ -47,5 +47,5 @@ class TestMapping(unittest.TestCase):
         d = Mapping(None)
         d.set("foo", Boxed(1))
 
-        self.failUnlessEqual(d.get("foo", None).value, 1)
+        self.failUnlessEqual(d.get("foo").value, 1)
 

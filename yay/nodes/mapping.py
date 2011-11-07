@@ -31,17 +31,17 @@ class Mapping(Node):
         self.value[key] = val
         val.set_parent(self)
 
-    def get(self, key, default=None):
+    def get(self, key):
         if key in self.value:
             return self.value[key]
         if self.predecessor:
-            return self.predecessor.get(key, default)
-        return default
+            return self.predecessor.get(key)
+        self.error("Not found: '%s'" % key)
 
     def keys(self):
         keys = set(self.value.keys())
         if self.predecessor:
-            keys.update(self.predecessor.keys())
+            keys.update(self.predecessor.expand().keys())
         return list(keys)
 
     def resolve(self):
@@ -51,7 +51,7 @@ class Mapping(Node):
                 key = key.encode('ascii')
             except UnicodeEncodeError:
                 pass
-            data[key] = self.get(key, None).resolve()
+            data[key] = self.get(key).resolve()
         return data
 
     def walk(self):
