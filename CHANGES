@@ -8,6 +8,8 @@ Changelog for yay
 
     fp = Openers(searchpath=['file:///home/john', 'http://google.com']).open("foo.txt")
 
+- The ``Openers()`` API now supports https://
+
 
 0.0.28 (2011-11-07)
 -------------------

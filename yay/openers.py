@@ -29,7 +29,7 @@ class IOpener(object):
 
 class FileOpener(IOpener):
 
-    scheme = "file://"
+    schemes = ("file://", )
 
     def open(self, uri):
         if uri.startswith("file://"):
@@ -39,7 +39,7 @@ class FileOpener(IOpener):
 
 class UrlOpener(IOpener):
 
-    scheme = "http://"
+    schemes = ("http://", "https://")
 
     def open(self, uri):
         return urllib.urlopen(uri)
@@ -56,7 +56,7 @@ class MemOpener(IOpener):
     temporary files
     """
 
-    scheme = "mem://"
+    schemes = ("mem://", )
     data = {}
 
     def open(self, uri):
@@ -87,9 +87,9 @@ class Openers(object):
     def __init__(self, searchpath=None):
         self.searchpath = searchpath or []
 
-        self.openers = {}
+        self.openers = []
         for cls in IOpener.__subclasses__():
-            self.openers[cls.scheme] = cls()
+            self.openers.append(cls())
 
     def _scheme(self, uri):
         parsed = urlparse.urlparse(uri)
@@ -107,9 +107,10 @@ class Openers(object):
         return os.path.join(*uri)
 
     def _open(self, uri):
-        for scheme, opener in self.openers.iteritems():
-            if uri.startswith(scheme):
-                return opener.open(uri)
+        for opener in self.openers:
+            for scheme in opener.schemes:
+                if uri.startswith(scheme):
+                    return opener.open(uri)
 
     def open(self, uri):
         fp = None
@@ -124,7 +125,7 @@ class Openers(object):
             else:
                 # Support direct file paths that dont specify a scheme
                 if os.path.exists(uri):
-                    fp = self.openers["file://"].open(uri)
+                    fp = open(uri)
 
         if not fp:
             raise NotFound("'%s' could not be found" % uri)
