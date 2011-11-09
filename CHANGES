@@ -4,7 +4,9 @@ Changelog for yay
 0.0.29 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- The internal ``Openers()`` API now has support for a search path::
+
+    fp = Openers(searchpath=['file:///home/john', 'http://google.com']).open("foo.txt")
 
 
 0.0.28 (2011-11-07)
