@@ -39,6 +39,22 @@ class FileOpener(IOpener):
         return open(uri, "r")
 
 
+class PackageOpener(FileOpener):
+
+    schemes = ("package://", )
+
+    def open(self, uri):
+        package, uri = uri.lstrip("package://").split("/", 1)
+        try:
+            __import__(package)
+            module = sys.modules[package]
+        except ImportError:
+            raise NotFound("Package '%s' could not be imported")
+        module_path = os.path.dirname(module.__file__)
+        path = os.path.join(module_path, uri)
+        return super(PackageOpener, self).open(path)
+
+
 class UrlOpener(IOpener):
 
     schemes = ("http://", "https://")

@@ -4,7 +4,9 @@ Changelog for yay
 0.0.30 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- The internal ``Openers()`` API can now load from any package on the Python path::
+
+    fp = Openers().open("package://some.egg/hello.txt")
 
 
 0.0.29 (2011-11-10)
