@@ -19,9 +19,9 @@ from yay.openers import Openers
 
 class Config(object):
 
-    def __init__(self, special_term='yay'):
+    def __init__(self, special_term='yay', searchpath=None):
         self.special_term = special_term
-        self.openers = Openers()
+        self.openers = Openers(searchpath=searchpath)
         self.clear()
 
     def load_uri(self, uri):
