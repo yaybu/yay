@@ -142,7 +142,7 @@ class Openers(object):
         return parsed.scheme
 
     def _absolute(self, uri):
-        return self._scheme(uri) or uri.startswith("/")
+        return self._scheme(uri)
 
     def _relative(self, uri):
         return not self._absolute(uri)
@@ -162,7 +162,9 @@ class Openers(object):
     def open(self, uri):
         fp = None
 
-        if self._absolute(uri):
+        if uri.startswith("/"):
+            fp = FileOpener().open(uri)
+        elif self._absolute(uri):
             fp = self._open(uri)
         else:
             for path in self.searchpath:
