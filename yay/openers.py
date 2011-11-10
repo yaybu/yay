@@ -34,6 +34,8 @@ class FileOpener(IOpener):
     def open(self, uri):
         if uri.startswith("file://"):
             uri = uri[8:]
+        if not os.path.exists(uri):
+            raise NotFound("Local file '%s' could not be found" % uri)
         return open(uri, "r")
 
 
@@ -42,7 +44,10 @@ class UrlOpener(IOpener):
     schemes = ("http://", "https://")
 
     def open(self, uri):
-        return urllib.urlopen(uri)
+        fp = urllib.urlopen(uri)
+        if fp.getcode() != 200:
+            raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, fp.getcode()))
+        return fp
 
 
 class MemOpener(IOpener):
@@ -111,6 +116,7 @@ class Openers(object):
             for scheme in opener.schemes:
                 if uri.startswith(scheme):
                     return opener.open(uri)
+        raise NotFound("Could not find a way to open '%s'" % uri)
 
     def open(self, uri):
         fp = None
@@ -119,13 +125,14 @@ class Openers(object):
             fp = self._open(uri)
         else:
             for path in self.searchpath:
-                fp = self._open(self._join(path, uri))
-                if fp:
+                try:
+                    fp = self._open(self._join(path, uri))
+                except NotFound:
+                    pass
+                else:
                     break
             else:
-                # Support direct file paths that dont specify a scheme
-                if os.path.exists(uri):
-                    fp = open(uri)
+                fp = FileOpener().open(uri)
 
         if not fp:
             raise NotFound("'%s' could not be found" % uri)
