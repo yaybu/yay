@@ -68,9 +68,8 @@ foo.yay::
 
 You can reuse this recipe in bar.yay like so::
 
-    yay:
-        extends:
-            - foo.yay
+    .include:
+      - foo.yay
 
     projectcode: MyCustomer-145
 
