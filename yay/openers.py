@@ -27,6 +27,16 @@ class IOpener(object):
         pass
 
 
+class FpAdaptor(object):
+
+    def __init__(self, fp):
+        self.fp = fp
+
+    def __getattr__(self, key):
+        """Everything delegated to the object"""
+        return getattr(self.fp, key)
+
+
 class FileOpener(IOpener):
 
     schemes = ("file://", )
@@ -36,7 +46,13 @@ class FileOpener(IOpener):
             uri = uri[8:]
         if not os.path.exists(uri):
             raise NotFound("Local file '%s' could not be found" % uri)
-        return open(uri, "r")
+
+        class File(FpAdaptor):
+            @property
+            def len(self):
+                return int(os.fstat(self.fp.fileno())[6])
+
+        return File(open(uri, "rb"))
 
 
 class PackageOpener(FileOpener):
@@ -63,7 +79,13 @@ class UrlOpener(IOpener):
         fp = urllib.urlopen(uri)
         if fp.getcode() != 200:
             raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, fp.getcode()))
-        return fp
+
+        class Resource(FpAdaptor):
+            @property
+            def len(self):
+                return int(self.fp.info()['content-length'])
+
+        return Resource(fp)
 
 
 class MemOpener(IOpener):
@@ -81,7 +103,9 @@ class MemOpener(IOpener):
     data = {}
 
     def open(self, uri):
-        return StringIO.StringIO(self.data[uri])
+        fp = StringIO.StringIO(self.data[uri])
+        fp.len = len(self.data[uri])
+        return fp
 
     @classmethod
     def add(cls, uri, data):
@@ -99,6 +123,7 @@ class Gpg(object):
         p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         stdout, stderr = p.communicate(data)
         stream = StringIO.StringIO(stdout)
+        stream.len = len(stdout)
         stream.secret = True
         return stream
 
