@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.29 (unreleased)
+0.0.29 (2011-11-10)
 -------------------
 
 - The internal ``Openers()`` API now has support for a search path::
