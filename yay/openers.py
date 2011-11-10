@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib
+import urllib, urlparse
 import StringIO
 import os
 import subprocess
+
+from yay.errors import NotFound
+
 
 class IOpener(object):
 
@@ -26,20 +29,25 @@ class IOpener(object):
 
 class FileOpener(IOpener):
 
-    scheme = "file://"
+    schemes = ("file://", )
 
     def open(self, uri):
         if uri.startswith("file://"):
             uri = uri[8:]
+        if not os.path.exists(uri):
+            raise NotFound("Local file '%s' could not be found" % uri)
         return open(uri, "r")
 
 
 class UrlOpener(IOpener):
 
-    scheme = "http://"
+    schemes = ("http://", "https://")
 
     def open(self, uri):
-        return urllib.urlopen(uri)
+        fp = urllib.urlopen(uri)
+        if fp.getcode() != 200:
+            raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, fp.getcode()))
+        return fp
 
 
 class MemOpener(IOpener):
@@ -53,7 +61,7 @@ class MemOpener(IOpener):
     temporary files
     """
 
-    scheme = "mem://"
+    schemes = ("mem://", )
     data = {}
 
     def open(self, uri):
@@ -78,27 +86,56 @@ class Gpg(object):
         stream.secret = True
         return stream
 
+
 class Openers(object):
 
-    def __init__(self):
-        self.openers = {}
+    def __init__(self, searchpath=None):
+        self.searchpath = searchpath or []
+
+        self.openers = []
         for cls in IOpener.__subclasses__():
-            self.openers[cls.scheme] = cls()
+            self.openers.append(cls())
+
+    def _scheme(self, uri):
+        parsed = urlparse.urlparse(uri)
+        return parsed.scheme
+
+    def _absolute(self, uri):
+        return self._scheme(uri) or uri.startswith("/")
+
+    def _relative(self, uri):
+        return not self._absolute(uri)
+
+    def _join(self, *uri):
+        if self._scheme(uri[0]):
+            return urlparse.urljoin(*uri)
+        return os.path.join(*uri)
+
+    def _open(self, uri):
+        for opener in self.openers:
+            for scheme in opener.schemes:
+                if uri.startswith(scheme):
+                    return opener.open(uri)
+        raise NotFound("Could not find a way to open '%s'" % uri)
 
     def open(self, uri):
         fp = None
 
-        for scheme, opener in self.openers.iteritems():
-            if uri.startswith(scheme):
-                fp = opener.open(uri)
-                break
+        if self._absolute(uri):
+            fp = self._open(uri)
         else:
-            # Support direct file paths that dont specify a scheme
-            if os.path.exists(uri):
-                fp = self.openers["file://"].open(uri)
+            for path in self.searchpath:
+                try:
+                    fp = self._open(self._join(path, uri))
+                except NotFound:
+                    pass
+                else:
+                    break
+            else:
+                fp = FileOpener().open(uri)
 
         if not fp:
-            raise ValueError("URI '%s' cannot be opened (unsupported scheme or missing local file)" % uri)
+            raise NotFound("'%s' could not be found" % uri)
 
         if uri.endswith(".gpg"):
             fp = Gpg().filter(fp)
