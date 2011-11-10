@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.30 (unreleased)
+0.0.30 (2011-11-10)
 -------------------
 
 - Any stream objects returned by the ``Openers()`` API now have a ``len`` property.
