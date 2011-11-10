@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib, urlparse
+import urllib
+import urlparse
 import StringIO
 import os
+import sys
 import subprocess
 
 from yay.errors import NotFound
@@ -55,7 +57,7 @@ class FileOpener(IOpener):
         return File(open(uri, "rb"))
 
 
-class PackageOpener(FileOpener):
+class PackageOpener(IOpener):
 
     schemes = ("package://", )
 
@@ -68,7 +70,7 @@ class PackageOpener(FileOpener):
             raise NotFound("Package '%s' could not be imported")
         module_path = os.path.dirname(module.__file__)
         path = os.path.join(module_path, uri)
-        return super(PackageOpener, self).open(path)
+        return FileOpener().open(path)
 
 
 class UrlOpener(IOpener):
