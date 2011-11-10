@@ -29,7 +29,7 @@ class Config(object):
         self.load(stream, uri, hasattr(stream, "secret") and stream.secret)
 
     def load(self, stream, name="<Unknown>", secret=False):
-        l = Loader(stream, name=name, special_term=self.special_term, secret=secret)
+        l = Loader(stream, name=name, special_term=self.special_term, secret=secret, openers=self.openers)
         data = l.compose(self.mapping)
         self.mapping = data
 

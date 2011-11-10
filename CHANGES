@@ -4,7 +4,8 @@ Changelog for yay
 0.0.34 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Compose now reuses Opener() rather than creating a new one for each stream
+  loaded.
 
 
 0.0.33 (2011-11-10)
