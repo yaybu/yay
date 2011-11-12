@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.config import Config, load, load_uri, dump
 from yay.stringbuilder import String
+from yay.config import Config, load, load_uri, dump
 
