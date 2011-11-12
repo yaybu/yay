@@ -14,22 +14,22 @@
 
 
 import unittest
-from yay.stringbuilder import String, StringPart
+from yay import String
 
 
 class TestString(unittest.TestCase):
 
     def test_normal_string(self):
-        a = StringPart("Just a normal string", False)
-        b = String([a])
+        a = String(["Just a normal string"])
 
-        self.failUnlessEqual(unicode(b), "Just a normal string")
-        self.failUnlessEqual(b.unprotected, "Just a normal string")
+        self.failUnlessEqual(unicode(a), "Just a normal string")
+        self.failUnlessEqual(a.unprotected, "Just a normal string")
 
     def test_partially_secret(self):
-        a = StringPart("adduser -u fred -p ", False)
-        b = StringPart("password", True)
-        c = StringPart(" -h /home/fred", False)
+        a = "adduser -u fred -p "
+        b = String()
+        b.add_secret("password")
+        c = " -h /home/fred"
         d = String([a,b,c])
 
         self.failUnlessEqual(unicode(d), "adduser -u fred -p ***** -h /home/fred")
