@@ -15,7 +15,7 @@
 import inspect
 
 from yay.nodes import Node
-from yay.protectedstring import ProtectedString
+from yay import String
 
 class Unboxable(Exception):
     pass
@@ -81,7 +81,7 @@ class Boxed(Node):
             return value
 
         if self.secret:
-            p = ProtectedString()
+            p = String()
             p.add_secret(value)
             return p
 

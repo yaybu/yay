@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from yay.nodes import Node, Boxed
-from yay.protectedstring import ProtectedString
+from yay import String
 
 
 class Comparison(Node):
@@ -152,7 +152,7 @@ class Concatenation(Node):
         """
         If any of the nodes that are being concatenated are protected (because
         Yay knows they were loaded from .yay.gpg) then this will return an
-        :py:class:`~yay.protected.ProtectedString` object.
+        :py:class:`~yay.String` object.
 
         If none of the nodes  are then it will return a string.
         """
@@ -160,11 +160,11 @@ class Concatenation(Node):
 
         protected = False
         for x in resolved:
-            if isinstance(x, ProtectedString):
+            if isinstance(x, String):
                 protected = True
 
         if protected:
-            p = ProtectedString()
+            p = String()
             for x in resolved:
                 p.add(x)
             return p
