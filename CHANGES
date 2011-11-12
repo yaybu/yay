@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.35 (unreleased)
+0.0.35 (2011-11-12)
 -------------------
 
 - This release refactors ProtectedString to make it more useful outside Yay.
