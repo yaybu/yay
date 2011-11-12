@@ -4,7 +4,45 @@ Changelog for yay
 0.0.35 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- This release refactors ProtectedString to make it more useful outside Yay.
+  Instead of importing ``yay.protectedstring.ProtectedString`` you should
+  import ``yay.String``
+
+- You can now pass strings to the constructor and they will automatically be
+  wrapped. Previously you had to pass StringPart's to the constructor. That is
+  now an internal implementation detail.
+
+- There is now an extend() function. This accepts lists that contains a mixture
+  of raw strings and other ``String`` objects::
+
+      s = String("echo")
+      y = String("supersekritpassword", secret=True)
+      s.extend(["a", "b", y, "d"])
+
+- There is now an as_list() function. This returns all the parts you have added
+  to a string. This is useful if you are building a command line to pass to
+  subprocess::
+
+      s.String(["someprogram", "--pasword"])
+      s.add_secret("password")
+
+      # Log the obfuscated version but execute with the real password
+      log.info(s.protected)
+      p = subprocess.Popen(s.as_list(secret=False), cwd="/")
+
+- There is now a ``secret`` call in Yay for exercising secret Yay without
+  needing to use GPG. This is mainly for test purposes, but might be useful if
+  you have strings which arent closely guarded secrets yet you dont want them
+  show in logs. To use it you do something like this::
+
+      resources.append:
+        - Checkout:
+            name: /checkouts/mycode
+            repository: http://github.com/whatever
+            scm_password.secret: mypassword
+
+  This example is from Yaybu and would stop Yaybu from logging your SVN
+  password.
 
 
 0.0.34 (2011-11-10)

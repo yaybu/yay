@@ -14,25 +14,30 @@
 
 
 import unittest
-from yay.protectedstring import *
+from yay import String
 
 
-class TestProtectedString(unittest.TestCase):
+class TestString(unittest.TestCase):
 
     def test_normal_string(self):
-        a = ProtectedStringPart("Just a normal string", False)
-        b = ProtectedString([a])
+        a = String(["Just a normal string"])
 
-        self.failUnlessEqual(unicode(b), "Just a normal string")
-        self.failUnlessEqual(b.unprotected, "Just a normal string")
+        self.failUnlessEqual(unicode(a), "Just a normal string")
+        self.failUnlessEqual(a.unprotected, "Just a normal string")
+
+        self.failUnlessEqual(a.as_list(secret=True), ["Just a normal string"])
+        self.failUnlessEqual(a.as_list(secret=False), ["Just a normal string"])
 
     def test_partially_secret(self):
-        a = ProtectedStringPart("adduser -u fred -p ", False)
-        b = ProtectedStringPart("password", True)
-        c = ProtectedStringPart(" -h /home/fred", False)
-        d = ProtectedString([a,b,c])
+        a = "adduser -u fred -p "
+        b = String()
+        b.add_secret("password")
+        c = " -h /home/fred"
+        d = String([a,b,c])
 
         self.failUnlessEqual(unicode(d), "adduser -u fred -p ***** -h /home/fred")
         self.failUnlessEqual(d.unprotected, "adduser -u fred -p password -h /home/fred")
 
+        self.failUnlessEqual(d.as_list(secret=True), ["adduser -u fred -p ", "*****", " -h /home/fred"])
+        self.failUnlessEqual(d.as_list(secret=False), ["adduser -u fred -p ", "password", " -h /home/fred"])
 

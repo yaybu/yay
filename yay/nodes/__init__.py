@@ -28,4 +28,5 @@ from yay.nodes.select import Select
 from yay.nodes.flatten import Flatten
 from yay.nodes.expression import *
 from yay.nodes.datastore.bind import Bind
+from yay.nodes.secret import Secret
 

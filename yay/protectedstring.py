@@ -12,60 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
+warnings.warn("yay.protectedstring is no longer supported and will be removed soon", DeprecationWarning)
 
-class ProtectedStringPart(object):
-    """ I represent a portion of a string which may or may not be sensitive """
+from yay.stringbuilder import String
 
-    __slots__ = ("value", "secret", )
-
-    def __init__(self, value, secret):
-        self.value = value
-        self.secret = secret
-
-    @property
-    def protected(self):
-        if self.secret:
-            return "*" * 5
-        return self.value
-
-    @property
-    def unprotected(self):
-        return self.value
-
-
-class _ProtectedString(object):
-    """ I exist purely to fudge around MRO """
-    pass
-
-
-class ProtectedString(_ProtectedString, basestring):
+class ProtectedString(String):
     """ I represent a string which contains sensitive parts """
-
-    def __init__(self, parts=None):
-        self.parts = []
-        if parts:
-            self.parts.extend(parts)
-
-    def add(self, value):
-        if isinstance(value, ProtectedString):
-            self.parts.extend(value.parts)
-        else:
-            self.parts.append(ProtectedStringPart(value, False))
-
-    def add_secret(self, value):
-        self.parts.append(ProtectedStringPart(value, True))
-
-    def __str__(self):
-        return "".join([str(p.protected) for p in self.parts])
-
-    def __unicode__(self):
-        return u"".join([unicode(p.protected) for p in self.parts])
-
-    @property
-    def protected(self):
-        return u"".join([unicode(p.protected) for p in self.parts])
-
-    @property
-    def unprotected(self):
-        return u"".join([unicode(p.unprotected) for p in self.parts])
+    pass
 
