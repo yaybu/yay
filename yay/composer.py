@@ -40,6 +40,7 @@ class Composer(object):
             "select": lambda value, args: Select(value, self.parser.expression.parseString(args)[0]),
             "flatten": lambda value, args: Flatten(value),
             "bind": lambda value, args: Bind(value),
+            "secret": lambda value, args: Secret(value),
             }
         self.dirty = False
 
