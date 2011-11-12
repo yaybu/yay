@@ -44,7 +44,7 @@ class String(_String, basestring):
     def __init__(self, parts=None):
         self.parts = []
         if parts:
-            [self.add(p) for p in parts]
+            self.extend(parts)
 
     def add(self, value):
         if isinstance(value, String):
@@ -54,6 +54,9 @@ class String(_String, basestring):
 
     def add_secret(self, value):
         self.parts.append(StringPart(value, True))
+
+    def extend(self, value):
+        [self.add(v) for v in value]
 
     def __str__(self):
         return "".join([str(p.protected) for p in self.parts])

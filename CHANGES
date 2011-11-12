@@ -12,6 +12,13 @@ Changelog for yay
   wrapped. Previously you had to pass StringPart's to the constructor. That is
   now an internal implementation detail.
 
+  There is now an extend() function. This accepts lists that contains a mixture
+  of raw strings and other ``String`` objects::
+
+    s = String("echo")
+    y = String("supersekritpassword", secret=True)
+    s.extend(["a", "b", y, "d"])
+
 
 0.0.34 (2011-11-10)
 -------------------
