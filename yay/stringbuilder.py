@@ -58,6 +58,17 @@ class String(_String, basestring):
     def extend(self, value):
         [self.add(v) for v in value]
 
+    def as_list(self, secret=True):
+        """
+        Return the string parts as a list
+
+        If secret is True (the default) then the sensitive parts of the string
+        will be obfuscated. If it is False, they will not.
+        """
+        if secret:
+            return [unicode(p.protected) for p in self.parts]
+        return [unicode(p.unprotected) for p in self.parts]
+
     def __str__(self):
         return "".join([str(p.protected) for p in self.parts])
 

@@ -15,9 +15,20 @@ Changelog for yay
   There is now an extend() function. This accepts lists that contains a mixture
   of raw strings and other ``String`` objects::
 
-    s = String("echo")
-    y = String("supersekritpassword", secret=True)
-    s.extend(["a", "b", y, "d"])
+      s = String("echo")
+      y = String("supersekritpassword", secret=True)
+      s.extend(["a", "b", y, "d"])
+
+  There is now an as_list() function. This returns all the parts you have added
+  to a string. This is useful if you are building a command line to pass to
+  subprocess::
+
+      s.String(["someprogram", "--pasword"])
+      s.add_secret("password")
+
+      # Log the obfuscated version but execute with the real password
+      log.info(s.protected)
+      p = subprocess.Popen(s.as_list(secret=False), cwd="/")
 
 
 0.0.34 (2011-11-10)

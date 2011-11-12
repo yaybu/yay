@@ -25,6 +25,9 @@ class TestString(unittest.TestCase):
         self.failUnlessEqual(unicode(a), "Just a normal string")
         self.failUnlessEqual(a.unprotected, "Just a normal string")
 
+        self.failUnlessEqual(a.as_list(secret=True), ["Just a normal string"])
+        self.failUnlessEqual(a.as_list(secret=False), ["Just a normal string"])
+
     def test_partially_secret(self):
         a = "adduser -u fred -p "
         b = String()
@@ -35,4 +38,6 @@ class TestString(unittest.TestCase):
         self.failUnlessEqual(unicode(d), "adduser -u fred -p ***** -h /home/fred")
         self.failUnlessEqual(d.unprotected, "adduser -u fred -p password -h /home/fred")
 
+        self.failUnlessEqual(d.as_list(secret=True), ["adduser -u fred -p ", "*****", " -h /home/fred"])
+        self.failUnlessEqual(d.as_list(secret=False), ["adduser -u fred -p ", "password", " -h /home/fred"])
 
