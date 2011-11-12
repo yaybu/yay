@@ -4,7 +4,13 @@ Changelog for yay
 0.0.35 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- This release refactors ProtectedString to make it more useful outside Yay.
+  Instead of importing ``yay.protectedstring.ProtectedString`` you should
+  import ``yay.String``
+
+  You can now pass strings to the constructor and they will automatically be
+  wrapped. Previously you had to pass StringPart's to the constructor. That is
+  now an internal implementation detail.
 
 
 0.0.34 (2011-11-10)
