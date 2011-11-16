@@ -181,3 +181,30 @@ class Concatenation(Node):
     def clone(self):
         return Concatenation(*[x.clone() for x in self.args])
 
+
+class Else(Node):
+
+    def __init__(self, *children):
+        self.children = list(children)
+        [c.set_parent(self) for c in children]
+
+    def append(self, child):
+        self.children.append(child)
+        child.set_parent(self)
+
+    def __repr__(self):
+        return "Else(%s)" % ",".join(self.children)
+
+    def resolve(self):
+        pass
+
+    def expand(self):
+        pass
+
+    def walk(self):
+        for c in self.children:
+            yield c
+
+    def clone(self):
+        return Else()
+

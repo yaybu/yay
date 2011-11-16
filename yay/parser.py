@@ -75,6 +75,20 @@ class Parser(object):
             i += 1
         return node
 
+    def handle_expression(self, s, w, t):
+        if len(t) == 1:
+            return t[0]
+
+        node = nodes.Else(t[0])
+        for i in range(1, len(t)):
+            if t[i] != "else":
+                #FIXME: Raise some kind of parasing error
+                pass
+            node.append(t[i+1])
+            i += 1
+
+        return node
+
     def index_access_action(self, s, w, t):
         return nodes.Access(None, t[0])
 
@@ -97,6 +111,7 @@ class Parser(object):
         return self.boxed_string(s, w, t)
 
     def setup_parser(self):
+        ELSE = Keyword("else")
         AND = Keyword("and")
         OR = Keyword("or")
         IN = Keyword("in")
@@ -109,6 +124,9 @@ class Parser(object):
         intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(self.boxed_int)
 
         expression = Forward()
+
+        else_expression = expression + OneOrMore(ELSE + expression)
+        else_expression.setParseAction(self.handle_expression)
 
         function_identifier = Word(alphanums+"_")
         function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
@@ -145,7 +163,8 @@ class Parser(object):
             octNum |
             intNum |
             function_call |
-            fullExpression
+            fullExpression |
+            else_expression
             )
 
         bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
@@ -169,3 +188,5 @@ class Parser(object):
         self.as_statement = as_statement
         self.expression = expression
 
+        self.templated_string.validate()
+        self.templated_string.setDebug()

@@ -1,0 +1,9 @@
+
+
+foo:
+    bar: 42
+
+bar: ${foo.baz else foo.bar}
+
+# baz: ${foo.baz else foo.qux else foo.bar}
+
