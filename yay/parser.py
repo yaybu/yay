@@ -76,18 +76,22 @@ class Parser(object):
         return node
 
     def handle_expression(self, s, w, t):
-        if len(t) == 1:
+        if len(t[0]) == 1:
             return t[0]
 
-        node = nodes.Else(t[0])
-        for i in range(1, len(t)):
-            if t[i] != "else":
-                #FIXME: Raise some kind of parasing error
-                pass
-            node.append(t[i+1])
-            i += 1
+        t = t[0]
 
-        return node
+        node = nodes.Else(t[0])
+
+        for i in range(1, len(t)):
+            if i % 2:
+                if t[i] != "else":
+                    #FIXME: Raise some kind of parasing error
+                    pass
+            else:
+                node.append(t[i])
+
+        return [node]
 
     def index_access_action(self, s, w, t):
         return nodes.Access(None, t[0])
@@ -125,9 +129,6 @@ class Parser(object):
 
         expression = Forward()
 
-        else_expression = expression + OneOrMore(ELSE + expression)
-        else_expression.setParseAction(self.handle_expression)
-
         function_identifier = Word(alphanums+"_")
         function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
         function_call.setParseAction(self.function_call_action)
@@ -159,13 +160,14 @@ class Parser(object):
             )
         fullExpression.setParseAction(self.full_expression_action)
 
-        expression << (
+        expression_part = (
             octNum |
             intNum |
             function_call |
-            fullExpression |
-            else_expression
+            fullExpression
             )
+
+        expression << Group(expression_part + Optional(ELSE + expression)).setParseAction(self.handle_expression)
 
         bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
 
@@ -188,5 +190,3 @@ class Parser(object):
         self.as_statement = as_statement
         self.expression = expression
 
-        self.templated_string.validate()
-        self.templated_string.setDebug()

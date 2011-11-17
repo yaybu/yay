@@ -85,17 +85,20 @@ class Node(object):
         else:
             return self
 
-    def error(self, message):
+    def error(self, exc):
         """
         Raise an error message annotated with the line and column of the text that was
         parsed to create this node
         """
-        raise EvaluationError(
-            message,
-            self.name,          # File
-            self.line,          # Line
-            self.column,        # Column
-            self.snippet)       # Snippet
+        if isinstance(exc, basestring):
+            exc = EvaluationError(exc)
+
+        exc.file = self.name,            # File
+        exc.line = self.line,            # Line
+        exc.column = self.column,        # Column
+        exc.snippet = self.snippet       # Snippet
+
+        raise exc
 
     def clone(self):
         """

@@ -14,6 +14,7 @@
 
 from yay.nodes import Node, Boxed
 from yay import String
+from yay.errors import NoMatching
 
 
 class Comparison(Node):
@@ -146,6 +147,7 @@ class Concatenation(Node):
 
     def __init__(self, *args):
         self.args = args
+        print args
         [x.set_parent(self) for x in args]
 
     def resolve(self):
@@ -193,18 +195,31 @@ class Else(Node):
         child.set_parent(self)
 
     def __repr__(self):
-        return "Else(%s)" % ",".join(self.children)
+        return "Else()" # % ",".join(self.children)
 
     def resolve(self):
-        pass
+        for c in self.children:
+            try:
+                return c.resolve()
+            except NoMatching:
+                pass
+        self.error(NoMatching("No matching field found"))
 
     def expand(self):
-        pass
+        for c in self.children:
+            try:
+                c.resolve()
+            except NoMatching:
+                continue
+            else:
+                return c.expand()
+
+        self.error(NoMatching("No matching field found"))
 
     def walk(self):
         for c in self.children:
             yield c
 
     def clone(self):
-        return Else()
+        return Else(*[x.clone() for x in self.children])
 
