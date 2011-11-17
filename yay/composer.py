@@ -1,4 +1,3 @@
-# Copyright 2010-2011 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +29,14 @@ class Composer(object):
         self.secret = secret
         self.root = None
         self.parser = Parser(self)
+        self.definitions = {}
+
+        def define(value, args):
+            value.defined_name = args[0]
+            return value
+
         self.action_map = {
+            "define": define,
             "copy": lambda value, args: Copy(value),
             "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
@@ -187,6 +193,9 @@ class Composer(object):
         if " " in action:
             action, action_args = action.split(" ", 1)
 
+        if action == "define":
+            key = ".define"
+
         try:
             existing = container.get(key)
         except:
@@ -245,6 +254,9 @@ class Composer(object):
                     previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
+
+            elif key == ".define":
+                self.definitions[value.defined_name] = value
 
             else:
                 previous.set(key, value)
