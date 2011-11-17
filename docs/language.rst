@@ -52,6 +52,29 @@ a directory based on a customer project id::
             name: /var/local/sites/${projectcode}/src
             repository: svn://mysvnserver/${projectcode}
 
+If you variables are in mappings you can access them using ``.`` as seperator.
+You can also access specific items in lists with ``[]``::
+
+    projects:
+      - name: www.foo.com
+        projectcode: Foo-1
+        checkout:
+            repository: http://github.com/isotoma/foo
+            branch: master
+
+    resources:
+        - Checkout:
+            repository: /var/local/sites/${projects[0].checkout.repository}
+
+Sometimes you might only want to optionally set variables in your
+configuration. Here we pickup ``project.id`` if its set, but fall back
+to ``project.name``::
+
+    project:
+        name: www.baz.com
+
+    example_key: ${project.id else project.name}
+
 
 Including Files
 ~~~~~~~~~~~~~~~
@@ -97,7 +120,16 @@ to allow appending to predefined lists: append::
     resources.append:
         - baz
 
-You can also use ``.remove``, which works in a similar way.
+You can also use ``.remove``, which works in a similar way::
+
+    resources:
+        - foo
+        - bar
+
+    resources.remove:
+        - bar
+
+The list now only contains ``foo``.
 
 
 For Loops
