@@ -29,7 +29,7 @@ class ProgrammingError(Error):
 
 class LanguageError(Error):
 
-    def __init__(self, description, file, line, column, snippet=None):
+    def __init__(self, description, file=None, line=None, column=None, snippet=None):
         self.description = description
         self.file = file
         self.line = line
@@ -55,4 +55,6 @@ class EvaluationError(LanguageError):
     pass
 
 
+class NoMatching(EvaluationError):
+    pass
 

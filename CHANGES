@@ -4,7 +4,12 @@ Changelog for yay
 0.0.36 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add support for ``else`` keyword in expressions as per YEP2::
+
+      foo:
+          bar: ${foo.baz else 52}
+
+  This is useful for providing sensible defaults in your recipes.
 
 
 0.0.35 (2011-11-12)

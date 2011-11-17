@@ -75,6 +75,24 @@ class Parser(object):
             i += 1
         return node
 
+    def handle_expression(self, s, w, t):
+        if len(t[0]) == 1:
+            return t[0]
+
+        t = t[0]
+
+        node = nodes.Else(t[0])
+
+        for i in range(1, len(t)):
+            if i % 2:
+                if t[i] != "else":
+                    #FIXME: Raise some kind of parasing error
+                    pass
+            else:
+                node.append(t[i])
+
+        return [node]
+
     def index_access_action(self, s, w, t):
         return nodes.Access(None, t[0])
 
@@ -97,6 +115,7 @@ class Parser(object):
         return self.boxed_string(s, w, t)
 
     def setup_parser(self):
+        ELSE = Keyword("else")
         AND = Keyword("and")
         OR = Keyword("or")
         IN = Keyword("in")
@@ -141,12 +160,14 @@ class Parser(object):
             )
         fullExpression.setParseAction(self.full_expression_action)
 
-        expression << (
+        expression_part = (
             octNum |
             intNum |
             function_call |
             fullExpression
             )
+
+        expression << Group(expression_part + Optional(ELSE + expression)).setParseAction(self.handle_expression)
 
         bracketed_expression = Suppress("${").leaveWhitespace() + expression + Suppress("}").leaveWhitespace()
 

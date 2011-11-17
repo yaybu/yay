@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from yay.nodes import Node, Boxed
+from yay.errors import NoMatching
 
 class Mapping(Node):
 
@@ -36,7 +37,7 @@ class Mapping(Node):
             return self.value[key]
         if self.predecessor:
             return self.predecessor.get(key)
-        self.error("Not found: '%s'" % key)
+        self.error(NoMatching("Not found: '%s'" % key))
 
     def keys(self):
         keys = set(self.value.keys())

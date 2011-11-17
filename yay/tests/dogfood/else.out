@@ -1,0 +1,12 @@
+
+
+foo:
+    bar: 42
+    wibble: 22
+
+bar: 42
+
+baz: 42
+
+qux: 22
+
