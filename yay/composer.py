@@ -32,7 +32,7 @@ class Composer(object):
         self.definitions = {}
 
         def define(value, args):
-            value.defined_name = args[0]
+            value.defined_name = args.strip()
             return value
 
         self.action_map = {

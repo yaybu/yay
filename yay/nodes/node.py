@@ -93,10 +93,10 @@ class Node(object):
         if isinstance(exc, basestring):
             exc = EvaluationError(exc)
 
-        exc.file = self.name,            # File
-        exc.line = self.line,            # Line
-        exc.column = self.column,        # Column
-        exc.snippet = self.snippet       # Snippet
+        exc.file = self.name            # File
+        exc.line = self.line            # Line
+        exc.column = self.column        # Column
+        exc.snippet = self.snippet      # Snippet
 
         raise exc
 
