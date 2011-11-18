@@ -1,0 +1,14 @@
+names:
+ - foo
+ - foobar
+
+resources:
+    - SomeItem:
+        name: foo
+    - SomeOtherItem:
+        name: foo
+    - SomeItem:
+        name: foobar
+    - SomeOtherItem:
+        name: foobar
+
