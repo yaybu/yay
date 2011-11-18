@@ -11,6 +11,65 @@ Changelog for yay
 
   This is useful for providing sensible defaults in your recipes.
 
+- The loop block is now autoflattening. This means that constructs that yield
+  lists of lists will be turned into 1-dimensional lists by ``.foreach``. For
+  example::
+
+      somelist:
+        - - - a
+            - b
+          - c
+        - d
+
+      someotherlist.foreach var in somelist: ${var}
+
+  The list ``someotherlist`` would now contain::
+
+      somelist:
+       - a
+       - b
+       - c
+       - d
+
+  The previous behaviour can be obtained with the ``chain`` modifier::
+
+      somelist.foreach var in somelist chain: ${var}
+
+- Add a simple macro language. You can define a reusable block of configuration
+  using the .define statement. An example of this in Yaybu to create a reusable
+  virtualenv step::
+
+    .define Virtualenv:
+      - Directory:
+          name: ${venv.location}
+          owner: ${venv.owner}
+      - Execute:
+          name: create-virtualenv-${venv.location}
+          command: virtualenv --no-site-packages ${venv.location}
+          creates: ${venv.location}/bin/pip
+      - Execute:
+          name: install-requirements-${venv.location}
+          command: ${venv.location}/bin/pip install -r ${venv.requirements}
+
+  The macro is callable inline as part of an expression. For example::
+
+    resources.append:
+      .foreach venv in virtualenvs: ${Virtualenv!}
+
+  Equally you can do this::
+
+    .define Virtualenv:
+      - Directory:
+          name: ${location}
+          owner: ${owner}
+    # SNIP
+
+    resources.append:
+        Virtualenv!:
+          location: /tmp/example
+          owner: dave
+          requirements: /tmp/requirements.txt
+
 
 0.0.35 (2011-11-12)
 -------------------
