@@ -28,15 +28,7 @@ class With(Node):
         return super(With, self).get_context(key)
 
     def expand(self):
-        w = With(self.value.expand(), self.expression, self.label)
-        w.set_parent(self.parent)
-        return w
-
-    def __iter__(self):
-        for v in self.value.expand().__iter__():
-            w = With(v, self.expression, self.label)
-            w.set_parent(self.parent)
-            yield w
+        return self.value.expand()
 
     def resolve(self):
         return self.value.resolve()
