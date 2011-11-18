@@ -189,7 +189,7 @@ class Parser(object):
 
         foreachif = Optional(Keyword("if") + filterExpression)
 
-        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain")) + foreachif
+        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain") | Keyword("flatten")) + foreachif
         as_statement = expression + Suppress("as") + identifier
 
         self.templated_string = templated_string
