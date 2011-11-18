@@ -52,6 +52,7 @@ class Mapping(Node):
                 key = key.encode('ascii')
             except UnicodeEncodeError:
                 pass
+
             data[key] = self.get(key).resolve()
         return data
 
