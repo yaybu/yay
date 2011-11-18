@@ -7,10 +7,10 @@
 
 
 resources.append:
-    - :SomeMacro:
+    - SomeMacro!:
         name: foo
 
 resources.append:
-    - :SomeMacro:
+    - SomeMacro!:
         name: foobar
 

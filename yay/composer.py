@@ -157,14 +157,16 @@ class Composer(object):
     def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
 
-        if not self.check_event(MappingEndEvent) and self.peek_event().value.startswith("."):
-            value = self.compose_anonymous(previous)
-        else:
-            value = self.compose_mapping(previous)
-
-        end = self.get_event()
-
-        return value
+        try:
+            if not self.check_event(MappingEndEvent):
+                if self.peek_event().value.startswith("."):
+                    return self.compose_anonymous(previous)
+                elif self.peek_event().value.endswith("!"):
+                    n = Call(self, self.get_event().value[:-1], self.compose_node(None))
+                    return n
+            return self.compose_mapping(previous)
+        finally:
+            self.get_event()
 
     def compose_anonymous(self, previous):
         # An anonymous expression that doesnt bind to a keyword

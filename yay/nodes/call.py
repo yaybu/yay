@@ -13,12 +13,25 @@
 # limitations under the License.
 
 from yay.nodes import Node
+from yay.errors import NoMatching
+
 
 class Call(Node):
 
-    def __init__(self, composer, value):
+    def __init__(self, composer, value, params=None):
         self.composer = composer
         self.value = value
+        self.params = params
+        if params:
+            params.set_parent(self)
+
+    def get_context(self, label):
+        if self.params:
+            try:
+                return self.params.expand().get(label)
+            except NoMatching:
+                pass
+        return super(Call, self).get_context(label)
 
     def get(self, idx):
         return self.expand().get(idx)
@@ -41,5 +54,5 @@ class Call(Node):
         yield self.value
 
     def clone(self):
-        return Call(composer, value)
+        return Call(self.composer, self.value, self.params.clone() if self.params else None)
 
