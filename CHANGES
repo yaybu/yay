@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.36 (unreleased)
+0.0.36 (2011-11-20)
 -------------------
 
 - There is now a ``home://`` URL handler. For my laptop this means::
