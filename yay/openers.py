@@ -151,7 +151,10 @@ class Openers(object):
 
     def _join(self, *uri):
         if self._scheme(uri[0]):
-            return urlparse.urljoin(*uri)
+            retval = uri[0]
+            for part in uri[1:]:
+                retval = retval.rstrip("/") + "/" + part.lstrip("/")
+            return retval
         return os.path.join(*uri)
 
     def _open(self, uri):

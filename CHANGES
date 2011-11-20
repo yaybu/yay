@@ -4,6 +4,8 @@ Changelog for yay
 0.0.36 (unreleased)
 -------------------
 
+- Improve searchpath handling to better cope with URIs.
+
 - Add support for ``else`` keyword in expressions as per YEP2::
 
       foo:
