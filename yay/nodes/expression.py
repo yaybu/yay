@@ -147,7 +147,6 @@ class Concatenation(Node):
 
     def __init__(self, *args):
         self.args = args
-        print args
         [x.set_parent(self) for x in args]
 
     def resolve(self):
