@@ -47,7 +47,8 @@ Changelog for yay
 
       somelist.foreach var in somelist chain: ${var}
 
-- Add a simple macro language. You can define a reusable block of configuration
+- Add a simple macro language. This is highly EXPERIMENTAL and subject to
+  frequent syntax tweaks. You can define a reusable block of configuration
   using the .define statement. An example of this in Yaybu to create a reusable
   virtualenv step::
 
