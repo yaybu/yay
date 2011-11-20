@@ -114,6 +114,9 @@ class Parser(object):
             return []
         return self.boxed_string(s, w, t)
 
+    def inline_call(self, s, w, t):
+        return nodes.Call(self.composer, t[0])
+
     def setup_parser(self):
         ELSE = Keyword("else")
         AND = Keyword("and")
@@ -128,6 +131,9 @@ class Parser(object):
         intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(self.boxed_int)
 
         expression = Forward()
+
+        macro_call = Word(alphanums+"_.") + Suppress("!")
+        macro_call.setParseAction(self.inline_call)
 
         function_identifier = Word(alphanums+"_")
         function_call = function_identifier + Group(Suppress("(") + Optional(expression + ZeroOrMore(Suppress(",") + expression)) + Suppress(")"))
@@ -163,6 +169,7 @@ class Parser(object):
         expression_part = (
             octNum |
             intNum |
+            macro_call |
             function_call |
             fullExpression
             )
@@ -182,7 +189,7 @@ class Parser(object):
 
         foreachif = Optional(Keyword("if") + filterExpression)
 
-        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain")) + foreachif
+        foreach_statement = identifier + Suppress("in") + expression + Optional(Keyword("chain") | Keyword("nochain") | Keyword("flatten")) + foreachif
         as_statement = expression + Suppress("as") + identifier
 
         self.templated_string = templated_string

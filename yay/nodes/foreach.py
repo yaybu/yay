@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from yay.nodes import Node, Boxed, Sequence, Context
+from yay.nodes.flatten import flatten
+
 
 class ForEach(Node):
 
@@ -34,10 +36,10 @@ class ForEach(Node):
         self.lookup = args.pop(0)
         self.lookup.set_parent(self)
 
-        if len(args) and args[0] in ("chain", "nochain"):
+        if len(args) and args[0] in ("chain", "nochain", "flatten"):
             self.mode = args.pop(0)
         else:
-            self.mode = "chain"
+            self.mode = "flatten"
 
         if len(args):
             if args[0] != "if":
@@ -69,7 +71,10 @@ class ForEach(Node):
                 c.set_parent(self)
                 val = c.resolve()
                 if isinstance(val, list):
-                    lst.extend(Boxed(v) for v in val)
+                    if self.mode == "flatten":
+                        lst.extend(Boxed(v) for v in flatten(val))
+                    else:
+                        lst.extend(Boxed(v) for v in val)
                 else:
                     lst.append(Boxed(val))
 

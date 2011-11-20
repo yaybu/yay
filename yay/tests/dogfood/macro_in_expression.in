@@ -1,0 +1,13 @@
+
+name: foo
+
+.define SomeMacro:
+    - SomeItem:
+        name: ${name}
+    - SomeOtherItem:
+        name: ${name}
+
+
+resources.append: ${SomeMacro!}
+
+

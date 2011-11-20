@@ -1,0 +1,18 @@
+
+names:
+  - foo
+  - foobar
+
+.define SomeMacro:
+    - SomeItem:
+        name: ${name}
+    - SomeOtherItem:
+        name: ${name}
+
+
+resources.append:
+  .with names[0] as name: ${SomeMacro!}
+
+resources.append:
+  .with names[1] as name: ${SomeMacro!}
+

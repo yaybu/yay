@@ -30,7 +30,14 @@ class Composer(object):
         self.secret = secret
         self.root = None
         self.parser = Parser(self)
+        self.definitions = {}
+
+        def define(value, args):
+            value.defined_name = args.strip()
+            return value
+
         self.action_map = {
+            "define": define,
             "copy": lambda value, args: Copy(value),
             "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
@@ -151,14 +158,16 @@ class Composer(object):
     def compose_mapping_or_anonymous(self, previous):
         start = self.get_event()
 
-        if not self.check_event(MappingEndEvent) and self.peek_event().value.startswith("."):
-            value = self.compose_anonymous(previous)
-        else:
-            value = self.compose_mapping(previous)
-
-        end = self.get_event()
-
-        return value
+        try:
+            if not self.check_event(MappingEndEvent):
+                if self.peek_event().value.startswith("."):
+                    return self.compose_anonymous(previous)
+                elif self.peek_event().value.endswith("!"):
+                    n = Call(self, self.get_event().value[:-1], self.compose_node(None))
+                    return n
+            return self.compose_mapping(previous)
+        finally:
+            self.get_event()
 
     def compose_anonymous(self, previous):
         # An anonymous expression that doesnt bind to a keyword
@@ -186,6 +195,9 @@ class Composer(object):
         action_args = None
         if " " in action:
             action, action_args = action.split(" ", 1)
+
+        if action == "define":
+            key = ".define"
 
         try:
             existing = container.get(key)
@@ -245,6 +257,9 @@ class Composer(object):
                     previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
+
+            elif key == ".define":
+                self.definitions[value.defined_name] = value
 
             else:
                 previous.set(key, value)

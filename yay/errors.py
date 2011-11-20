@@ -29,7 +29,7 @@ class ProgrammingError(Error):
 
 class LanguageError(Error):
 
-    def __init__(self, description, file=None, line=None, column=None, snippet=None):
+    def __init__(self, description, file="<Unknown>", line=0, column=0, snippet=None):
         self.description = description
         self.file = file
         self.line = line
