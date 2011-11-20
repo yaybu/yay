@@ -73,6 +73,15 @@ class PackageOpener(IOpener):
         return FileOpener().open(path)
 
 
+class HomeOpener(IOpener):
+
+    schemes = ("home://", )
+
+    def open(self, uri):
+        uri = os.path.expanduser("~/" + uri.lstrip("home://"))
+        return FileOpener().open(uri)
+
+
 class UrlOpener(IOpener):
 
     schemes = ("http://", "https://")

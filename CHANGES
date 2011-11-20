@@ -4,6 +4,16 @@ Changelog for yay
 0.0.36 (unreleased)
 -------------------
 
+- There is now a ``home://`` URL handler. For my laptop this means::
+
+      import yay
+      yay.load_uri("home://foo/bar.yay")
+
+  Is equivalent to::
+
+      import yay
+      yay.load_uri("/home/john/foo/bar.yay")
+
 - Improve searchpath handling to better cope with URIs.
 
 - Add support for ``else`` keyword in expressions as per YEP2::
