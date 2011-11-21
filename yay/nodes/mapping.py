@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed
+from yay.nodes import Node, BoxingFactory
 from yay.errors import NoMatching
 
 class Mapping(Node):
@@ -72,5 +72,13 @@ class Mapping(Node):
         return m
 
     def __iter__(self):
-        return iter(Boxed(v) for v in sorted(self.keys()))
+        return iter(BoxingFactory.box(v) for v in sorted(self.keys()))
+
+
+def box_dict(val):
+    m = Mapping(None)
+    for k, v in val.items():
+        m.set(k, BoxingFactory.box(v))
+    return m
+BoxingFactory.register(lambda x: isinstance(x, dict), box_dict)
 

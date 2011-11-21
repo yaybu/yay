@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed
+from yay.nodes import Node, BoxingFactory
 
 def sum(*args):
     return reduce(lambda x, y: x+y, args)
@@ -41,7 +41,7 @@ class Function(Node):
         return self.functions[self.function](*args)
 
     def expand(self):
-        return [Boxed(x) for x in self.resolve()]
+        return [BoxingFactory.box(x) for x in self.resolve()]
 
     def __repr__(self):
         return "Function(%s)" % ", ".join([self.function] + [str(a) for a in self.args])

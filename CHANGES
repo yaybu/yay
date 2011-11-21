@@ -4,7 +4,13 @@ Changelog for yay
 0.0.38 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- This is a bugfix release to improve existing features, especially boxing of
+  foreign data.
+
+- Move more code away from direct use of ``Boxed`` to ``BoxingFactory.box``
+
+- Wrap any dictionary objects in a Mapping object so they can be merged with
+  other mappings that come from within Yay. 
 
 
 0.0.37 (2011-11-20)

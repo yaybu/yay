@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed, Sequence, Context
+from yay.nodes import Node, BoxingFactory, Sequence, Context
 from yay.nodes.flatten import flatten
 
 
@@ -72,11 +72,11 @@ class ForEach(Node):
                 val = c.resolve()
                 if isinstance(val, list):
                     if self.mode == "flatten":
-                        lst.extend(Boxed(v) for v in flatten(val))
+                        lst.extend(BoxingFactory.box(v) for v in flatten(val))
                     else:
-                        lst.extend(Boxed(v) for v in val)
+                        lst.extend(BoxingFactory.box(v) for v in val)
                 else:
-                    lst.append(Boxed(val))
+                    lst.append(BoxingFactory.box(val))
 
         sq = Sequence(lst)
         sq.set_parent(self.parent)

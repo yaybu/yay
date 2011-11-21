@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.nodes import Node, Boxed, Sequence
+from yay.nodes import Node, BoxingFactory, Sequence
 
 class Append(Node):
 
@@ -30,7 +30,7 @@ class Append(Node):
     """
 
     def get(self, idx, default=None):
-        return Boxed(self.resolve()[int(idx)])
+        return BoxingFactory.box(self.resolve()[int(idx)])
 
     def expand(self):
         if not self.chain:
