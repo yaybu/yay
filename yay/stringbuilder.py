@@ -32,13 +32,15 @@ class StringPart(object):
     def unprotected(self):
         return self.value
 
+    def __getstate__(self):
+        return dict(value=self.value, secret=self.secret)
 
-class _String(object):
-    """ I exist purely to fudge around MRO """
-    pass
+    def __setstate__(self, state):
+        self.value = state['value']
+        self.secret = state['secret']
 
 
-class String(_String, basestring):
+class String(object):
     """ I represent a string which contains sensitive parts """
 
     def __init__(self, parts=None):
