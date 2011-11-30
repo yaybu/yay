@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.39 (unreleased)
+0.0.39 (2011-11-30)
 -------------------
 
 - Fix string builder so that configs containing secrets can be pickled.
