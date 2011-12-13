@@ -30,7 +30,6 @@ class Composer(object):
         self.secret = secret
         self.root = None
         self.parser = Parser(self)
-        self.definitions = {}
 
         def define(value, args):
             value.defined_name = args.strip()
@@ -139,7 +138,7 @@ class Composer(object):
         for extend in imports:
             data = self.openers.open(extend)
             secret = hasattr(data, "secret") and data.secret
-            previous = self.__class__(data, special_term=self.special_term, secret=secret, openers=self.openers).compose(previous)
+            previous = self.__class__(data, parent=self.parent, secret=secret).compose(previous)
         return previous
 
     def handle_special_term(self, previous):
@@ -259,7 +258,7 @@ class Composer(object):
                 previous = Mapping(previous)
 
             elif key == ".define":
-                self.definitions[value.defined_name] = value
+                self.parent.definitions[value.defined_name] = value
 
             else:
                 previous.set(key, value)

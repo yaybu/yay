@@ -1,0 +1,4 @@
+foo:
+  SomeMacro!:
+    somevar: c
+

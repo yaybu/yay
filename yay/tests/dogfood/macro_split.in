@@ -1,0 +1,4 @@
+.include:
+ - macro_split.file1
+ - macro_split.file2
+ 
