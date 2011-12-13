@@ -38,7 +38,7 @@ class Call(Node):
 
     def expand(self):
         try:
-            block = self.composer.definitions[self.value]
+            block = self.composer.parent.definitions[self.value]
         except KeyError:
             self.error("'%s' was not defined" % self.value)
 

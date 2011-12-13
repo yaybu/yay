@@ -29,12 +29,13 @@ class Config(object):
         self.load(stream, uri, hasattr(stream, "secret") and stream.secret)
 
     def load(self, stream, name="<Unknown>", secret=False):
-        l = Loader(stream, name=name, special_term=self.special_term, secret=secret, openers=self.openers)
+        l = Loader(stream, name=name, parent=self, secret=secret)
         data = l.compose(self.mapping)
         self.mapping = data
 
     def clear(self):
         self.mapping = None
+        self.definitions = {}
 
     def get(self):
         if not self.mapping:
