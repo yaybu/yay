@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.41 (unreleased)
+0.0.41 (2011-12-21)
 -------------------
 
 - You can inject Python objects into the Yay Config object, as long as Yay
