@@ -16,6 +16,9 @@ import yaml
 
 from yay.loader import Loader
 from yay.openers import Openers
+from yay.nodes import BoxingFactory, Mapping
+from yay.errors import ProgrammingError
+
 
 class Config(object):
 
@@ -23,6 +26,7 @@ class Config(object):
         self.special_term = special_term
         self.openers = Openers(searchpath=searchpath)
         self.clear()
+        self.mapping = None
 
     def load_uri(self, uri):
         stream = self.openers.open(uri)
@@ -32,6 +36,17 @@ class Config(object):
         l = Loader(stream, name=name, parent=self, secret=secret)
         data = l.compose(self.mapping)
         self.mapping = data
+
+    def add(self, data):
+        boxed = BoxingFactory.box(data)
+        if not isinstance(boxed, Mapping):
+            raise ProgrammingError("Tried to call Config.add on type '%s'. This cannot be boxed as a 'Mapping'." % type(data))
+
+        boxed.predecessor = self.mapping
+        if boxed.predecessor:
+            boxed.predecessor.set_parent(boxed)
+
+        self.mapping = boxed
 
     def clear(self):
         self.mapping = None
