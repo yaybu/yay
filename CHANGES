@@ -4,7 +4,22 @@ Changelog for yay
 0.0.41 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- You can inject Python objects into the Yay Config object, as long as Yay
+  knows how to box them. If you had a Yay file like this::
+
+      hello: abc
+      result: ${hello}
+
+  And the following python code::
+
+      from yay.config import Config
+      c = Config()
+      c.load_uri(example_file)
+      c.add(dict(hello="xyx"))
+
+  Then the following assertion is true::
+
+      c.get() == dict(hello="xyz", result="xyz")
 
 
 0.0.40 (2011-12-13)
