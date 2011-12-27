@@ -86,23 +86,10 @@ class Table(Node):
         for i in range(self.value.objects.count()):
             yield self.get(i)
 
-_horrible_cludge = False
 
 class DjangoStore(DataStore):
 
     def __init__(self, config):
-        try:
-            from django.conf import settings
-            from django.db import models
-
-            # Make sure our adaptor is registered....
-            global _horrible_cludge
-            if not _horrible_cludge:
-                BoxingFactory.register(lambda x: isinstance(x, models.Model), Instance)
-                _horrible_cludge = True
-        except ImportError:
-            self.error("Django Models are not available as cannot import django")
-
         self.config = config
         self.tables = {}
 
@@ -135,4 +122,17 @@ class DjangoStore(DataStore):
     def error(self, msg):
         raise RuntimeError(msg)
 
+
+def lazy_isinstance(classname):
+    def _(obj):
+        cls = obj.__class__
+        if not hasattr(cls, "__mro__"):
+            return False
+        modname, cname = classname.rsplit(".", 1)
+        return any(x.__module__ == modname and x.__name__ == cname for x in cls.__mro__)
+    return _
+
+BoxingFactory.register(lazy_isinstance("django.db.models.base.Model"), Instance)
+BoxingFactory.register(lazy_isinstance("django.db.models.query.QuerySet"), InstanceList)
+BoxingFactory.register(lazy_isinstance("django.db.models.manager.Manager"), InstanceList)
 

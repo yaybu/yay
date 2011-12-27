@@ -15,9 +15,12 @@ from unittest import TestCase
 
 from yay.config import Config
 from yay.tests.dj.models import Car, Part
+from yay.nodes import BoxingFactory
+from yay.nodes.datastore import dj
 from django.core.management.commands.syncdb import Command as syncdb
 
-class TestDjango(TestCase):
+
+class TestDjangoBase(TestCase):
 
     def setUp(self):
         syncdb().handle_noargs()
@@ -33,6 +36,27 @@ class TestDjango(TestCase):
         p2.save()
         p3 = Part(name="badger", car=c2)
         p3.save()
+
+
+class TestDjangoBoxing(TestDjangoBase):
+
+    def test_box_instance(self):
+        b = BoxingFactory.box(Car(name="pudding"))
+        self.assert_(isinstance(b, dj.Instance))
+
+    def test_box_query(self):
+        b = BoxingFactory.box(Car.objects.filter(name="pudding"))
+        self.assert_(isinstance(b, dj.InstanceList))
+
+    def test_box_manager(self):
+        b = BoxingFactory.box(Car.objects)
+        self.assert_(isinstance(b, dj.InstanceList))
+
+
+class TestDjangoYay(TestDjangoBase):
+
+    def setUp(self):
+        TestDjangoBase.setUp(self)
 
         self.config = Config()
         self.config.load("""

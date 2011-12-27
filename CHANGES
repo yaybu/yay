@@ -4,7 +4,9 @@ Changelog for yay
 0.0.42 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Change how Django boxing works so that a .bind isn't required for the
+  boxing mechanism to work. This allows raw Django mdoels to be pushed
+  into Yay using the ``.add`` API from 0.0.41.
 
 
 0.0.41 (2011-12-21)
