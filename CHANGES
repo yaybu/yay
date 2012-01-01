@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.42 (unreleased)
+0.0.42 (2012-01-01)
 -------------------
 
 - Change how Django boxing works so that a .bind isn't required for the
