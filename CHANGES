@@ -4,7 +4,7 @@ Changelog for yay
 0.0.43 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix handling of paths on searchpath without a scheme.
 
 
 0.0.42 (2012-01-01)

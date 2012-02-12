@@ -171,7 +171,8 @@ class Openers(object):
             for scheme in opener.schemes:
                 if uri.startswith(scheme):
                     return opener.open(uri)
-        raise NotFound("Could not find a way to open '%s'" % uri)
+
+        return FileOpener().open(uri)
 
     def open(self, uri):
         fp = None
@@ -184,12 +185,9 @@ class Openers(object):
             for path in self.searchpath:
                 try:
                     fp = self._open(self._join(path, uri))
+                    break
                 except NotFound:
                     pass
-                else:
-                    break
-            else:
-                fp = FileOpener().open(uri)
 
         if not fp:
             raise NotFound("'%s' could not be found" % uri)
