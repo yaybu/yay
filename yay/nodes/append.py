@@ -35,9 +35,18 @@ class Append(Node):
     def expand(self):
         if not self.chain:
             return self.value.expand()
+
+        chain = self.chain.expand()
+        if not hasattr(chain, "__iter__"):
+            self.error("You can only append to list types")
+
+        value = self.value.expand()
+        if not hasattr(value, "__iter__"):
+            self.error("You must append a list to this field")
+
         # we initialize this sequence weirdly as we dont want to reparent the nodes we are appending
         s = Sequence([])
-        s.value = list(iter(self.chain.expand())) + list(iter(self.value.expand()))
+        s.value = list(iter(chain)) + list(iter(value))
         s.set_parent(self.parent)
         return s
 

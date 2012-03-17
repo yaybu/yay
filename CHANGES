@@ -6,6 +6,8 @@ Changelog for yay
 
 - Fix .select when value that is resolved is a complicated expression.
 
+- Better validation when you accidentally mix up list and mapping types.
+
 
 0.0.43 (2012-02-12)
 -------------------

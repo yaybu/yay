@@ -42,6 +42,8 @@ class Mapping(Node):
     def keys(self):
         keys = set(self.value.keys())
         if self.predecessor:
+            if not hasattr(self.predecessor, "keys"):
+                self.error("Mapping cannot mask or replace field with same name and different type")
             keys.update(self.predecessor.expand().keys())
         return list(keys)
 
