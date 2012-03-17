@@ -55,7 +55,7 @@ class TestDogfood(unittest.TestCase):
         oldpath = os.getcwd()
         os.chdir(dogfood_path)
         try:
-            c = TestConfig()
+            c = TestConfig(searchpath=[dogfood_path])
             self.failUnlessEqual(c.get(), {})
             c.load_uri(path)
             return c.get()
