@@ -24,7 +24,7 @@ class Select(Node):
 
     def expand(self):
         key = self.key.resolve()
-        return self.options.get(key)
+        return self.options.get(key).expand()
 
     def resolve(self):
         return self.expand().resolve()

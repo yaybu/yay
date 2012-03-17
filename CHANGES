@@ -4,7 +4,7 @@ Changelog for yay
 0.0.44 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix .select when value that is resolved is a complicated expression.
 
 
 0.0.43 (2012-02-12)
