@@ -113,6 +113,10 @@ class UrlOpener(IOpener):
 
         try:
             fp = urllib2.urlopen(req)
+
+        except urllib2.URLError as exc:
+            raise NotFound("URL '%s' not found (URLError)" % uri)
+
         except urllib2.HTTPError as exc:
             if exc.code == 304:
                 raise NotModified("URL '%s' has not been modified" % uri)
@@ -148,12 +152,18 @@ class MemOpener(IOpener):
     data = {}
 
     def open(self, uri, etag=None):
-        fp = StringIO.StringIO(self.data[uri])
+        try:
+            fp = StringIO.StringIO(self.data[uri])
+        except KeyError:
+            raise NotFound("Memory cell '%s' does not exist" % uri)
+
         fp.len = len(self.data[uri])
+
         new_etag = etag_stream(StringIO.StringIO(self.data[uri]))
         if etag and new_etag == etag:
             raise NotModified("Memory cell '%s' hasn't changed" % uri)
         fp.etag = new_etag
+
         return fp
 
     @classmethod
