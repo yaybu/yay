@@ -18,8 +18,18 @@ import StringIO
 import os
 import sys
 import subprocess
+import hashlib
 
 from yay.errors import NotFound
+
+def etag_stream(fp):
+    s = hashlib.sha1()
+    while True:
+        block = fp.read(8192)
+        if not block:
+            break
+        s.update(block)
+    return s.hexdigest()
 
 
 class IOpener(object):
@@ -54,7 +64,12 @@ class FileOpener(IOpener):
             def len(self):
                 return int(os.fstat(self.fp.fileno())[6])
 
-        return File(open(uri, "rb"))
+        fp = open(uri, "rb")
+        etag = etag_stream(fp)
+        fp.seek(0)
+        f = File(fp)
+        f.etag = etag
+        return f
 
 
 class PackageOpener(IOpener):
@@ -93,6 +108,13 @@ class UrlOpener(IOpener):
 
         class Resource(FpAdaptor):
             @property
+            def etag(self):
+                info = self.fp.info()
+                if "etag" in info:
+                    return info["etag"]
+                return None
+
+            @property
             def len(self):
                 return int(self.fp.info()['content-length'])
 
@@ -116,6 +138,7 @@ class MemOpener(IOpener):
     def open(self, uri):
         fp = StringIO.StringIO(self.data[uri])
         fp.len = len(self.data[uri])
+        fp.etag = etag_stream(StringIO.StringIO(self.data[uri]))
         return fp
 
     @classmethod
@@ -134,6 +157,7 @@ class Gpg(object):
         p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         stdout, stderr = p.communicate(data)
         stream = StringIO.StringIO(stdout)
+        stream.etag = fp.etag
         stream.len = len(stdout)
         stream.secret = True
         return stream

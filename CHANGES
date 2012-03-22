@@ -4,7 +4,10 @@ Changelog for yay
 0.0.45 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- All openers will now have an etag property. This property can be None if a
+  suitable etag cannot be provided. Otherwise it should be some hash that
+  guarantees the state of the file so that later requests can just ask "has it
+  changed since it was in this state".
 
 
 0.0.44 (2012-03-17)
