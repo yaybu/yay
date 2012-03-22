@@ -150,7 +150,10 @@ class MemOpener(IOpener):
     def open(self, uri, etag=None):
         fp = StringIO.StringIO(self.data[uri])
         fp.len = len(self.data[uri])
-        fp.etag = etag_stream(StringIO.StringIO(self.data[uri]))
+        new_etag = etag_stream(StringIO.StringIO(self.data[uri]))
+        if etag and new_etag == etag:
+            raise NotModified("Memory cell '%s' hasn't changed" % uri)
+        fp.etag = new_etag
         return fp
 
     @classmethod
