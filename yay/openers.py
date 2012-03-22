@@ -65,10 +65,15 @@ class FileOpener(IOpener):
                 return int(os.fstat(self.fp.fileno())[6])
 
         fp = open(uri, "rb")
-        etag = etag_stream(fp)
+        new_etag = etag_stream(fp)
+
+        if etag and etag == new_etag:
+            fp.close()
+            raise NotModified("File '%s' not modified" % uri)
+
         fp.seek(0)
         f = File(fp)
-        f.etag = etag
+        f.etag = new_etag
         return f
 
 
