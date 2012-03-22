@@ -18,6 +18,10 @@ from yay.openers import *
 from yay.errors import NotModified, NotFound
 
 
+if __file__.endswith(".pyc"):
+    __file__ = __file__[:-1]
+
+
 class TestFileOpener(unittest.TestCase):
 
     def test_read(self):
