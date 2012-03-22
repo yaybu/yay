@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.45 (unreleased)
+0.0.45 (2012-03-22)
 -------------------
 
 - You can now pass an etag to the open method of ``Openers``. This will throw a
