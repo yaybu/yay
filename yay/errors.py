@@ -22,6 +22,10 @@ class NotFound(Error):
     """ An asset or referenced file could not be found """
     pass
 
+class NotModified(Error):
+    """ An asset or referenced file has not been modified since last time it
+    was opened. Use a cached version or request again without etag. """
+    pass
 
 class ProgrammingError(Error):
     pass

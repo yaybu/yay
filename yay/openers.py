@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib
+import urllib2
 import urlparse
 import StringIO
 import os
@@ -20,7 +20,7 @@ import sys
 import subprocess
 import hashlib
 
-from yay.errors import NotFound
+from yay.errors import NotFound, NotModified
 
 def etag_stream(fp):
     s = hashlib.sha1()
@@ -102,9 +102,16 @@ class UrlOpener(IOpener):
     schemes = ("http://", "https://")
 
     def open(self, uri, etag=None):
-        fp = urllib.urlopen(uri)
-        if fp.getcode() != 200:
-            raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, fp.getcode()))
+        req = urllib2.Request(uri)
+        if etag:
+            req.add_header("If-None-Match", etag)
+
+        try:
+            fp = urllib2.urlopen(req)
+        except urllib2.HTTPError as exc:
+            if exc.code == 304:
+                raise NotModified("URL '%s' has not been modified" % uri)
+            raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, exc.code))
 
         class Resource(FpAdaptor):
             @property
