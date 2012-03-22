@@ -34,7 +34,7 @@ def etag_stream(fp):
 
 class IOpener(object):
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         """ Given a uri, return a YAML compatible stream """
         pass
 
@@ -53,7 +53,7 @@ class FileOpener(IOpener):
 
     schemes = ("file://", )
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         if uri.startswith("file://"):
             uri = uri[8:]
         if not os.path.exists(uri):
@@ -76,7 +76,7 @@ class PackageOpener(IOpener):
 
     schemes = ("package://", )
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         package, uri = uri.lstrip("package://").split("/", 1)
         try:
             __import__(package)
@@ -85,23 +85,23 @@ class PackageOpener(IOpener):
             raise NotFound("Package '%s' could not be imported")
         module_path = os.path.dirname(module.__file__)
         path = os.path.join(module_path, uri)
-        return FileOpener().open(path)
+        return FileOpener().open(path, etag)
 
 
 class HomeOpener(IOpener):
 
     schemes = ("home://", )
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         uri = os.path.expanduser("~/" + uri.lstrip("home://"))
-        return FileOpener().open(uri)
+        return FileOpener().open(uri, etag)
 
 
 class UrlOpener(IOpener):
 
     schemes = ("http://", "https://")
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         fp = urllib.urlopen(uri)
         if fp.getcode() != 200:
             raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, fp.getcode()))
@@ -135,7 +135,7 @@ class MemOpener(IOpener):
     schemes = ("mem://", )
     data = {}
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         fp = StringIO.StringIO(self.data[uri])
         fp.len = len(self.data[uri])
         fp.etag = etag_stream(StringIO.StringIO(self.data[uri]))
@@ -190,25 +190,25 @@ class Openers(object):
             return retval
         return os.path.join(*uri)
 
-    def _open(self, uri):
+    def _open(self, uri, etag=None):
         for opener in self.openers:
             for scheme in opener.schemes:
                 if uri.startswith(scheme):
-                    return opener.open(uri)
+                    return opener.open(uri, etag)
 
-        return FileOpener().open(uri)
+        return FileOpener().open(uri, etag)
 
-    def open(self, uri):
+    def open(self, uri, etag=None):
         fp = None
 
         if uri.startswith("/"):
-            fp = FileOpener().open(uri)
+            fp = FileOpener().open(uri, etag)
         elif self._absolute(uri):
             fp = self._open(uri)
         else:
             for path in self.searchpath:
                 try:
-                    fp = self._open(self._join(path, uri))
+                    fp = self._open(self._join(path, uri), etag)
                     break
                 except NotFound:
                     pass
