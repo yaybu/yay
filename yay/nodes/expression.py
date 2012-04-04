@@ -217,7 +217,11 @@ class Else(Node):
 
     def walk(self):
         for c in self.children:
-            yield c
+            try:
+                c.resolve()
+                yield c
+            except NoMatching:
+                pass
 
     def clone(self):
         return Else(*[x.clone() for x in self.children])

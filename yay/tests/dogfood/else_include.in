@@ -1,0 +1,6 @@
+
+a: else_include_in
+
+.include:
+  - ${b else a}.inc
+
