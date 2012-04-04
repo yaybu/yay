@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.46 (unreleased)
+0.0.46 (2012-04-04)
 -------------------
 
 - Fix ``else`` expression inside an ``.include``
