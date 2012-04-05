@@ -1,0 +1,15 @@
+
+parts:
+  part1:
+    recipe: isotoma.recipe.apache
+  part2:
+    name: hello
+
+const: isotoma.recipe.apache
+
+res1:
+  - part1
+
+res2:
+  - part2
+

@@ -1,0 +1,13 @@
+
+parts:
+  part1:
+    recipe: isotoma.recipe.apache
+  part2:
+    name: hello
+
+const: isotoma.recipe.apache
+
+res1.foreach p in parts if parts[p].recipe = const: ${p}
+
+res2.foreach p in parts if parts[p].recipe != const: ${p}
+

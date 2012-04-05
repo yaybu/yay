@@ -48,11 +48,26 @@ class In(Comparison):
 
 class Equal(Comparison):
     def resolve(self):
-        return self.left.resolve() == self.right.resolve()
+        missing = 0
+        try:
+            left = self.left.resolve()
+        except NoMatching:
+            missing += 1
+        try:
+            right = self.right.resolve()
+        except NoMatching:
+            missing += 1
 
-class NotEqual(Comparison):
+        if missing == 1:
+            return False
+        elif missing == 2:
+            return True
+
+        return left == right
+
+class NotEqual(Equal):
     def resolve(self):
-        return self.left.resolve() != self.right.resolve()
+        return not super(NotEqual, self).resolve()
 
 class LessThan(Comparison):
     def resolve(self):
