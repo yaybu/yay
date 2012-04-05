@@ -7,6 +7,9 @@ Changelog for yay
 - Allow equality checks of undefined keys to pass or fail appropriately without
   raising a NoMatching exception.
 
+- Add an ``undefined`` that raises a NoMatch exception when resolved. This
+  allows one to filter by whether or not a key is present in a mapping.
+
 
 0.0.46 (2012-04-04)
 -------------------

@@ -1,0 +1,13 @@
+
+parts:
+  part1:
+    name: hello
+  part2:
+    name: hello2
+
+
+res1.foreach p in parts if parts[p].recipe = undefined: ${p}
+
+res2.foreach p in parts if parts[p].recipe != undefined: ${p}
+
+

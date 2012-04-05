@@ -30,4 +30,5 @@ from yay.nodes.expression import *
 from yay.nodes.datastore.bind import Bind
 from yay.nodes.secret import Secret
 from yay.nodes.call import Call
+from yay.nodes.undefined import Undefined
 

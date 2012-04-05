@@ -117,12 +117,18 @@ class Parser(object):
     def inline_call(self, s, w, t):
         return nodes.Call(self.composer, t[0])
 
+    def undefined(self, s, w, t):
+        return nodes.Undefined()
+
     def setup_parser(self):
         ELSE = Keyword("else")
         AND = Keyword("and")
         OR = Keyword("or")
         IN = Keyword("in")
         BINOP = oneOf("= != < > <= >=")
+
+        UNDEFINED = Keyword("undefined")
+        UNDEFINED.setParseAction(self.undefined)
 
         identifier = Word(alphanums+"_") | Keyword("@")
         arithSign = Word("+-",exact=1)
@@ -167,6 +173,7 @@ class Parser(object):
         fullExpression.setParseAction(self.full_expression_action)
 
         expression_part = (
+            UNDEFINED |
             octNum |
             intNum |
             macro_call |
