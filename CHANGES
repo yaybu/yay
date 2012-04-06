@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.47 (unreleased)
+0.0.47 (2012-04-06)
 -------------------
 
 - Allow expressions to contain literal strings and floats::
