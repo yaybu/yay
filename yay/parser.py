@@ -120,12 +120,18 @@ class Parser(object):
     def undefined(self, s, w, t):
         return nodes.Undefined()
 
+    def empty_list(self, s, w, t):
+        return nodes.Sequence([])
+
     def setup_parser(self):
         ELSE = Keyword("else")
         AND = Keyword("and")
         OR = Keyword("or")
         IN = Keyword("in")
         BINOP = oneOf("= != < > <= >=")
+
+        EMPTYLIST = Keyword("[]")
+        EMPTYLIST.setParseAction(self.empty_list)
 
         UNDEFINED = Keyword("undefined")
         UNDEFINED.setParseAction(self.undefined)
@@ -174,6 +180,7 @@ class Parser(object):
 
         expression_part = (
             UNDEFINED |
+            EMPTYLIST |
             octNum |
             intNum |
             macro_call |
