@@ -4,6 +4,11 @@ Changelog for yay
 0.0.47 (unreleased)
 -------------------
 
+- Allow expressions to contain literal strings and floats::
+
+      result: ${site.description else "No description"}
+      result2: ${3.212121}
+
 - Allow expressions to return an empty list::
 
       result: ${site.vhosts else []}

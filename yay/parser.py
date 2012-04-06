@@ -38,6 +38,9 @@ class Parser(object):
     def boxed_string(self, str, words, tokens):
         return self.box(tokens[0])
 
+    def boxed_float(self, str, words, tokens):
+        return self.box(float(tokens[0]))
+
     def boxed_int(self, str, words, tokens):
         return self.box(int(tokens[0]))
 
@@ -141,6 +144,10 @@ class Parser(object):
 
         octNum = Combine(Optional(arithSign) + Suppress("0") + Word(nums)).setParseAction(self.boxed_octal)
         intNum = Combine(Optional(arithSign) + Word(nums)).setParseAction(self.boxed_int)
+        floatNum = Combine(Optional(arithSign) + Word(nums) + Literal('.') + Word(nums)).setName('float').setParseAction(self.boxed_float)
+
+        string = QuotedString('"')
+        string.setParseAction(self.boxed_string)
 
         expression = Forward()
 
@@ -181,10 +188,12 @@ class Parser(object):
         expression_part = (
             UNDEFINED |
             EMPTYLIST |
+            floatNum |
             octNum |
             intNum |
             macro_call |
             function_call |
+            string |
             fullExpression
             )
 
