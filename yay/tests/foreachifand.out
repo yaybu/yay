@@ -1,0 +1,16 @@
+
+parts:
+  part1:
+    name: b
+    wibble: []
+  part2:
+    name: a
+    wibble:
+      - fox
+  part3:
+    name: a
+    wibble: []
+
+res:
+  - part3
+
