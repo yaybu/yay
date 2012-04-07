@@ -126,6 +126,9 @@ class Parser(object):
     def empty_list(self, s, w, t):
         return nodes.Sequence([])
 
+    def in_expression(self, s, w, t):
+        return nodes.In(t[0][0], t[0][2])
+
     def setup_parser(self):
         ELSE = Keyword("else")
         AND = Keyword("and")
@@ -139,6 +142,7 @@ class Parser(object):
         UNDEFINED = Keyword("undefined")
         UNDEFINED.setParseAction(self.undefined)
 
+        #identifier = Word(alphanums+"_").ignore(ELSE|AND|OR|IN|UNDEFINED) | Keyword("@")
         identifier = Word(alphanums+"_") | Keyword("@")
         arithSign = Word("+-",exact=1)
 
@@ -163,7 +167,11 @@ class Parser(object):
         filter_bin_comparison = Group(expression + BINOP + expression)
         filter_bin_comparison.setParseAction(self.filter_bin_comparison_action)
 
+        inexpression = Group(expression + IN + expression)
+        inexpression.setParseAction(self.in_expression)
+
         filterCondition = (
+            inexpression |
             filter_bin_comparison |
             ( "(" + filterExpression + ")" )
         )
@@ -196,6 +204,7 @@ class Parser(object):
             string |
             fullExpression
             )
+
 
         expression << Group(expression_part + Optional(ELSE + expression)).setParseAction(self.handle_expression)
 

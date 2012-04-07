@@ -4,7 +4,9 @@ Changelog for yay
 0.0.48 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Support in operator during foreach::
+
+      result.foreach v in somevalues if v in somelist: ${v}.
 
 
 0.0.47 (2012-04-06)

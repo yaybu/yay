@@ -1,0 +1,12 @@
+
+list:
+  - dog
+  - cat
+  - badger
+
+list2:
+  - dog
+  - mouse
+
+res1.foreach p in list2 if p in list: ${p}
+

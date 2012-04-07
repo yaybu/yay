@@ -11,5 +11,5 @@ parts:
     name: a
     wibble: []
 
-res.foreach p in parts if parts[p].name="a" and parts[p].wibble=[]: p
+res.foreach p in parts if parts[p].name="a" and parts[p].wibble=[]: ${p}
 

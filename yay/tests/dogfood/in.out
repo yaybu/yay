@@ -1,0 +1,13 @@
+
+list:
+  - dog
+  - cat
+  - badger
+
+list2:
+  - dog
+  - mouse
+
+res1:
+  - dog
+
