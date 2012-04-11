@@ -18,12 +18,13 @@ from yay.tests.dj.models import Car, Part
 from yay.nodes import BoxingFactory
 from yay.nodes.datastore import dj
 from django.core.management.commands.syncdb import Command as syncdb
+from django.db import DEFAULT_DB_ALIAS
 
 
 class TestDjangoBase(TestCase):
 
     def setUp(self):
-        syncdb().handle_noargs()
+        syncdb().handle_noargs(verbosity=0, interactive=False, show_traceback=True, database=DEFAULT_DB_ALIAS)
 
         c1 = Car(name="fred")
         c1.save()
