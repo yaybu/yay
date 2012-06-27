@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.49 (unreleased)
+0.0.49 (2012-06-27)
 -------------------
 
 - Added a string replacement function allowing people to do things like::
