@@ -1,0 +1,3 @@
+teststring: foo bar baz
+
+replacedstring: ${replace(teststring, " ", "-")}

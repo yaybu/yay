@@ -17,6 +17,8 @@ from yay.nodes import Node, BoxingFactory
 def sum(*args):
     return reduce(lambda x, y: x+y, args)
 
+def replace(string, old, new):
+    return string.replace(old, new)
 
 class Function(Node):
 
@@ -29,6 +31,7 @@ class Function(Node):
     functions = {
         "range": range,
         "sum": sum,
+        "replace": replace,
         }
 
     def __init__(self, function, args):
