@@ -4,7 +4,9 @@ Changelog for yay
 0.0.50 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Allow expressions to return an empty dictionary::
+
+      result: ${site.vhosts else {}}
 
 
 0.0.49 (2012-06-27)
