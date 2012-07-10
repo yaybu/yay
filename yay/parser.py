@@ -126,6 +126,9 @@ class Parser(object):
     def empty_list(self, s, w, t):
         return nodes.Sequence([])
 
+    def empty_dict(self, s, w, t):
+        return nodes.Mapping(None)
+
     def in_expression(self, s, w, t):
         return nodes.In(t[0][0], t[0][2])
 
@@ -138,6 +141,9 @@ class Parser(object):
 
         EMPTYLIST = Keyword("[]")
         EMPTYLIST.setParseAction(self.empty_list)
+
+        EMPTYDICT = Keyword("{}")
+        EMPTYDICT.setParseAction(self.empty_dict)
 
         UNDEFINED = Keyword("undefined")
         UNDEFINED.setParseAction(self.undefined)
@@ -196,6 +202,7 @@ class Parser(object):
         expression_part = (
             UNDEFINED |
             EMPTYLIST |
+            EMPTYDICT |
             floatNum |
             octNum |
             intNum |
