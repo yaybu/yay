@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.50 (unreleased)
+0.0.50 (2012-07-10)
 -------------------
 
 - Allow expressions to return an empty dictionary::
