@@ -188,7 +188,7 @@ class Composer(object):
         key = key_event.value
 
         action = "assign"
-        if "." in key and key != '.include':
+        if "." in key and key not in ('.include', '.search'):
             key, action = key.split(".", 1)
 
         action_args = None
@@ -256,6 +256,9 @@ class Composer(object):
                     previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
+
+            elif key == ".search":
+                self.openers.searchpath.extend(value.resolve())
 
             elif key == ".define":
                 self.parent.definitions[value.defined_name] = value

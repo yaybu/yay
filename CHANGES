@@ -4,7 +4,13 @@ Changelog for yay
 0.0.51 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Introduce a lazily evaluated mechanism for expanding the search path::
+
+      .search:
+        - package://some.egg/
+        - http://raw.github.com/isotoma/yay/
+
+  Any subsequent ``.import`` statements will be use the modified search path.
 
 
 0.0.50 (2012-07-10)
