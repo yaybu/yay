@@ -12,6 +12,9 @@ Changelog for yay
 
   Any subsequent ``.import`` statements will be use the modified search path.
 
+- If a package specified either as part of a .include or as part of a .search
+  is not available on sys.path then an attempt will be made to install it.
+
 
 0.0.50 (2012-07-10)
 -------------------

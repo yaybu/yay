@@ -77,22 +77,6 @@ class FileOpener(IOpener):
         return f
 
 
-class PackageOpener(IOpener):
-
-    schemes = ("package://", )
-
-    def open(self, uri, etag=None):
-        package, uri = uri.lstrip("package://").split("/", 1)
-        try:
-            __import__(package)
-            module = sys.modules[package]
-        except ImportError:
-            raise NotFound("Package '%s' could not be imported")
-        module_path = os.path.dirname(module.__file__)
-        path = os.path.join(module_path, uri)
-        return FileOpener().open(path, etag)
-
-
 class HomeOpener(IOpener):
 
     schemes = ("home://", )
