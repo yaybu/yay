@@ -35,8 +35,8 @@ class PackageOpener(IOpener):
             location = [self._install(package)]
             location.extend(package.split("."))
         except ImportError:
-	    # This old code path only exists for the old case where you might
-	    # have specified a module within a package to import
+            # This old code path only exists for the old case where you might
+            # have specified a module within a package to import
             try:
                 __import__(package)
                 module = sys.modules[package]
