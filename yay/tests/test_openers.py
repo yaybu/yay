@@ -57,18 +57,18 @@ class TestMemOpener(unittest.TestCase):
 
     def test_read(self):
         MemOpener.data['hello'] = "test data"
-        self.failUnlessEqual("test data", MemOpener().open("hello").read())
+        self.failUnlessEqual("test data", MemOpener().open("mem://hello").read())
 
     def test_notfound(self):
-        self.failUnlessRaises(NotFound, MemOpener().open, "does-not-exist")
+        self.failUnlessRaises(NotFound, MemOpener().open, "mem://does-not-exist")
 
     def test_etag(self):
         MemOpener.data['hello'] = "test data"
         mo = MemOpener()
-        fp = mo.open("hello")
+        fp = mo.open("mem://hello")
         etag = fp.etag
         fp.close()
 
-        self.failUnlessRaises(NotModified, mo.open, "hello", etag)
+        self.failUnlessRaises(NotModified, mo.open, "mem://hello", etag)
 
 

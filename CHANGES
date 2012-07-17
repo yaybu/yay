@@ -15,6 +15,8 @@ Changelog for yay
 - If a package specified either as part of a .include or as part of a .search
   is not available on sys.path then an attempt will be made to install it.
 
+- Can pass config to opener backends using ``.config``
+
 
 0.0.50 (2012-07-10)
 -------------------

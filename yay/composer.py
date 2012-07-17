@@ -188,7 +188,7 @@ class Composer(object):
         key = key_event.value
 
         action = "assign"
-        if "." in key and key not in ('.include', '.search'):
+        if "." in key and key not in ('.include', '.search', '.config'):
             key, action = key.split(".", 1)
 
         action_args = None
@@ -256,6 +256,11 @@ class Composer(object):
                     previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
+
+            elif key == ".config":
+                value.lock()
+                mapping = value.resolve()
+                self.openers.config.update(mapping.get("openers", {}))
 
             elif key == ".search":
                 self.openers.searchpath.extend(value.resolve())

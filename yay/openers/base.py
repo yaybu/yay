@@ -34,6 +34,15 @@ def etag_stream(fp):
 
 class IOpener(object):
 
+    def __init__(self, factory=None):
+        self.factory = factory
+
+    def get_setting(self, key, default=None):
+        if self.factory:
+            self.factory.config.setdefault(self.name, {})
+            return self.factory.config[self.name].get(key, default)
+        return default
+
     def open(self, uri, etag=None):
         """ Given a uri, return a YAML compatible stream """
         pass
@@ -51,6 +60,7 @@ class FpAdaptor(object):
 
 class FileOpener(IOpener):
 
+    name = "files"
     schemes = ("file://", )
 
     def open(self, uri, etag=None):
@@ -79,15 +89,17 @@ class FileOpener(IOpener):
 
 class HomeOpener(IOpener):
 
+    name = "home"
     schemes = ("home://", )
 
     def open(self, uri, etag=None):
         uri = os.path.expanduser("~/" + uri.lstrip("home://"))
-        return FileOpener().open(uri, etag)
+        return FileOpener(self.factory).open(uri, etag)
 
 
 class UrlOpener(IOpener):
 
+    name = "urls"
     schemes = ("http://", "https://")
 
     def open(self, uri, etag=None):
@@ -132,18 +144,31 @@ class MemOpener(IOpener):
     temporary files
     """
 
+    name = "memory"
     schemes = ("mem://", )
     data = {}
 
+    @classmethod
+    def _simplify_uri(cls, uri):
+        assert uri.startswith("mem://")
+        return uri[6:]
+
     def open(self, uri, etag=None):
+        uri = self._simplify_uri(uri)
+
         try:
-            fp = StringIO.StringIO(self.data[uri])
+            data = self.data[uri]
         except KeyError:
-            raise NotFound("Memory cell '%s' does not exist" % uri)
+            import yaml
+            data = self.get_setting(uri)
+            if not data:
+                raise NotFound("Memory cell '%s' does not exist" % uri)
+            data = yaml.dump(data, default_flow_style=False)
 
-        fp.len = len(self.data[uri])
+        fp = StringIO.StringIO(data)
+        fp.len = len(data)
 
-        new_etag = etag_stream(StringIO.StringIO(self.data[uri]))
+        new_etag = etag_stream(StringIO.StringIO(data))
         if etag and new_etag == etag:
             raise NotModified("Memory cell '%s' hasn't changed" % uri)
         fp.etag = new_etag
@@ -152,7 +177,7 @@ class MemOpener(IOpener):
 
     @classmethod
     def add(cls, uri, data):
-        cls.data[uri] = data
+        cls.data[cls._simplify_uri(uri)] = data
 
     @classmethod
     def reset(cls):
@@ -174,12 +199,25 @@ class Gpg(object):
 
 class Openers(object):
 
-    def __init__(self, searchpath=None):
+    def __init__(self, searchpath=None, config=None):
         self.searchpath = searchpath or []
+        self.config = {}
 
         self.openers = []
         for cls in IOpener.__subclasses__():
-            self.openers.append(cls())
+            self.openers.append(cls(self))
+
+    def update(self, config):
+        def _merge(self, a, b):
+            out = {}
+            for k, v in b.items():
+                if k in a:
+                    if isinstance(a[k], dict) and isinstance(v, dict):
+                        out[k] = _merge(a[k], v)
+                        continue
+                out[k] = v
+            return out
+        self.config = _merge(self.config, config)
 
     def _scheme(self, uri):
         parsed = urlparse.urlparse(uri)
@@ -205,13 +243,13 @@ class Openers(object):
                 if uri.startswith(scheme):
                     return opener.open(uri, etag)
 
-        return FileOpener().open(uri, etag)
+        return FileOpener(self).open(uri, etag)
 
     def open(self, uri, etag=None):
         fp = None
 
         if uri.startswith("/"):
-            fp = FileOpener().open(uri, etag)
+            fp = FileOpener(self).open(uri, etag)
         elif self._absolute(uri):
             fp = self._open(uri)
         else:

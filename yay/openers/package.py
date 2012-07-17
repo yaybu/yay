@@ -23,11 +23,10 @@ from .base import IOpener, FileOpener
 
 class PackageOpener(IOpener):
 
+    name = "packages"
     schemes = ("package://", )
 
     cmd = 'from setuptools.command.easy_install import main; main()'
-    python = sys.executable
-    eggdir = os.path.expanduser("~/.yay/packages")
 
     def open(self, uri, etag=None):
         package, uri = uri.lstrip("package://").split("/", 1)
@@ -47,15 +46,17 @@ class PackageOpener(IOpener):
         return FileOpener().open(path, etag)
 
     def _install(self, requirement):
+        eggdir = self.get_setting("cachedir", "~/.yay/packages")
+
         ws  = pkg_resources.working_set
-        ws.add_entry(self.eggdir)
+        ws.add_entry(eggdir)
 
         def _installer(requirement):
-            if not os.path.exists(self.eggdir):
-                os.makedirs(self.eggdir)
+            if not os.path.exists(eggdir):
+                os.makedirs(eggdir)
         
             # The base easy_install command
-            command = [self.python, "-c", self.cmd, '-mqNxd', self.eggdir]
+            command = [sys.executable, "-c", self.cmd, '-mqNxd', eggdir]
 
             # User can set up an alternative PyPI index
             # if self.index:
