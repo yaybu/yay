@@ -19,6 +19,7 @@ import os
 import sys
 import subprocess
 import hashlib
+import base64
 
 from yay.errors import NotFound, NotModified
 
@@ -103,7 +104,18 @@ class UrlOpener(IOpener):
     schemes = ("http://", "https://")
 
     def open(self, uri, etag=None):
+        p = urlparse.urlparse(uri)
+        netloc = p.hostname
+        if p.port:
+            netloc += ":" + p.port
+        uri = urlparse.urlunparse((p.scheme, netloc, p[2], p[3], p[4], p[5]))
+
         req = urllib2.Request(uri)
+
+        if p.username and p.password:
+            header = base64.encodestring("%s:%s" % (p.username, p.password))
+            req.add_header("Authorization", "Basic " + header)
+
         if etag:
             req.add_header("If-None-Match", etag)
 
