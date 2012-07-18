@@ -16,10 +16,28 @@ import os
 import sys
 import subprocess
 import pkg_resources
+from setuptools.package_index import PackageIndex
 from itertools import chain
 
 from yay.errors import NotFound
 from .base import IOpener, FileOpener
+
+from tempfile import mkdtemp
+import shutil
+import urllib2
+import urlparse
+
+class TemporaryDirectory(object):
+
+    def __init__(self, suffix="", prefix="tmp", dir=None):
+        self.name = mkdtemp(suffix, prefix, dir)
+
+    def __enter__(self):
+        return self.name
+
+    def __exit__(self, exc, value, tb):
+        shutil.rmtree(self.name)
+
 
 class PackageOpener(IOpener):
 
@@ -27,6 +45,10 @@ class PackageOpener(IOpener):
     schemes = ("package://", )
 
     cmd = 'from setuptools.command.easy_install import main; main()'
+
+    DEFAULT_INDEX = "http://pypi.python.org/pypi/"
+    _index = None
+    _password_mgr = None
 
     def open(self, uri, etag=None):
         package, uri = uri.lstrip("package://").split("/", 1)
@@ -45,38 +67,64 @@ class PackageOpener(IOpener):
         path = os.path.join(*chain(location, [uri]))
         return FileOpener().open(path, etag)
 
+    @property
+    def index(self):
+        if not self._index:
+            self._index = PackageIndex(
+                index_url = self.get_setting("index", self.DEFAULT_INDEX),
+                python = sys.executable,
+                )
+        return self._index
+
     def _install(self, requirement):
-        eggdir = self.get_setting("cachedir", "~/.yay/packages")
+        eggdir = os.path.expanduser(self.get_setting("cachedir", "~/.yay/packages"))
 
         ws  = pkg_resources.working_set
         ws.add_entry(eggdir)
 
-        def _installer(requirement):
+        if not self._password_mgr and self.get_setting("index"):
+            mgr = self._password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            parsed = urlparse.urlparse(self.get_setting("index"))
+            top_level_url = urlparse.urlunparse((parsed.scheme, parsed.netloc, '', '', '', ''))
+            mgr.add_password(self.get_setting("realm"), top_level_url, self.get_setting("username"), self.get_setting("password"))
+
+            handler = urllib2.HTTPBasicAuthHandler(mgr)
+            opener = urllib2.build_opener(handler)
+            urllib2.install_opener(opener)
+
+        def _installer(req):
             if not os.path.exists(eggdir):
                 os.makedirs(eggdir)
-        
-            # The base easy_install command
-            command = [sys.executable, "-c", self.cmd, '-mqNxd', eggdir]
 
-            # User can set up an alternative PyPI index
-            # if self.index:
-            #     command.extend(["-i", self.index])
+            self.index.find_packages(req)
+            matches = [d for d in self.index[req.key] if d in req]
+            if not matches:
+                raise NotFound("Could not find package '%s'" % req)
 
-            # Actually add requirements
-            command.append(str(requirement))
+            with TemporaryDirectory(dir=eggdir) as path:
+                download = self.index.download(matches[0].location, path)
 
-            # Actually run the command
-            result = subprocess.Popen(command).wait()
+                # The base easy_install command
+                command = [sys.executable, "-c", self.cmd, '-ZmqNxd', eggdir]
 
-            if result != 0:
-                raise ImportError("Unable to automatically fetch package '%s' % requirement")
+                # Actually add requirements
+                command.append(download)
 
-            # Recursively resolve any dependencies of this package
-            ws.resolve([requirement], installer=_installer)
-            return pkg_resources.get_distribution(requirement)
+                # Actually run the command
+                result = subprocess.Popen(command).wait()
+
+                if result != 0:
+                    raise ImportError("Unable to automatically fetch package '%s'" % req)
 
         parsed = list(pkg_resources.parse_requirements(requirement))
-        ws.resolve(parsed, installer=_installer)
+        while 1:
+            try:
+                ws.resolve(parsed)
+            except pkg_resources.DistributionNotFound, err:
+                [req] = err
+                _installer(req)
+            else:
+                break
 
         distro = pkg_resources.get_distribution(requirement)
         return distro.location

@@ -15,7 +15,20 @@ Changelog for yay
 - If a package specified either as part of a .include or as part of a .search
   is not available on sys.path then an attempt will be made to install it.
 
-- Can pass config to opener backends using ``.config``
+- Can pass config to opener backends using ``.config``. For example, you might
+  want to have the ``package://`` opener to use your internal package
+  repository::
+
+      .config:
+          openers:
+              packages:
+                  index: https://my-python-mirror/simple/
+                  username: joe
+                  password: penguin55
+
+  You can use variable subsitution and to define the password in a GPG
+  encrypted yay file or to push the variable from application that is using
+  Yay.
 
 
 0.0.50 (2012-07-10)
