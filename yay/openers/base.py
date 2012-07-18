@@ -213,7 +213,7 @@ class Openers(object):
 
     def __init__(self, searchpath=None, config=None):
         self.searchpath = searchpath or []
-        self.config = config
+        self.config = config or {}
 
         self.openers = []
         for cls in IOpener.__subclasses__():
