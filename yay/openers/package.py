@@ -104,16 +104,12 @@ class PackageOpener(IOpener):
             with TemporaryDirectory(dir=eggdir) as path:
                 download = self.index.download(matches[0].location, path)
 
-                # The base easy_install command
                 command = [sys.executable, "-c", self.cmd, '-ZmqNxd', eggdir]
-
-                # Actually add requirements
                 command.append(download)
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.communicate()
 
-                # Actually run the command
-                result = subprocess.Popen(command).wait()
-
-                if result != 0:
+                if p.returncode != 0:
                     raise ImportError("Unable to automatically fetch package '%s'" % req)
 
         parsed = list(pkg_resources.parse_requirements(requirement))
