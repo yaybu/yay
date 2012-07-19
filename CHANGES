@@ -4,7 +4,43 @@ Changelog for yay
 0.0.51 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Introduce a lazily evaluated mechanism for expanding the search path::
+
+      .search:
+        - package://some.egg/
+        - http://raw.github.com/isotoma/yay/
+
+  Any subsequent ``.import`` statements will use the modified search path.
+
+- If a package specified either as part of a .include or as part of a .search
+  is not available on sys.path then an attempt will be made to install it.
+
+- Can pass config to opener backends using ``.config``. For example, you might
+  want to have the ``package://`` opener to use your internal package
+  repository::
+
+      .config:
+          openers:
+              packages:
+                  index: https://my-python-mirror/simple/
+                  username: joe
+                  password: penguin55
+
+  You can use variable subsitution and to define the password in a GPG
+  encrypted yay file or to push the variable from application that is using
+  Yay.
+
+- Yay openers support basic auth in the url. If used with .include then use of
+  secrets to concatenate to hide the password is suggsted::
+
+      # Define ${password} in a GPG armored file
+      .include: home://.credentials.yay.gpg
+
+      .search:
+        - https://username:${password}@svn.yourcompany.org/svn/cookbook/trunk
+
+- ``.include`` and ``.search`` may be a single scalar value rather than a list
+  if you desire.
 
 
 0.0.50 (2012-07-10)

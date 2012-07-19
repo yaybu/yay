@@ -1,0 +1,9 @@
+
+.search:
+  - package://yay/tests/dogfood/search1
+  - package://yay/tests/dogfood/search2
+
+.include:
+  - somefile.yay
+  - onlyin2.yay
+

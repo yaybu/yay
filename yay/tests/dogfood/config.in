@@ -1,0 +1,12 @@
+
+.config:
+    openers:
+        packages:
+            index: http://b.pypi.python.org/simple
+        memory:
+            example:
+                hello: world
+
+.include:
+  - mem://example
+

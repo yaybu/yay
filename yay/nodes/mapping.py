@@ -59,9 +59,10 @@ class Mapping(Node):
         return data
 
     def walk(self):
-        for itm in self.value.items():
+        for itm in self.value.values():
             yield itm
-        yield self.predecessor
+        if self.predecessor:
+            yield self.predecessor
 
     def clone(self):
         p = None

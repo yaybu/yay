@@ -188,7 +188,7 @@ class Composer(object):
         key = key_event.value
 
         action = "assign"
-        if "." in key and key != '.include':
+        if "." in key and key not in ('.include', '.search', '.config'):
             key, action = key.split(".", 1)
 
         action_args = None
@@ -249,13 +249,23 @@ class Composer(object):
                 else:
                     value.lock()
                     includes = value.resolve()
-
                     if not isinstance(includes, list):
-                        value.error("Expected something that resolved to a sequence and didnt")
+                        includes = [includes]
 
                     previous = self.handle_imports(previous, includes)
 
                 previous = Mapping(previous)
+
+            elif key == ".config":
+                value.lock()
+                mapping = value.resolve()
+                self.openers.config.update(mapping.get("openers", {}))
+
+            elif key == ".search":
+                searchpath = value.resolve()
+                if not isinstance(searchpath, list):
+                    searchpath = [searchpath]
+                self.openers.searchpath.extend(searchpath)
 
             elif key == ".define":
                 self.parent.definitions[value.defined_name] = value
