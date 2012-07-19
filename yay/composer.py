@@ -249,9 +249,8 @@ class Composer(object):
                 else:
                     value.lock()
                     includes = value.resolve()
-
                     if not isinstance(includes, list):
-                        value.error("Expected something that resolved to a sequence and didnt")
+                        includes = [includes]
 
                     previous = self.handle_imports(previous, includes)
 
@@ -263,7 +262,10 @@ class Composer(object):
                 self.openers.config.update(mapping.get("openers", {}))
 
             elif key == ".search":
-                self.openers.searchpath.extend(value.resolve())
+                searchpath = value.resolve()
+                if not isinstance(searchpath, list):
+                    searchpath = [searchpath]
+                self.openers.searchpath.extend(searchpath)
 
             elif key == ".define":
                 self.parent.definitions[value.defined_name] = value

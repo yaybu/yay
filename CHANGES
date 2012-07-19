@@ -10,7 +10,7 @@ Changelog for yay
         - package://some.egg/
         - http://raw.github.com/isotoma/yay/
 
-  Any subsequent ``.import`` statements will be use the modified search path.
+  Any subsequent ``.import`` statements will use the modified search path.
 
 - If a package specified either as part of a .include or as part of a .search
   is not available on sys.path then an attempt will be made to install it.
@@ -38,6 +38,9 @@ Changelog for yay
 
       .search:
         - https://username:${password}@svn.yourcompany.org/svn/cookbook/trunk
+
+- ``.include`` and ``.search`` may be a single scalar value rather than a list
+  if you desire.
 
 
 0.0.50 (2012-07-10)
