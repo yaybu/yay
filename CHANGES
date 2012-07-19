@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.51 (unreleased)
+0.0.51 (2012-07-19)
 -------------------
 
 - Introduce a lazily evaluated mechanism for expanding the search path::
