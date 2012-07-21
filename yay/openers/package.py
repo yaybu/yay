@@ -55,7 +55,7 @@ class PackageOpener(IOpener):
         try:
             location = [self._install(package)]
             location.extend(package.split("."))
-        except ImportError:
+        except NotFound:
             # This old code path only exists for the old case where you might
             # have specified a module within a package to import
             try:
@@ -110,7 +110,7 @@ class PackageOpener(IOpener):
                 p.communicate()
 
                 if p.returncode != 0:
-                    raise ImportError("Unable to automatically fetch package '%s'" % req)
+                    raise NotFound("Unable to install package '%s'" % req)
 
         parsed = list(pkg_resources.parse_requirements(requirement))
         while 1:

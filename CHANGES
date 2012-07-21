@@ -4,7 +4,7 @@ Changelog for yay
 0.0.52 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix regression in ``package://`` for existing users..
 
 
 0.0.51 (2012-07-19)
