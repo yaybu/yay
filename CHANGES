@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.53 (unreleased)
+0.0.53 (2012-07-21)
 -------------------
 
 - Allow python code using yay to set default configuration for openers
