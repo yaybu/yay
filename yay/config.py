@@ -22,9 +22,11 @@ from yay.errors import ProgrammingError
 
 class Config(object):
 
-    def __init__(self, special_term='yay', searchpath=None):
+    def __init__(self, special_term='yay', searchpath=None, config=None):
+        if not config:
+            config = {}
         self.special_term = special_term
-        self.openers = Openers(searchpath=searchpath)
+        self.openers = Openers(searchpath=searchpath, config=config.get("openers", {}))
         self.clear()
         self.mapping = None
 
