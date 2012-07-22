@@ -25,5 +25,12 @@ class Undefined(Node):
         self.error(NoMatching("Undefined!"))
 
     def clone(self):
-        return Undefined()
+        c = Undefined()
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

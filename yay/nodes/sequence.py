@@ -26,7 +26,18 @@ class Sequence(Node):
         [x.set_parent(self) for x in value]
 
     def get(self, idx):
-        return self.value[int(idx)]
+        try:
+            idx = int(idx)
+        except ValueError:
+            self.error("Expected integer but got '%s'" % idx)
+
+        if idx < 0:
+            self.error("Index must be greater than 0")
+        elif idx >= len(self.value):
+            self.error("Index out of range")
+
+        return self.value[idx]
+
         #b = BoxingFactory.box(self.resolve()[int(idx)])
         #return b
 
@@ -44,7 +55,14 @@ class Sequence(Node):
             yield val
 
     def clone(self):
-        return Sequence([x.clone() for x in self.value])
+        c = Sequence([x.clone() for x in self.value])
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 
 
 def box_generator(val):

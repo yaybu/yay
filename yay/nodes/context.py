@@ -47,5 +47,12 @@ class Context(Node):
         return "Context(%s)" % self.value
 
     def clone(self):
-        return Context(self.value.clone(), self.context)
+        c = Context(self.value.clone(), self.context)
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

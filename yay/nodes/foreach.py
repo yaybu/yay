@@ -94,5 +94,11 @@ class ForEach(Node):
         if self.filter:
             fe.filter = self.filter.clone()
             fe.filter.set_parent(fe)
+
+        fe.file = self.name 
+        fe.line = self.line
+        fe.column = self.column
+        fe.snippet = self.snippet
+
         return fe
 

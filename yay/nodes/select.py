@@ -34,5 +34,12 @@ class Select(Node):
         yield self.expand()
 
     def clone(self):
-        return Select(self.options.clone(), self.key.clone())
+        c = Select(self.options.clone(), self.key.clone())
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

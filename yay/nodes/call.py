@@ -54,5 +54,12 @@ class Call(Node):
         yield self.value
 
     def clone(self):
-        return Call(self.composer, self.value, self.params.clone() if self.params else None)
+        c = Call(self.composer, self.value, self.params.clone() if self.params else None)
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

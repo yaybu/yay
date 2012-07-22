@@ -48,5 +48,12 @@ class Filter(Node):
         yield self.filter_expression
 
     def clone(self):
-        return Filter(self.container.clone(), self.filter_expression.clone())
+        c = Filter(self.container.clone(), self.filter_expression.clone())
+
+        c.file = self.name 
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

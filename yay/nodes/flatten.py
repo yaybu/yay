@@ -50,5 +50,12 @@ class Flatten(Node):
         yield self.value
 
     def clone(self):
-        return Flatten(self.value.clone())
+        c = Flatten(self.value.clone())
+
+        c.file = self.name 
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

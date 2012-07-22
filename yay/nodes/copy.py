@@ -36,5 +36,12 @@ class Copy(Node):
         yield self.value
 
     def clone(self):
-        return self.value.clone()
+        c = self.value.clone()
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

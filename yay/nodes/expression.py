@@ -32,7 +32,14 @@ class Comparison(Node):
         yield self.right
 
     def clone(self):
-        return self.__class__(self.left.clone(), self.right.clone())
+        c = self.__class__(self.left.clone(), self.right.clone())
+
+        c.file = self.name        
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 
 class And(Comparison):
     def resolve(self):
@@ -146,7 +153,14 @@ class Access(Node):
         c = None
         if self.container:
             c = self.container.clone()
-        return Access(c, self.access.clone())
+        a = Access(c, self.access.clone())
+
+        a.file = self.name 
+        a.line = self.line
+        a.column = self.column
+        a.snippet = self.snippet
+
+        return a
 
 
 class Concatenation(Node):
@@ -195,7 +209,13 @@ class Concatenation(Node):
         return "Concat(%s)" % ", ".join(str(arg) for arg in self.args)
 
     def clone(self):
-        return Concatenation(*[x.clone() for x in self.args])
+        c = Concatenation(*[x.clone() for x in self.args])
+        c.file = self.name 
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 
 
 class Else(Node):
@@ -239,5 +259,13 @@ class Else(Node):
                 pass
 
     def clone(self):
-        return Else(*[x.clone() for x in self.children])
+        c = Else(*[x.clone() for x in self.children])
+
+        c.file = self.name 
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
+
 

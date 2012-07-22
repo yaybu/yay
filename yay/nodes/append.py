@@ -60,5 +60,11 @@ class Append(Node):
     def clone(self):
         a = Append(self.value.clone())
         a.chain = self.chain.clone() if self.chain else None
+
+        a.file = self.name
+        a.line = self.line
+        a.column = self.column
+        a.snippet = self.snippet
+
         return a
 

@@ -32,5 +32,11 @@ class Remove(Node):
     def clone(self):
         r = Remove(self.value.clone())
         r.chain = self.chain.clone() if self.chain else None
+
+        r.file = self.name        
+        r.line = self.line
+        r.column = self.column
+        r.snippet = self.snippet
+
         return r
 

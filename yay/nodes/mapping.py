@@ -72,6 +72,12 @@ class Mapping(Node):
         m = Mapping(p)
         for k, v in self.value.items():
             m.set(k, v.clone())
+
+        m.file = self.name        
+        m.line = self.line
+        m.column = self.column
+        m.snippet = self.snippet
+
         return m
 
     def __iter__(self):

@@ -54,5 +54,12 @@ class Function(Node):
             yield arg
 
     def clone(self):
-        return Function(self.function, [x.clone() for x in self.args])
+        c = Function(self.function, [x.clone() for x in self.args])
+
+        c.file = self.name 
+        c.line = self.line
+        c.column = self.column
+        c.snippet = self.snippet
+
+        return c
 

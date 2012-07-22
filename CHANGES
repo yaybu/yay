@@ -4,7 +4,12 @@ Changelog for yay
 0.0.54 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Line number and file information should be available for nodes that have been
+  cloned leading to much more useful error output.
+
+- Index errors on Sequence nodes will be properly dealt with
+
+- Treating a sequence as a mapping node will trigger an appropriate Yay error.
 
 
 0.0.53 (2012-07-21)
