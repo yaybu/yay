@@ -39,6 +39,12 @@ class TemporaryDirectory(object):
         shutil.rmtree(self.name)
 
 
+class YayPackageIndex(PackageIndex):
+
+    def not_found_in_index(self, requirement):
+        self.scan_all()
+
+
 class PackageOpener(IOpener):
 
     name = "packages"
@@ -70,7 +76,7 @@ class PackageOpener(IOpener):
     @property
     def index(self):
         if not self._index:
-            self._index = PackageIndex(
+            self._index = YayPackageIndex(
                 index_url = self.get_setting("index", self.DEFAULT_INDEX),
                 python = sys.executable,
                 )

@@ -4,7 +4,8 @@ Changelog for yay
 0.0.55 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix PackageIndex to not warn() on missing package - we capture this
+  ourselves!
 
 
 0.0.54 (2012-07-22)
