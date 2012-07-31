@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.56 (unreleased)
+0.0.56 (2012-07-31)
 -------------------
 
 - Code paths are now decorated with tracing context. This ``__context__``
