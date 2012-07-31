@@ -12,6 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+
+
+def get_exception_context():
+    tb = sys.exc_info()[2]
+    context = []
+
+    while tb is not None:
+        d = tb.tb_frame.f_locals.get('__context__')
+        if d:
+            context.append("  %s" % d)
+        tb = tb.tb_next
+
+    if not context:
+        return ""
+
+    return "While:\n" + "\n".join(context)
+
+
 class Error(Exception):
 
     def get_string(self):
@@ -61,4 +80,5 @@ class EvaluationError(LanguageError):
 
 class NoMatching(EvaluationError):
     pass
+
 

@@ -4,7 +4,8 @@ Changelog for yay
 0.0.56 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Code paths are now decorated with tracing context. This ``__context__``
+  metadata gives a sense of what yay was doing when it went off the handle.
 
 
 0.0.55 (2012-07-25)

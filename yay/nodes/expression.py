@@ -123,13 +123,19 @@ class Access(Node):
         return sr.get(idx)
 
     def expand(self):
+        __context__ = self.context("Resolving key to use as index lookup")
+
         key = self.access.resolve()
 
         if self.container:
+            __context__ = self.context("Performing lookup of %s", key)
+
             unresolved = self.container.get(key)
             if unresolved is None:
                 self.error("Container does not have field '%s'" % key)
         else:
+            __context__ = self.context("Performing lookup of %s on document root", key)
+
             unresolved = self.get_context(key)
             if unresolved is None:
                 self.error("Context does not have field '%s'" % key)

@@ -100,6 +100,14 @@ class Node(object):
 
         raise exc
 
+    def context(self, msg, *args):
+        """
+        Attack debug context to the stack
+
+        """
+        msg = msg % args
+        return "%s (file: %s, line: %s, column: %s)" % (msg, self.name, self.line, self.column)
+
     def clone(self):
         """
         Return a copy of this node.

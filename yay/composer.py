@@ -115,14 +115,18 @@ class Composer(object):
 
         if isinstance(event.value, basestring):
             #Icky - this needs to move *beneath* this layer of code
+            __context__ = "Composing scalar via pyparsing (line: %s, column: %s)" % (event.start_mark.line, event.start_mark.column)
             node = self.parser.templated_string.parseString(event.value)[0]
         else:
+            __context__ = "Boxing scalar (line: %s, column: %s)" % (event.start_mark.line, event.start_mark.column)
             node = self.parser.box(event.value)
 
         return node
 
     def compose_sequence(self, previous):
         start = self.get_event()
+
+        __context__ = "Composing sequence (line: %s, column: %s)" % (start.start_mark.line, start.start_mark.column)
 
         data = []
         while not self.check_event(SequenceEndEvent):
@@ -136,6 +140,7 @@ class Composer(object):
 
     def handle_imports(self, previous, imports):
         for extend in imports:
+            __context__ = "Importing %s" % extend
             data = self.openers.open(extend)
             secret = hasattr(data, "secret") and data.secret
             previous = self.__class__(data, parent=self.parent, secret=secret).compose(previous)
@@ -187,6 +192,11 @@ class Composer(object):
         key_event = self.get_event()
         key = key_event.value
 
+        line = key_event.start_mark.line
+        column = key_event.start_mark.column
+
+        __context__ = "Setting mapping key %s to unresolved value (line: %s, column: %s)" % (key, line, column)
+
         action = "assign"
         if "." in key and key not in ('.include', '.search', '.config'):
             key, action = key.split(".", 1)
@@ -197,6 +207,8 @@ class Composer(object):
 
         if action == "define":
             key = ".define"
+
+        __context__ = "Setting mapping key %s to unresolved value with action '%s' (line: %s, column: %s)" % (key, action, line, column)
 
         try:
             existing = container.get(key)
@@ -219,10 +231,13 @@ class Composer(object):
         return key, boxed
 
     def compose_mapping(self, previous):
+        __context__ = "Started to compose mapping"
+
         container = Mapping(previous)
         while not self.check_event(MappingEndEvent):
             key, value = self.compose_mapping_value(container)
             container.set(key, value)
+
         return container
 
     def compose_root_mapping(self, previous):
@@ -271,6 +286,7 @@ class Composer(object):
                 self.parent.definitions[value.defined_name] = value
 
             else:
+                __doing__ = "Setting %s at root to unresolved value" % key
                 previous.set(key, value)
 
         end = self.get_event()

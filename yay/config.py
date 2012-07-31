@@ -31,18 +31,26 @@ class Config(object):
         self.mapping = None
 
     def load_uri(self, uri):
+        __context__ = "Loading URI %s" % uri
+
         stream = self.openers.open(uri)
         self.load(stream, uri, hasattr(stream, "secret") and stream.secret)
 
     def load(self, stream, name="<Unknown>", secret=False):
+        __context__ = "Loading stream %s. secret=%s." % (name, secret)
+
         l = Loader(stream, name=name, parent=self, secret=secret)
         data = l.compose(self.mapping)
         self.mapping = data
 
     def add(self, data):
+        __context__ = "Boxing python data to overlay on node graph"
+
         boxed = BoxingFactory.box(data)
         if not isinstance(boxed, Mapping):
             raise ProgrammingError("Tried to call Config.add on type '%s'. This cannot be boxed as a 'Mapping'." % type(data))
+
+        __context__ = "Overlaying boxed python data on node graph"
 
         boxed.predecessor = self.mapping
         if boxed.predecessor:
@@ -55,6 +63,7 @@ class Config(object):
         self.definitions = {}
 
     def get(self):
+        __context__ = "Performing full resolve"
         if not self.mapping:
             return {}
         return self.mapping.resolve()

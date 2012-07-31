@@ -53,15 +53,24 @@ class ForEach(Node):
     def expand(self):
         lst = []
 
+        idx = 0
+
         for item in self.lookup.expand():
+            __context__ = self.context("Iterating over an expression (iteration %d)", idx)
+
             c = Context(self.value.clone(), {self.alias: item})
             c.set_parent(self)
 
             if self.filter:
+                __context__ = self.context("Applying filter on item %d returned by foreach", idx)
+
                 f = self.filter.clone()
                 f.set_parent(c)
                 if not f.resolve():
+                    idx += 1
                     continue
+
+            __context__ = self.context("Iterating over an expression (iteration %d)", idx)
 
             item.set_parent(c)
 
@@ -77,6 +86,10 @@ class ForEach(Node):
                         lst.extend(BoxingFactory.box(v) for v in val)
                 else:
                     lst.append(BoxingFactory.box(val))
+
+            idx += 1
+
+        __context__ = self.context("Converting results of for each into a new sequence object")
 
         sq = Sequence(lst)
         sq.set_parent(self.parent)
