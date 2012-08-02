@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.57 (unreleased)
+0.0.57 (2012-08-02)
 -------------------
 
 - Add new lazy lookup method to the root config object. This is useful if you
