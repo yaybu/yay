@@ -23,6 +23,8 @@ Changelog for yay
   exceptions until the iterator needs to access they key - and the iterator
   already has apropriate exception handling.
 
+- Add additional test cases for backwards compatibility
+
 
 0.0.56 (2012-07-31)
 -------------------
