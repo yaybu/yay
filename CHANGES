@@ -4,7 +4,24 @@ Changelog for yay
 0.0.57 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Add new lazy lookup method to the root config object. This is useful if you
+  are building a lazy iterator over a dictionary key::
+
+      def example_iterator(self, expression):
+          try:
+              for item in expression.expand():
+                  resolved = item.resolve()
+                  create_obj_from_settings(resolved)
+          except CreateObjectError:
+              # You can get line and column from the item object!
+          except yay.errors.Error:
+              # Ideal place to wrap Yay errors in your apps exceptions
+
+      example_iterator(config.lookup("somekey"))
+
+  You can see here that the API lets you defer any messy "key not found"
+  exceptions until the iterator needs to access they key - and the iterator
+  already has apropriate exception handling.
 
 
 0.0.56 (2012-07-31)

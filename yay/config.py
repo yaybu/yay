@@ -16,7 +16,7 @@ import yaml
 
 from yay.loader import Loader
 from yay.openers import Openers
-from yay.nodes import BoxingFactory, Mapping
+from yay.nodes import BoxingFactory, Mapping, Access
 from yay.errors import ProgrammingError
 
 
@@ -67,6 +67,16 @@ class Config(object):
         if not self.mapping:
             return {}
         return self.mapping.resolve()
+
+    def lookup(self, key):
+        """
+        Returns an object which can be resolved to a key on the current
+        document
+        """
+        l = Access(None, BoxingFactory.box(key))
+        l.set_parent(self.mapping)
+        return l
+
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
