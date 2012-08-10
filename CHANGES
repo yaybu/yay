@@ -4,7 +4,12 @@ Changelog for yay
 0.0.58 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Capture GPG failures and throw exceptions. Unfortunately without talking to
+  GPG over the status fd we can't get much information about what went wrong.
+
+- Run in batch mode. This stops GPG from ignoring the stdout/stderr redirection
+  but means you now *MUST* use a GPG agent as it can no longer prompt for a
+  passphrase.
 
 
 0.0.57 (2012-08-02)

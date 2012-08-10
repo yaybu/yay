@@ -200,8 +200,10 @@ class Gpg(object):
 
     def filter(self, fp):
         data = fp.read()
-        p = subprocess.Popen(["gpg", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         stdout, stderr = p.communicate(data)
+        if p.returncode != 0:
+            raise NotFound("Unable to decrypt resource")
         stream = StringIO.StringIO(stdout)
         stream.etag = fp.etag
         stream.len = len(stdout)
