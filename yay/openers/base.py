@@ -85,6 +85,7 @@ class FileOpener(IOpener):
         fp.seek(0)
         f = File(fp)
         f.etag = new_etag
+        f.uri = uri
         return f
 
 
@@ -142,6 +143,8 @@ class UrlOpener(IOpener):
             def len(self):
                 return int(self.fp.info()['content-length'])
 
+            uri = uri
+
         return Resource(fp)
 
 
@@ -184,6 +187,7 @@ class MemOpener(IOpener):
         if etag and new_etag == etag:
             raise NotModified("Memory cell '%s' hasn't changed" % uri)
         fp.etag = new_etag
+        fp.uri = uri
 
         return fp
 
@@ -203,10 +207,14 @@ class Gpg(object):
         p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
         stdout, stderr = p.communicate(data)
         if p.returncode != 0:
-            raise NotFound("Unable to decrypt resource")
+            msg = "Unable to decrypt resource '%s'" % fp.uri
+            if not "GPG_AGENT_INFO" in os.environ:
+                msg += "\nGPG Agent not running so your GPG key may not be available"
+            raise NotFound(msg)
         stream = StringIO.StringIO(stdout)
         stream.etag = fp.etag
         stream.len = len(stdout)
+        stream.uri = fp.uri
         stream.secret = True
         return stream
 
