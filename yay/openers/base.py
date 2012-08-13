@@ -204,7 +204,16 @@ class Gpg(object):
 
     def filter(self, fp):
         data = fp.read()
-        p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+
+        # Build an environment for the child process
+        # In particular, if GPG_TTY is not set then gpg-agent will not prompt
+        # for a passphrase even it is running and correctly configured.
+        # GPG_TTY is not required if using seahorse-agent.
+        env = os.environ.copy()
+        if not "GPG_TTY" in env:
+            os.environ['GPG_TTY'] = os.readlink('/proc/self/fd/0')
+
+        p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate(data)
         if p.returncode != 0:
             msg = "Unable to decrypt resource '%s'" % fp.uri

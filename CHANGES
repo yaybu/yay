@@ -11,6 +11,8 @@ Changelog for yay
   but means you now *MUST* use a GPG agent as it can no longer prompt for a
   passphrase.
 
+- GPG_TTY is set - this means gpg-agent can actually prompt now.
+
 
 0.0.57 (2012-08-02)
 -------------------
