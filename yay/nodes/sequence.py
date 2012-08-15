@@ -65,7 +65,7 @@ class Sequence(Node):
         return c
 
 
-def box_generator(val):
+def box_generator(val, predecessor=None):
     return Sequence(list(BoxingFactory.box(itm) for itm in val))
 BoxingFactory.register(inspect.isgenerator, box_generator)
 

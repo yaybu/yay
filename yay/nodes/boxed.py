@@ -34,18 +34,18 @@ class BoxingFactory(object):
         cls.boxers.append((checker, boxer))
 
     @classmethod
-    def box(cls, value):
+    def box(cls, value, predecessor=None):
         for checker, boxer in cls.boxers:
             if checker(value):
-                return boxer(value)
+                return boxer(value, predecessor=predecessor)
         return Boxed(value)
 
 
-def callable_boxer(val):
+def callable_boxer(val, predecessor=None):
     """ Attempt to box callables """
     try:
         #inspect.getcallargs(val)
-        return BoxingFactory.box(val())
+        return BoxingFactory.box(val(), predecessor=predecessor)
     except TypeError:
         raise Unboxable("Cannot invoke callable that requires arguments")
 BoxingFactory.register(callable, callable_boxer)

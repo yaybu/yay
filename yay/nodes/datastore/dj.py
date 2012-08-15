@@ -132,7 +132,7 @@ def lazy_isinstance(classname):
         return any(x.__module__ == modname and x.__name__ == cname for x in cls.__mro__)
     return _
 
-BoxingFactory.register(lazy_isinstance("django.db.models.base.Model"), Instance)
-BoxingFactory.register(lazy_isinstance("django.db.models.query.QuerySet"), InstanceList)
-BoxingFactory.register(lazy_isinstance("django.db.models.manager.Manager"), InstanceList)
+BoxingFactory.register(lazy_isinstance("django.db.models.base.Model"), lambda a, predecessor: Instance(a))
+BoxingFactory.register(lazy_isinstance("django.db.models.query.QuerySet"), lambda a, predecessor: InstanceList(a))
+BoxingFactory.register(lazy_isinstance("django.db.models.manager.Manager"), lambda a, predecessor: InstanceList(a))
 

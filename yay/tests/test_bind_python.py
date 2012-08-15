@@ -38,3 +38,10 @@ class TestInjectPython(unittest.TestCase):
 
         self.failUnlessEqual(config.get()["result"], "xyz")
 
+    def test_layer_python_mappings(self):
+        config = Config()
+        config.add(dict(foo=dict(foo=1)))
+        config.add(dict(foo=dict(bar=1)))
+
+        self.failUnlessEqual(config.get(), dict(foo=dict(foo=1, bar=1)))
+

@@ -84,10 +84,15 @@ class Mapping(Node):
         return iter(BoxingFactory.box(v) for v in sorted(self.keys()))
 
 
-def box_dict(val):
-    m = Mapping(None)
+def box_dict(val, predecessor=None):
+    m = Mapping(predecessor)
     for k, v in val.items():
-        m.set(k, BoxingFactory.box(v))
+        try:
+            p = m.get(k)
+        except NoMatching:
+            p = None
+
+        m.set(k, BoxingFactory.box(v, p))
     return m
 BoxingFactory.register(lambda x: isinstance(x, dict), box_dict)
 

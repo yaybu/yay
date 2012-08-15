@@ -13,6 +13,8 @@ Changelog for yay
 
 - GPG_TTY is set - this means gpg-agent can actually prompt now.
 
+- Fix ``Config.add`` when using nested dictionaries.
+
 
 0.0.57 (2012-08-02)
 -------------------
