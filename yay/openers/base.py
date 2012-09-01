@@ -211,7 +211,7 @@ class Gpg(object):
         # GPG_TTY is not required if using seahorse-agent.
         env = os.environ.copy()
         if not "GPG_TTY" in env:
-            os.environ['GPG_TTY'] = os.readlink('/proc/self/fd/0')
+            env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
         p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate(data)
