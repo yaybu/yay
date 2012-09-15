@@ -32,7 +32,9 @@ class Filter(Node):
             if ctx.resolve():
                 filtered.append(r)
 
-        return Sequence(filtered)
+        s = Sequence(filtered)
+        s.set_parent(self.parent)
+        return s
 
     def get(self, idx):
         return self.expand().get(idx)

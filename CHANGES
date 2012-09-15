@@ -4,7 +4,9 @@ Changelog for yay
 0.0.60 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Fix filter node. It was previously unaware of its parent when expanded and
+  this stopped its children from being able to look up values in the global
+  namespace.
 
 
 0.0.59 (2012-09-01)
