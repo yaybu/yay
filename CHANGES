@@ -4,7 +4,9 @@ Changelog for yay
 0.0.61 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- An earlier version added validation to stop you replacing lists with mappings
+  or vice versa. However the implementation didn't consider that you might
+  extend a mapping that comes from a lookup.
 
 
 0.0.60 (2012-09-15)
