@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.60 (unreleased)
+0.0.60 (2012-09-15)
 -------------------
 
 - Fix filter node. It was previously unaware of its parent when expanded and
