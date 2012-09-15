@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.61 (unreleased)
+0.0.61 (2012-09-15)
 -------------------
 
 - An earlier version added validation to stop you replacing lists with mappings
