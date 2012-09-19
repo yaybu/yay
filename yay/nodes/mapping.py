@@ -36,7 +36,7 @@ class Mapping(Node):
         if key in self.value:
             return self.value[key]
         if self.predecessor:
-            return self.predecessor.get(key)
+            return self.predecessor.expand().get(key)
         self.error(NoMatching("Not found: '%s'" % key))
 
     def keys(self):
