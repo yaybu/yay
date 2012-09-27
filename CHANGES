@@ -1,7 +1,7 @@
 Changelog for yay
 =================
 
-0.0.62 (unreleased)
+0.0.62 (2012-09-27)
 -------------------
 
 - Try importing first as it might yield a hit and save checking the internets
