@@ -59,16 +59,15 @@ class PackageOpener(IOpener):
     def open(self, uri, etag=None):
         package, uri = uri.lstrip("package://").split("/", 1)
         try:
-            location = [self._install(package)]
-            location.extend(package.split("."))
-        except NotFound:
-            # This old code path only exists for the old case where you might
-            # have specified a module within a package to import
+            __import__(package)
+            module = sys.modules[package]
+        except ImportError:
             try:
-                __import__(package)
-                module = sys.modules[package]
-            except ImportError:
+                location = [self._install(package)]
+                location.extend(package.split("."))
+            except NotFound:
                 raise NotFound("Package '%s' could not be imported" % package)
+        else:
             location = [os.path.dirname(module.__file__)]
         path = os.path.join(*chain(location, [uri]))
         return FileOpener().open(path, etag)

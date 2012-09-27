@@ -4,7 +4,8 @@ Changelog for yay
 0.0.62 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Try importing first as it might yield a hit and save checking the internets
+  for things.
 
 
 0.0.61 (2012-09-15)
