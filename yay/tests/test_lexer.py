@@ -1,6 +1,6 @@
 
 import unittest
-from yay.lexer import Lexer, BLOCK, ENDBLOCK, KEY, VALUE, LISTVALUE
+from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE
 
 sample1 = """
 key1: value1
@@ -34,25 +34,21 @@ class TestLexer(unittest.TestCase):
     
     def test_sample2(self):
         l = Lexer()
-        l.input(sample1)
+        l.input(sample2)
         l.done()
         self.assertEqual(list(l.tokens()), [
             KEY('a'),
-            BLOCK(),
             KEY('b'),
-            BLOCK(),
             VALUE('c'),
             ENDBLOCK(),
             KEY('e'),
-            BLOCK(),
             LISTVALUE('f'),
             LISTVALUE('g'),
             ENDBLOCK(),
             KEY('h'),
-            BLOCK(),
             KEY('i'),
-            BLOCK(),
             VALUE('j'),
+            ENDBLOCK(),
             ENDBLOCK(),
             ENDBLOCK(),
             ])
@@ -65,25 +61,19 @@ class TestLexer(unittest.TestCase):
         l.done()
         self.assertEqual(list(l.tokens()), [
                               KEY('key1'),
-                              BLOCK(),
                               VALUE('value1'),
                               ENDBLOCK(),
                               KEY('key2'),
-                              BLOCK(),
                               VALUE('value2'),
                               ENDBLOCK(),
                               KEY('key3'),
-                              BLOCK(),
                               LISTVALUE('item1'),
                               LISTVALUE('item2'),
                               LISTVALUE('item3'),
                               ENDBLOCK(),
                               KEY('key4'),
-                              BLOCK(),
                               KEY('key5'),
-                              BLOCK(),
                               KEY('key6'),
-                              BLOCK(),
                               VALUE('key7'),
                               ENDBLOCK(),
                               ENDBLOCK(),

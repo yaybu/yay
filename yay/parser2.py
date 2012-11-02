@@ -37,7 +37,6 @@ class Parser(object):
         endblock = self.stack.pop()
         if isinstance(self.stack[-1], lexer.VALUE):
             value = self.stack.pop()
-            block = self.stack.pop()
             key = self.stack.pop()
             return key.value, value.value
         elif isinstance(self.stack[-1], lexer.LISTVALUE):
@@ -45,7 +44,6 @@ class Parser(object):
             while isinstance(self.stack[-1], lexer.LISTVALUE):
                 value = self.stack.pop()
                 l.insert(0, value.value)
-            block = self.stack.pop()
             key = self.stack.pop()
             return key.value, l
         elif isinstance(self.stack[-1], lexer.ENDBLOCK):
@@ -53,14 +51,8 @@ class Parser(object):
             while isinstance(self.stack[-1], lexer.ENDBLOCK):
                 key, value = self.reduce()
                 d[key] = value
-            block = self.stack.pop()
             key = self.stack.pop()
             return key.value, d
         else:
             raise ParseError("buh")
-        
-            
-            
-            
-            
-            
+

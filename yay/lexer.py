@@ -15,10 +15,6 @@ class Token(object):
             return 0
         return 1
 
-class BLOCK(Token):
-    def __repr__(self):
-        return "<BLOCK>"
-
 class KEY(Token):
     pass
 
@@ -95,10 +91,7 @@ class Lexer(object):
                 # we ignore blank lines completely
                 continue
             level = self.indent_level(spaces)
-            if level > last_level:
-                for x in range(last_level, level):
-                    yield BLOCK()
-            elif level < last_level:
+            if level < last_level:
                 for x in range(level, last_level):
                     yield ENDBLOCK()
             last_level = level
@@ -107,7 +100,6 @@ class Lexer(object):
                 key, value = line.split(":", 1)
                 yield KEY(key)
                 if value:
-                    yield BLOCK()
                     yield VALUE(value.lstrip(" "))
                     yield ENDBLOCK()
             else:
