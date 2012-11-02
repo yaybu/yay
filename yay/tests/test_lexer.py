@@ -17,10 +17,47 @@ key4:
         key6: key7
 """
 
+sample2 = """
+a:
+    b:c
+    e:
+        - f
+        - g
+    h:
+        i: j
+"""
+
         
 
 
 class TestLexer(unittest.TestCase):
+    
+    def test_sample2(self):
+        l = Lexer()
+        l.input(sample1)
+        l.done()
+        self.assertEqual(list(l.tokens()), [
+            KEY('a'),
+            BLOCK(),
+            KEY('b'),
+            BLOCK(),
+            VALUE('c'),
+            ENDBLOCK(),
+            KEY('e'),
+            BLOCK(),
+            LISTVALUE('f'),
+            LISTVALUE('g'),
+            ENDBLOCK(),
+            KEY('h'),
+            BLOCK(),
+            KEY('i'),
+            BLOCK(),
+            VALUE('j'),
+            ENDBLOCK(),
+            ENDBLOCK(),
+            ])
+            
+        
     
     def test_sample1(self):
         l = Lexer()

@@ -1,33 +1,66 @@
-from ply import yacc as yacc
-from yay.lexer import tokens
 
-parsed = {}
-current = None
+from . import lexer
 
-def p_bare_key(p):
-    'barekey: WS* TERM COLON WS* CR'
-    
-    
+import types
 
-def p_list_item(p):
-    'listitem: WS DASH WS expression CR'
-    stack_top().append(p[3])
-
-def p_expression_inline(p):
-    'expression : TERM COLON expression CR'
-    p[0] = {}
-    p[0][p[1]] = p[3]
-    push_key(p[0])
-    
-def p_emptyline(p):
-    'empty : CR WS* CR'
-    pop_key()
-    
-def p_continuation(p):
+class ParseError(Exception):
     pass
 
+class Temp(lexer.Token):
+    pass
+
+class Parser(object):
     
+    def __init__(self, lexerClass=lexer.Lexer):
+        self.lexer = lexerClass()
+        self.stack = []
     
-
-
-
+    def input(self, text):
+        self.lexer.input(text)
+        self.lexer.done()
+        
+    def parse(self):
+        for token in self.lexer.tokens():
+            self.stack.append(token)
+        data = {}
+        while len(self.stack) > 1:
+            key, value = self.reduce()
+            data[key] = value
+        return data
+    
+    def print_stack(self):
+        for i in self.stack:
+            print repr(i)
+        print
+                
+    def reduce(self):
+        endblock = self.stack.pop()
+        if isinstance(self.stack[-1], lexer.VALUE):
+            value = self.stack.pop()
+            block = self.stack.pop()
+            key = self.stack.pop()
+            return key.value, value.value
+        elif isinstance(self.stack[-1], lexer.LISTVALUE):
+            l = []
+            while isinstance(self.stack[-1], lexer.LISTVALUE):
+                value = self.stack.pop()
+                l.insert(0, value.value)
+            block = self.stack.pop()
+            key = self.stack.pop()
+            return key.value, l
+        elif isinstance(self.stack[-1], lexer.ENDBLOCK):
+            d = {}
+            while isinstance(self.stack[-1], lexer.ENDBLOCK):
+                key, value = self.reduce()
+                d[key] = value
+            block = self.stack.pop()
+            key = self.stack.pop()
+            return key.value, d
+        else:
+            raise ParseError("buh")
+        
+            
+            
+            
+            
+            
