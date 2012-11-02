@@ -25,7 +25,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires = [
-        "PyYAML",
+        "ply",
     ],
     extras_require = dict(
         test = [
