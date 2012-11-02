@@ -27,8 +27,6 @@ a:
         i: j
 """
 
-        
-
 
 class TestLexer(unittest.TestCase):
     

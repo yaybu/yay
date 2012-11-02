@@ -15,6 +15,10 @@ class Token(object):
             return 0
         return 1
 
+class BLOCK(Token):
+    def __repr__(self):
+        return "<BLOCK>"
+
 class KEY(Token):
     pass
 
@@ -97,10 +101,10 @@ class Lexer(object):
             last_level = level
             # see if the line starts with a key
             if ':' in line:
-                key, value = line.split(":", 1)
+                key, value = [x.strip() for x in line.split(":", 1)]
                 yield KEY(key)
                 if value:
-                    yield VALUE(value.lstrip(" "))
+                    yield VALUE(value)
                     yield ENDBLOCK()
             else:
                 if level == 0:
