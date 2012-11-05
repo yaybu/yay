@@ -1,10 +1,44 @@
 Changelog for yay
 =================
 
-0.0.63 (unreleased)
+0.2.0 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Language refresh. This exchanges a dependency on pyparsing and pyyaml for a
+  dependency on jinja2. This provides a much stronger foundation for the
+  transformation logic in yay whilst still retaining the lazy evaluation that
+  made yay so flexible.
+
+- ``.append`` has changed slightly to look more natural and is renamed
+  ``extend`` to reflect its actual behaviour::
+
+      foo extend:
+        - 1
+        - 3
+
+- ``.foreach`` is gone. It now looks something like this (see the docs for
+  actual examples)::
+
+      foo:
+        - 1
+        - 3
+
+      mykey:
+        % for row in foo
+        - Now {{ row }}
+        % endfor
+
+- ``.select`` and ``.with`` are gone.
+
+- Direct SQLAlchemy and Django integration has been dropped. The previous
+  iteration was ambitious but incomplete. The language refresh mights that in
+  future we might just have::
+
+      mykey j2:
+        % for server in servers.filter(criteria="value")
+        - server: {{ server.name }}
+          ip: {{ server.ip }}
+        % endfor
 
 
 0.0.62 (2012-09-27)
