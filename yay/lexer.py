@@ -1,6 +1,10 @@
 
 class LexerError(Exception):
-    pass
+    
+    def __init__(self, message, lineno=None, line=None):
+        self.message = message
+        self.lineno = lineno
+        self.line = line
 
 class Token(object):
     
@@ -37,14 +41,18 @@ class Lexer(object):
     def __init__(self):
         self.indents = {}
         self.remaining = []
+        self.lineno = 0
         self.finished = False
         
     def input(self, text):
         self.remaining.extend(list(text))
         
+    def remaining_input(self):
+        return "".join(self.remaining).strip()
+    
     def read_line(self):
         """ Read a line from the input. """
-        while self.remaining or not self.finished:
+        while self.remaining_input() or not self.finished:
             if not self.remaining:
                 raise LexerError("Out of input")
             try:
@@ -53,7 +61,11 @@ class Lexer(object):
                 raise LexerError("Out of lines")
             line = self.remaining[:eol]
             self.remaining = self.remaining[eol+1:]
-            yield "".join(line).rstrip(" ")
+            self.lineno += 1
+            line = "".join(line).rstrip(" ")
+            # skip comments
+            if not line.lstrip().startswith("#"):
+                yield line
             
     def parse_indent(self, line):
         spaces = 0
@@ -78,7 +90,7 @@ class Lexer(object):
             return level
         else:
             if spaces < max(self.indents.keys()):
-                raise LexerError("Unindent to surprise level")
+                raise LexerError("Unindent to surprise level", self.lineno)
             else:
                 self.indents[spaces] = max(self.indents.values())+1
                 return self.indents[spaces]
@@ -108,7 +120,7 @@ class Lexer(object):
                     yield ENDBLOCK()
             else:
                 if level == 0:
-                    raise LexerError("No key found on a top level line")
+                    raise LexerError("No key found on a top level line", lineno, line)
                 elif line.startswith("- "):
                     yield LISTVALUE(line[2:])
                 else:

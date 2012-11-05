@@ -27,8 +27,33 @@ a:
         i: j
 """
 
+comments = """
+
+# example
+a: b
+c:
+  - d
+  # foo
+  - e
+ 
+ """
 
 class TestLexer(unittest.TestCase):
+    
+    def test_comments(self):
+        l = Lexer()
+        l.input(comments)
+        l.done()
+        self.assertEqual(list(l.tokens()), [
+            KEY('a'),
+            VALUE('b'),
+            ENDBLOCK(),
+            KEY('c'),
+            LISTVALUE('d'),
+            LISTVALUE('e'),
+            ENDBLOCK(),
+            ])
+        
     
     def test_sample2(self):
         l = Lexer()
