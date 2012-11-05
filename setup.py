@@ -30,6 +30,7 @@ setup(
     ],
     extras_require = dict(
         test = [
+            "mock",
             ],
         ),
 )
