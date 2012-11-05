@@ -30,8 +30,6 @@ setup(
     ],
     extras_require = dict(
         test = [
-            'Django',
-            'SQLAlchemy',
             ],
         ),
 )

@@ -53,22 +53,4 @@ class TestHttpOpener(unittest.TestCase):
         self.failUnlessRaises(NotFound, uo.open, "http://yay-test-url-that-doesnt-exist.isotoma.com/hello_world")
 
 
-class TestMemOpener(unittest.TestCase):
-
-    def test_read(self):
-        MemOpener.data['hello'] = "test data"
-        self.failUnlessEqual("test data", MemOpener().open("mem://hello").read())
-
-    def test_notfound(self):
-        self.failUnlessRaises(NotFound, MemOpener().open, "mem://does-not-exist")
-
-    def test_etag(self):
-        MemOpener.data['hello'] = "test data"
-        mo = MemOpener()
-        fp = mo.open("mem://hello")
-        etag = fp.etag
-        fp.close()
-
-        self.failUnlessRaises(NotModified, mo.open, "mem://hello", etag)
-
 

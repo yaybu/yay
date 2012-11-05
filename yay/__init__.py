@@ -13,5 +13,5 @@
 # limitations under the License.
 
 from yay.stringbuilder import String
-from yay.config import Config, load, load_uri, dump
+from yay.config import Config, load, load_uri
 

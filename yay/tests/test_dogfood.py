@@ -17,7 +17,7 @@ import doctest
 import os
 import glob
 
-import yaml
+#import yaml
 
 from yay.config import Config
 from yay.openers import MemOpener

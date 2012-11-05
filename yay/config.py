@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
-
-from yay.loader import Loader
 from yay.openers import Openers
 from yay.nodes import BoxingFactory, Mapping, Access
 from yay.errors import ProgrammingError
@@ -88,6 +85,4 @@ def load(stream, special_term='yay', secret=False):
     c.load(stream, secret)
     return c.get()
 
-def dump(obj):
-    return yaml.dump(obj, default_flow_style=False)
 
