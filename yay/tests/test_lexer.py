@@ -1,6 +1,6 @@
 
 import unittest
-from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE
+from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST
 
 sample1 = """
 key1: value1
@@ -36,15 +36,40 @@ c:
   # foo
   - e
  
- """
+"""
+
+emptylist = """
+a: []
+"""
+
+emptydict = """
+a: {}
+"""
 
 class TestLexer(unittest.TestCase):
     
-    def test_comments(self):
+    def _lex(self, value):
         l = Lexer()
-        l.input(comments)
+        l.input(value)
         l.done()
-        self.assertEqual(list(l.tokens()), [
+        return list(l.tokens())
+    
+    def test_emptydict(self):
+        self.assertEqual(self._lex(emptydict), [
+            KEY('a'),
+            EMPTYDICT(),
+            ENDBLOCK()
+            ])
+        
+    def test_emptylist(self):
+        self.assertEqual(self._lex(emptylist), [
+            KEY('a'),
+            EMPTYLIST(),
+            ENDBLOCK()
+            ])
+    
+    def test_comments(self):
+        self.assertEqual(self._lex(comments), [
             KEY('a'),
             VALUE('b'),
             ENDBLOCK(),

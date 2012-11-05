@@ -36,6 +36,12 @@ class ENDBLOCK(Token):
 class LISTVALUE(Token):
     pass
 
+class EMPTYDICT(Token):
+    pass
+
+class EMPTYLIST(Token):
+    pass
+
 class Lexer(object):
     
     def __init__(self):
@@ -116,7 +122,12 @@ class Lexer(object):
                 key, value = [x.strip() for x in line.split(":", 1)]
                 yield KEY(key)
                 if value:
-                    yield VALUE(value)
+                    if value == '{}':
+                        yield EMPTYDICT()
+                    elif value == '[]':
+                        yield EMPTYLIST()
+                    else:
+                        yield VALUE(value)
                     yield ENDBLOCK()
             else:
                 if level == 0:
