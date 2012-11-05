@@ -90,19 +90,4 @@ class TestConfigUpdate(unittest.TestCase):
             """)
         self.failUnlessEqual(c.get()['foo'], [1,2,3,4,5,6])
 
-    def test_list_remove(self):
-        c = Config()
-        c.load("""
-            foo:
-                - 1
-                - 2
-                - 3
-            foo.remove:
-                - 1
-                - 2
-                - 3
-                - 5
-            """)
-
-        self.failUnlessEqual(c.get()['foo'], [])
 

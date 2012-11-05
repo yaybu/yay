@@ -26,7 +26,6 @@ setup(
     include_package_data=True,
     install_requires = [
         "ply",
-        "PyYAML",
         "Jinja2",
     ],
     extras_require = dict(

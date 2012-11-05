@@ -31,13 +31,6 @@ class TestSequenceOperations(unittest.TestCase):
 
         self.failUnlessEqual(a.resolve(), [1, 2, 3, 4, 5])
 
-    def test_sequence_remove(self):
-        l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
-        r = Remove(Sequence([Boxed(2)]))
-        r.chain = l
-
-        self.failUnlessEqual(r.resolve(), [1, 3])
-
 
 class TestMapping(unittest.TestCase):
 
@@ -47,5 +40,5 @@ class TestMapping(unittest.TestCase):
         d = Mapping(None)
         d.set("foo", Boxed(1))
 
-        self.failUnlessEqual(d.get("foo").value, 1)
+        self.failUnlessEqual(d.get("foo").resolve(), 1)
 

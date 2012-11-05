@@ -24,7 +24,7 @@ from yay.openers import MemOpener
 
 dogfood_path = os.path.join(os.path.dirname(__file__), "dogfood")
 
-
+"""
 class TestConfig(Config):
 
     def load_uri(self, uri):
@@ -78,4 +78,5 @@ class TestDogfood(unittest.TestCase):
 
         for key in k1:
             self.failUnlessEqual(value1[key], value2[key])
+"""
 
