@@ -2,50 +2,6 @@
 import unittest
 from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST
 
-sample1 = """
-key1: value1
-
-key2: value2
-
-key3: 
-  - item1
-  - item2
-  - item3
-  
-key4:
-    key5:
-        key6: key7
-"""
-
-sample2 = """
-a:
-    b:c
-    e:
-        - f
-        - g
-    h:
-        i: j
-"""
-
-comments = """
-
-# example
-a: b
-c:
-  - d
-  # foo
-  - e
- 
-"""
-
-emptylist = """
-a: []
-"""
-
-emptydict = """
-a: {}
-"""
-
 class TestLexer(unittest.TestCase):
     
     def _lex(self, value):
@@ -54,22 +10,45 @@ class TestLexer(unittest.TestCase):
         l.done()
         return list(l.tokens())
     
+    def test_initial1(self):
+        self.assertEqual(self._lex("""
+               a: b
+               c: 
+                 d: e
+            """), [
+            KEY('a'),
+            VALUE('b'),
+            ENDBLOCK(),
+            KEY('c'),
+            KEY('d'),
+            VALUE('e'),
+            ENDBLOCK(),
+            ENDBLOCK(),
+            ])
+    
     def test_emptydict(self):
-        self.assertEqual(self._lex(emptydict), [
+        self.assertEqual(self._lex("a: {}"), [
             KEY('a'),
             EMPTYDICT(),
             ENDBLOCK()
             ])
         
     def test_emptylist(self):
-        self.assertEqual(self._lex(emptylist), [
+        self.assertEqual(self._lex("a: []"), [
             KEY('a'),
             EMPTYLIST(),
             ENDBLOCK()
             ])
     
     def test_comments(self):
-        self.assertEqual(self._lex(comments), [
+        self.assertEqual(self._lex("""
+            # example
+            a: b
+            c:
+              - d
+              # foo
+              - e
+            """), [
             KEY('a'),
             VALUE('b'),
             ENDBLOCK(),
@@ -81,10 +60,14 @@ class TestLexer(unittest.TestCase):
         
     
     def test_sample2(self):
-        l = Lexer()
-        l.input(sample2)
-        l.done()
-        self.assertEqual(list(l.tokens()), [
+        self.assertEqual(self._lex("""
+        a:
+            b:c
+            e:
+                - f
+                - g
+            h:
+                i: j"""), [
             KEY('a'),
             KEY('b'),
             VALUE('c'),
@@ -104,10 +87,20 @@ class TestLexer(unittest.TestCase):
         
     
     def test_sample1(self):
-        l = Lexer()
-        l.input(sample1)
-        l.done()
-        self.assertEqual(list(l.tokens()), [
+        self.assertEqual(self._lex("""
+            key1: value1
+            
+            key2: value2
+            
+            key3: 
+              - item1
+              - item2
+              - item3
+              
+            key4:
+                key5:
+                    key6: key7
+            """), [
                               KEY('key1'),
                               VALUE('value1'),
                               ENDBLOCK(),

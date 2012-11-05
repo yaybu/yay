@@ -46,6 +46,9 @@ class Lexer(object):
     
     def __init__(self):
         self.indents = {}
+        # initial_indent holds the number of spaces prefixing the first real line
+        # this is used as the leftmost indent level
+        self.initial_indent = None
         self.remaining = []
         self.lineno = 0
         self.finished = False
@@ -64,7 +67,7 @@ class Lexer(object):
             try:
                 eol = self.remaining.index("\n")
             except ValueError:
-                raise LexerError("Out of lines")
+                eol = len(self.remaining)
             line = self.remaining[:eol]
             self.remaining = self.remaining[eol+1:]
             self.lineno += 1
@@ -84,10 +87,14 @@ class Lexer(object):
     
     def indent_level(self, spaces):
         """ Return the correct indent level for the number of spaces """
-        if spaces == 0:
+        if self.initial_indent == None:
+            self.initial_indent = spaces
+        if spaces == self.initial_indent:
             # reset indenting
             self.indents = {}
             return 0
+        if spaces < self.initial_indent:
+            raise LexerError("Dedent below initial indent", self.lineno)
         if not self.indents:
             self.indents[spaces] = 1
             return 1
