@@ -1,0 +1,9 @@
+wibble: world
+
+hello.jinja: |
+    hello {{ wibble }}
+
+wibble: lol
+
+finally: it said ${hello}
+
