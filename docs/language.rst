@@ -1,6 +1,16 @@
 Language Tour
 =============
 
+Comments
+~~~~~~~~
+
+# comment
+
+foo:
+   - a
+   # foo
+   - b
+
 Mappings
 ~~~~~~~~
 
@@ -19,6 +29,13 @@ relationships between each item is based on the amount of indentation::
         eth0:
            interfaces: 192.168.0.1
            dhcp: yes
+
+Empty mappings
+##############
+
+::
+
+packages: {}
 
 List
 ~~~~
@@ -46,11 +63,11 @@ a directory based on a customer project id::
 
     resources:
         - Directory:
-            name: /var/local/sites/${projectcode}
+            name: /var/local/sites/{{projectcode}}
 
         - Checkout:
-            name: /var/local/sites/${projectcode}/src
-            repository: svn://mysvnserver/${projectcode}
+            name: /var/local/sites/{{projectcode}}/src
+            repository: svn://mysvnserver/{{projectcode}}
 
 If you variables are in mappings you can access them using ``.`` as seperator.
 You can also access specific items in lists with ``[]``::
@@ -64,7 +81,7 @@ You can also access specific items in lists with ``[]``::
 
     resources:
         - Checkout:
-            repository: /var/local/sites/${projects[0].checkout.repository}
+            repository: /var/local/sites/{{projects[0].checkout.repository}}
 
 Sometimes you might only want to optionally set variables in your
 configuration. Here we pickup ``project.id`` if its set, but fall back
@@ -73,29 +90,22 @@ to ``project.name``::
     project:
         name: www.baz.com
 
-    example_key: ${project.id else project.name}
+    example_key: {{ project.id|default(project.name) }}
 
 
-Including Files
+Large templates
 ~~~~~~~~~~~~~~~
 
-You can import a recipe using the yay extends feature. If you had a template
-foo.yay::
+::
 
-    resources:
+foo j2:
+    % for p in projectcodes:
         - Directory:
-              name: /var/local/sites/${projectcode}
+              name: /var/local/sites/{{p}}
         - Checkout:
-              name: /var/local/sites/${projectcode}/src
-              repository: svn://mysvnserver/${projectcode}
-
-You can reuse this recipe in bar.yay like so::
-
-    .include:
-      - foo.yay
-
-    projectcode: MyCustomer-145
-
+              name: /var/local/sites/{{p}}/src
+              repository: svn://mysvnserver/{{p}}
+    % endfor
 
 Extending Lists
 ~~~~~~~~~~~~~~~
@@ -111,25 +121,14 @@ multiple files, the most recently specified one would win::
         - baz
 
 If you were to do this, resources would only contain baz. Yay has a function
-to allow appending to predefined lists: append::
+to allow appending to predefined lists: extend::
 
     resources:
         - foo
         - bar
 
-    resources.append:
+    resources extend:
         - baz
-
-You can also use ``.remove``, which works in a similar way::
-
-    resources:
-        - foo
-        - bar
-
-    resources.remove:
-        - bar
-
-The list now only contains ``foo``.
 
 
 For Loops
@@ -142,94 +141,46 @@ resources for each item in that list. You would do something like this::
         MyCustomer-100
         MyCustomer-72
 
-    resources.append:
-        .foreach p in projectcodes:
+    resources extend j2:
+        % for p in projectcodes:
             - Directory:
-                  name: /var/local/sites/${p}
+                  name: /var/local/sites/{{p}}
             - Checkout:
-                  name: /var/local/sites/${p}/src
-                  repository: svn://mysvnserver/${p}
-
-You can also have conditions::
-
-    fruit:
-        - name: apple
-          price: 5
-        - name: lime
-          price: 10
-
-    cheap.foreach f in fruit if f.price < 10: ${f}
+                  name: /var/local/sites/{{p}}/src
+                  repository: svn://mysvnserver/{{p}}
+        % endfor
 
 
-You might need to loop over a list within a list::
+Including Files
+~~~~~~~~~~~~~~~
 
-    staff:
-      - name: Joe
-        devices:
-          - macbook
-          - iphone
+You can import a recipe using the yay extends feature. If you had a template
+foo.yay::
 
-      - name: John
-        devices:
-          - air
-          - iphone
+    resources:
+        - Directory:
+              name: /var/local/sites/{{projectcode}}
+        - Checkout:
+              name: /var/local/sites/{{projectcode}}/src
+              repository: svn://mysvnserver/{{projectcode}}
 
-    stuff.foreach s in staff:
-      .foreach d in s.devices: ${d}
+You can reuse this recipe in bar.yay like so::
 
-This will produce a single list that is equivalent to::
+    yay include:
+        - foo.yay
+        - bar.yay
 
-    stuff:
-      - macbook
-      - iphone
-      - air
-      - iphone
-
-You can use a foreach against a mapping too - you will iterate over its
-keys. A foreach over a mapping with a condition might look like this::
-
-    fruit:
-      apple: 5
-      lime: 10
-      strawberry: 1
-
-    cheap.foreach f in fruit if fruit[f] < 10: ${f}
-
-That would return a list with apple and strawberry in it. The list will
-be sorted alphabetically: mappings are generally unordered but we want
-the iteration order to be stable.
+    projectcode: MyCustomer-145
 
 
-Select
-~~~~~~
+Search path
+~~~~~~~~~~~
 
-The select statement is a way to have conditions in your configuration.
-
-Lets say ``host.distro`` contains your Ubuntu version and you want to install
-difference packages based on the distro. You could do something like::
-
-    packages.select:
-        karmic:
-          - python-setuptools
-        lucid:
-          - python-distribute
-          - python-zc.buildout
+yay search:
 
 
-With
-~~~~
+Configuring your environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you have a complicated expression and you want to avoid typing it
-over and over again you can use the with expression::
-
-    staff:
-      john:
-        devices:
-         - name: ipod
-           serial: 1234
-
-    thing.with staff.john.devices[0] as ipod:
-      someattr: ipod.serial
-      someotherattr: ipod.name
-
+yay config:
 
