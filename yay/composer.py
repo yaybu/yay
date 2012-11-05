@@ -40,6 +40,7 @@ class Composer(object):
             "copy": lambda value, args: Copy(value),
             "assign": lambda value, args: value,
             "append": lambda value, args: Append(value),
+            "jinja": lambda value, args: Jinja(self, value),
             "remove": lambda value, args: Remove(value),
             "foreach": lambda value, args: ForEach(self, value, self.parser.foreach_statement.parseString(args)),
             "with": lambda value, args: With(value, *self.parser.as_statement.parseString(args)),
