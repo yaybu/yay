@@ -40,6 +40,8 @@ Changelog for yay
           ip: {{ server.ip }}
         % endfor
 
+- ``yay.protectedstring`` was deprecated and is now removed.
+
 
 0.0.62 (2012-09-27)
 -------------------
