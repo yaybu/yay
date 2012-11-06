@@ -1,6 +1,6 @@
 
 import unittest
-from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST
+from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST, LISTKEY
 
 class TestLexer(unittest.TestCase):
     
@@ -22,7 +22,7 @@ class TestLexer(unittest.TestCase):
             LISTKEY('c'),
             VALUE('d'),
             ENDBLOCK(),
-            LISTVALUE('c'),
+            LISTVALUE('e'),
             ENDBLOCK(),
         ])
     

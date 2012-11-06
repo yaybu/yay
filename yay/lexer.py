@@ -36,6 +36,9 @@ class ENDBLOCK(Token):
 class LISTVALUE(Token):
     pass
 
+class LISTKEY(Token):
+    pass
+
 class EMPTYDICT(Token):
     pass
 
@@ -126,8 +129,13 @@ class Lexer(object):
             last_level = level
             # see if the line starts with a key
             if ':' in line:
-                key, value = [x.strip() for x in line.split(":", 1)]
-                yield KEY(key)
+                if line.startswith('-'):
+                    key, value = [x.strip() for x in line.split(":", 1)]
+                    key = key[1:].strip()
+                    yield LISTKEY(key)
+                else:
+                    key, value = [x.strip() for x in line.split(":", 1)]
+                    yield KEY(key)
                 if value:
                     if value == '{}':
                         yield EMPTYDICT()
