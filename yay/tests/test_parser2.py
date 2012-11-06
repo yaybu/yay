@@ -65,3 +65,28 @@ class TestParser(unittest.TestCase):
                 {'c': 'd'},
                 'e',
                 ]})
+
+    def test_list_of_multikey_dicts(self):
+        self.assertEqual(self._parse("""
+            a: 
+              - b
+              - c: d
+                e: f
+              - g
+              """), {
+                'a': [
+                'b',
+                {'c': 'd', 'e': 'f'},
+                'g',
+                ]})
+
+    def test_list_of_dicts_with_lists_in(self):
+        self.assertEqual(self._parse("""
+            a:
+             - b: c
+               d:
+                 - e
+                 - f
+                 - g
+              """), {'a': [{'b': 'c', 'd': ['e', 'f', 'g']}]})
+
