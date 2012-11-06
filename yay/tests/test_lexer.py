@@ -9,6 +9,22 @@ class TestLexer(unittest.TestCase):
         l.input(value)
         l.done()
         return list(l.tokens())
+
+    def test_list_of_dicts(self):
+        self.assertEqual(self._lex("""
+            a:
+              - b
+              - c: d
+              - e
+        """), [
+            KEY('a'),
+            LISTVALUE('b'),
+            LISTKEY('c'),
+            VALUE('d'),
+            ENDBLOCK(),
+            LISTVALUE('c'),
+            ENDBLOCK(),
+        ])
     
     def test_initial1(self):
         self.assertEqual(self._lex("""
