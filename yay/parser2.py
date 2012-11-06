@@ -32,23 +32,30 @@ class Parser(object):
         for i in self.stack:
             print repr(i)
         print
-                
+        
+    def peek(self):
+        return self.stack[-1]
+
     def reduce(self):
         endblock = self.stack.pop()
-        if isinstance(self.stack[-1], lexer.VALUE):
+        if isinstance(self.peek(), lexer.VALUE):
             value = self.stack.pop()
             key = self.stack.pop()
             return key.value, value.value
-        elif isinstance(self.stack[-1], lexer.LISTVALUE):
+        elif isinstance(self.peek(), (lexer.LISTVALUE, lexer.LISTKEY)):
             l = []
-            while isinstance(self.stack[-1], lexer.LISTVALUE):
-                value = self.stack.pop()
-                l.insert(0, value.value)
+            while isinstance(self.peek(), (lexer.LISTVALUE, lexer.LISTKEY, lexer.ENDBLOCK)):
+                if isinstance(self.peek(), lexer.LISTVALUE):
+                    value = self.stack.pop()
+                    l.insert(0, value.value)
+                elif isinstance(self.peek(), lexer.ENDBLOCK):
+                    key, value = self.reduce()
+                    l.insert(0, {key: value})
             key = self.stack.pop()
             return key.value, l
-        elif isinstance(self.stack[-1], lexer.ENDBLOCK):
+        elif isinstance(self.peek(), lexer.ENDBLOCK):
             d = {}
-            while isinstance(self.stack[-1], lexer.ENDBLOCK):
+            while isinstance(self.peek(), lexer.ENDBLOCK):
                 key, value = self.reduce()
                 d[key] = value
             key = self.stack.pop()
