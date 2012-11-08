@@ -18,7 +18,7 @@ class TestLexer(unittest.TestCase):
                 e: f
               - g
               """)
-        self.assertEqual(result, [
+        self.assertEqual(result, [ BLOCK(),
             KEY('a'),
             BLOCK(),
                 LISTITEM(), BLOCK(), SCALAR('b'), END(),
@@ -29,7 +29,7 @@ class TestLexer(unittest.TestCase):
                 END(),
                 LISTITEM(), BLOCK(), SCALAR('g'), END(),
             END(),
-            ])
+            END(), ])
 
     def test_list_of_dicts(self):
         self.assertEqual(self._lex("""
@@ -37,7 +37,7 @@ class TestLexer(unittest.TestCase):
               - b
               - c: d
               - e
-        """), [
+        """), [ BLOCK(),
             KEY('a'),
             BLOCK(),
                 LISTITEM(), BLOCK(), SCALAR('b'), END(),
@@ -47,30 +47,30 @@ class TestLexer(unittest.TestCase):
                 END(),
                 LISTITEM(), BLOCK(), SCALAR('e'), END(),
             END(),
-        ])
+        END(), ])
     
     def test_initial1(self):
         self.assertEqual(self._lex("""
                a: b
                c: 
                  d: e
-            """), [
+            """), [ BLOCK(),
             KEY('a'), BLOCK(), SCALAR('b'), END(),
             KEY('c'),
             BLOCK(),
                 KEY('d'), BLOCK(), SCALAR('e'), END(),
             END(),
-            ])
+            END(), ])
     
     def test_emptydict(self):
-        self.assertEqual(self._lex("a: {}"), [
-            KEY('a'), BLOCK(), EMPTYDICT(), END()
-            ])
+        self.assertEqual(self._lex("a: {}"), [ BLOCK(),
+            KEY('a'), BLOCK(), EMPTYDICT(), END(),
+            END(), ])
         
     def test_emptylist(self):
-        self.assertEqual(self._lex("a: []"), [
-            KEY('a'), BLOCK(), EMPTYLIST(), END()
-            ])
+        self.assertEqual(self._lex("a: []"), [ BLOCK(),
+            KEY('a'), BLOCK(), EMPTYLIST(), END(),
+            END(), ])
     
     def test_comments(self):
         self.assertEqual(self._lex("""
@@ -80,14 +80,14 @@ class TestLexer(unittest.TestCase):
               - d
               # foo
               - e
-            """), [
+            """), [ BLOCK(),
             KEY('a'), BLOCK(), SCALAR('b'), END(),
             KEY('c'),
             BLOCK(),
                 LISTITEM(), BLOCK(), SCALAR('d'), END(),
                 LISTITEM(), BLOCK(), SCALAR('e'), END(),
             END(),
-            ])
+            END(), ])
         
     
     def test_sample2(self):
@@ -98,7 +98,7 @@ class TestLexer(unittest.TestCase):
                 - f
                 - g
             h:
-                i: j"""), [
+                i: j"""), [ BLOCK(),
             KEY('a'),
             BLOCK(),
                 KEY('b'), BLOCK(), SCALAR('c'), END(),
@@ -112,7 +112,7 @@ class TestLexer(unittest.TestCase):
                     KEY('i'), BLOCK(), SCALAR('j'), END(),
                     END(),
                 END(),
-            ])
+            END(), ])
             
         
     
@@ -130,7 +130,7 @@ class TestLexer(unittest.TestCase):
             key4:
                 key5:
                     key6: key7
-        """), [
+        """), [ BLOCK(),
             KEY('key1'), BLOCK(), SCALAR('value1'), END(),
             KEY('key2'), BLOCK(), SCALAR('value2'), END(),
             KEY('key3'),
@@ -146,5 +146,5 @@ class TestLexer(unittest.TestCase):
                     KEY('key6'), BLOCK(), SCALAR('key7'), END(),
                 END(),
             END(),
-            ])
+            END(), ])
 

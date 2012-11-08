@@ -62,7 +62,7 @@ class Parser(object):
             value = token.value
         return value
     
-    def match_complete(self):
+    def match_node(self):
         """ COMPLETE: BLOCK VALUE END """
         
         if self.matches(BLOCK, VALUE, END):
@@ -128,7 +128,7 @@ class Parser(object):
         Extract the matching elements and replace them with the result of the
         production. """
 
-        if self.match_complete():
+        if self.match_node():
             return True
         if self.match_dict():
             return True
