@@ -1,6 +1,6 @@
 
 import unittest
-from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST, LISTBLOCK
+from yay.lexer import Lexer, END, KEY, SCALAR, LISTITEM, EMPTYDICT, EMPTYLIST
 
 class TestLexer(unittest.TestCase):
     
@@ -19,16 +19,12 @@ class TestLexer(unittest.TestCase):
               - g
               """), [
             KEY('a'),
-            LISTVALUE('b'),
-            LISTBLOCK(),
-            KEY('c'),
-            VALUE('d'),
-            ENDBLOCK(),
-            KEY('e'),
-            VALUE('f'),
-            ENDBLOCK(),
-            ENDBLOCK(),
-            LISTVALUE('g'),
+                LISTITEM('b'),
+                KEY('c'), SCALAR('d'), END(),
+                KEY('e'), SCALAR('f'), END(),
+                END(),
+                LISTITEM('g'),
+                END(),
             ])
 
     def test_list_of_dicts(self):
@@ -39,14 +35,11 @@ class TestLexer(unittest.TestCase):
               - e
         """), [
             KEY('a'),
-            LISTVALUE('b'),
-            LISTBLOCK(),
-            KEY('c'),
-            VALUE('d'),
-            ENDBLOCK(),
-            ENDBLOCK(),
-            LISTVALUE('e'),
-            ENDBLOCK(),
+                LISTITEM('b'),
+                KEY('c'), SCALAR('d'), END(),
+                END(),
+                LISTITEM('e'),
+                END(),
         ])
     
     def test_initial1(self):
@@ -55,28 +48,20 @@ class TestLexer(unittest.TestCase):
                c: 
                  d: e
             """), [
-            KEY('a'),
-            VALUE('b'),
-            ENDBLOCK(),
+            KEY('a'), SCALAR('b'), END(),
             KEY('c'),
-            KEY('d'),
-            VALUE('e'),
-            ENDBLOCK(),
-            ENDBLOCK(),
+                KEY('d'), SCALAR('e'), END(),
+                END(),
             ])
     
     def test_emptydict(self):
         self.assertEqual(self._lex("a: {}"), [
-            KEY('a'),
-            EMPTYDICT(),
-            ENDBLOCK()
+            KEY('a'), EMPTYDICT(), END()
             ])
         
     def test_emptylist(self):
         self.assertEqual(self._lex("a: []"), [
-            KEY('a'),
-            EMPTYLIST(),
-            ENDBLOCK()
+            KEY('a'), EMPTYLIST(), END()
             ])
     
     def test_comments(self):
@@ -88,13 +73,11 @@ class TestLexer(unittest.TestCase):
               # foo
               - e
             """), [
-            KEY('a'),
-            VALUE('b'),
-            ENDBLOCK(),
+            KEY('a'), SCALAR('b'), END(),
             KEY('c'),
-            LISTVALUE('d'),
-            LISTVALUE('e'),
-            ENDBLOCK(),
+                LISTITEM('d'),
+                LISTITEM('e'),
+                END(),
             ])
         
     
@@ -108,19 +91,15 @@ class TestLexer(unittest.TestCase):
             h:
                 i: j"""), [
             KEY('a'),
-            KEY('b'),
-            VALUE('c'),
-            ENDBLOCK(),
-            KEY('e'),
-            LISTVALUE('f'),
-            LISTVALUE('g'),
-            ENDBLOCK(),
-            KEY('h'),
-            KEY('i'),
-            VALUE('j'),
-            ENDBLOCK(),
-            ENDBLOCK(),
-            ENDBLOCK(),
+                KEY('b'), SCALAR('c'), END(),
+                KEY('e'),
+                    LISTITEM('f'),
+                    LISTITEM('g'),
+                    END(),
+                KEY('h'),
+                    KEY('i'), SCALAR('j'), END(),
+                    END(),
+                END(),
             ])
             
         
@@ -139,24 +118,18 @@ class TestLexer(unittest.TestCase):
             key4:
                 key5:
                     key6: key7
-            """), [
-                              KEY('key1'),
-                              VALUE('value1'),
-                              ENDBLOCK(),
-                              KEY('key2'),
-                              VALUE('value2'),
-                              ENDBLOCK(),
-                              KEY('key3'),
-                              LISTVALUE('item1'),
-                              LISTVALUE('item2'),
-                              LISTVALUE('item3'),
-                              ENDBLOCK(),
-                              KEY('key4'),
-                              KEY('key5'),
-                              KEY('key6'),
-                              VALUE('key7'),
-                              ENDBLOCK(),
-                              ENDBLOCK(),
-                              ENDBLOCK(),
-                              ])
-            
+        """), [
+            KEY('key1'), SCALAR('value1'), END(),
+            KEY('key2'), SCALAR('value2'), END(),
+            KEY('key3'),
+                LISTITEM('item1'),
+                LISTITEM('item2'),
+                LISTITEM('item3'),
+                END(),
+            KEY('key4'),
+                KEY('key5'),
+                    KEY('key6'), SCALAR('key7'), END(),
+                    END(),
+                END(),
+            ])
+

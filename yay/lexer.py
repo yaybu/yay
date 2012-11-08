@@ -19,24 +19,17 @@ class Token(object):
             return 0
         return 1
 
-class BLOCK(Token):
-    def __repr__(self):
-        return "<BLOCK>"
-
 class KEY(Token):
     pass
 
-class VALUE(Token):
+class SCALAR(Token):
     pass
 
-class ENDBLOCK(Token):
+class END(Token):
     def __repr__(self):
-        return "<ENDBLOCK>"
+        return "<END>"
 
-class LISTVALUE(Token):
-    pass
-
-class LISTBLOCK(Token):
+class LISTITEM(Token):
     pass
 
 class EMPTYDICT(Token):
@@ -114,26 +107,40 @@ class Lexer(object):
     def done(self):
         self.finished = True
             
+    def list_key_indent_level(self, line):
+        """ This is the case where we have:
+        
+          - a: b
+        
+        We need to indent to the 'a' so we can continue to dict.
+        """
+        spaces, line = self.parse_indent(line)
+        assert(line.startswith('-'))
+        spaces2, line2 = self.parse_indent(line[1:])
+        total_spaces = spaces + 1 + spaces2 # indent the '-' too
+        return self.indent_level(total_spaces)
+        
     def tokens(self):
         last_level = 0
-        for line in self.read_line():
+        for raw_line in self.read_line():
             # handle indents
-            spaces, line = self.parse_indent(line)
+            spaces, line = self.parse_indent(raw_line)
             if not line:
                 # we ignore blank lines completely
                 continue
             level = self.indent_level(spaces)
             if level < last_level:
                 for x in range(level, last_level):
-                    yield ENDBLOCK()
+                    yield END()
             last_level = level
             # see if the line starts with a key
             if ':' in line:
                 if line.startswith('-'):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
-                    yield LISTBLOCK()
                     yield KEY(key)
+                    # push in the level so we end the block correctly
+                    last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
                     yield KEY(key)
@@ -143,16 +150,16 @@ class Lexer(object):
                     elif value == '[]':
                         yield EMPTYLIST()
                     else:
-                        yield VALUE(value)
-                    yield ENDBLOCK()
+                        yield SCALAR(value)
+                    yield END()
             else:
                 if level == 0:
                     raise LexerError("No key found on a top level line", lineno, line)
                 elif line.startswith("- "):
-                    yield LISTVALUE(line[2:])
+                    yield LISTITEM(line[2:])
                 else:
-                    yield VALUE(line)
+                    yield SCALAR(line)
         for x in range(0, last_level):
-            yield ENDBLOCK()
+            yield END()
                 
             
