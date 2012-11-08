@@ -30,9 +30,7 @@ class Parser(object):
     def parse(self):
         for token in self.lexer.tokens():
             self.stack.append(token)
-            print self.stack
             while self.reduce():
-                print self.stack
                 pass
         return self.stack[0].value
 

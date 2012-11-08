@@ -5,7 +5,6 @@ class TestParser(unittest.TestCase):
     
     def _parse(self, value):
         parser = parser2.Parser()
-        print value
         parser.input(value)
         d = parser.parse()
         return d
