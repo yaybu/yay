@@ -18,7 +18,7 @@ from yay.nodes import Node
 class Access(Node):
 
     """
-    A future lookup on another part of the graph.
+    A future lookup on another part of the graph. i an a promise.
 
     This node is created when the parser encounters any source of lookup.
     For example::

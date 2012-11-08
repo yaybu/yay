@@ -7,38 +7,41 @@ class TestParser(unittest.TestCase):
         parser = parser2.Parser()
         parser.input(value)
         d = parser.parse()
-        return d.resolve()
+        return d
+    
+    def _resolve(self, value):
+        return self._parse(value).resolve()
     
     def test_emptydict(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         a: {}
         """), {'a': {}})
         
     def test_emptylist(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         a: []
         """), {'a': []})
     
     def test_simple_dict(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         a: b
         """), {'a': 'b'})
         
         
     def test_two_item_dict(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         a: b
         c: d
         """), {'a': 'b', 'c': 'd'})
         
     def test_nested_dict(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         a:
          b: c
         """), {'a': {'b': 'c'}})
     
     def test_sample1(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         key1: value1
         
         key2: value2
@@ -63,7 +66,7 @@ class TestParser(unittest.TestCase):
             })
 
     def test_sample2(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
         key1:
             key2:
                 - a
@@ -82,7 +85,7 @@ class TestParser(unittest.TestCase):
             })
     
     def test_list_of_dicts(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
             a: 
               - b
               - c: d
@@ -95,7 +98,7 @@ class TestParser(unittest.TestCase):
                 ]})
 
     def test_list_of_multikey_dicts(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
             a: 
               - b
               - c: d
@@ -109,7 +112,7 @@ class TestParser(unittest.TestCase):
                 ]})
 
     def test_list_of_dicts_with_lists_in(self):
-        self.assertEqual(self._parse("""
+        self.assertEqual(self._resolve("""
             a:
              - b: c
                d:
@@ -118,3 +121,44 @@ class TestParser(unittest.TestCase):
                  - g
               """), {'a': [{'b': 'c', 'd': ['e', 'f', 'g']}]})
 
+    def test_simple_overlay(self):
+        self.assertEqual(self._resolve("""
+        foo: 
+          a: b
+          
+        foo:
+          c: d
+        """), {
+               'foo': {
+                   'a': 'b',
+                   'c': 'd',
+                   }
+               })
+        
+    def test_nested_overlay(self):
+        self.assertEqual(self._resolve("""
+        a:
+          b: 
+            c: d
+          
+        a:
+          b: 
+            e: f
+        """), {
+               'a': {
+                   'b': {
+                       'c': 'd',
+                       'e': 'f',
+                       }
+                   }
+               })
+                       
+                       
+        self.assertEqual(self._resolve("""
+        a:
+          b:
+            c: d
+          b:
+            e: f
+            """)
+        

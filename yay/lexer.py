@@ -127,6 +127,7 @@ class Lexer(object):
         
     def tokens(self):
         last_level = 0
+        yield BLOCK()
         for raw_line in self.read_line():
             # handle indents
             spaces, line = self.parse_indent(raw_line)
@@ -173,5 +174,6 @@ class Lexer(object):
                     yield SCALAR(line)
         for x in range(0, last_level):
             yield END()
+        yield END()
                 
             
