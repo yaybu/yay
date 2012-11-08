@@ -7,7 +7,7 @@ class TestParser(unittest.TestCase):
         parser = parser2.Parser()
         parser.input(value)
         d = parser.parse()
-        return d
+        return d.resolve()
     
     def test_emptydict(self):
         self.assertEqual(self._parse("""

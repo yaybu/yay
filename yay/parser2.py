@@ -1,6 +1,8 @@
 
 from .lexer import Token, Lexer, BLOCK, END, SCALAR, LISTITEM, KEY, EMPTYLIST, EMPTYDICT
 
+from . import nodes
+
 import types
 
 class ParseError(Exception):
@@ -47,6 +49,13 @@ class Parser(object):
                 yield self.stack.pop()
         return reversed(list(_()))
 
+    def value(self, token):
+        if isinstance(token, SCALAR):
+            value = nodes.Boxed(token.value)
+        else:
+            value = token.value
+        return value
+    
     def match_dict(self):
         """ DICT := KEY BLOCK VALUE END 
                   | DICT DICT
@@ -54,8 +63,9 @@ class Parser(object):
         """
         if self.matches(KEY, BLOCK, VALUE, END):
             t_key, t_block, t_value, t_end = self.pop(4)
-            produces = DICT({t_key.value:t_value.value})
-            self.stack.append(produces)
+            node = nodes.Mapping()
+            node.set(t_key.value, self.value(t_value))
+            self.stack.append(DICT(node))
             return True
         if self.matches(DICT, DICT):
             t_1, t_2 = self.pop(2)
@@ -64,7 +74,7 @@ class Parser(object):
             return True
         if self.matches(EMPTYDICT):
             t_d = self.pop(1)
-            self.stack.append(DICT({}))
+            self.stack.append(DICT(nodes.Mapping()))
             return True
         return False
         
@@ -75,8 +85,8 @@ class Parser(object):
         """
         if self.matches(LISTITEM, BLOCK, VALUE, END):
             t_listitem, t_block, t_value, t_end = self.pop(4)
-            produces = LIST([t_value.value])
-            self.stack.append(produces)
+            node = nodes.Sequence([self.value(t_value)])
+            self.stack.append(LIST(node))
             return True
         if self.matches(LIST, LIST):
             t_1, t_2 = self.pop(2)
@@ -85,7 +95,7 @@ class Parser(object):
             return True
         if self.matches(EMPTYLIST):
             t_l = self.pop(1)
-            self.stack.append(LIST([]))
+            self.stack.append(LIST(nodes.Sequence()))
             return True
         return False
         

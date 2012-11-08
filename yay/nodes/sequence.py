@@ -21,11 +21,11 @@ class Sequence(Node):
     An ordered list of unresolved :py:class:`~yay.nodes.Node` objects.
     """
 
-    def __init__(self, value):
-        self.value = value
-        [x.set_parent(self) for x in value]
+    def __init__(self, value=()):
+        self.value = list(value)
+        [x.set_parent(self) for x in self.value]
 
-    def extend(self, iterable)
+    def extend(self, iterable):
         for row in iterable:
             self.value.append(row)
             row.set_parent(self)

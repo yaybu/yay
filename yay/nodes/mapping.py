@@ -21,7 +21,7 @@ class Mapping(Node):
     An unordered collection of key/value pairs
     """
 
-    def __init__(self, predecessor):
+    def __init__(self, predecessor=None):
         self.predecessor = predecessor
         if predecessor:
             predecessor.set_parent(self)
@@ -34,14 +34,14 @@ class Mapping(Node):
 
     def update(self, d, **kwargs):
         if hasattr(d, "keys"):
-            for k in d:
-                self.set(k, d[k])
+            for k in d.keys():
+                self.set(k, d.get(k))
         else:
             for k, v in d:
                 self.set(k, v)
 
         for k in kwargs:
-            self.set(k, kwargs[k]
+            self.set(k, kwargs[k])
 
     def get(self, key):
         if key in self.value:
