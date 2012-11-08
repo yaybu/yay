@@ -25,6 +25,11 @@ class Sequence(Node):
         self.value = value
         [x.set_parent(self) for x in value]
 
+    def extend(self, iterable)
+        for row in iterable:
+            self.value.append(row)
+            row.set_parent(self)
+
     def get(self, idx):
         try:
             idx = int(idx)

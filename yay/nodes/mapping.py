@@ -32,6 +32,17 @@ class Mapping(Node):
         self.value[key] = val
         val.set_parent(self)
 
+    def update(self, d, **kwargs):
+        if hasattr(d, "keys"):
+            for k in d:
+                self.set(k, d[k])
+        else:
+            for k, v in d:
+                self.set(k, v)
+
+        for k in kwargs:
+            self.set(k, kwargs[k]
+
     def get(self, key):
         if key in self.value:
             return self.value[key]
