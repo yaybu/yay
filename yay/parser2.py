@@ -6,9 +6,6 @@ import types
 class ParseError(Exception):
     pass
 
-class KVP(Token):
-    pass
-
 class DICT(Token):
     pass
 
@@ -53,6 +50,7 @@ class Parser(object):
     def match_dict(self):
         """ DICT := KEY BLOCK VALUE END 
                   | DICT DICT
+                  | EMPTYDICT
         """
         if self.matches(KEY, BLOCK, VALUE, END):
             t_key, t_block, t_value, t_end = self.pop(4)
@@ -64,11 +62,16 @@ class Parser(object):
             t_1.value.update(t_2.value)
             self.stack.append(t_1)
             return True
+        if self.matches(EMPTYDICT):
+            t_d = self.pop(1)
+            self.stack.append(DICT({}))
+            return True
         return False
         
     def match_list(self):
         """ LIST := LISTITEM BLOCK VALUE END
                   | LIST LIST
+                  | EMPTYLIST
         """
         if self.matches(LISTITEM, BLOCK, VALUE, END):
             t_listitem, t_block, t_value, t_end = self.pop(4)
@@ -79,6 +82,10 @@ class Parser(object):
             t_1, t_2 = self.pop(2)
             t_1.value.extend(t_2.value)
             self.stack.append(t_1)
+            return True
+        if self.matches(EMPTYLIST):
+            t_l = self.pop(1)
+            self.stack.append(LIST([]))
             return True
         return False
         

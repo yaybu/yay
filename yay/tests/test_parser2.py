@@ -9,6 +9,16 @@ class TestParser(unittest.TestCase):
         d = parser.parse()
         return d
     
+    def test_emptydict(self):
+        self.assertEqual(self._parse("""
+        a: {}
+        """), {'a': {}})
+        
+    def test_emptylist(self):
+        self.assertEqual(self._parse("""
+        a: []
+        """), {'a': []})
+    
     def test_simple_dict(self):
         self.assertEqual(self._parse("""
         a: b
