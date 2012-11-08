@@ -36,7 +36,7 @@ class ENDBLOCK(Token):
 class LISTVALUE(Token):
     pass
 
-class LISTKEY(Token):
+class LISTBLOCK(Token):
     pass
 
 class EMPTYDICT(Token):
@@ -132,7 +132,8 @@ class Lexer(object):
                 if line.startswith('-'):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
-                    yield LISTKEY(key)
+                    yield LISTBLOCK()
+                    yield KEY(key)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
                     yield KEY(key)
