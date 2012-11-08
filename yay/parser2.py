@@ -1,9 +1,11 @@
 
 from .lexer import Token, Lexer, BLOCK, END, SCALAR, LISTITEM, KEY, EMPTYLIST, EMPTYDICT
-
 from . import nodes
 
+import logging
 import types
+
+logger = logging.getLogger(__name__)
 
 class ParseError(Exception):
     pass
@@ -26,17 +28,20 @@ class Parser(object):
         self.stack = []
     
     def input(self, text):
+        logger.debug("Parsing >>>")
+        logger.debug(text)
+        logger.debug("<<< Parsing")
         self.lexer.input(text)
         self.lexer.done()
-        print "==========+"
         
     def parse(self):
         for token in self.lexer.tokens():
             self.stack.append(token)
-            print self.stack
+            logger.debug("+ %r" % self.stack)
             while self.reduce():
-                print self.stack
-                pass
+                logger.debug("- %r" % self.stack)
+        if len(self.stack) > 1:
+            raise ParseError("Stack not completely reduced: %r" % self.stack)
         return self.stack[0].value
 
     def matches(self, *match):
@@ -120,9 +125,6 @@ class Parser(object):
             return True
         return False
         
-    def log(self, s):
-        print s
-            
     def reduce(self):
         """ Examine the end of the stack for matches with productions.
         Extract the matching elements and replace them with the result of the
