@@ -1,6 +1,6 @@
 
 import unittest
-from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST, LISTKEY
+from yay.lexer import Lexer, ENDBLOCK, KEY, VALUE, LISTVALUE, EMPTYDICT, EMPTYLIST, LISTBLOCK
 
 class TestLexer(unittest.TestCase):
     
@@ -9,6 +9,27 @@ class TestLexer(unittest.TestCase):
         l.input(value)
         l.done()
         return list(l.tokens())
+    
+    def test_list_of_multikey_dicts(self):
+        self.assertEqual(self._lex("""
+            a: 
+              - b
+              - c: d
+                e: f
+              - g
+              """), [
+            KEY('a'),
+            LISTVALUE('b'),
+            LISTBLOCK(),
+            KEY('c'),
+            VALUE('d'),
+            ENDBLOCK(),
+            KEY('e'),
+            VALUE('f'),
+            ENDBLOCK(),
+            ENDBLOCK(),
+            LISTVALUE('g'),
+            ])
 
     def test_list_of_dicts(self):
         self.assertEqual(self._lex("""
@@ -19,8 +40,10 @@ class TestLexer(unittest.TestCase):
         """), [
             KEY('a'),
             LISTVALUE('b'),
-            LISTKEY('c'),
+            LISTBLOCK(),
+            KEY('c'),
             VALUE('d'),
+            ENDBLOCK(),
             ENDBLOCK(),
             LISTVALUE('e'),
             ENDBLOCK(),
