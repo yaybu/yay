@@ -135,30 +135,3 @@ class TestParser(unittest.TestCase):
                    }
                })
         
-    def test_nested_overlay(self):
-        self.assertEqual(self._resolve("""
-        a:
-          b: 
-            c: d
-          
-        a:
-          b: 
-            e: f
-        """), {
-               'a': {
-                   'b': {
-                       'c': 'd',
-                       'e': 'f',
-                       }
-                   }
-               })
-                       
-                       
-        self.assertEqual(self._resolve("""
-        a:
-          b:
-            c: d
-          b:
-            e: f
-            """)
-        

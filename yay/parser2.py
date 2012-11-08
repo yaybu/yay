@@ -11,13 +11,13 @@ class ParseError(Exception):
 class DICT(Token):
     pass
 
-class KVP(Token):
-    pass
-
 class LIST(Token):
     pass
 
-VALUE = (KVP, SCALAR, DICT, LIST, EMPTYDICT, EMPTYLIST)
+class NODE(Token):
+    pass
+
+VALUE = (SCALAR, DICT, LIST, EMPTYDICT, EMPTYLIST)
 
 class Parser(object):
     
@@ -62,47 +62,52 @@ class Parser(object):
             value = token.value
         return value
     
-    def match_kvp(self):
-        """ KVP := KEY BLOCK VALUE END """
+    def match_complete(self):
+        """ COMPLETE: BLOCK VALUE END """
         
-        if self.matches(KEY, BLOCK, VALUE, END):
-            t_key, t_block, t_value, t_end = self.pop(4)
-            self.stack.append(KVP((t_key.value, self.value(t_value))))
-            return True
+        if self.matches(BLOCK, VALUE, END):
+            t_block, t_value, t_end = self.pop(3)
+            if isinstance(t_value, SCALAR):
+                self.stack.append(NODE(nodes.Boxed(t_value.value)))
+                return True
+            if isinstance(t_value, DICT):
+                m = nodes.Mapping()
+                for key, value in t_value.value:
+                    m.set(key, value)
+                self.stack.append(NODE(m))
+                return True
+            if isinstance(t_value, LIST):
+                self.stack.append(NODE(nodes.Sequence(t_value.value)))
+                return True
     
     def match_dict(self):
-        """ DICT := BLOCK KVP
-                  | DICT KVP
-                  | DICT END
+        """ DICT := KEY NODE
+                  | DICT DICT
                   | EMPTYDICT
         """
-        if self.matches(BLOCK, KVP):
-            t_block, t_kvp = self.pop(2)
-            n = nodes.Mapping()
-            n.set(*t_kvp.value)
-            self.stack.append(DICT(n))
+        if self.matches(KEY, NODE):
+            t_key, t_node = self.pop(2)
+            self.stack.append(DICT([(t_key.value, t_node.value)]))
             return True
-        if self.matches(DICT, KVP):
-            t_dict, t_kvp = self.pop(2)
-            t_dict.value.set(*t_kvp.value)
-            self.stack.append(t_dict)
+        if self.matches(DICT, DICT):
+            t_1, t_2 = self.pop(2)
+            t_1.value.extend(t_2.value)
+            self.stack.append(t_1)
             return True
-        if self.
         if self.matches(EMPTYDICT):
             t_d = self.pop(1)
-            self.stack.append(DICT(nodes.Mapping()))
+            self.stack.append(DICT([]))
             return True
         return False
         
     def match_list(self):
-        """ LIST := LISTITEM BLOCK VALUE END
+        """ LIST := LISTITEM NODE
                   | LIST LIST
                   | EMPTYLIST
         """
-        if self.matches(LISTITEM, BLOCK, VALUE, END):
-            t_listitem, t_block, t_value, t_end = self.pop(4)
-            node = nodes.Sequence([self.value(t_value)])
-            self.stack.append(LIST(node))
+        if self.matches(LISTITEM, NODE):
+            t_listitem, t_node = self.pop(2)
+            self.stack.append(LIST([t_node.value]))
             return True
         if self.matches(LIST, LIST):
             t_1, t_2 = self.pop(2)
@@ -111,7 +116,7 @@ class Parser(object):
             return True
         if self.matches(EMPTYLIST):
             t_l = self.pop(1)
-            self.stack.append(LIST(nodes.Sequence()))
+            self.stack.append(LIST([]))
             return True
         return False
         
@@ -123,7 +128,7 @@ class Parser(object):
         Extract the matching elements and replace them with the result of the
         production. """
 
-        if self.match_kvp():
+        if self.match_complete():
             return True
         if self.match_dict():
             return True
