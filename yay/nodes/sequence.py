@@ -55,20 +55,6 @@ class Sequence(Node):
     def __iter__(self):
         return iter(self.value)
 
-    def walk(self):
-        for val in self.value:
-            yield val
-
-    def clone(self):
-        c = Sequence([x.clone() for x in self.value])
-
-        c.file = self.name        
-        c.line = self.line
-        c.column = self.column
-        c.snippet = self.snippet
-
-        return c
-
 
 def box_generator(val, predecessor=None):
     return Sequence(list(BoxingFactory.box(itm) for itm in val))

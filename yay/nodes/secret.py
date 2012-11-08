@@ -38,13 +38,3 @@ class Secret(Node):
     def __repr__(self):
         return "Secret(%s)" % self.value
 
-    def clone(self):
-        c = Secret(self.value)
-
-        c.file = self.name        
-        c.line = self.line
-        c.column = self.column
-        c.snippet = self.snippet
-
-        return c
-

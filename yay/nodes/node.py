@@ -21,8 +21,7 @@ class Node(object):
     The base class for all things that can be inserted into the graph.
     """
 
-    __slots__ = ("chain", "value")
-    chain = None
+    __slots__ = ("value")
     parent = None
     locked = False
 
@@ -53,17 +52,6 @@ class Node(object):
         Generate a simplification of this object that can replace it in the graph
         """
         return self
-
-    def walk(self):
-        return iter([])
-
-    def lock(self):
-        """
-        Attempt to lock a node so any further changes to its value will cause errors.
-        """
-        self.locked = True
-        for child in self.walk():
-            child.lock()
 
     def get_context(self, key):
         """
@@ -107,12 +95,6 @@ class Node(object):
         """
         msg = msg % args
         return "%s (file: %s, line: %s, column: %s)" % (msg, self.name, self.line, self.column)
-
-    def clone(self):
-        """
-        Return a copy of this node.
-        """
-        raise NotImplementedError(self.clone)
 
     def __str__(self):
         return repr(self)

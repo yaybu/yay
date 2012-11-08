@@ -126,6 +126,4 @@ class Jinja(Node):
     def resolve(self):
         return self.expand().resolve()
 
-    def walk(self):
-        yield self.value
 

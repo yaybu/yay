@@ -67,28 +67,6 @@ class Mapping(Node):
             data[key] = self.get(key).resolve()
         return data
 
-    def walk(self):
-        for itm in self.value.values():
-            yield itm
-        if self.predecessor:
-            yield self.predecessor
-
-    def clone(self):
-        p = None
-        if self.predecessor:
-            p = self.predecessor.clone()
-
-        m = Mapping(p)
-        for k, v in self.value.items():
-            m.set(k, v.clone())
-
-        m.file = self.name        
-        m.line = self.line
-        m.column = self.column
-        m.snippet = self.snippet
-
-        return m
-
     def __iter__(self):
         return iter(BoxingFactory.box(v) for v in sorted(self.keys()))
 

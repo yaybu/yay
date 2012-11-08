@@ -71,22 +71,7 @@ class Access(Node):
         sr = self.expand()
         return sr.resolve()
 
-    def walk(self):
-        yield self.expand()
-
     def __repr__(self):
         return "Access(%s, %s)" % (self.container, self.access)
 
-    def clone(self):
-        c = None
-        if self.container:
-            c = self.container.clone()
-        a = Access(c, self.access.clone())
-
-        a.file = self.name 
-        a.line = self.line
-        a.column = self.column
-        a.snippet = self.snippet
-
-        return a
 

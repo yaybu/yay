@@ -122,13 +122,4 @@ class Boxed(Node):
     def __repr__(self):
         return "Boxed(%s)" % self.value
 
-    def clone(self):
-        b = Boxed(self.value)
-
-        b.file = self.name        
-        b.line = self.line
-        b.column = self.column
-        b.snippet = self.snippet
-
-        return b
 
