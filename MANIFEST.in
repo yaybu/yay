@@ -2,4 +2,3 @@ include *.rst
 include CHANGES
 include stdeb.cfg
 recursive-include yay/tests/dogfood *
-recursive-include yay/doctests/ *.rst
