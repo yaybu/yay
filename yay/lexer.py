@@ -25,12 +25,17 @@ class KEY(Token):
 class SCALAR(Token):
     pass
 
+class BLOCK(Token):
+    def __repr__(self):
+        return "<BLOCK>"
+    
 class END(Token):
     def __repr__(self):
         return "<END>"
 
 class LISTITEM(Token):
-    pass
+    def __repr__(self):
+        return "<LISTITEM>"
 
 class EMPTYDICT(Token):
     pass
@@ -138,12 +143,16 @@ class Lexer(object):
                 if line.startswith('-'):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
+                    yield LISTITEM()
+                    yield BLOCK()
                     yield KEY(key)
+                    yield BLOCK()
                     # push in the level so we end the block correctly
                     last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
                     yield KEY(key)
+                    yield BLOCK()
                 if value:
                     if value == '{}':
                         yield EMPTYDICT()
@@ -156,7 +165,10 @@ class Lexer(object):
                 if level == 0:
                     raise LexerError("No key found on a top level line", lineno, line)
                 elif line.startswith("- "):
-                    yield LISTITEM(line[2:])
+                    yield LISTITEM()
+                    yield BLOCK()
+                    yield SCALAR(line[2:])
+                    yield END()
                 else:
                     yield SCALAR(line)
         for x in range(0, last_level):
