@@ -92,7 +92,15 @@ class Parser(object):
             if isinstance(t_value, LIST):
                 self.stack.append(NODE(nodes.Sequence(t_value.value)))
                 return True
-    
+
+    def match_adaptor(self):
+        """ NODE := EXTEND NODE """
+        if self.matches(EXTEND, NODE):
+            t_extend, t_node = self.pop(2)
+            self.stack.append(DICT([(t_extend.value, nodes.Append(t_node.value))]))
+            return True
+        return False
+
     def match_dict(self):
         """ DICT := KEY NODE
                   | DICT DICT
@@ -139,6 +147,8 @@ class Parser(object):
         production. """
 
         if self.match_node():
+            return True
+        if self.match_adaptor():
             return True
         if self.match_dict():
             return True
