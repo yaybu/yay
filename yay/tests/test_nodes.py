@@ -37,7 +37,7 @@ class TestMapping(unittest.TestCase):
     ctx = None
 
     def test_get_set(self):
-        d = Mapping(None)
+        d = Mapping()
         d.set("foo", Boxed(1))
 
         self.failUnlessEqual(d.get("foo").resolve(), 1)

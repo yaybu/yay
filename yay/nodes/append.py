@@ -29,6 +29,11 @@ class Append(Node):
     to an empty sequence.
     """
 
+    def __init__(self, value):
+        super(Append, self).__init__()
+        self.value = value
+        value.set_parent(self)
+
     def get(self, idx, default=None):
         return BoxingFactory.box(self.resolve()[int(idx)])
 

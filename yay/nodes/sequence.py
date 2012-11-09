@@ -22,6 +22,7 @@ class Sequence(Node):
     """
 
     def __init__(self, value=()):
+        super(Sequence, self).__init__()
         self.value = list(value)
         [x.set_parent(self) for x in self.value]
 

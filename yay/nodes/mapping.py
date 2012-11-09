@@ -21,10 +21,8 @@ class Mapping(Node):
     An unordered collection of key/value pairs
     """
 
-    def __init__(self, predecessor=None):
-        self.predecessor = predecessor
-        if predecessor:
-            predecessor.set_parent(self)
+    def __init__(self):
+        super(Mapping, self).__init__()
         self.value = {}
 
     def set(self, key, val):

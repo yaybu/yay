@@ -21,22 +21,22 @@ class Node(object):
     The base class for all things that can be inserted into the graph.
     """
 
-    __slots__ = ("value")
-    parent = None
-    locked = False
+    __slots__ = ("value", "parent", "predecessor")
 
     name = "<Unknown>"
     line = 0
     column = 0
     snippet = None
 
-    def __init__(self, value=None):
-        # Premature typing optimisation
-        self.value = value
-        value.set_parent(self)
+    def __init__(self):
+        self.parent = None
+        self.predecessor = None
 
     def set_parent(self, parent):
         self.parent = parent
+
+    def set_predecessor(self, predecessor):
+        self.predecessor = predecessor
 
     def resolve(self):
         """
