@@ -1,12 +1,12 @@
 import unittest
-from yay import parser2
+from yay import parser
 
 class TestParser(unittest.TestCase):
     
     def _parse(self, value):
-        parser = parser2.Parser()
-        parser.input(value)
-        d = parser.parse()
+        p = parser.Parser()
+        p.input(value)
+        d = p.parse()
         return d
     
     def _resolve(self, value):
