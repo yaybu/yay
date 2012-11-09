@@ -189,6 +189,21 @@ class TestLexer(unittest.TestCase):
                 END(),
         ])
         
+    def test_deep_multiline_file_end(self):
+        self.assertEqual(self._lex("""
+            foo:
+                bar: |
+                    quux
+        """), [
+               BLOCK(),
+                   KEY('foo'),
+                   BLOCK(),
+                       KEY('bar'),
+                       BLOCK(), SCALAR('quux\n'), END(),
+                    END(),
+                END(),
+            ])
+        
     def test_multiline_implicit_j2(self):
         self.assertEqual(self._lex("""
         foo: |
