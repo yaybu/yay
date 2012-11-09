@@ -224,7 +224,8 @@ class TestLexer(unittest.TestCase):
             - quux
         """), [
             BLOCK(),
-                EXTEND('foo'),
+                KEY('foo'),
+                EXTEND(),
                 BLOCK(),
                     LISTITEM(), BLOCK(), SCALAR('baz'), END(),
                     LISTITEM(), BLOCK(), SCALAR('quux'), END(),
@@ -239,7 +240,8 @@ class TestLexer(unittest.TestCase):
             - quux
         """), [
             BLOCK(),
-                EXTEND('foo'),
+                KEY('foo'),
+                EXTEND(),
                 BLOCK(), TEMPLATE(('j2', '- baz\n- quux\n')), END(),
             END(),
         ])

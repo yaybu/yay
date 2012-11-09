@@ -191,7 +191,7 @@ class Lexer(object):
         # which make no sense
         extend = False
         if ' ' not in key:
-            return KEY(key)
+            return [KEY(key)]
         terms = key.split()
         if terms[-1] == 'j2':
             self.multiline = True
@@ -200,11 +200,11 @@ class Lexer(object):
         if terms[-1] == 'extend':
             extend = True
         if terms[0] == 'yay':
-            return DIRECTIVE(terms[1])
+            return [DIRECTIVE(terms[1])]
         if extend:
-            return EXTEND(terms[0])
+            return [KEY(terms[0]), EXTEND()]
         else:
-            return KEY(terms[0])
+            return [KEY(terms[0])]
         
     def parse_value(self, value):
         """ Return either a template or a scalar, by sniffing the contents of
@@ -275,13 +275,15 @@ class Lexer(object):
                     key = key[1:].strip()
                     yield LISTITEM()
                     yield BLOCK()
-                    yield self.parse_key(key)
+                    for token in self.parse_key(key):
+                        yield token
                     yield BLOCK()
                     # push in the level so we end the block correctly
                     self.last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
-                    yield self.parse_key(key)
+                    for token in self.parse_key(key):
+                        yield token
                     yield BLOCK()
                 if value:
                     if value == '|':
