@@ -1,6 +1,8 @@
 
 import unittest
-from yay.lexer import Lexer, BLOCK, END, KEY, SCALAR, LISTITEM, EMPTYDICT, EMPTYLIST
+from yay.lexer import (Lexer, BLOCK, END, KEY, SCALAR,
+                       LISTITEM, EMPTYDICT, EMPTYLIST,
+                       TEMPLATE, EXTEND, DIRECTIVE)
 
 class TestLexer(unittest.TestCase):
     
@@ -113,8 +115,6 @@ class TestLexer(unittest.TestCase):
                     END(),
                 END(),
             END(), ])
-            
-        
     
     def test_sample1(self):
         self.assertEqual(self._lex("""
@@ -148,3 +148,146 @@ class TestLexer(unittest.TestCase):
             END(),
             END(), ])
 
+    def test_explicit_j2(self):
+        self.assertEqual(self._lex("""
+        foo j2:
+            % for p in q:
+                - x: {{p}}
+            % endfor
+        """), [
+            BLOCK(),
+                KEY('foo'),
+                BLOCK(),
+                    TEMPLATE(('j2', "% for p in q:\n    - x: {{p}}\n% endfor\n")),
+                END(),
+            END(),
+        ])
+            
+    def test_implicit_j2(self):
+        self.assertEqual(self._lex("foo: {{bar}}"), [
+            BLOCK(),
+                KEY('foo'),
+                BLOCK(), TEMPLATE(('j2', '{{bar}}')), END(),
+            END(),
+        ])
+        
+    def test_multiline(self):
+        self.assertEqual(self._lex("""
+            foo: |
+               bar
+               baz
+               quux
+               
+            bar: |
+               x y z
+               a b c
+        """), [
+               BLOCK(),
+                   KEY('foo'),
+                   BLOCK(), SCALAR("bar\nbaz\nquux\n"), END(),
+                   KEY('bar'),
+                   BLOCK(), SCALAR("x y z\na b c\n"), END(),
+                END(),
+        ])
+        
+    def test_multiline_implicit_j2(self):
+        self.assertEqual(self._lex("""
+        foo: |
+          bar
+          baz
+          {{quux}}
+        """), [
+            BLOCK(),
+                KEY('foo'),
+                BLOCK(), TEMPLATE(('j2', 'bar\nbaz\n{{quux}}')), END(),
+            END(),
+        ])
+        
+    def test_extend(self):
+        self.assertEqual(self._lex("""
+        foo extend:
+            - baz
+            - quux
+        """), [
+            BLOCK(),
+                KEY('foo'),
+                BLOCK(),
+                    EXTEND('a'),
+                    BLOCK(),
+                        LISTITEM(), BLOCK(), SCALAR('baz'), END(),
+                        LISTITEM(), BLOCK(), SCALAR('quux'), END(),
+                    END(),
+                END(),
+            END(),
+            ])
+        
+    def test_extend_j2(self):
+        self.assertEqual(self._lex("""
+        foo extend j2:
+            - baz
+            - quux
+        """), [
+            BLOCK(),
+                EXTEND('foo'),
+                BLOCK(), TEMPLATE(('j2', '-baz\n- quux\n')), END(),
+            END(),
+        ])
+        
+    def test_j2_listitem(self):
+        self.assertEqual(self._lex("""
+        foo:
+          - a
+          - {{bar}}
+          - c
+        """), [
+            BLOCK(),
+                KEY('foo'),
+                BLOCK(),
+                    LISTITEM(), BLOCK(), SCALAR('a'), END(),
+                    LISTITEM(), BLOCK(), TEMPLATE(('j2', '{{bar}}')), END(),
+                    LISTITEM(), BLOCK(), SCALAR('c'), END(),
+                END(),
+            END(),
+        ])
+
+    def test_include(self):
+        self.assertEqual(self._lex("""
+        yay include:
+            - foo.yay
+            - bar.yay
+        """), [
+            BLOCK(),
+                DIRECTIVE('include'),
+                BLOCK(),
+                    LISTITEM(), BLOCK(), SCALAR('foo.yay'), END(),
+                    LISTITEM(), BLOCK(), SCALAR('bar.yay'), END(),
+                END(),
+            END(),
+        ])
+        
+    def test_madness(self):
+        self.assertEqual(self._lex("""
+        yay search:
+            - {{foo}}
+        """), [
+            BLOCK(),
+                DIRECTIVE('search'),
+                BLOCK(),
+                    LISTITEM(), BLOCK(), TEMPLATE(('j2', '{{foo}}')), END(),
+                END(),
+            END(),
+        ])
+        
+    def test_more_madness(self):
+        self.assertEqual(self._lex("""
+        yay search j2:
+            - {{foo}}
+        """), [
+            BLOCK(),
+                DIRECTIVE('search'),
+                BLOCK(),
+                TEMPLATE(('j2', '-{{foo}}\n')),
+                END(),
+            END(),
+        ])
+        

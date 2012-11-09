@@ -43,6 +43,15 @@ class EMPTYDICT(Token):
 class EMPTYLIST(Token):
     pass
 
+class TEMPLATE(Token):
+    pass
+
+class EXTEND(Token):
+    pass
+
+class DIRECTIVE(Token):
+    pass
+
 class Lexer(object):
     
     def __init__(self):
