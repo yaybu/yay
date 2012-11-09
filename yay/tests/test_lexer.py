@@ -177,7 +177,6 @@ class TestLexer(unittest.TestCase):
                bar
                baz
                quux
-               
             bar: |
                x y z
                a b c
@@ -290,4 +289,3 @@ class TestLexer(unittest.TestCase):
                 END(),
             END(),
         ])
-        

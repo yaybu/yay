@@ -118,6 +118,10 @@ class Lexer(object):
                 self.indents[spaces] = max(self.indents.values())+1
                 return self.indents[spaces]
             
+    def get_spaces_for_level(self, level):
+        insideout = dict((y,x) for (x,y) in self.indents.items())
+        return insideout.get(level, 0)
+            
     def done(self):
         self.finished = True
             
@@ -135,15 +139,35 @@ class Lexer(object):
         return self.indent_level(total_spaces)
         
     def tokens(self):
+        multiline = False
+        multiline_buffer = []
         last_level = 0
         yield BLOCK()
         for raw_line in self.read_line():
             # handle indents
             spaces, line = self.parse_indent(raw_line)
             if not line:
-                # we ignore blank lines completely
+                if multiline:
+                    multiline_buffer.append('\n')
                 continue
-            level = self.indent_level(spaces)
+            if line:
+                level = self.indent_level(spaces)
+            if multiline:
+                if not multiline_buffer:
+                    # first multiline
+                    last_level = level
+                if level == last_level:
+                    multiline_buffer.append(line)
+                    continue
+                elif level < last_level:
+                    yield SCALAR("\n".join(multiline_buffer) + "\n")
+                    multiline = False
+                    multiline_buffer = []
+                    # don't continue, we parse as a non-multiline
+                elif level > last_level:
+                    prev_spaces = self.get_spaces_for_level(last_level)
+                    multiline_buffer.append((spaces - prev_spaces) * ' ' + line)
+                    continue
             if level < last_level:
                 for x in range(level, last_level):
                     yield END()
@@ -168,6 +192,9 @@ class Lexer(object):
                         yield EMPTYDICT()
                     elif value == '[]':
                         yield EMPTYLIST()
+                    elif value == '|':
+                        multiline = True
+                        continue
                     else:
                         yield SCALAR(value)
                     yield END()
@@ -181,6 +208,8 @@ class Lexer(object):
                     yield END()
                 else:
                     yield SCALAR(line)
+        if multiline:
+            yield SCALAR("\n".join(multiline_buffer) + "\n")
         for x in range(0, last_level):
             yield END()
         yield END()
