@@ -12,24 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .base import TestCase
 
-import unittest
-from mock import Mock
+class TestJinja(TestCase):
 
-from yay.nodes import Boxed, Jinja
+    def test_simple_true(self):
+        source = """
+            foo:
+              bar: hello
+            foo j2:
+              % if True
+              bar: world
+              % endif
+            """
+        self.assertResolves(source, {"foo":{"bar":"world"}})
 
-
-class TestJinja(unittest.TestCase):
-
-    def setUp(self):
-        composer = Mock()
-        self.jinja = Jinja(composer, Boxed(""))
-
-    def test_empty(self):
-        self.jinja.resolve()
-
-    def test_scalar(self):
-        self.jinja.value = Boxed("{{ hello }}")
-        self.jinja.resolve()
-
+    def test_simple_false(self):
+        source = """
+            foo:
+              bar: hello
+            foo j2:
+              qux: :)
+              % if False
+              bar: world
+              % endif
+            """
+        self.assertResolves(source, {"foo":{"bar":"hello","qux": ":)"}})
 

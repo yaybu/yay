@@ -92,6 +92,9 @@ class Parser(object):
             if isinstance(t_value, LIST):
                 self.stack.append(NODE(nodes.Sequence(t_value.value)))
                 return True
+            if isinstance(t_value, TEMPLATE):
+                self.stack.append(NODE(nodes.Jinja(t_value.value[1])))
+                return True
 
     def match_adaptor(self):
         """ NODE := EXTEND NODE """

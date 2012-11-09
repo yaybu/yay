@@ -106,19 +106,23 @@ class Template(environment.Template):
 
 class Jinja(Node):
 
-    def __init__(self, composer, value):
-        self.composer = composer
+    def __init__(self, value):
         self.value = value
 
         self.environment = Environment(
             line_statement_prefix = '%',
             )
-        self.environment.composer = composer
 
     def expand(self):
-        result = self.environment.from_string(self.value.resolve(), template_class=Template).render()
-        boxed = BoxingFactory.box(result)
-        return boxed
+        print self.value
+        result = self.environment.from_string(self.value, template_class=Template).render()
+        # FIXME: Import here to avoid circular import
+        from yay import parser
+        p = parser.Parser()
+        p.input(result)
+        node = p.parse()
+        node.set_predecessor(self.predecessor)
+        return node
 
     def get(self, idx):
         return self.expand().get(idx)
