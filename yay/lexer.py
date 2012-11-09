@@ -54,6 +54,8 @@ class DIRECTIVE(Token):
 
 class Lexer(object):
     
+    """ Leading significant whitespace lexing considered fugly. """
+    
     def __init__(self):
         self.indents = {}
         # initial_indent holds the number of spaces prefixing the first real line
@@ -159,18 +161,19 @@ class Lexer(object):
         self.multiline_buffer = []
         return token
     
-    def emit_listitem(self, value):
-        return [LISTITEM(), BLOCK(), self.parse_value(value), END()]
-        
     def parse_key(self, key):
         """ Parse a key. Supports the following formats:
           key j2
           key extend j2
           key extend
+          yay directive
           
           sets the template flag if required, and returns the key material and the extend flag
           
         """
+        # TODO: cope with some weirdnesses like
+        # yay include extend j2
+        # which make no sense
         extend = False
         if ' ' not in key:
             return KEY(key)
@@ -181,15 +184,20 @@ class Lexer(object):
             terms = terms[:-1]
         if terms[-1] == 'extend':
             extend = True
-        key = terms[0]
+        if terms[0] == 'yay':
+            return DIRECTIVE(terms[1])
         if extend:
-            return EXTEND(key)
+            return EXTEND(terms[0])
         else:
-            return KEY(key)
+            return KEY(terms[0])
         
     def parse_value(self, value):
         """ Return either a template or a scalar, by sniffing the contents of
         the value """
+        if value == '{}':
+            return EMPTYDICT()
+        elif value == '[]':
+            return EMPTYLIST()
         if '{{' in value:
             return TEMPLATE(('j2', value))
         else:
@@ -261,11 +269,7 @@ class Lexer(object):
                     yield self.parse_key(key)
                     yield BLOCK()
                 if value:
-                    if value == '{}':
-                        yield EMPTYDICT()
-                    elif value == '[]':
-                        yield EMPTYLIST()
-                    elif value == '|':
+                    if value == '|':
                         self.multiline = True
                         continue
                     else:
@@ -275,8 +279,10 @@ class Lexer(object):
                 if level == 0:
                     raise LexerError("No key found on a top level line", lineno, line)
                 elif line.startswith("- "):
-                    for token in self.emit_listitem(line[2:]):
-                        yield token
+                    yield LISTITEM()
+                    yield BLOCK()
+                    yield self.parse_value(line[1:].strip())
+                    yield END()
                 else:
                     yield self.parse_value(line)
         if self.multiline:

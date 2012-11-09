@@ -297,7 +297,7 @@ class TestLexer(unittest.TestCase):
             BLOCK(),
                 DIRECTIVE('search'),
                 BLOCK(),
-                TEMPLATE(('j2', '-{{foo}}\n')),
+                TEMPLATE(('j2', '- {{foo}}\n')),
                 END(),
             END(),
         ])
