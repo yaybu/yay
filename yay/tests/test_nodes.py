@@ -27,7 +27,7 @@ class TestSequenceOperations(unittest.TestCase):
     def test_sequence_append(self):
         l = Sequence([Boxed(1), Boxed(2), Boxed(3)])
         a = Append(Sequence([Boxed(4), Boxed(5)]))
-        a.chain = l
+        a.set_predecessor(l)
 
         self.failUnlessEqual(a.resolve(), [1, 2, 3, 4, 5])
 

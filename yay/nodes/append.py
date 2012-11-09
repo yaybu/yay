@@ -38,11 +38,15 @@ class Append(Node):
         return BoxingFactory.box(self.resolve()[int(idx)])
 
     def expand(self):
-        if not self.chain:
+        if not self.predecessor:
             return self.value.expand()
 
-        chain = self.chain.expand()
-        if not hasattr(chain, "__iter__"):
+        try:
+            predecessor = self.predecessor.expand()
+        except NoMatching:
+            return self.value.expand()
+
+        if not hasattr(predecessor, "__iter__"):
             self.error("You can only append to list types")
 
         value = self.value.expand()
@@ -51,7 +55,7 @@ class Append(Node):
 
         # we initialize this sequence weirdly as we dont want to reparent the nodes we are appending
         s = Sequence([])
-        s.value = list(iter(chain)) + list(iter(value))
+        s.value = list(iter(predecessor)) + list(iter(value))
         s.set_parent(self.parent)
         return s
 
