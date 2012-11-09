@@ -83,7 +83,7 @@ class Environment(environment.Environment):
 
     def resolve(self, name):
         print name
-        return self.composer.parent.mapping.get(name)
+        return self.node.get_root().get(name)
 
     def getattr(self, obj, attr):
         return obj.get(attr)
@@ -112,6 +112,7 @@ class Jinja(Node):
         self.environment = Environment(
             line_statement_prefix = '%',
             )
+        self.environment.node = self
 
     def expand(self):
         print self.value

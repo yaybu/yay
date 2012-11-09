@@ -39,3 +39,15 @@ class TestJinja(TestCase):
             """
         self.assertResolves(source, {"foo":{"bar":"hello","qux": ":)"}})
 
+    def test_value_of_sibling(self):
+        source = """
+            foo:
+              bar: hello
+            foo j2:
+              % if foo.bar == 'hello':
+              box: world
+              % endif
+            """
+        self.assertResolves(source, {"foo":{"bar":"hello","box":"world"}})
+
+
