@@ -8,6 +8,8 @@ class LexerError(Exception):
 
 class Token(object):
     
+    """ A token in the input stream. """
+    
     def __init__(self, value=None):
         self.value = value
         
@@ -20,37 +22,50 @@ class Token(object):
         return 1
 
 class KEY(Token):
-    pass
+    
+    """ A token that represents a straightforward key, to be placed in a
+    dictionary """
 
 class SCALAR(Token):
-    pass
+    
+    """ A scalar value """
 
 class BLOCK(Token):
+    
+    """ The beginning of a block, comes before the value list within a list
+    or before the list of key/value pairs in a dictionary. """
+    
     def __repr__(self):
         return "<BLOCK>"
     
 class END(Token):
+    
+    """ Marks the end of a block. """
+    
     def __repr__(self):
         return "<END>"
 
 class LISTITEM(Token):
+    
+    """ Indicates that the next token is an item in a list """
+    
     def __repr__(self):
         return "<LISTITEM>"
 
 class EMPTYDICT(Token):
-    pass
+    """ An empty dictionary ({}) """
 
 class EMPTYLIST(Token):
-    pass
+    """ An empty list ([]) """
 
 class TEMPLATE(Token):
-    pass
+    """ A template in the input stream, for example {{foo}} """
 
 class EXTEND(Token):
-    pass
+    """ A key that is to be extended """
 
 class DIRECTIVE(Token):
-    pass
+    """ A yay directive, for example 'search' or 'include' """
 
 class Lexer(object):
     

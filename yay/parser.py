@@ -1,5 +1,9 @@
 
-from .lexer import Token, Lexer, BLOCK, END, SCALAR, LISTITEM, KEY, EMPTYLIST, EMPTYDICT
+from .lexer import (Token, Lexer, 
+                    BLOCK, END, 
+                    TEMPLATE, SCALAR, LISTITEM, EMPTYLIST, EMPTYDICT,
+                    KEY, EXTEND,
+                    DIRECTIVE)
 from . import nodes
 
 import logging
@@ -11,15 +15,18 @@ class ParseError(Exception):
     pass
 
 class DICT(Token):
-    pass
+    
+    """ A dictionary """
 
 class LIST(Token):
-    pass
+    
+    """ A list """
 
 class NODE(Token):
-    pass
+    
+    """ A value that has been turned into one of the node classes """
 
-VALUE = (SCALAR, DICT, LIST, EMPTYDICT, EMPTYLIST)
+VALUE = (SCALAR, DICT, LIST, EMPTYDICT, EMPTYLIST, TEMPLATE)
 
 class Parser(object):
     
