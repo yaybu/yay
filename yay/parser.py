@@ -78,6 +78,7 @@ class Parser(object):
             if isinstance(t_value, DICT):
                 m = nodes.Mapping()
                 for key, value in t_value.value:
+                    value.set_predecessor(m.get(key))
                     m.set(key, value)
                 self.stack.append(NODE(m))
                 return True

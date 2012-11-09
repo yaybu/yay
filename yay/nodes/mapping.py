@@ -15,6 +15,17 @@
 from yay.nodes import Node, BoxingFactory
 from yay.errors import NoMatching
 
+class MappingPromise(Node):
+
+    def __init__(self, mapping, key):
+        super(MappingPromise, self).__init__()
+        self.mapping = mapping
+        self.key = key
+
+    def expand(self):
+        self.error(NoMatching("Not found: '%s'" % self.key))
+
+
 class Mapping(Node):
 
     """
@@ -43,15 +54,21 @@ class Mapping(Node):
             return self.value[key]
         if self.predecessor:
             return self.predecessor.expand().get(key)
-        self.error(NoMatching("Not found: '%s'" % key))
+        return MappingPromise(self, key)
 
     def keys(self):
         keys = set(self.value.keys())
         if self.predecessor:
-            expanded = self.predecessor.expand()
-            if not hasattr(expanded, "keys"):
-                self.error("Mapping cannot mask or replace field with same name and different type")
-            keys.update(expanded.keys())
+            try:
+                expanded = self.predecessor.expand()
+            except NoMatching:
+                # this node doesn't have a predecessor
+                pass
+            else:
+                expanded = self.predecessor.expand()
+                if not hasattr(expanded, "keys"):
+                    self.error("Mapping cannot mask or replace field with same name and different type")
+                keys.update(expanded.keys())
         return list(keys)
 
     def resolve(self):
