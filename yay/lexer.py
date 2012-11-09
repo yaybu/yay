@@ -63,6 +63,12 @@ class Lexer(object):
         self.lineno = 0
         self.finished = False
         
+        # these handle state during token generation
+        self.multiline = False
+        self.template = None
+        self.multiline_buffer = []
+        self.last_level = 0
+        
     def input(self, text):
         self.remaining.extend(list(text))
         
@@ -137,41 +143,50 @@ class Lexer(object):
         spaces2, line2 = self.parse_indent(line[1:])
         total_spaces = spaces + 1 + spaces2 # indent the '-' too
         return self.indent_level(total_spaces)
+
+
+    def emit_multiline(self):
+        value = "\n".join(self.multiline_buffer) + "\n"
+        if '{{' in value or \
+           '\n%' in value:
+            self.template = 'j2'
+        if self.template is not None:
+            token = TEMPLATE((self.template, value))
+        else:
+            token = SCALAR(value)
+        self.multiline = False
+        self.template = None
+        self.multiline_buffer = []
+        return token
         
     def tokens(self):
-        multiline = False
-        multiline_buffer = []
-        last_level = 0
-        yield BLOCK()
+        yield BLOCK()        
         for raw_line in self.read_line():
             # handle indents
             spaces, line = self.parse_indent(raw_line)
             if not line:
-                if multiline:
+                if self.multiline:
                     multiline_buffer.append('\n')
                 continue
             if line:
                 level = self.indent_level(spaces)
-            if multiline:
-                if not multiline_buffer:
+            if self.multiline:
+                if not self.multiline_buffer:
                     # first multiline
-                    last_level = level
-                if level == last_level:
-                    multiline_buffer.append(line)
+                    self.last_level = level
+                if level == self.last_level:
+                    self.multiline_buffer.append(line)
                     continue
-                elif level < last_level:
-                    yield SCALAR("\n".join(multiline_buffer) + "\n")
-                    multiline = False
-                    multiline_buffer = []
-                    # don't continue, we parse as a non-multiline
-                elif level > last_level:
-                    prev_spaces = self.get_spaces_for_level(last_level)
-                    multiline_buffer.append((spaces - prev_spaces) * ' ' + line)
+                elif level < self.last_level:
+                    yield self.emit_multiline()
+                elif level > self.last_level:
+                    prev_spaces = self.get_spaces_for_level(self.last_level)
+                    self.multiline_buffer.append((spaces - prev_spaces) * ' ' + line)
                     continue
-            if level < last_level:
-                for x in range(level, last_level):
+            if level < self.last_level:
+                for x in range(level, self.last_level):
                     yield END()
-            last_level = level
+            self.last_level = level
             # see if the line starts with a key
             if ':' in line:
                 if line.startswith('-'):
@@ -182,9 +197,16 @@ class Lexer(object):
                     yield KEY(key)
                     yield BLOCK()
                     # push in the level so we end the block correctly
-                    last_level = self.list_key_indent_level(raw_line)
+                    self.last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
+                    if ' ' in key:
+                        terms = key.split()
+                        if terms[-1] == 'j2':
+                            multiline = True
+                            template = 'j2'
+                            terms = terms[:-1]
+                        key = terms[0]
                     yield KEY(key)
                     yield BLOCK()
                 if value:
@@ -193,10 +215,13 @@ class Lexer(object):
                     elif value == '[]':
                         yield EMPTYLIST()
                     elif value == '|':
-                        multiline = True
+                        self.multiline = True
                         continue
                     else:
-                        yield SCALAR(value)
+                        if '{{' in value:
+                            yield TEMPLATE(('j2', value))
+                        else:
+                            yield SCALAR(value)
                     yield END()
             else:
                 if level == 0:
@@ -208,9 +233,9 @@ class Lexer(object):
                     yield END()
                 else:
                     yield SCALAR(line)
-        if multiline:
-            yield SCALAR("\n".join(multiline_buffer) + "\n")
-        for x in range(0, last_level):
+        if self.multiline:
+            yield self.emit_multiline()
+        for x in range(0, self.last_level):
             yield END()
         yield END()
                 

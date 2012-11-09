@@ -213,7 +213,7 @@ class TestLexer(unittest.TestCase):
         """), [
             BLOCK(),
                 KEY('foo'),
-                BLOCK(), TEMPLATE(('j2', 'bar\nbaz\n{{quux}}')), END(),
+                BLOCK(), TEMPLATE(('j2', 'bar\nbaz\n{{quux}}\n')), END(),
             END(),
         ])
         
