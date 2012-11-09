@@ -70,9 +70,11 @@ class LanguageError(Error):
         return self.get_string()
 
 
-class SyntaxError(LanguageError):
+class LexerError(LanguageError):
     pass
 
+class ParseError(LanguageError):
+    pass
 
 class EvaluationError(LanguageError):
     pass

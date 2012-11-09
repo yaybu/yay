@@ -13,12 +13,8 @@
 # limitations under the License.
 
 
-class LexerError(Exception):
-    
-    def __init__(self, message, lineno=None, line=None):
-        self.message = message
-        self.lineno = lineno
-        self.line = line
+from .errors import LexerError
+
 
 class Token(object):
     
@@ -110,7 +106,7 @@ class Lexer(object):
         """ Read a line from the input. """
         while self.remaining_input() or not self.finished:
             if not self.remaining:
-                raise LexerError("Out of input")
+                raise LexerError("Out of input", line=self.lineno)
             try:
                 eol = self.remaining.index("\n")
             except ValueError:
@@ -141,7 +137,7 @@ class Lexer(object):
             self.indents = {}
             return 0
         if spaces < self.initial_indent:
-            raise LexerError("Dedent below initial indent", self.lineno)
+            raise LexerError("Dedent below initial indent", line=self.lineno)
         if not self.indents:
             self.indents[spaces] = 1
             return 1
@@ -150,7 +146,7 @@ class Lexer(object):
             return level
         else:
             if spaces < max(self.indents.keys()):
-                raise LexerError("Unindent to surprise level", self.lineno)
+                raise LexerError("Unindent to surprise level", line=self.lineno)
             else:
                 self.indents[spaces] = max(self.indents.values())+1
                 return self.indents[spaces]
@@ -308,7 +304,7 @@ class Lexer(object):
                     yield END()
             else:
                 if level == 0:
-                    raise LexerError("No key found on a top level line", lineno, line)
+                    raise LexerError("No key found on a top level line", line=lineno)
                 elif line.startswith("- "):
                     yield LISTITEM()
                     yield BLOCK()

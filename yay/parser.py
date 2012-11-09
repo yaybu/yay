@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+from .errors import ParseError
+
 from .lexer import (Token, Lexer, 
                     BLOCK, END, 
                     TEMPLATE, SCALAR, LISTITEM, EMPTYLIST, EMPTYDICT,
@@ -25,8 +27,6 @@ import types
 
 logger = logging.getLogger(__name__)
 
-class ParseError(Exception):
-    pass
 
 class DICT(Token):
     
