@@ -158,18 +158,66 @@ class Lexer(object):
         self.template = None
         self.multiline_buffer = []
         return token
+    
+    def emit_listitem(self, value):
+        return [LISTITEM(), BLOCK(), self.parse_value(value), END()]
         
+    def parse_key(self, key):
+        """ Parse a key. Supports the following formats:
+          key j2
+          key extend j2
+          key extend
+          
+          sets the template flag if required, and returns the key material and the extend flag
+          
+        """
+        extend = False
+        if ' ' not in key:
+            return KEY(key)
+        terms = key.split()
+        if terms[-1] == 'j2':
+            self.multiline = True
+            self.template = 'j2'
+            terms = terms[:-1]
+        if terms[-1] == 'extend':
+            extend = True
+        key = terms[0]
+        if extend:
+            return EXTEND(key)
+        else:
+            return KEY(key)
+        
+    def parse_value(self, value):
+        """ Return either a template or a scalar, by sniffing the contents of
+        the value """
+        if '{{' in value:
+            return TEMPLATE(('j2', value))
+        else:
+            return SCALAR(value)
+
     def tokens(self):
-        yield BLOCK()        
+        # this function is too long
+        # but it is very hard to make shorter
+        
+        # initial block to wrap them all
+        yield BLOCK()
+        
         for raw_line in self.read_line():
             # handle indents
             spaces, line = self.parse_indent(raw_line)
+            
+            # blank lines are ignored, unless they are inside a multiline block
+            # in which case they are included
             if not line:
                 if self.multiline:
                     multiline_buffer.append('\n')
                 continue
-            if line:
-                level = self.indent_level(spaces)
+            
+            # find the current indent level
+            level = self.indent_level(spaces)
+            
+            # if the multiline flag is set we are not in standard token processing
+            # this is a core state flag
             if self.multiline:
                 if not self.multiline_buffer:
                     # first multiline
@@ -179,35 +227,38 @@ class Lexer(object):
                     continue
                 elif level < self.last_level:
                     yield self.emit_multiline()
+                    # don't continue, go on to process what is on the line
                 elif level > self.last_level:
                     prev_spaces = self.get_spaces_for_level(self.last_level)
                     self.multiline_buffer.append((spaces - prev_spaces) * ' ' + line)
                     continue
+                
+            # we are now processing non-multiline content
+            
+            # dedent with END tokens as required to achieve the correct level
             if level < self.last_level:
                 for x in range(level, self.last_level):
                     yield END()
+                    
+            # stash the level
             self.last_level = level
+            
             # see if the line starts with a key
             if ':' in line:
+                
+                # it's a key inside a list value
                 if line.startswith('-'):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
                     yield LISTITEM()
                     yield BLOCK()
-                    yield KEY(key)
+                    yield self.parse_key(key)
                     yield BLOCK()
                     # push in the level so we end the block correctly
                     self.last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
-                    if ' ' in key:
-                        terms = key.split()
-                        if terms[-1] == 'j2':
-                            multiline = True
-                            template = 'j2'
-                            terms = terms[:-1]
-                        key = terms[0]
-                    yield KEY(key)
+                    yield self.parse_key(key)
                     yield BLOCK()
                 if value:
                     if value == '{}':
@@ -218,21 +269,16 @@ class Lexer(object):
                         self.multiline = True
                         continue
                     else:
-                        if '{{' in value:
-                            yield TEMPLATE(('j2', value))
-                        else:
-                            yield SCALAR(value)
+                        yield self.parse_value(value)
                     yield END()
             else:
                 if level == 0:
                     raise LexerError("No key found on a top level line", lineno, line)
                 elif line.startswith("- "):
-                    yield LISTITEM()
-                    yield BLOCK()
-                    yield SCALAR(line[2:])
-                    yield END()
+                    for token in self.emit_listitem(line[2:]):
+                        yield token
                 else:
-                    yield SCALAR(line)
+                    yield self.parse_value(line)
         if self.multiline:
             yield self.emit_multiline()
         for x in range(0, self.last_level):
