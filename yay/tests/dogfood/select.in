@@ -1,9 +1,0 @@
-
-foo.select bar:
-
-    foo: 123
-    bar: 456
-    baz: 789
-
-bar: foo
-

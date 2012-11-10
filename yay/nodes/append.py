@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from yay.nodes import Node, BoxingFactory, Sequence
+from yay.errors import NoMatching
+
 
 class Append(Node):
 

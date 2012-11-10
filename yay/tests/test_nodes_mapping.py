@@ -15,29 +15,8 @@
 
 from .base import TestCase
 
-class TestAppend(TestCase):
+class TestMapping(TestCase):
 
-    def test_append_list(self):
-        source = """
-            foo:
-              - 1
-              - 9
-            foo extend:
-              - 8
-              - 5
-            """
-        expected = {
-            "foo": [1, 9, 8, 5],
-            }
+    pass
 
-        self.assertResolves(source, expected)
-
-    def test_append_no_predecessor(self):
-        source = """
-            foo extend:
-              - 1
-              - 2
-              - 3
-            """
-        self.assertResolves(source, {"foo": [1,2,3]})
 

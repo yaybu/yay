@@ -304,7 +304,7 @@ class Lexer(object):
                     yield END()
             else:
                 if level == 0:
-                    raise LexerError("No key found on a top level line", line=lineno)
+                    raise LexerError("No key found on a top level line", line=self.lineno)
                 elif line.startswith("- "):
                     yield LISTITEM()
                     yield BLOCK()
