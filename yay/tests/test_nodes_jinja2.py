@@ -21,7 +21,7 @@ class TestJinja(TestCase):
             foo: bye bye
             bar: {{ foo }} world
             foo: hello
-            """
+        """
         self.assertResolves(source, {"foo": "hello", "bar": "hello world"})
 
     def test_simple_true(self):
