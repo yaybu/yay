@@ -1,16 +1,6 @@
 Language Tour
 =============
 
-Comments
-~~~~~~~~
-
-# comment
-
-foo:
-   - a
-   # foo
-   - b
-
 Mappings
 ~~~~~~~~
 
@@ -29,13 +19,6 @@ relationships between each item is based on the amount of indentation::
         eth0:
            interfaces: 192.168.0.1
            dhcp: yes
-
-Empty mappings
-##############
-
-::
-
-packages: {}
 
 List
 ~~~~
@@ -90,22 +73,66 @@ to ``project.name``::
     project:
         name: www.baz.com
 
-    example_key: {{ project.id|default(project.name) }}
+    example_key: {{project.id else project.name}}
 
+Filters
+~~~~~~~
 
-Large templates
+These work just as with jinja::
+
+    foo: {{baz|function(arg)}}
+
+Including Files
 ~~~~~~~~~~~~~~~
 
-::
+You can import a recipe using the yay extends feature. If you had a template
+``foo.yay``::
 
-foo j2:
-    % for p in projectcodes:
+    resources:
         - Directory:
-              name: /var/local/sites/{{p}}
+              name: /var/local/sites/{{projectcode}}
         - Checkout:
-              name: /var/local/sites/{{p}}/src
-              repository: svn://mysvnserver/{{p}}
-    % endfor
+              name: /var/local/sites/{{projectcode}}/src
+              repository: svn://mysvnserver/{{projectcode}}
+
+You can reuse this recipe in ``bar.yay`` like so::
+
+    % include "foo.yay"
+
+    % include foo.bar.includes
+
+    projectcode: MyCustomer-145
+
+
+Search paths
+~~~~~~~~~~~~
+
+You can add a directory to the search path::
+
+    % search "/var/yay/includes"
+
+    % search foo.bar.searchpath
+
+Configuration
+~~~~~~~~~~~~~
+
+configure openers:
+    foo: bar
+    baz: quux
+
+configure basicauth:
+    zip: zop
+
+Ephemeral keys
+~~~~~~~~~~~~~~
+
+These will not appear in the output::
+
+    % for a in b
+        % set c = d.foo.bar.baz
+        % set d = dsds.sdsd.sewewe
+        % set e = as.ew.qw
+        foo: c
 
 Extending Lists
 ~~~~~~~~~~~~~~~
@@ -121,15 +148,32 @@ multiple files, the most recently specified one would win::
         - baz
 
 If you were to do this, resources would only contain baz. Yay has a function
-to allow appending to predefined lists: extend::
+to allow appending to predefined lists: append::
 
     resources:
         - foo
         - bar
 
-    resources extend:
+    extend resources:
         - baz
 
+Conditions
+~~~~~~~~~~
+
+    foo:
+        % if averylongvariablename = anotherverylongvariablename and \
+            yetanothervariable = d and e = f
+
+          bar:
+            quux:
+                foo:
+                    bar: baz
+
+        % elif blah = something
+            moo: mah
+
+        % else
+          - baz
 
 For Loops
 ~~~~~~~~~
@@ -141,46 +185,124 @@ resources for each item in that list. You would do something like this::
         MyCustomer-100
         MyCustomer-72
 
-    resources extend j2:
-        % for p in projectcodes:
+    extend resources:
+
+        % for p in projectcodes
             - Directory:
                   name: /var/local/sites/{{p}}
-            - Checkout:
-                  name: /var/local/sites/{{p}}/src
-                  repository: svn://mysvnserver/{{p}}
-        % endfor
+
+            % for q in p.qcodes
+                - Checkout:
+                    name: /var/local/sites/{{p}}/src
+                    repository: svn://mysvnserver/{{q}}
+
+You can also have conditions::
+
+    fruit:
+        - name: apple
+          price: 5
+        - name: lime
+          price: 10
+
+    cheap: 
+        % for f in fruit if f.price < 10
+            - {{f}}
 
 
-Including Files
-~~~~~~~~~~~~~~~
+You might need to loop over a list within a list::
 
-You can import a recipe using the yay extends feature. If you had a template
-foo.yay::
+    staff:
+      - name: Joe
+        devices:
+          - macbook
+          - iphone
 
-    resources:
-        - Directory:
-              name: /var/local/sites/{{projectcode}}
-        - Checkout:
-              name: /var/local/sites/{{projectcode}}/src
-              repository: svn://mysvnserver/{{projectcode}}
+      - name: John
+        devices:
+          - air
+          - iphone
 
-You can reuse this recipe in bar.yay like so::
+    stuff:
+        % for s in staff
+            % for d in s.devices
+                {{d}}
 
-    yay include:
-        - foo.yay
-        - bar.yay
+This will produce a single list that is equivalent to::
 
-    projectcode: MyCustomer-145
+    stuff:
+      - macbook
+      - iphone
+      - air
+      - iphone
 
+You can use a for against a mapping too - you will iterate over its
+keys. A for over a mapping with a condition might look like this::
 
-Search path
-~~~~~~~~~~~
+    fruit:
+      # recognised as decimal integers since they look a bit like them
+      apple: 5
+      lime: 10
+      strawberry: 1
 
-yay search:
+    cheap:
+        % for f in fruit
+           % if fruit[f] < 10 
+             {{f}}
 
+That would return a list with apple and strawberry in it. The list will
+be sorted alphabetically: mappings are generally unordered but we want
+the iteration order to be stable.
 
-Configuring your environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Select
+~~~~~~
 
-yay config:
+The select statement is a way to have conditions in your configuration.
+
+Lets say ``host.distro`` contains your Ubuntu version and you want to install
+difference packages based on the distro. You could do something like::
+
+    packages:
+        % select distro
+            karmic:
+                - python-setuptools
+            lucid:
+                - python-distribute
+                - python-zc.buildout
+
+Function calls
+~~~~~~~~~~~~~~
+
+Any sandboxed python function can be called where an expression would exist in a yay statement::
+
+    % set foo = sum(a)
+    % for x in range(foo)
+
+Class bindings
+~~~~~~~~~~~~~~
+
+Classes can be constructed on-the-fly::
+
+    parts:
+        web:
+            % create "Compute"
+                foo: bar
+                % for x in range(4)
+                    baz: x
+
+Classes may have special side-effects, or provide additional data, at runtime.
+
+Macros
+~~~~~~
+
+you can define a macro with::
+
+    % macro mymacro
+        foo: bar
+        baz: {{q}}
+
+You can then call it later::
+
+    foo:
+        % for q in x
+            % call mymacro
 
