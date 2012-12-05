@@ -286,6 +286,35 @@ Classes can be constructed on-the-fly::
 
 Classes may have special side-effects, or provide additional data, at runtime.
 
+Each name for a class will be looked up in a registry for a concrete implementation that must provide
+the following methods::
+
+class Example:
+
+    def __init__(self, contents):
+        self.contents = contents
+
+    def resolve(self):
+        """ Returns a python dictionary, if possible, that is a completely resolved structure of scalars, lists and dictionaries """
+        # this method is responsible for ensuring the contents are completely resolved
+        
+    def traversible(self): 
+    
+        Return a traversible object based on self (which could be self or could be a mapping or could be something else that inherits from Node)
+        
+        To be traversible it must be able to execute the get method successfully for all direct children
+        
+        For example a for loop has to unroll itself so it is able to return its indexed members
+        
+        
+    def get(self, key/index): 
+    
+        """ Returns a node object that, when resolved, will contain the value of
+        the specified key. Any side-effects required to obtain the value should
+        occur on resolution of the returned node, not on the call to get(). """
+        
+    
+
 Macros
 ~~~~~~
 
