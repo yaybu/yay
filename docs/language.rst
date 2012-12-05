@@ -75,13 +75,6 @@ to ``project.name``::
 
     example_key: {{project.id else project.name}}
 
-Filters
-~~~~~~~
-
-These work just as with jinja::
-
-    foo: {{baz|function(arg)}}
-
 Including Files
 ~~~~~~~~~~~~~~~
 
@@ -137,7 +130,7 @@ These will not appear in the output::
 Extending Lists
 ~~~~~~~~~~~~~~~
 
-If you were to speficy resources twice in the same file, or indeed across
+If you were to specify resources twice in the same file, or indeed across
 multiple files, the most recently specified one would win::
 
     resources:
@@ -161,8 +154,8 @@ Conditions
 ~~~~~~~~~~
 
     foo:
-        % if averylongvariablename = anotherverylongvariablename and \
-            yetanothervariable = d and e = f
+        % if averylongvariablename == anotherverylongvariablename and \
+            yetanothervariable == d and e == f
 
           bar:
             quux:
@@ -285,6 +278,8 @@ Classes can be constructed on-the-fly::
     parts:
         web:
             % create "Compute"
+            % Compute
+            % create myClass
                 foo: bar
                 % for x in range(4)
                     baz: x
@@ -298,11 +293,12 @@ you can define a macro with::
 
     % macro mymacro
         foo: bar
-        baz: {{q}}
+        baz: {{thing}}
 
 You can then call it later::
 
     foo:
         % for q in x
             % call mymacro
+                thing: {{q}}
 
