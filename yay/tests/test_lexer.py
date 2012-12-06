@@ -1,8 +1,15 @@
 
 import unittest
-from yay.lexer import (Lexer, BLOCK, END, KEY, SCALAR,
-                       LISTITEM, EMPTYDICT, EMPTYLIST,
-                       TEMPLATE, EXTEND, DIRECTIVE)
+from yay.lexer import Lexer
+from ply.lex import LexToken
+
+def tok(name, value=None):
+    t = LexToken()
+    t.type = name
+    t.value = value
+    t.lineno = 0
+    t.lexpos = 0
+    return t
 
 class TestLexer(unittest.TestCase):
     
@@ -12,6 +19,14 @@ class TestLexer(unittest.TestCase):
         l.done()
         return list(l)
     
+    def compare(self, x, y):
+        """ Compare two lists of LexTokens """
+        if len(x) != len(y):
+            raise self.failureException("Token lists are of different lengths")
+        for a, b in zip(x,y):
+            if a.value != b.value or a.type != b.type:
+                raise self.failureException("Tokens %r %r differ" % (a,b))
+    
     def test_list_of_multikey_dicts(self):
         result = self._lex("""
             a: 
@@ -20,104 +35,104 @@ class TestLexer(unittest.TestCase):
                 e: f
               - g
               """)
-        self.assertEqual(result, [ BLOCK(),
-            KEY('a'),
-            BLOCK(),
-                LISTITEM(), BLOCK(), SCALAR('b'), END(),
-                LISTITEM(),
-                BLOCK(),
-                    KEY('c'), BLOCK(), SCALAR('d'), END(),
-                    KEY('e'), BLOCK(), SCALAR('f'), END(),
-                END(),
-                LISTITEM(), BLOCK(), SCALAR('g'), END(),
-            END(),
-            END(), ])
+        self.compare(result, [ tok('BLOCK'),
+            tok('KEY', 'a'),
+            tok('BLOCK'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'b'), tok('END'),
+                tok('LISTITEM'),
+                tok('BLOCK'),
+                    tok('KEY', 'c'), tok('BLOCK'), tok('SCALAR', 'd'), tok('END'),
+                    tok('KEY', 'e'), tok('BLOCK'), tok('SCALAR', 'f'), tok('END'),
+                tok('END'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'g'), tok('END'),
+            tok('END'),
+            tok('END'), ])
 
     def test_list_of_dicts(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
             a:
               - b
               - c: d
               - e
-        """), [ BLOCK(),
-            KEY('a'),
-            BLOCK(),
-                LISTITEM(), BLOCK(), SCALAR('b'), END(),
-                LISTITEM(),
-                BLOCK(),
-                    KEY('c'), BLOCK(), SCALAR('d'), END(),
-                END(),
-                LISTITEM(), BLOCK(), SCALAR('e'), END(),
-            END(),
-        END(), ])
+        """), [ tok('BLOCK'),
+            tok('KEY', 'a'),
+            tok('BLOCK'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'b'), tok('END'),
+                tok('LISTITEM'),
+                tok('BLOCK'),
+                    tok('KEY', 'c'), tok('BLOCK'), tok('SCALAR', 'd'), tok('END'),
+                tok('END'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'e'), tok('END'),
+            tok('END'),
+        tok('END'), ])
     
     def test_initial1(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
                a: b
                c: 
                  d: e
-            """), [ BLOCK(),
-            KEY('a'), BLOCK(), SCALAR('b'), END(),
-            KEY('c'),
-            BLOCK(),
-                KEY('d'), BLOCK(), SCALAR('e'), END(),
-            END(),
-            END(), ])
+            """), [ tok('BLOCK'),
+            tok('KEY', 'a'), tok('BLOCK'), tok('SCALAR', 'b'), tok('END'),
+            tok('KEY', 'c'),
+            tok('BLOCK'),
+                tok('KEY', 'd'), tok('BLOCK'), tok('SCALAR', 'e'), tok('END'),
+            tok('END'),
+            tok('END'), ])
     
     def test_emptydict(self):
-        self.assertEqual(self._lex("a: {}"), [ BLOCK(),
-            KEY('a'), BLOCK(), EMPTYDICT(), END(),
-            END(), ])
+        self.compare(self._lex("a: {}"), [ tok('BLOCK'),
+            tok('KEY', 'a'), tok('BLOCK'), tok('EMPTYDICT', ), tok('END'),
+            tok('END'), ])
         
     def test_emptylist(self):
-        self.assertEqual(self._lex("a: []"), [ BLOCK(),
-            KEY('a'), BLOCK(), EMPTYLIST(), END(),
-            END(), ])
+        self.compare(self._lex("a: []"), [ tok('BLOCK'),
+            tok('KEY', 'a'), tok('BLOCK'), tok('EMPTYLIST'), tok('END'),
+            tok('END'), ])
     
     def test_comments(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
             # example
             a: b
             c:
               - d
               # foo
               - e
-            """), [ BLOCK(),
-            KEY('a'), BLOCK(), SCALAR('b'), END(),
-            KEY('c'),
-            BLOCK(),
-                LISTITEM(), BLOCK(), SCALAR('d'), END(),
-                LISTITEM(), BLOCK(), SCALAR('e'), END(),
-            END(),
-            END(), ])
+            """), [ tok('BLOCK'),
+            tok('KEY', 'a'), tok('BLOCK'), tok('SCALAR', 'b'), tok('END'),
+            tok('KEY', 'c'),
+            tok('BLOCK'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'd'), tok('END'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'e'), tok('END'),
+            tok('END'),
+            tok('END'), ])
         
     
     def test_sample2(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         a:
             b:c
             e:
                 - f
                 - g
             h:
-                i: j"""), [ BLOCK(),
-            KEY('a'),
-            BLOCK(),
-                KEY('b'), BLOCK(), SCALAR('c'), END(),
-                KEY('e'),
-                BLOCK(),
-                    LISTITEM(), BLOCK(), SCALAR('f'), END(),
-                    LISTITEM(), BLOCK(), SCALAR('g'), END(),
-                END(),
-                KEY('h'),
-                BLOCK(),
-                    KEY('i'), BLOCK(), SCALAR('j'), END(),
-                    END(),
-                END(),
-            END(), ])
+                i: j"""), [ tok('BLOCK'),
+            tok('KEY', 'a'),
+            tok('BLOCK'),
+                tok('KEY', 'b'), tok('BLOCK'), tok('SCALAR', 'c'), tok('END'),
+                tok('KEY', 'e'),
+                tok('BLOCK'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'f'), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'g'), tok('END'),
+                tok('END'),
+                tok('KEY', 'h'),
+                tok('BLOCK'),
+                    tok('KEY', 'i'), tok('BLOCK'), tok('SCALAR', 'j'), tok('END'),
+                    tok('END'),
+                tok('END'),
+            tok('END'), ])
     
     def test_sample1(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
             key1: value1
             
             key2: value2
@@ -130,49 +145,49 @@ class TestLexer(unittest.TestCase):
             key4:
                 key5:
                     key6: key7
-        """), [ BLOCK(),
-            KEY('key1'), BLOCK(), SCALAR('value1'), END(),
-            KEY('key2'), BLOCK(), SCALAR('value2'), END(),
-            KEY('key3'),
-            BLOCK(),
-                LISTITEM(), BLOCK(), SCALAR('item1'), END(),
-                LISTITEM(), BLOCK(), SCALAR('item2'), END(),
-                LISTITEM(), BLOCK(), SCALAR('item3'), END(),
-            END(),
-            KEY('key4'),
-            BLOCK(),
-                KEY('key5'),
-                BLOCK(),
-                    KEY('key6'), BLOCK(), SCALAR('key7'), END(),
-                END(),
-            END(),
-            END(), ])
+        """), [ tok('BLOCK'),
+            tok('KEY', 'key1'), tok('BLOCK'), tok('SCALAR', 'value1'), tok('END'),
+            tok('KEY', 'key2'), tok('BLOCK'), tok('SCALAR', 'value2'), tok('END'),
+            tok('KEY', 'key3'),
+            tok('BLOCK'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'item1'), tok('END'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'item2'), tok('END'),
+                tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'item3'), tok('END'),
+            tok('END'),
+            tok('KEY', 'key4'),
+            tok('BLOCK'),
+                tok('KEY', 'key5'),
+                tok('BLOCK'),
+                    tok('KEY', 'key6'), tok('BLOCK'), tok('SCALAR', 'key7'), tok('END'),
+                tok('END'),
+            tok('END'),
+            tok('END'), ])
 
     def test_explicit_j2(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         foo j2:
             % for p in q:
                 - x: {{p}}
             % endfor
         """), [
-            BLOCK(),
-                KEY('foo'),
-                BLOCK(),
-                    TEMPLATE(('j2', "% for p in q:\n    - x: {{p}}\n% endfor\n")),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('BLOCK'),
+                    tok('TEMPLATE', ('j2', "% for p in q:\n    - x: {{p}}\n% endfor\n")),
+                tok('END'),
+            tok('END'),
         ])
             
     def test_implicit_j2(self):
-        self.assertEqual(self._lex("foo: {{bar}}"), [
-            BLOCK(),
-                KEY('foo'),
-                BLOCK(), TEMPLATE(('j2', '{{bar}}')), END(),
-            END(),
+        self.compare(self._lex("foo: {{bar}}"), [
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('BLOCK'), tok('TEMPLATE', ('j2', '{{bar}}')), tok('END'),
+            tok('END'),
         ])
         
     def test_multiline(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
             foo: |
                bar
                baz
@@ -181,127 +196,127 @@ class TestLexer(unittest.TestCase):
                x y z
                a b c
         """), [
-               BLOCK(),
-                   KEY('foo'),
-                   BLOCK(), SCALAR("bar\nbaz\nquux\n"), END(),
-                   KEY('bar'),
-                   BLOCK(), SCALAR("x y z\na b c\n"), END(),
-                END(),
+               tok('BLOCK'),
+                   tok('KEY', 'foo'),
+                   tok('BLOCK'), tok('SCALAR', "bar\nbaz\nquux\n"), tok('END'),
+                   tok('KEY', 'bar'),
+                   tok('BLOCK'), tok('SCALAR', "x y z\na b c\n"), tok('END'),
+                tok('END'),
         ])
         
     def test_deep_multiline_file_end(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
             foo:
                 bar: |
                     quux
         """), [
-               BLOCK(),
-                   KEY('foo'),
-                   BLOCK(),
-                       KEY('bar'),
-                       BLOCK(), SCALAR('quux\n'), END(),
-                    END(),
-                END(),
+               tok('BLOCK'),
+                   tok('KEY', 'foo'),
+                   tok('BLOCK'),
+                       tok('KEY', 'bar'),
+                       tok('BLOCK'), tok('SCALAR', 'quux\n'), tok('END'),
+                    tok('END'),
+                tok('END'),
             ])
         
     def test_multiline_implicit_j2(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         foo: |
           bar
           baz
           {{quux}}
         """), [
-            BLOCK(),
-                KEY('foo'),
-                BLOCK(), TEMPLATE(('j2', 'bar\nbaz\n{{quux}}\n')), END(),
-            END(),
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('BLOCK'), tok('TEMPLATE', ('j2', 'bar\nbaz\n{{quux}}\n')), tok('END'),
+            tok('END'),
         ])
         
     def test_extend(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         foo extend:
             - baz
             - quux
         """), [
-            BLOCK(),
-                KEY('foo'),
-                EXTEND(),
-                BLOCK(),
-                    LISTITEM(), BLOCK(), SCALAR('baz'), END(),
-                    LISTITEM(), BLOCK(), SCALAR('quux'), END(),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('EXTEND'),
+                tok('BLOCK'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'baz'), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'quux'), tok('END'),
+                tok('END'),
+            tok('END'),
             ])
         
     def test_extend_j2(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         foo extend j2:
             - baz
             - quux
         """), [
-            BLOCK(),
-                KEY('foo'),
-                EXTEND(),
-                BLOCK(), TEMPLATE(('j2', '- baz\n- quux\n')), END(),
-            END(),
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('EXTEND'),
+                tok('BLOCK'), tok('TEMPLATE', ('j2', '- baz\n- quux\n')), tok('END'),
+            tok('END'),
         ])
         
     def test_j2_listitem(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         foo:
           - a
           - {{bar}}
           - c
         """), [
-            BLOCK(),
-                KEY('foo'),
-                BLOCK(),
-                    LISTITEM(), BLOCK(), SCALAR('a'), END(),
-                    LISTITEM(), BLOCK(), TEMPLATE(('j2', '{{bar}}')), END(),
-                    LISTITEM(), BLOCK(), SCALAR('c'), END(),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('KEY', 'foo'),
+                tok('BLOCK'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'a'), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', ('j2', '{{bar}}')), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'c'), tok('END'),
+                tok('END'),
+            tok('END'),
         ])
 
     def test_include(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         yay include:
             - foo.yay
             - bar.yay
         """), [
-            BLOCK(),
-                DIRECTIVE('include'),
-                BLOCK(),
-                    LISTITEM(), BLOCK(), SCALAR('foo.yay'), END(),
-                    LISTITEM(), BLOCK(), SCALAR('bar.yay'), END(),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('DIRECTIVE', 'include'),
+                tok('BLOCK'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'foo.yay'), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'bar.yay'), tok('END'),
+                tok('END'),
+            tok('END'),
         ])
         
     def test_madness(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         yay search:
             - {{foo}}
         """), [
-            BLOCK(),
-                DIRECTIVE('search'),
-                BLOCK(),
-                    LISTITEM(), BLOCK(), TEMPLATE(('j2', '{{foo}}')), END(),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('DIRECTIVE', 'search'),
+                tok('BLOCK'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', ('j2', '{{foo}}')), tok('END'),
+                tok('END'),
+            tok('END'),
         ])
         
     def test_more_madness(self):
-        self.assertEqual(self._lex("""
+        self.compare(self._lex("""
         yay search j2:
             - {{foo}}
         """), [
-            BLOCK(),
-                DIRECTIVE('search'),
-                BLOCK(),
-                TEMPLATE(('j2', '- {{foo}}\n')),
-                END(),
-            END(),
+            tok('BLOCK'),
+                tok('DIRECTIVE', 'search'),
+                tok('BLOCK'),
+                tok('TEMPLATE', ('j2', '- {{foo}}\n')),
+                tok('END'),
+            tok('END'),
         ])
 
     def test_token(self):
@@ -311,17 +326,17 @@ class TestLexer(unittest.TestCase):
                c: 
                  d: e
             """)
-        self.assertEqual(l.token(), BLOCK())
-        self.assertEqual(l.token(), KEY('a'))
-        self.assertEqual(l.token(), BLOCK())
-        self.assertEqual(l.token(), SCALAR('b'))
-        self.assertEqual(l.token(), END())
-        self.assertEqual(l.token(), KEY('c'))
-        self.assertEqual(l.token(), BLOCK())
-        self.assertEqual(l.token(), KEY('d'))
-        self.assertEqual(l.token(), BLOCK())
-        self.assertEqual(l.token(), SCALAR('e'))
-        self.assertEqual(l.token(), END())
-        self.assertEqual(l.token(), END())
-        self.assertEqual(l.token(), END())
+        self.compare([l.token()], [tok('BLOCK')])
+        self.compare([l.token()], [tok('KEY', 'a')])
+        self.compare([l.token()], [tok('BLOCK')])
+        self.compare([l.token()], [tok('SCALAR', 'b')])
+        self.compare([l.token()], [tok('END')])
+        self.compare([l.token()], [tok('KEY', 'c')])
+        self.compare([l.token()], [tok('BLOCK')])
+        self.compare([l.token()], [tok('KEY', 'd')])
+        self.compare([l.token()], [tok('BLOCK')])
+        self.compare([l.token()], [tok('SCALAR', 'e')])
+        self.compare([l.token()], [tok('END')])
+        self.compare([l.token()], [tok('END')])
+        self.compare([l.token()], [tok('END')])
     

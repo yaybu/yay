@@ -15,11 +15,7 @@
 
 from .errors import ParseError
 
-from .lexer import (Token, Lexer, 
-                    BLOCK, END, 
-                    TEMPLATE, SCALAR, LISTITEM, EMPTYLIST, EMPTYDICT,
-                    KEY, EXTEND,
-                    DIRECTIVE)
+from .lexer import Lexer
 from . import nodes
 
 import logging
