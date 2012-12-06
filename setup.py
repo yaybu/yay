@@ -25,7 +25,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     install_requires = [
-        "Jinja2",
+        "ply",
     ],
     extras_require = dict(
         test = [
