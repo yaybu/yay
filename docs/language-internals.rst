@@ -75,8 +75,13 @@ Backus-Naur productions
           | <list>
           | <template>
           
-<template> ::= [a-z0-9]*'{{' [a-z0-9]+ '}}' [a-z0-9]*
+<scalar> ::= anything without a "{{"
 
+LDBRACE ::= '{{'
+RDBRACE ::= '}}'
+
+stuff inside {{ }} parsed as expression
+          
 <include-command> ::= '%' 'include' <expr>
 
 <search-command> ::= '%' 'search' <expr>

@@ -22,7 +22,7 @@ class TestLexer(unittest.TestCase):
     def compare(self, x, y):
         """ Compare two lists of LexTokens """
         if len(x) != len(y):
-            raise self.failureException("Token lists are of different lengths")
+            raise self.failureException("Token lists are of different lengths: %r %r", (x, y))
         for a, b in zip(x,y):
             if a.value != b.value or a.type != b.type:
                 raise self.failureException("Tokens %r %r differ" % (a,b))
@@ -167,7 +167,11 @@ class TestLexer(unittest.TestCase):
         self.compare(self._lex("foo: {{bar}}"), [
             tok('BLOCK'),
                 tok('KEY', 'foo'),
-                tok('BLOCK'), tok('TEMPLATE', '{{bar}}'), tok('END'),
+                tok('BLOCK'), 
+                tok('LDBRACE'),
+                tok('VAR', 'bar'),
+                tok('RDBRACE'),
+                tok('END'),
             tok('END'),
         ])
         
@@ -213,7 +217,13 @@ class TestLexer(unittest.TestCase):
         """), [
             tok('BLOCK'),
                 tok('KEY', 'foo'),
-                tok('BLOCK'), tok('TEMPLATE', 'bar\nbaz\n{{quux}}\n'), tok('END'),
+                tok('BLOCK'),
+                tok('SCALAR', 'bar\nbaz\n'),
+                tok('LDBRACE'),
+                tok('VAR', 'quux'),
+                tok('RDBRACE'),
+                tok('SCALAR', '\n'),
+                tok('END'),
             tok('END'),
         ])
         
@@ -244,7 +254,11 @@ class TestLexer(unittest.TestCase):
                 tok('KEY', 'foo'),
                 tok('BLOCK'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'a'), tok('END'),
-                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', '{{bar}}'), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), 
+                        tok('LDBRACE'),
+                        tok('VAR', 'bar'), 
+                        tok('RDBRACE'),
+                        tok('END'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'c'), tok('END'),
                 tok('END'),
             tok('END'),

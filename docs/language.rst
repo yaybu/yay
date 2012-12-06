@@ -1,6 +1,8 @@
 Language Tour
 =============
 
+Yay is a non-strict language that supports lazy evaluation.
+
 Mappings
 ~~~~~~~~
 

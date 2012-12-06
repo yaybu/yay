@@ -22,9 +22,9 @@ def p_node_list(p):
     'node : BLOCK list END'
     p[0] = nodes.Sequence(p[2])
     
-def p_node_template(p):
-    'node : BLOCK TEMPLATE END'
-    p[0] = nodes.Jinja(p[2][1])
+#def p_node_template(p):
+#    'node : BLOCK TEMPLATE END'
+#    p[0] = nodes.Template(p[2][1])
     
 def p_extend(p):
     'extend : EXTEND KEY node'

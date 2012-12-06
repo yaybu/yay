@@ -54,22 +54,38 @@ class Lexer(object):
     """ Leading significant whitespace lexing considered fugly. """
 
     tokens = (
+        'ASSIGN',
         'BLOCK',
-        'END',
-        'KEY',
-        'SCALAR',
-        'INTEGER',
-        'FLOAT',
-        'STRING',
-        'TEMPLATE',
-        'EMPTYLIST',
-        'EMPTYDICT',
-        'EXTEND',
+        'CALL',
         'CONFIGURE',
+        'CMP',
+        'CREATE',
+        'END',
+        'EMPTYDICT',
+        'EMPTYLIST',
+        'EXPR',
+        'EXTEND',
+        'FLOAT',
+        'FOR',
+        'IF',
+        'IN',
+        'INCLUDE',
+        'INTEGER',
+        'KEY',
+        'LDBRACE',
         'LISTITEM',
+        'LPAREN',
+        'MACRO',
+        'OP',
+        'PERCENT',
+        'RDBRACE',
+        'RPAREN',
+        'SCALAR',
+        'SEARCH',
+        'SET',
+        'STRING',
+        'VAR',
         )
-        
-
     
     def __init__(self):
         self.indents = {}
@@ -175,14 +191,11 @@ class Lexer(object):
 
     def emit_multiline(self):
         value = "\n".join(self.multiline_buffer) + "\n"
-        if '{{' in value:
-            token = self.mktok('TEMPLATE', value)
-        else:
-            token = self.mktok('SCALAR', value)
+        for tok in self.parse_value(value):
+            yield tok
         self.multiline = False
         self.template = None
         self.multiline_buffer = []
-        return token
     
     def parse_key(self, key):
         """ Parse a key. Supports the following formats:
@@ -203,29 +216,44 @@ class Lexer(object):
         raise LexerError("Key contains whitespace", line=self.lineno)
         
     def parse_value(self, value):
-        """ Return an appropriate token for a value """
+        """ Return tokens as required for value """
         if value == '{}':
-            return self.mktok('EMPTYDICT')
+            yield self.mktok('EMPTYDICT')
         elif value == '[]':
-            return self.mktok('EMPTYLIST')
-        if '{{' in value:
-            return self.mktok('TEMPLATE', value)
+            yield self.mktok('EMPTYLIST')
         else:
-            return self.mktok('SCALAR', value)
-        
+            while value:
+                ldbrace = value.find('{{')
+                if ldbrace == -1:
+                    yield self.mktok('SCALAR', value)
+                    value = ""
+                else:
+                    if ldbrace > 0:
+                        yield self.mktok('SCALAR', value[:ldbrace])
+                    yield self.mktok('LDBRACE')
+                    value = value[ldbrace+2:]
+                    rdbrace = value.find('}}')
+                    if rdbrace == -1:
+                        raise LexerError("Unbalanced {{}}", lineno=self.lineno)
+                    for tok in self.parse_command(value[:rdbrace]):
+                        yield tok
+                    yield self.mktok('RDBRACE')
+                    value = value[rdbrace+2:]
         
     def parse_command(self, line):
         """ The line will start with '%'. We use regex matching and consumption so we can handle quoted strings, classes etc. """
-        yield '%'
-        line = line[1:]
+        line = line.strip()
         while line:
-            line = line.strip()
             for r, tok in ct_compiled:
-                res = r.match(line)
-                if res is not None:
+                m = r.match(line)
+                if m is not None:
+                    res = m.group()
                     line = line[len(res):]
                     yield self.mktok(tok, res)
-            raise LexerError("Cannot parse %r" % line, lineno=self.lineno)
+                    break
+            else:
+                raise LexerError("Cannot parse %r" % line, line=self.lineno)
+            line = line.strip()
 
     def _tokens(self):
         # this function is too long
@@ -258,7 +286,8 @@ class Lexer(object):
                     self.multiline_buffer.append(line)
                     continue
                 elif level < self.last_level:
-                    yield self.emit_multiline()
+                    for tok in self.emit_multiline():
+                        yield tok
                     # don't continue, go on to process what is on the line
                 elif level > self.last_level:
                     prev_spaces = self.get_spaces_for_level(self.last_level)
@@ -277,6 +306,8 @@ class Lexer(object):
             
             # see if this is actually a command line
             if line.startswith('%'):
+                yield self.mktok('PERCENT')
+                line = line[1:]
                 for tok in self.parse_command(line):
                     yield tok
             
@@ -304,7 +335,8 @@ class Lexer(object):
                         self.multiline = True
                         continue
                     else:
-                        yield self.parse_value(value)
+                        for tok in self.parse_value(value):
+                            yield tok
                     yield self.mktok('END')
             else:
                 if level == 0:
@@ -312,14 +344,17 @@ class Lexer(object):
                 elif line.startswith("- "):
                     yield self.mktok('LISTITEM')
                     yield self.mktok('BLOCK')
-                    yield self.parse_value(line[1:].strip())
+                    for tok in self.parse_value(line[1:].strip()):
+                        yield tok
                     yield self.mktok('END')
                 else:
-                    yield self.parse_value(line)
+                    for tok in self.parse_value(line):
+                        yield tok
                     
         # emit the multiline if we end the file in multiline mode
         if self.multiline:
-            yield self.emit_multiline()
+            for tok in self.emit_multiline():
+                yield tok
             
         # finish with sufficient ends
         for x in range(0, self.last_level):
