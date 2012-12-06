@@ -243,6 +243,33 @@ class TestLexer(unittest.TestCase):
             tok('END'),
             ])
         
+    def test_complex_expressions_in_templates(self):
+        self.compare(self._lex("""
+        foo: this {{a+b+c}} is {{foo("bar")}} hard
+        """), [
+               tok('BLOCK'),
+               tok('KEY', 'foo'),
+               tok('BLOCK'),
+               tok('SCALAR', 'this '),
+               tok('LDBRACE'),
+               tok('VAR', 'a'),
+               tok('OP', '+'),
+               tok('VAR', 'b'),
+               tok('OP', '+'),
+               tok('VAR', 'c'),
+               tok('RDBRACE'),
+               tok('SCALAR', ' is '),
+               tok('LDBRACE'),
+               tok('VAR', 'foo'),
+               tok('LPAREN', '('),
+               tok('STRING', '"bar"'),
+               tok('RPAREN', ')'),
+               tok('RDBRACE'),
+               tok('SCALAR', ' hard'),
+               tok('END'),
+               tok('END'),
+            ])
+        
     def test_template_in_listitem(self):
         self.compare(self._lex("""
         foo:
