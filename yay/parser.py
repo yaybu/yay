@@ -56,7 +56,7 @@ class Parser(object):
         self.lexer.done()
         
     def parse(self):
-        for token in self.lexer.tokens():
+        for token in self.lexer:
             self.stack.append(token)
             logger.debug("+ %r" % self.stack)
             while self.reduce():

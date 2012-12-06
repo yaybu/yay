@@ -95,9 +95,11 @@ class Lexer(object):
         self.template = None
         self.multiline_buffer = []
         self.last_level = 0
+        self._generator = self._tokens()
         
     def input(self, text):
         self.remaining.extend(list(text))
+        self.done() # is this right? PLY not clear
         
     def remaining_input(self):
         return "".join(self.remaining).strip()
@@ -228,7 +230,7 @@ class Lexer(object):
         else:
             return SCALAR(value)
 
-    def tokens(self):
+    def _tokens(self):
         # this function is too long
         # but it is very hard to make shorter
         
@@ -317,18 +319,12 @@ class Lexer(object):
         for x in range(0, self.last_level):
             yield END()
         yield END()
-                
-            
-class PLYLexer:
-    
-    def __init__(self):
-        self.__lexer = Lexer()
-        self.tokens = self.__lexer.tokens()
-        
-    def input(self, data):
-        self.__lexer.input(data)
-        self.__lexer.done()
         
     def token(self):
-        return self.tokens.next()
+        return self._generator.next()
+    
+    def __iter__(self):
+        for i in self._generator:
+            yield i
+                
     

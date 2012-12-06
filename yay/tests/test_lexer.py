@@ -4,15 +4,13 @@ from yay.lexer import (Lexer, BLOCK, END, KEY, SCALAR,
                        LISTITEM, EMPTYDICT, EMPTYLIST,
                        TEMPLATE, EXTEND, DIRECTIVE)
 
-from yay.lexer import PLYLexer
-
 class TestLexer(unittest.TestCase):
     
     def _lex(self, value):
         l = Lexer()
         l.input(value)
         l.done()
-        return list(l.tokens())
+        return list(l)
     
     def test_list_of_multikey_dicts(self):
         result = self._lex("""
@@ -306,10 +304,8 @@ class TestLexer(unittest.TestCase):
             END(),
         ])
 
-class noTestPLYLexer(unittest.TestCase):
-    
-    def test_initial1(self):
-        l = PLYLexer()
+    def test_token(self):
+        l = Lexer()
         l.input("""
                a: b
                c: 
