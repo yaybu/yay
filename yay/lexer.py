@@ -17,9 +17,25 @@ from .errors import LexerError
 
 from ply import lex
 
+
 class Lexer(object):
     
     """ Leading significant whitespace lexing considered fugly. """
+
+    tokens = (
+        'BLOCK',
+        'END',
+        'KEY',
+        'SCALAR',
+        'DIRECTIVE',
+        'TEMPLATE',
+        'EMPTYLIST',
+        'EMPTYDICT',
+        'EXTEND',
+        'LISTITEM',
+        )
+        
+
     
     def __init__(self):
         self.indents = {}
@@ -270,7 +286,10 @@ class Lexer(object):
         yield self.mktok('END')
         
     def token(self):
-        return self._generator.next()
+        try:
+            return self._generator.next()
+        except StopIteration:
+            return None
     
     def __iter__(self):
         for i in self._generator:

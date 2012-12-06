@@ -1,13 +1,11 @@
 import unittest
-from yay import parser
+from yay.parser import parser
+from yay.lexer import Lexer
 
 class TestParser(unittest.TestCase):
     
     def _parse(self, value):
-        p = parser.Parser()
-        p.input(value)
-        d = p.parse()
-        return d
+        return parser.parse(value, lexer=Lexer())
     
     def _resolve(self, value):
         return self._parse(value).resolve()
