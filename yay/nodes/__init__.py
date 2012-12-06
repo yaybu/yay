@@ -16,7 +16,12 @@ from yay.nodes.node import Node
 from yay.nodes.boxed import BoxingFactory, Boxed
 from yay.nodes.mapping import Mapping
 from yay.nodes.sequence import Sequence
-from yay.nodes.append import Append
+from yay.nodes.extend import Extend
 from yay.nodes.secret import Secret
 from yay.nodes.access import Access
+from yay.nodes.template import Template
+from yay.nodes.command import Include, Search, Configure, Set, If, Select
+from yay.nodes.function import Function
+from yay.nodes.macro import Define, Call
+from yay.nodes.yayclass import YayClass
 

@@ -16,7 +16,7 @@ from yay.nodes import Node, BoxingFactory, Sequence
 from yay.errors import NoMatching
 
 
-class Append(Node):
+class Extend(Node):
 
     """
     Appends an iterable to a sequence
@@ -32,7 +32,7 @@ class Append(Node):
     """
 
     def __init__(self, value):
-        super(Append, self).__init__()
+        super(Extend, self).__init__()
         self.value = value
         value.set_parent(self)
 

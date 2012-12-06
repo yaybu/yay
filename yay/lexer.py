@@ -12,11 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 
 from .errors import LexerError
 
 from ply import lex
 
+command_terms = [
+    ('call ', 'CALL'),
+    ('create ', 'CREATE'),
+    ('if ', 'IF'),
+    ('for ', 'FOR'),
+    ('in ', 'IN'),
+    ('include ', 'INCLUDE'),
+    ('macro ', 'MACRO'),
+    ('search ', 'SEARCH'),
+    ('set ', 'SET'),
+    ('=', 'ASSIGN'),
+    (r'\+', 'OP'),
+    ('-', 'OP'),
+    ('/', 'OP'),
+    (r'\*', 'OP'),
+    ('<', 'CMP'),
+    ('>', 'CMP'),
+    ('<=', 'CMP'),
+    ('>=', 'CMP'),
+    ('==', 'CMP'),
+    ('!=', 'CMP'),
+    (r'\(', 'LPAREN'),
+    (r'\)', 'RPAREN'),
+    (r'[0-9]+.[0-9]+', 'FLOAT'),
+    (r'[0-9]+', 'INTEGER'),
+    (r'"(\.|[^"])*"', 'STRING'),
+    (r'[A-Za-z][A-Za-z0-9]*', 'VAR'),
+]
+
+ct_compiled = [(re.compile(x), y) for x, y in command_terms]
 
 class Lexer(object):
     
@@ -27,11 +58,14 @@ class Lexer(object):
         'END',
         'KEY',
         'SCALAR',
-        'DIRECTIVE',
+        'INTEGER',
+        'FLOAT',
+        'STRING',
         'TEMPLATE',
         'EMPTYLIST',
         'EMPTYDICT',
         'EXTEND',
+        'CONFIGURE',
         'LISTITEM',
         )
         
@@ -141,11 +175,8 @@ class Lexer(object):
 
     def emit_multiline(self):
         value = "\n".join(self.multiline_buffer) + "\n"
-        if '{{' in value or \
-           '\n%' in value:
-            self.template = 'j2'
-        if self.template is not None:
-            token = self.mktok('TEMPLATE', (self.template, value))
+        if '{{' in value:
+            token = self.mktok('TEMPLATE', value)
         else:
             token = self.mktok('SCALAR', value)
         self.multiline = False
@@ -155,45 +186,46 @@ class Lexer(object):
     
     def parse_key(self, key):
         """ Parse a key. Supports the following formats:
-          key j2
-          key extend j2
-          key extend
-          yay directive
-          
-          sets the template flag if required, and returns the key material and the extend flag
-          
+          key
+          extend key
+          configure key
         """
-        # TODO: cope with some weirdnesses like
-        # yay include extend j2
-        # which make no sense
-        extend = False
+        
         if ' ' not in key:
             return [self.mktok('KEY', key)]
-        terms = key.split()
-        if terms[-1] == 'j2':
-            self.multiline = True
-            self.template = 'j2'
-            terms = terms[:-1]
-        if terms[-1] == 'extend':
-            extend = True
-        if terms[0] == 'yay':
-            return [self.mktok('DIRECTIVE', terms[1])]
-        if extend:
-            return [self.mktok('KEY', terms[0]), self.mktok('EXTEND')]
-        else:
-            return [self.mktok('KEY', terms[0])]
+        parts = key.split(" ", 2)
+        if parts[0] == 'extend':
+            return [self.mktok('EXTEND'),
+                    self.mktok('KEY', parts[1])]
+        if parts[0] == 'configure':
+            return [self.mktok('CONFIGURE'),
+                    self.mktok('KEY', parts[1])]
+        raise LexerError("Key contains whitespace", line=self.lineno)
         
     def parse_value(self, value):
-        """ Return either a template or a scalar, by sniffing the contents of
-        the value """
+        """ Return an appropriate token for a value """
         if value == '{}':
             return self.mktok('EMPTYDICT')
         elif value == '[]':
             return self.mktok('EMPTYLIST')
         if '{{' in value:
-            return self.mktok('TEMPLATE', ('j2', value))
+            return self.mktok('TEMPLATE', value)
         else:
             return self.mktok('SCALAR', value)
+        
+        
+    def parse_command(self, line):
+        """ The line will start with '%'. We use regex matching and consumption so we can handle quoted strings, classes etc. """
+        yield '%'
+        line = line[1:]
+        while line:
+            line = line.strip()
+            for r, tok in ct_compiled:
+                res = r.match(line)
+                if res is not None:
+                    line = line[len(res):]
+                    yield self.mktok(tok, res)
+            raise LexerError("Cannot parse %r" % line, lineno=self.lineno)
 
     def _tokens(self):
         # this function is too long
@@ -243,8 +275,13 @@ class Lexer(object):
             # stash the level
             self.last_level = level
             
+            # see if this is actually a command line
+            if line.startswith('%'):
+                for tok in self.parse_command(line):
+                    yield tok
+            
             # see if the line starts with a key
-            if ':' in line:
+            elif ':' in line:
                 
                 # it's a key inside a list value
                 if line.startswith('-'):
@@ -279,10 +316,16 @@ class Lexer(object):
                     yield self.mktok('END')
                 else:
                     yield self.parse_value(line)
+                    
+        # emit the multiline if we end the file in multiline mode
         if self.multiline:
             yield self.emit_multiline()
+            
+        # finish with sufficient ends
         for x in range(0, self.last_level):
             yield self.mktok('END')
+            
+        # final enclosing block
         yield self.mktok('END')
         
     def token(self):

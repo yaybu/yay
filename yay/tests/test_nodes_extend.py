@@ -15,14 +15,14 @@
 
 from .base import TestCase
 
-class TestAppend(TestCase):
+class TestExtend(TestCase):
 
-    def test_append_list(self):
+    def test_extend_list(self):
         source = """
             foo:
               - 1
               - 9
-            foo extend:
+            extend foo:
               - 8
               - 5
             """
@@ -32,9 +32,9 @@ class TestAppend(TestCase):
 
         self.assertResolves(source, expected)
 
-    def test_append_no_predecessor(self):
+    def test_extend_no_predecessor(self):
         source = """
-            foo extend:
+            extend foo:
               - 1
               - 2
               - 3

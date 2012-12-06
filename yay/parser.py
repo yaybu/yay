@@ -26,9 +26,13 @@ def p_node_template(p):
     'node : BLOCK TEMPLATE END'
     p[0] = nodes.Jinja(p[2][1])
     
-def p_node_extend(p):
-    'node : EXTEND node'
-    p[0] = nodes.Append(p[2])
+def p_extend(p):
+    'extend : EXTEND KEY node'
+    p[0] = (p[2], nodes.Extend(p[3]))
+    
+def p_dict_extend(p):
+    'dict : extend'
+    p[0] = [(p[1][0], p[1][1])]
     
 def p_dict_key_node(p):
     'dict : KEY node'
@@ -41,7 +45,7 @@ def p_dict_dict_dict(p):
 
 def p_dict_emptydict(p):
     'dict : EMPTYDICT'
-    p[0] = []
+    p[0] = nodes.Mapping()
     
 def p_list_listitem_node(p):
     'list : LISTITEM node'
@@ -54,7 +58,7 @@ def p_list_list_list(p):
     
 def p_list_emptylist(p):
     'list : EMPTYLIST'
-    p[0] = []
+    p[0] = nodes.Sequence()
     
 parser = yacc.yacc()
 

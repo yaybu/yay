@@ -163,26 +163,11 @@ class TestLexer(unittest.TestCase):
             tok('END'),
             tok('END'), ])
 
-    def test_explicit_j2(self):
-        self.compare(self._lex("""
-        foo j2:
-            % for p in q:
-                - x: {{p}}
-            % endfor
-        """), [
-            tok('BLOCK'),
-                tok('KEY', 'foo'),
-                tok('BLOCK'),
-                    tok('TEMPLATE', ('j2', "% for p in q:\n    - x: {{p}}\n% endfor\n")),
-                tok('END'),
-            tok('END'),
-        ])
-            
-    def test_implicit_j2(self):
+    def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
             tok('BLOCK'),
                 tok('KEY', 'foo'),
-                tok('BLOCK'), tok('TEMPLATE', ('j2', '{{bar}}')), tok('END'),
+                tok('BLOCK'), tok('TEMPLATE', '{{bar}}'), tok('END'),
             tok('END'),
         ])
         
@@ -219,7 +204,7 @@ class TestLexer(unittest.TestCase):
                 tok('END'),
             ])
         
-    def test_multiline_implicit_j2(self):
+    def test_multiline_implicit_template(self):
         self.compare(self._lex("""
         foo: |
           bar
@@ -228,19 +213,19 @@ class TestLexer(unittest.TestCase):
         """), [
             tok('BLOCK'),
                 tok('KEY', 'foo'),
-                tok('BLOCK'), tok('TEMPLATE', ('j2', 'bar\nbaz\n{{quux}}\n')), tok('END'),
+                tok('BLOCK'), tok('TEMPLATE', 'bar\nbaz\n{{quux}}\n'), tok('END'),
             tok('END'),
         ])
         
     def test_extend(self):
         self.compare(self._lex("""
-        foo extend:
+        extend foo:
             - baz
             - quux
         """), [
             tok('BLOCK'),
-                tok('KEY', 'foo'),
                 tok('EXTEND'),
+                tok('KEY', 'foo'),
                 tok('BLOCK'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'baz'), tok('END'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'quux'), tok('END'),
@@ -248,20 +233,7 @@ class TestLexer(unittest.TestCase):
             tok('END'),
             ])
         
-    def test_extend_j2(self):
-        self.compare(self._lex("""
-        foo extend j2:
-            - baz
-            - quux
-        """), [
-            tok('BLOCK'),
-                tok('KEY', 'foo'),
-                tok('EXTEND'),
-                tok('BLOCK'), tok('TEMPLATE', ('j2', '- baz\n- quux\n')), tok('END'),
-            tok('END'),
-        ])
-        
-    def test_j2_listitem(self):
+    def test_template_in_listitem(self):
         self.compare(self._lex("""
         foo:
           - a
@@ -272,49 +244,8 @@ class TestLexer(unittest.TestCase):
                 tok('KEY', 'foo'),
                 tok('BLOCK'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'a'), tok('END'),
-                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', ('j2', '{{bar}}')), tok('END'),
+                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', '{{bar}}'), tok('END'),
                     tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'c'), tok('END'),
-                tok('END'),
-            tok('END'),
-        ])
-
-    def test_include(self):
-        self.compare(self._lex("""
-        yay include:
-            - foo.yay
-            - bar.yay
-        """), [
-            tok('BLOCK'),
-                tok('DIRECTIVE', 'include'),
-                tok('BLOCK'),
-                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'foo.yay'), tok('END'),
-                    tok('LISTITEM'), tok('BLOCK'), tok('SCALAR', 'bar.yay'), tok('END'),
-                tok('END'),
-            tok('END'),
-        ])
-        
-    def test_madness(self):
-        self.compare(self._lex("""
-        yay search:
-            - {{foo}}
-        """), [
-            tok('BLOCK'),
-                tok('DIRECTIVE', 'search'),
-                tok('BLOCK'),
-                    tok('LISTITEM'), tok('BLOCK'), tok('TEMPLATE', ('j2', '{{foo}}')), tok('END'),
-                tok('END'),
-            tok('END'),
-        ])
-        
-    def test_more_madness(self):
-        self.compare(self._lex("""
-        yay search j2:
-            - {{foo}}
-        """), [
-            tok('BLOCK'),
-                tok('DIRECTIVE', 'search'),
-                tok('BLOCK'),
-                tok('TEMPLATE', ('j2', '- {{foo}}\n')),
                 tok('END'),
             tok('END'),
         ])
