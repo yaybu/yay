@@ -13,13 +13,12 @@
 # limitations under the License.
 
 import unittest
-from yay.parser import parser
-from yay.lexer import Lexer
+from yay.parser import parse
 
 class TestCase(unittest.TestCase):
 
     def _parse(self, source):
-        return parser.parse(source, lexer=Lexer())
+        return parse(source)
 
     def _resolve(self, source):
         return self._parse(source).resolve()

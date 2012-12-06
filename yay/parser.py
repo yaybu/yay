@@ -57,3 +57,6 @@ def p_list_emptylist(p):
     p[0] = []
     
 parser = yacc.yacc()
+
+def parse(value):
+    return parser.parse(value, lexer=Lexer())

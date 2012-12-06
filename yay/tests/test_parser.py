@@ -1,14 +1,11 @@
 import unittest
-from yay.parser import parser
-from yay.lexer import Lexer
+from yay.parser import parse
 
 class TestParser(unittest.TestCase):
     
-    def _parse(self, value):
-        return parser.parse(value, lexer=Lexer())
-    
     def _resolve(self, value):
-        return self._parse(value).resolve()
+        result = parse(value).resolve()
+        return result
     
     def test_emptydict(self):
         self.assertEqual(self._resolve("""

@@ -136,3 +136,7 @@ Backus-Naur productions
 
 <call> ::= '%' 'call' <var> <node>
 
+<class> ::= '%' 'create' <expr> <node>
+          | '%' <var> <node>
+          
+      
