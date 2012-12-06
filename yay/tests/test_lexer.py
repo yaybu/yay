@@ -4,6 +4,8 @@ from yay.lexer import (Lexer, BLOCK, END, KEY, SCALAR,
                        LISTITEM, EMPTYDICT, EMPTYLIST,
                        TEMPLATE, EXTEND, DIRECTIVE)
 
+from yay.lexer import PLYLexer
+
 class TestLexer(unittest.TestCase):
     
     def _lex(self, value):
@@ -303,3 +305,27 @@ class TestLexer(unittest.TestCase):
                 END(),
             END(),
         ])
+
+class noTestPLYLexer(unittest.TestCase):
+    
+    def test_initial1(self):
+        l = PLYLexer()
+        l.input("""
+               a: b
+               c: 
+                 d: e
+            """)
+        self.assertEqual(l.token(), BLOCK())
+        self.assertEqual(l.token(), KEY('a'))
+        self.assertEqual(l.token(), BLOCK())
+        self.assertEqual(l.token(), SCALAR('b'))
+        self.assertEqual(l.token(), END())
+        self.assertEqual(l.token(), KEY('c'))
+        self.assertEqual(l.token(), BLOCK())
+        self.assertEqual(l.token(), KEY('d'))
+        self.assertEqual(l.token(), BLOCK())
+        self.assertEqual(l.token(), SCALAR('e'))
+        self.assertEqual(l.token(), END())
+        self.assertEqual(l.token(), END())
+        self.assertEqual(l.token(), END())
+    

@@ -319,3 +319,16 @@ class Lexer(object):
         yield END()
                 
             
+class PLYLexer:
+    
+    def __init__(self):
+        self.__lexer = Lexer()
+        self.tokens = self.__lexer.tokens()
+        
+    def input(self, data):
+        self.__lexer.input(data)
+        self.__lexer.done()
+        
+    def token(self):
+        return self.tokens.next()
+    
