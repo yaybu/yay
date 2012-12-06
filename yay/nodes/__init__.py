@@ -18,6 +18,5 @@ from yay.nodes.mapping import Mapping
 from yay.nodes.sequence import Sequence
 from yay.nodes.append import Append
 from yay.nodes.secret import Secret
-from yay.nodes.jinja2 import Jinja
 from yay.nodes.access import Access
 
