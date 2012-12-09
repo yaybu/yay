@@ -4,6 +4,36 @@ Resolving
 
 The language is parsed into a graph.
 
+
+Parenting
+=========
+
+Every node should have one and only one parent. Detached nodes are not valid.
+It is the responsibility of the parent to adopt its child nodes and let them
+know who there parents are.
+
+Parents will hold a strong ref to their children. Therfore the ref back to the
+parent can be a weakref.
+
+
+Predecessors
+============
+
+When a node is inserted into a Mapping it might supercede an existing key. The
+graph will keep track of this, which allows mappings to perform operations that
+involve previous versions of themselves. For example::
+
+    foo:
+      - 1
+      - 2
+
+    extend foo:
+      - 3
+
+This would create a ``Mapping`` node with a single key: ``foo``. This key would
+resolve to an ``Extend`` node. It would have a predecessor that was the original ``Sequence`` (of 1, 2).
+
+
 Resolving vs Expanding
 ======================
 
