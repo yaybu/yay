@@ -54,6 +54,63 @@ We can then access ``default`` without triggering ``dont_resolve_me``.
 (#FIXME: I think the correct thing is to return a clone of the child mapping,
 but predecessored and parented as though it were the if).
 
+It is important that when a node is expanded the node that it returns is indeed
+expanded. To clarify, consider this example::
+
+    var: 1
+
+    % if 0:
+        var: 2
+
+    % if 0:
+        var: 3
+
+    foo: {{ var }}
+
+If this was prased and you attempted to expand ``foo`` we'd expect it to return
+a ``Boxed(1)``
+
+When the first ``If`` node is expanded it will realise that the condition is
+false and attempt to return its predecessor. However it's predecessor is a
+``If`` node as well. So if when a node is expanded it returns another existing
+node it should take care to call ``expand`` upon it. In this case, the 2nd
+``If`` will expand to a ``Mapping`` and when a ``Mapping`` is expanded it will
+just return itself. This is the correct behaviour.
+
+
+Variable expansion
+==================
+
+Expressions can reference variables. These might be keys in the global document
+or they might be temporary variables in the local scope. An example of this
+might be::
+
+    somevar: 123
+
+    foo:
+        % let temp1 = 123
+        bar: {{ somevar }} {{ temp1 }}
+
+In order to resolve bar the graph needs to be able to resolve ``temp1`` and
+``somevar``.
+
+When a variable is referenced from an expression it is not immediable 'bound'.
+This is not the point at which we traverse the graph and find these variables.
+Instead we place an ``Access`` node in the graph.
+
+Primarily an ``Access`` node needs to know the key or index to traverse to.
+This is an expression that will be resolved when any attempt to expand the node
+is actioned.
+
+When no additional parameters are passed to an Access node it will look up the
+key in the current scope (see the Context section).
+
+However you can specify an expression on which to act. This is useful because
+you can chain several ``Access`` nodes together. For the example above, the
+expression ``{{foo.bar}}`` would be parsed to::
+
+    Access(Access(None, "foo"), "bar")
+
 
 Context
 =======
@@ -94,6 +151,7 @@ object wants to look up a name and consider scope it asks its parent for the
 nearest context node. This just traverses its parents until it reaches a
 context node or reaches the root of the graph. If a context node cannot answer
 it's query then traversal continues.
+
 
 For
 ===
