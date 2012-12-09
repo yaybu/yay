@@ -30,8 +30,25 @@ involve previous versions of themselves. For example::
     extend foo:
       - 3
 
-This would create a ``Mapping`` node with a single key: ``foo``. This key would
-resolve to an ``Extend`` node. It would have a predecessor that was the original ``Sequence`` (of 1, 2).
+This would parse to:
+
+.. digraph:: foo
+
+    Mapping;
+    Mapping -> Extend [label="foo"];
+    Sequence1 [label="Sequence"];
+    Boxed1 [label="1"];
+    Boxed2 [label="2"];
+    Sequence1 -> Boxed1;
+    Sequence1 -> Boxed2;
+    Extend -> Sequence1 [label="predecessor"];
+    Sequence2 [label="Sequence"];
+    Boxed3 [label="3"];
+    Sequence2 -> Boxed3;
+    Extend -> Sequence2 [label="inner"];
+
+With this structure it is then easy to combine the original list with the 2nd
+list.
 
 
 Resolving vs Expanding
