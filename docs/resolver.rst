@@ -32,7 +32,7 @@ involve previous versions of themselves. For example::
 
 This would parse to:
 
-.. digraph:: foo
+.. digraph:: resolver_predecessor
 
     Mapping;
     Mapping -> Extend [label="foo"];
@@ -205,6 +205,11 @@ no match has been found the ``get`` method is called on the root. This may
 raise an exception if there is no such node.
 
 
+If
+==
+
+
+
 For
 ===
 
@@ -219,6 +224,33 @@ a context node for each iteration of the loop. For example::
       % for i in baz
           - {{ i }}
 
-Might expand to something like ``Seq(Ctx({'i':1), Tmpl("{{i}}"), Ctx({'i':2}, Tmpl("{{i}}")))``
+This would parse to:
+
+.. digraph:: resolver_for_unresolved
+
+    Mapping -> For [label="foo"];
+    Function [label="Function(range, 2)"];
+    For -> Function [label="sequence"];
+    For -> Sequence [label="inner"];
+    Access [label="Access(key=i)"];
+    Sequence -> Access;
+
+
+This might expand to:
+
+.. digraph:: resolver_for_expanded
+
+    Context0 [label="Context(i=0)"];
+    Sequence -> Context0 [label="0"];
+    Sequence0 [label="Sequence"];
+    Access0 [label="Access(key=i)"];
+    Sequence0 -> Access0;
+    Context0 -> Sequence0;
+    Context1 [label="Context(i=1)"];
+    Sequence -> Context1 [label="1"];
+    Sequence1 [label="Sequence"];
+    Access1 [label="Access(key=i)"];
+    Sequence1 -> Access1;
+    Context1 -> Sequence1;
 
 
