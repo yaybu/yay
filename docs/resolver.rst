@@ -73,7 +73,7 @@ needs to be traversal friendly. There is no need to resolve the
 ``dont_resolve_me`` variable when attempting to access ``default``.
 
 This is where the ``expand`` API comes in. In order to resolve ``default`` we
-need to resolve the if expression. But there is no need to resolve the other
+need to resolve the guard expression. But there is no need to resolve the other
 child nodes of If.
 
 In this case, calling expand() will return the predecessor mapping if the
@@ -97,7 +97,7 @@ expanded. To clarify, consider this example::
 
     foo: {{ var }}
 
-If this was prased and you attempted to expand ``foo`` we'd expect it to return
+If this was parsed and you attempted to expand ``foo`` we'd expect it to return
 a ``Boxed(1)``
 
 When the first ``If`` node is expanded it will realise that the condition is
@@ -121,16 +121,19 @@ might be::
         % let temp1 = 123
         bar: {{ somevar }} {{ temp1 }}
 
-In order to resolve bar the graph needs to be able to resolve ``temp1`` and
+In order to resolve ``bar`` the graph needs to be able to resolve ``temp1`` and
 ``somevar``.
 
-When a variable is referenced from an expression it is not immediable 'bound'.
+When a variable is referenced from an expression it is not immediately 'bound'.
 This is not the point at which we traverse the graph and find these variables.
 Instead we place an ``Access`` node in the graph.
 
 Primarily an ``Access`` node needs to know the key or index to traverse to.
 This is an expression that will be resolved when any attempt to expand the node
-is actioned.
+is actioned. This expression could be as simple as a literal, or as complicated
+as something like this::
+
+    {{ foo.bar[1].baz[someothervar[0].bar] else foo.bar[0] }}
 
 When no additional parameters are passed to an Access node it will look up the
 key in the current scope (see the Context section).
@@ -169,7 +172,7 @@ object. This was problematic::
             b: {{ b }}
 
 Is ``b`` always ``6``, or does its value change with the for loop? The correct
-behaviour is that it is always 6 but this approach did not allow this.
+behaviour is that it is always 6 but a context object approach did not allow this.
 
 Another disadvantage of this approach is that a node doesn't resolve to one
 state - it resolves to many states as it could be passed many different
@@ -180,7 +183,9 @@ The current approach is to treat context as a member of the graph. When an
 object wants to look up a name and consider scope it asks its parent for the
 nearest context node. This just traverses its parents until it reaches a
 context node or reaches the root of the graph. If a context node cannot answer
-it's query then traversal continues.
+it's query then traversal continues. When the root of the graph is reached if
+no match has been found the ``get`` method is called on the root. This may
+raise an exception if there is no such node.
 
 
 For
