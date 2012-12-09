@@ -29,6 +29,7 @@ Internals
    language-internals
    parser
    resolver
+   nodes
 
 
 Contributing
