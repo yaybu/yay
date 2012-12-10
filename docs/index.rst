@@ -19,3 +19,23 @@ Contents:
    patterns
    hacking
 
+
+Internals
+=========
+
+.. toctree::
+   :maxdepth: 2
+
+   language-internals
+   parser
+   resolver
+   nodes
+
+
+Contributing
+============
+
+To contribute to Yay send us pull requests on GitHub!
+
+If you have any questions we are in ``#yaybu`` on ``irc.oftc.net``.
+

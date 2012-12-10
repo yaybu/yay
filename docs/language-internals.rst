@@ -56,6 +56,22 @@ addition of an else operator.
 
 If the named variable does not exist and there is no else clause then this is an error.
 
+
+Coalescence
+===========
+
+Within the parser, constructs like::
+
+    foo: bar
+
+    % include 'baz.yay'
+
+    quux: quuux
+
+will be returned as a mapping {'quux': 'quuux'} which has a predecessor of an
+include node, which itself has a predecessor of {'foo': 'bar'}. 
+
+
 Backus-Naur productions
 =======================
 
