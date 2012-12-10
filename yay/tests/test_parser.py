@@ -1,6 +1,8 @@
 import unittest
 from yay.parser import parse
 
+from yay.nodes import *
+
 class TestParser(unittest.TestCase):
     
     def _resolve(self, value):

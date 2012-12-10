@@ -312,3 +312,8 @@ class TestLexer(unittest.TestCase):
         self.compare([l.token()], [tok('END')])
         self.compare([l.token()], [tok('END')])
     
+    def test_include(self):
+        self.compare(self._lex("""
+        % include "foo.yay"
+        """), [])
+        

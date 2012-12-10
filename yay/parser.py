@@ -6,6 +6,46 @@ from . import nodes
 
 tokens = Lexer.tokens
 
+start = 'node'
+
+def p_include(p):
+    'include : PERCENT INCLUDE expr'
+    p[0] = nodes.Include(p[3])
+    
+def p_consume_include(p):
+    'dict : dict include'
+    # 
+
+def p_expr_scalar(p):
+    '''expr : STRING
+            | INTEGER
+            | FLOAT
+            | function
+            | VAR
+    '''
+    p[0] = p[1]
+    
+def p_expr_operator(p):
+    'expr : expr OP expr'
+    p[0] = nodes.Operator(p[2], p[1], p[3])
+    
+def p_expr_comparison(p):
+    'expr : expr CMP expr'
+    p[0] = nodes.Comparison(p[2], p[1], p[3])
+
+def p_expression_list(p):
+    '''expression_list : expression'''
+    p[0] = [p[1]]
+    
+def p_expression_list_cont(p):
+    'expression_list : expression_list COMMA expression'
+    p[0] = p[1]
+    p[0].append(p[3])
+    
+def p_function(p):
+    'function : FUNCTION LPAREN expression_list RPAREN'
+    p[0] = nodes.Function(p[1], p[3])
+
 def p_node_scalar(p):
     'node : BLOCK SCALAR END'
     p[0] = nodes.Boxed(p[2])
@@ -21,11 +61,7 @@ def p_node_dict(p):
 def p_node_list(p):
     'node : BLOCK list END'
     p[0] = nodes.Sequence(p[2])
-    
-#def p_node_template(p):
-#    'node : BLOCK TEMPLATE END'
-#    p[0] = nodes.Template(p[2][1])
-    
+
 def p_extend(p):
     'extend : EXTEND KEY node'
     p[0] = (p[2], nodes.Extend(p[3]))
