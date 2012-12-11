@@ -18,39 +18,43 @@ from .errors import LexerError
 
 from ply import lex
 
-command_terms = [
-    ('and', 'AND'),
-    ('call', 'CALL'),
-    ('create', 'CREATE'),
-    ('else', 'ELSE'),
-    ('if', 'IF'),
-    ('is', 'IS'),
-    ('for', 'FOR'),
-    ('in', 'IN'),
-    ('include', 'INCLUDE'),
-    ('lambda', 'LAMBDA'),
-    ('macro', 'MACRO'),
-    ('not', 'NOT'),
-    ('or', 'OR'),
-    ('search ', 'SEARCH'),
-    ('set ', 'SET'),
-    ('<<', 'LSHIFT'),
-    ('>>', 'RSHIFT'),
-    ('<=', 'LE'),
-    ('>=', 'GE'),
-    ('==', 'EQ'),
-    ('!=', 'NE'),
-    ('<>', 'GTLT'),
-    (r'\.\.\.', 'ELLIPSIS'),
-    ('\*\*', 'POW'),
-    ('//', 'FLOOR_DIVIDE'),
-]
-
-ct_compiled = [(re.compile(x), y) for x, y in command_terms]
-
 class Lexer(object):
     
     """ Leading significant whitespace lexing considered fugly. """
+    
+    literals = [
+        '+', '-', '*', '/', '%', '&', '|', '^', '~', '<', '>',
+        '(', ')', '[', ']', '{', '}', '@', ',', ':', '.', '`',
+        '=', ';', "'", '"', '#', '\\'
+        ]
+    
+    keywords = [
+        ('and', 'AND'),
+        ('call', 'CALL'),
+        ('create', 'CREATE'),
+        ('else', 'ELSE'),
+        ('if', 'IF'),
+        ('is', 'IS'),
+        ('for', 'FOR'),
+        ('in', 'IN'),
+        ('include', 'INCLUDE'),
+        ('lambda', 'LAMBDA'),
+        ('macro', 'MACRO'),
+        ('not', 'NOT'),
+        ('or', 'OR'),
+        ('search ', 'SEARCH'),
+        ('set ', 'SET'),
+        ('<<', 'LSHIFT'),
+        ('>>', 'RSHIFT'),
+        ('<=', 'LE'),
+        ('>=', 'GE'),
+        ('==', 'EQ'),
+        ('!=', 'NE'),
+        ('<>', 'GTLT'),
+        (r'\.\.\.', 'ELLIPSIS'),
+        ('\*\*', 'POW'),
+        ('//', 'FLOOR_DIVIDE'),
+    ]
 
     tokens = [
         'BLOCK',
@@ -227,18 +231,11 @@ class Lexer(object):
         """ The line will start with '%'. We use regex matching and consumption so we can handle quoted strings, classes etc. """
         line = line.strip()
         while line:
-            for r, tok in ct_compiled:
-                m = r.match(line)
-                if m is not None:
-                    res = m.group()
-                    line = line[len(res):]
-                    yield self.mktok(tok, res)
-                    break
-            else:                
-                # TODO: implement all of http://docs.python.org/2/reference/lexical_analysis.html#literals
-                # find literals and identifiers
-                raise LexerError("Cannot parse %r" % line, line=self.lineno)
-            line = line.strip()
+            pass
+            # match literals
+            # match identifiers
+            # match keywords
+        
 
     def _tokens(self):
         # this function is too long
