@@ -64,9 +64,10 @@ class Lexer(object):
         'LISTITEM',
         'RDBRACE',
         'SCALAR',
-        'SET',
         'IDENTIFIER',
         'LITERAL',
+        'ELIF',
+        'SELECT',
         ]
     
     def __init__(self):

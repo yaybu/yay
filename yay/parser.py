@@ -7,6 +7,7 @@ from . import nodes
 
 tokens = Lexer.tokens
 
+start = 'node'
 
 ########## EXPRESSIONS
 ## http://docs.python.org/2/reference/expressions.html
@@ -431,10 +432,82 @@ def p_sublist(p):
             | sublist "," parameter ","
     '''
 
-##############################
+#### yay \o/
 
 
-
+def p_command(p):
+    '''
+    command : BLOCK '%' directive END
+    '''
+    
+def p_directive(p):
+    '''
+    directive : include_directive
+              | search_directive
+              | for_directive
+              | set_directive
+              | if_directive
+              | select_directive
+    '''
+    
+def p_include_directive(p):
+    '''
+    include_directive : INCLUDE atom
+    '''
+    
+def p_search_directive(p):
+    '''
+    search_directive : SEARCH atom
+    '''
+    
+def p_for_directive(p):
+    '''
+    for_directive : FOR target IN atom node
+                  | FOR target IF atom IN atom node
+    '''
+    
+def p_set_directive(p):
+    '''
+    set_directive : SET target "=" atom
+    '''
+    
+def p_if_directive(p):
+    '''
+    if_directive : IF atom node
+                 | IF atom node ELSE node
+                 | IF atom node elif_list
+                 | IF atom node elif_list ELSE node
+    '''
+    
+def p_elif_list(p):
+    '''
+    elif_list : elif
+              | elif_list elif
+    '''
+    
+def p_elif(p):
+    '''
+    elif : ELIF atom node
+    '''
+    
+def p_select_directive(p):
+    '''
+    select_directive : SELECT atom case_list
+    '''
+    
+def p_case_list(p):
+    '''
+    case_list : case_block
+              | case_list case_block
+    '''
+    
+def p_case_block(p):
+    '''
+    case_block : KEY ":" node
+    '''
+    
+def p_command_node(p):
+    'node : command'
 
 def p_node_scalar(p):
     'node : BLOCK SCALAR END'
