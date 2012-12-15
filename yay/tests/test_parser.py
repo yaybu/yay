@@ -9,6 +9,10 @@ class TestParser(unittest.TestCase):
         result = parse(value).resolve()
         return result
     
+    def test_expr_basic(self):
+        res = parse("% set a = 2")
+        self.assertEqual(res, Set('a', 2))
+    
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
         a: {}

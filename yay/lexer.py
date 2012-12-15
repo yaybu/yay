@@ -70,7 +70,28 @@ class LexToken(lex.LexToken):
         self.orig = orig or value
     
     def __len__(self):
+        if self.orig is None:
+            return 0
         return len(self.orig)
+    
+    def __nonzero__(self):
+        # work around some evil code in PLY
+        return True
+    
+    def __eq__(self, other):
+        """ Used in tests only """
+        if type(other) == type(""):
+            if self.type == other and self.value == other:
+                return True
+        elif type(other) != type(self):
+            return False
+        else:
+            if self.type == other.type and self.value == other.value:
+                return True
+        return False
+    
+    def __ne__(self, other):
+        return not self == other
     
 class Lexer(object):
     
@@ -295,7 +316,7 @@ class Lexer(object):
             m = i.match(line)
             if m is not None:
                 r =  m.group()
-                return r
+                return LexToken(r, r)
         
     def match_string_literal(self, line):
         """ If there is a literal at the start of this line, then return the
@@ -448,7 +469,7 @@ class Lexer(object):
             
             # see if this is actually a command line
             if line.startswith('%'):
-                yield LexToken('PERCENT')
+                yield LexToken('%', '%')
                 line = line[1:]
                 for tok in self.parse_command(line):
                     yield tok
@@ -507,7 +528,8 @@ class Lexer(object):
         
     def token(self):
         try:
-            return self._generator.next()
+            tok = self._generator.next()
+            return tok
         except StopIteration:
             return None
     
@@ -516,5 +538,7 @@ class Lexer(object):
             yield i
                 
 for s, t in Lexer.keywords:
+    Lexer.tokens.append(t)
+for s, t in Lexer.long_literals:
     Lexer.tokens.append(t)
     

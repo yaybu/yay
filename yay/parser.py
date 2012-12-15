@@ -4,6 +4,7 @@ from ply import yacc
 
 from lexer import Lexer
 from . import nodes
+from . import ast
 
 tokens = Lexer.tokens
 
@@ -18,6 +19,12 @@ def p_atom(p):
          | LITERAL
          | enclosure
     '''
+    # Atoms are the most basic elements of expressions. The simplest atoms
+    # are identifiers or literals. Forms enclosed in reverse quotes or in
+    # parentheses, brackets or braces are also categorized syntactically as
+    # atoms.
+    p[0] = p[1]
+    
     
 def p_enclosure(p):
     '''
@@ -34,6 +41,28 @@ def p_parent_form(p):
     parenth_form : "(" ")"
                  | "(" expression_list ")"
     '''
+    # A parenthesized form is an optional expression list enclosed in
+    # parentheses
+    # 
+    # A parenthesized expression list yields whatever that expression list
+    # yields: if the list contains at least one comma, it yields a tuple;
+    # otherwise, it yields the single expression that makes up the expression
+    # list.
+    # 
+    # An empty pair of parentheses yields an empty tuple object. Since tuples
+    # are immutable, the rules for literals apply (i.e., two occurrences of
+    # the empty tuple may or may not yield the same object).
+    # 
+    # Note that tuples are not formed by the parentheses, but rather by use
+    # of the comma operator. The exception is the empty tuple, for which
+    # parentheses are required - allowing unparenthesized "nothing" in
+    # expressions would cause ambiguities and allow common typos to pass
+    # uncaught.
+
+    if len(p) == 3:
+        p[0] = ast.ParentForm()
+    else:
+        p[0] = ast.ParentForm(p[2])
     
 def p_list_display(p):
     '''
@@ -41,6 +70,19 @@ def p_list_display(p):
                  | "[" expression_list "]"
                  | "[" list_comprehension "]"
     '''
+    # A list display is a possibly empty series of expressions enclosed in
+    # square brackets.
+    # 
+    # A list display yields a new list object. Its contents are specified by
+    # providing either a list of expressions or a list comprehension. When a
+    # comma-separated list of expressions is supplied, its elements are
+    # evaluated from left to right and placed into the list object in that
+    # order. When a list comprehension is supplied, it consists of a single
+    # expression followed by at least one for clause and zero or more for or
+    # if clauses. In this case, the elements of the new list are those that
+    # would be produced by considering each of the for or if clauses a block,
+    # nesting from left to right, and evaluating the expression to produce a
+    # list element each time the innermost block is reached.
     
 def p_list_comprehension(p):
     '''
@@ -152,6 +194,7 @@ def p_primary(p):
             | slicing
             | call
     '''
+    p[0] = p[1]
     
 def p_attributeref(p):
     '''
@@ -217,11 +260,13 @@ def p_lower_bound(p):
     '''
     lower_bound : expression
     '''
+    p[0] = p[1]
     
 def p_upper_bound(p):
     '''
     upper_bound : expression
     '''
+    p[0] = p[1]
     
 def p_stride(p):
     '''
@@ -265,6 +310,10 @@ def p_power(p):
     power : primary
           | primary POW u_expr
     '''
+    if len(p) == 2:
+        p[0] = ast.Power(p[1])
+    else:
+        p[0] = ast.Power(p[1], p[3])
 
 def p_u_expr(p):
     '''
@@ -273,6 +322,26 @@ def p_u_expr(p):
            | "+" u_expr
            | "~" u_expr
     '''
+    # The unary - (minus) operator yields the negation of its numeric
+    # argument.
+    # 
+    # The unary + (plus) operator yields its numeric argument unchanged.
+    # 
+    # The unary ~ (invert) operator yields the bitwise inversion of its plain
+    # or long integer argument. The bitwise inversion of x is defined as
+    # -(x+1). It only applies to integral numbers.
+    # 
+    # In all three cases, if the argument does not have the proper type, a
+    # TypeError exception is raised.
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        if p[1] == '-':
+            p[0] = ast.UnaryMinus(p[2])
+        elif p[1] == '+':
+            p[0] == p[2]
+        elif p[1] == '~':
+            p[0] = ast.Invert(p[2])
     
 def p_m_expr(p):
     '''
@@ -282,6 +351,11 @@ def p_m_expr(p):
            | m_expr "/" u_expr
            | m_expr "%" u_expr
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.Expr(p[1], p[3], p[2])
+    
     
 def p_a_expr(p):
     '''
@@ -289,6 +363,10 @@ def p_a_expr(p):
            | a_expr "+" m_expr
            | a_expr "-" m_expr
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_shift_expr(p):
     '''
@@ -296,30 +374,47 @@ def p_shift_expr(p):
                | shift_expr LSHIFT a_expr
                | shift_expr RSHIFT a_expr
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_and_expr(p):
     '''
     and_expr : shift_expr
              | and_expr "&" shift_expr
     '''
+    if len(p) ==2:
+        p[0] = p[1]
+    else:
+        p[0] = Expr(p[1], p[3], p[2])
     
 def p_xor_expr(p):
     '''
     xor_expr : and_expr
              | xor_expr "^" and_expr
     '''
+    if len(p) ==2:
+        p[0] = p[1]
+    else:
+        p[0] = Expr(p[1], p[3], p[2])
     
 def p_or_expr(p):
     '''
     or_expr : xor_expr
             | or_expr "|" xor_expr
     '''
+    if len(p) ==2:
+        p[0] = p[1]
+    else:
+        p[0] = Expr(p[1], p[3], p[2])
     
 def p_comparison(p):
     '''
     comparison : or_expr comp_operator or_expr
                | comparison comp_operator or_expr
     '''
+    p[0] = Expr(p[1], p[3], p[2])
     
 def p_comp_operator(p):
     '''
@@ -341,42 +436,61 @@ def p_or_test(p):
     or_test : and_test
             | or_test OR and_test
     '''
+    if len(p) ==2:
+        p[0] = p[1]
+    else:
+        p[0] = Expr(p[1], p[3], p[2])
     
 def p_and_test(p):
     '''
     and_test : not_test
              | and_test AND not_test
     '''
+    if len(p) ==2:
+        p[0] = p[1]
+    else:
+        p[0] = Expr(p[1], p[3], p[2])
     
 def p_not_test(p):
     '''
     not_test : comparison
              | NOT not_test
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.Not(p[2])
     
 def p_conditional_expression(p):
     '''
     conditional_expression : or_test
                            | or_test IF or_test ELSE expression
     '''
-    
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.ConditionalExpression(p[1], p[3], p[5])
+        
 def p_expression(p):
     '''
     expression : conditional_expression
                | lambda_form
     '''
+    p[0] = p[1]
     
 def p_lambda_form(p):
     '''
     lambda_form : LAMBDA ":" expression
                 | LAMBDA parameter_list ":" expression
     '''
+    raise NotImplementedError
     
 def p_old_lambda_form(p):
     '''
     old_lambda_form : LAMBDA ":" expression
                     | LAMBDA parameter_list ":" old_expression
     '''
+    raise NotImplementedError
 
 def p_expression_list(p):
     '''
@@ -384,6 +498,11 @@ def p_expression_list(p):
                     | expression_list "," expression
                     | expression_list "," expression ","
     '''
+    if len(p) == 2:
+        p[0] = ast.ExpressionList(p[1])
+    elif len(p) in (4,5):
+        p[0] = p[1]
+        p[0].append(p[3])
 
 #### SIMPLE STATEMENTS
 # http://docs.python.org/2/reference/simple_stmts.html
@@ -402,6 +521,7 @@ def p_target(p):
            | subscription
            | slicing
     '''
+    p[0] = p[1]
 
 #### COMPOUND STATEMENTS
 # http://docs.python.org/2/reference/compound_stmts.html
@@ -439,6 +559,7 @@ def p_command(p):
     '''
     command : BLOCK '%' directive END
     '''
+    p[0] = p[3]
     
 def p_directive(p):
     '''
@@ -449,6 +570,7 @@ def p_directive(p):
               | if_directive
               | select_directive
     '''
+    p[0] = p[1]
     
 def p_include_directive(p):
     '''
@@ -470,6 +592,7 @@ def p_set_directive(p):
     '''
     set_directive : SET target "=" atom
     '''
+    p[0] = nodes.command.Set(p[2], p[4])
     
 def p_if_directive(p):
     '''
@@ -508,6 +631,7 @@ def p_case_block(p):
     
 def p_command_node(p):
     'node : command'
+    p[0] = p[1]
 
 def p_node_scalar(p):
     'node : BLOCK SCALAR END'

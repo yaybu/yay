@@ -27,6 +27,15 @@ class Set(Node):
         self.var = var
         self.expr = expr
         
+    def __eq__(self, other):
+        if isinstance(other, self.__class__) and \
+           self.var == other.var and \
+           self.expr == other.expr:
+            return True
+        else:
+            return False
+        
+        
 class If(Node):
     
     def __init__(self, condition, result, elifs, else_):

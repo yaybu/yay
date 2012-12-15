@@ -38,13 +38,8 @@ class TestLexer(unittest.TestCase):
         if len(x) != len(y):
             raise self.failureException("Token lists are of different lengths: %r %r", (x, y))
         for a, b in zip(x,y):
-            if type(a) != type(b):
+            if a != b:
                 raise self.failureException("Tokens %r %r differ" % (a,b))                
-            elif type(a) in types.StringTypes:
-                if a != b:
-                    raise self.failureException("Tokens %r %r differ" % (a,b))                                    
-            elif a.value != b.value or a.type != b.type:
-                raise self.failureException("Tokens %r %r differ" % (a,b))
     
     def test_list_of_multikey_dicts(self):
         result = self._lex("""
@@ -188,7 +183,7 @@ class TestLexer(unittest.TestCase):
                 t('KEY', 'foo'),
                 t('BLOCK'), 
                 t('LDBRACE'),
-                t('VAR', 'bar'),
+                t('IDENTIFIER', 'bar'),
                 t('RDBRACE'),
                 t('END'),
             t('END'),
@@ -239,7 +234,7 @@ class TestLexer(unittest.TestCase):
                 t('BLOCK'),
                 t('SCALAR', 'bar\nbaz\n'),
                 t('LDBRACE'),
-                t('VAR', 'quux'),
+                t('IDENTIFIER', 'quux'),
                 t('RDBRACE'),
                 t('SCALAR', '\n'),
                 t('END'),
@@ -271,18 +266,18 @@ class TestLexer(unittest.TestCase):
                t('BLOCK'),
                t('SCALAR', 'this '),
                t('LDBRACE'),
-               t('VAR', 'a'),
-               t('OP', '+'),
-               t('VAR', 'b'),
-               t('OP', '+'),
-               t('VAR', 'c'),
+               t('IDENTIFIER', 'a'),
+               t('+', '+'),
+               t('IDENTIFIER', 'b'),
+               t('+', '+'),
+               t('IDENTIFIER', 'c'),
                t('RDBRACE'),
                t('SCALAR', ' is '),
                t('LDBRACE'),
-               t('VAR', 'foo'),
-               t('LPAREN', '('),
-               t('STRING', '"bar"'),
-               t('RPAREN', ')'),
+               t('IDENTIFIER', 'foo'),
+               t('(', '('),
+               t('LITERAL', '"bar"'),
+               t(')', ')'),
                t('RDBRACE'),
                t('SCALAR', ' hard'),
                t('END'),
@@ -302,7 +297,7 @@ class TestLexer(unittest.TestCase):
                     t('LISTITEM'), t('BLOCK'), t('SCALAR', 'a'), t('END'),
                     t('LISTITEM'), t('BLOCK'), 
                         t('LDBRACE'),
-                        t('VAR', 'bar'), 
+                        t('IDENTIFIER', 'bar'), 
                         t('RDBRACE'),
                         t('END'),
                     t('LISTITEM'), t('BLOCK'), t('SCALAR', 'c'), t('END'),
@@ -334,5 +329,6 @@ class TestLexer(unittest.TestCase):
     def test_include(self):
         self.compare(self._lex("""
         % include "foo.yay"
-        """), [])
+        """), [
+           t('BLOCK'), t('%'), t('INCLUDE', 'include'), t('LITERAL', '"foo.yay"'), t('END')])
         
