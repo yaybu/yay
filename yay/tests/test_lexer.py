@@ -25,6 +25,11 @@ class TestLexer(unittest.TestCase):
         self.compare(p("('foo')"), ['(', t('LITERAL', "'foo'"), ')'])
         self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "'foo'")])
         self.compare(p("a+2"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', 2)])
+        self.compare(p("a<<5"), [t('IDENTIFIER', 'a'), t('LSHIFT', "<<"), t('LITERAL', 5)])
+        self.compare(p("a<5"), [t('IDENTIFIER', 'a'), '<', t('LITERAL', 5)])
+        self.compare(p("a and 5"), [t('IDENTIFIER', 'a'), t('AND', 'and'), t('LITERAL', 5)])
+        self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
+        self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "'foo'"), ']'])
     
     def compare(self, x, y):
         """ Compare two lists of ts """

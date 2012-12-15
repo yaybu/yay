@@ -53,9 +53,12 @@ PY_INTEGER_RE = r"""
 (?![\w.])                #End of string or non-alpha non-decimal point
 """
 
+PY_FLOAT_RE = r'([+-]?\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
+
 string_literal_re = re.compile(PY_STRING_LITERAL_RE, re.VERBOSE)
 identifier_re = re.compile(PY_IDENTIFER_RE)
 integer_re = re.compile(PY_INTEGER_RE, re.VERBOSE | re.IGNORECASE)
+float_re = re.compile(PY_FLOAT_RE)
 
 class LexToken(lex.LexToken):
     
@@ -79,6 +82,19 @@ class Lexer(object):
         '=', ';'
         ]
     
+    long_literals = [
+        ('<<', 'LSHIFT'),
+        ('>>', 'RSHIFT'),
+        ('<=', 'LE'),
+        ('>=', 'GE'),
+        ('==', 'EQ'),
+        ('!=', 'NE'),
+        ('<>', 'GTLT'),
+        (r'\.\.\.', 'ELLIPSIS'),
+        ('\*\*', 'POW'),
+        ('//', 'FLOOR_DIVIDE'),
+    ]
+    
     keywords = [
         ('and', 'AND'),
         ('call', 'CALL'),
@@ -93,20 +109,10 @@ class Lexer(object):
         ('macro', 'MACRO'),
         ('not', 'NOT'),
         ('or', 'OR'),
-        ('search ', 'SEARCH'),
-        ('set ', 'SET'),
-        ('<<', 'LSHIFT'),
-        ('>>', 'RSHIFT'),
-        ('<=', 'LE'),
-        ('>=', 'GE'),
-        ('==', 'EQ'),
-        ('!=', 'NE'),
-        ('<>', 'GTLT'),
-        (r'\.\.\.', 'ELLIPSIS'),
-        ('\*\*', 'POW'),
-        ('//', 'FLOOR_DIVIDE'),
-        
+        ('search', 'SEARCH'),
+        ('set', 'SET'),
     ]
+    
 
     # tokens also includes all the tokens defined in the keywords list above
     tokens = [
@@ -136,8 +142,6 @@ class Lexer(object):
         self.lineno = 0
         self.lexpos = 0
         self.finished = False
-        self.literals_re = []
-        self.keywords_re = []
         self.compile()
         
         # these handle state during token generation
@@ -147,13 +151,16 @@ class Lexer(object):
         self.last_level = 0
         self._generator = self._tokens()
         
-        
     def compile(self):
+        self.literals_re = []
+        self.keywords_re = []
+        self.long_literals_re = []
         for i in self.literals:
             self.literals_re.append(re.compile(i))
         for s, t in self.keywords:
-            self.keywords_re.append((re.compile(s), t))
-        
+            self.keywords_re.append((re.compile("(%s)($|[^A-Za-z0-9_])" % s), t))
+        for s, t in self.long_literals:
+            self.long_literals_re.append((re.compile(s), t))
         
     def input(self, text):
         self.remaining.extend(list(text))
@@ -331,6 +338,10 @@ class Lexer(object):
         #intpart       ::=  digit+
         #fraction      ::=  "." digit+
         #exponent      ::=  ("e" | "E") ["+" | "-"] digit+        
+        m = float_re.match(line) 
+        if m is not None:
+            ival = eval(m.group())
+            return LexToken('LITERAL', ival, orig=m.group())
 
     def match_identifier(self, line):
         """ If there is an identifier at the start of this line, then return the
@@ -344,14 +355,29 @@ class Lexer(object):
         if m is not None:
             return LexToken('IDENTIFIER', m.group())
         
+    def match_long_symbolic_literal(self, line):
+        """ return literals longer than one character """
+        for i, t in self.long_literals_re:
+            m = i.match(line)
+            if m is not None:
+                r =  m.group()
+                return LexToken(t, r)
+            
     def match_keyword(self, line):
         """ return keywords """
+        for i, t in self.keywords_re:
+            m = i.match(line)
+            if m is not None:
+                r =  m.group(1)
+                return LexToken(t, r)
         
     def match_command_token(self, line):
-        for f in [self.match_symbolic_literal,
+        for f in [
+            self.match_long_symbolic_literal,
+            self.match_symbolic_literal,
             self.match_string_literal,
             self.match_floating_point_literal,
-            self.match_integer_literal, 
+            self.match_integer_literal,
             self.match_keyword,
             self.match_identifier]:
             r = f(line)
