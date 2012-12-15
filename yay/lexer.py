@@ -18,14 +18,65 @@ from .errors import LexerError
 
 from ply import lex
 
+PY_STRING_LITERAL_RE = (r"""
+[uU]?[rR]?
+  (?:              # Single-quote (') strings
+  '''(?:                 # Tripple-quoted can contain...
+      [^']               | # a non-quote
+      \\'                | # a backslashed quote
+      '{1,2}(?!')          # one or two quotes
+    )*''' |
+  '(?:                   # Non-tripple quoted can contain...
+     [^']                | # a non-quote
+     \\'                   # a backslashded quote
+   )*'(?!') | """+
+r'''               # Double-quote (") strings
+  """(?:                 # Tripple-quoted can contain...
+      [^"]               | # a non-quote
+      \\"                | # a backslashed single
+      "{1,2}(?!")          # one or two quotes
+    )*""" |
+  "(?:                   # Non-tripple quoted can contain...
+     [^"]                | # a non-quote
+     \\"                   # a backslashded quote
+   )*"(?!")
+)''')
+
+PY_IDENTIFER_RE = "[A-Za-z_][A-Za-z0-9_]*"
+
+PY_INTEGER_RE = r"""
+(?<![\w.])               #Start of string or non-alpha non-decimal point
+    0[X][0-9A-F]+L?|     #Hexadecimal
+    0[O][0-7]+L?|        #Octal
+    0[B][01]+L?|         #Binary
+    [1-9]\d*L?           #Decimal/Long Decimal, will not match 0____
+(?![\w.])                #End of string or non-alpha non-decimal point
+"""
+
+string_literal_re = re.compile(PY_STRING_LITERAL_RE, re.VERBOSE)
+identifier_re = re.compile(PY_IDENTIFER_RE)
+integer_re = re.compile(PY_INTEGER_RE, re.VERBOSE | re.IGNORECASE)
+
+class LexToken(lex.LexToken):
+    
+    def __init__(self, name, value=None, lineno=0, lexpos=0, orig=None):
+        self.type = name
+        self.value = value
+        self.lineno = lineno
+        self.lexpos = lexpos
+        self.orig = orig or value
+    
+    def __len__(self):
+        return len(self.orig)
+    
 class Lexer(object):
     
     """ Leading significant whitespace lexing considered fugly. """
     
     literals = [
-        '+', '-', '*', '/', '%', '&', '|', '^', '~', '<', '>',
-        '(', ')', '[', ']', '{', '}', '@', ',', ':', '.', '`',
-        '=', ';', "'", '"', '#', '\\'
+        '\+', '-', '\*', '/', '%', '&', '\|', '\^', '\~', '<', '>',
+        '\(', '\)', '\[', '\]', '{', '}', '@', ',', ':', '\.', '`',
+        '=', ';'
         ]
     
     keywords = [
@@ -54,8 +105,10 @@ class Lexer(object):
         (r'\.\.\.', 'ELLIPSIS'),
         ('\*\*', 'POW'),
         ('//', 'FLOOR_DIVIDE'),
+        
     ]
 
+    # tokens also includes all the tokens defined in the keywords list above
     tokens = [
         'BLOCK',
         'CONFIGURE',
@@ -83,6 +136,9 @@ class Lexer(object):
         self.lineno = 0
         self.lexpos = 0
         self.finished = False
+        self.literals_re = []
+        self.keywords_re = []
+        self.compile()
         
         # these handle state during token generation
         self.multiline = False
@@ -90,6 +146,14 @@ class Lexer(object):
         self.multiline_buffer = []
         self.last_level = 0
         self._generator = self._tokens()
+        
+        
+    def compile(self):
+        for i in self.literals:
+            self.literals_re.append(re.compile(i))
+        for s, t in self.keywords:
+            self.keywords_re.append((re.compile(s), t))
+        
         
     def input(self, text):
         self.remaining.extend(list(text))
@@ -168,14 +232,6 @@ class Lexer(object):
         total_spaces = spaces + 1 + spaces2 # indent the '-' too
         return self.indent_level(total_spaces)
 
-    def mktok(self, name, value=None):
-        tok = lex.LexToken()
-        tok.type = name
-        tok.value = value
-        tok.lineno = self.lineno
-        tok.lexpos = self.lexpos
-        return tok
-
     def emit_multiline(self):
         value = "\n".join(self.multiline_buffer) + "\n"
         for tok in self.parse_value(value):
@@ -192,49 +248,127 @@ class Lexer(object):
         """
         
         if ' ' not in key:
-            return [self.mktok('KEY', key)]
+            return [LexToken('KEY', key)]
         parts = key.split(" ", 2)
         if parts[0] == 'extend':
-            return [self.mktok('EXTEND'),
-                    self.mktok('KEY', parts[1])]
+            return [LexToken('EXTEND'),
+                    LexToken('KEY', parts[1])]
         if parts[0] == 'configure':
-            return [self.mktok('CONFIGURE'),
-                    self.mktok('KEY', parts[1])]
+            return [LexToken('CONFIGURE'),
+                    LexToken('KEY', parts[1])]
         raise LexerError("Key contains whitespace", line=self.lineno)
         
     def parse_value(self, value):
         """ Return tokens as required for value """
         if value == '{}':
-            yield self.mktok('EMPTYDICT')
+            yield LexToken('EMPTYDICT')
         elif value == '[]':
-            yield self.mktok('EMPTYLIST')
+            yield LexToken('EMPTYLIST')
         else:
             while value:
                 ldbrace = value.find('{{')
                 if ldbrace == -1:
-                    yield self.mktok('SCALAR', value)
+                    yield LexToken('SCALAR', value)
                     value = ""
                 else:
                     if ldbrace > 0:
-                        yield self.mktok('SCALAR', value[:ldbrace])
-                    yield self.mktok('LDBRACE')
+                        yield LexToken('SCALAR', value[:ldbrace])
+                    yield LexToken('LDBRACE')
                     value = value[ldbrace+2:]
                     rdbrace = value.find('}}')
                     if rdbrace == -1:
                         raise LexerError("Unbalanced {{}}", lineno=self.lineno)
                     for tok in self.parse_command(value[:rdbrace]):
                         yield tok
-                    yield self.mktok('RDBRACE')
+                    yield LexToken('RDBRACE')
                     value = value[rdbrace+2:]
         
+    def match_symbolic_literal(self, line):
+        for i in self.literals_re:
+            m = i.match(line)
+            if m is not None:
+                r =  m.group()
+                return r
+        
+    def match_string_literal(self, line):
+        """ If there is a literal at the start of this line, then return the
+        matching literal. Otherwise return None. """
+        
+        # shortstring     ::=  "'" shortstringitem* "'" | '"' shortstringitem* '"'
+        # longstring      ::=  "'''" longstringitem* "'''"
+        #                      | '"""' longstringitem* '"""'
+        # shortstringitem ::=  shortstringchar | escapeseq
+        # longstringitem  ::=  longstringchar | escapeseq
+        # shortstringchar ::=  <any source character except "\" or newline or the quote>
+        # longstringchar  ::=  <any source character except "\">
+        # escapeseq       ::=  "\" <any ASCII character>
+        m = string_literal_re.match(line)
+        if m is not None:
+            return LexToken('LITERAL', m.group())
+        
+    def match_integer_literal(self, line):
+        """ return integers """
+        #longinteger    ::=  integer ("l" | "L")
+        #integer        ::=  decimalinteger | octinteger | hexinteger | bininteger
+        #decimalinteger ::=  nonzerodigit digit* | "0"
+        #octinteger     ::=  "0" ("o" | "O") octdigit+ | "0" octdigit+
+        #hexinteger     ::=  "0" ("x" | "X") hexdigit+
+        #bininteger     ::=  "0" ("b" | "B") bindigit+
+        #nonzerodigit   ::=  "1"..."9"
+        #octdigit       ::=  "0"..."7"
+        #bindigit       ::=  "0" | "1"
+        #hexdigit       ::=  digit | "a"..."f" | "A"..."F"
+        m = integer_re.match(line)
+        if m is not None:
+            ival = eval(m.group())
+            return LexToken('LITERAL', ival, orig=m.group())
+
+    def match_floating_point_literal(self, line):
+        """ return floating points """
+        #floatnumber   ::=  pointfloat | exponentfloat
+        #pointfloat    ::=  [intpart] fraction | intpart "."
+        #exponentfloat ::=  (intpart | pointfloat) exponent
+        #intpart       ::=  digit+
+        #fraction      ::=  "." digit+
+        #exponent      ::=  ("e" | "E") ["+" | "-"] digit+        
+
+    def match_identifier(self, line):
+        """ If there is an identifier at the start of this line, then return the
+        matching literal. Otherwise return None. """
+        # identifier ::=  (letter|"_") (letter | digit | "_")*
+        # letter     ::=  lowercase | uppercase
+        # lowercase  ::=  "a"..."z"
+        # uppercase  ::=  "A"..."Z"
+        # digit      ::=  "0"..."9"
+        m = identifier_re.match(line)
+        if m is not None:
+            return LexToken('IDENTIFIER', m.group())
+        
+    def match_keyword(self, line):
+        """ return keywords """
+        
+    def match_command_token(self, line):
+        for f in [self.match_symbolic_literal,
+            self.match_string_literal,
+            self.match_floating_point_literal,
+            self.match_integer_literal, 
+            self.match_keyword,
+            self.match_identifier]:
+            r = f(line)
+            if r is not None:
+                return r
+
     def parse_command(self, line):
-        """ The line will start with '%'. We use regex matching and consumption so we can handle quoted strings, classes etc. """
+        """ A "command" is anything entered in command mode. command mode is generally found by starting a line with a % """
         line = line.strip()
         while line:
-            pass
-            # match literals
-            # match identifiers
-            # match keywords
+            tok = self.match_command_token(line)
+            if tok is None:
+                raise LexerError("Cannot parse command fragment %r" % line)
+            else:
+                yield tok
+                line = line[len(tok):]
+                line = line.lstrip()
         
 
     def _tokens(self):
@@ -242,7 +376,7 @@ class Lexer(object):
         # but it is very hard to make shorter
         
         # initial block to wrap them all
-        yield self.mktok('BLOCK')
+        yield LexToken('BLOCK')
         
         for raw_line in self.read_line():
             # handle indents
@@ -281,14 +415,14 @@ class Lexer(object):
             # dedent with END tokens as required to achieve the correct level
             if level < self.last_level:
                 for x in range(level, self.last_level):
-                    yield self.mktok('END')
+                    yield LexToken('END')
                     
             # stash the level
             self.last_level = level
             
             # see if this is actually a command line
             if line.startswith('%'):
-                yield self.mktok('PERCENT')
+                yield LexToken('PERCENT')
                 line = line[1:]
                 for tok in self.parse_command(line):
                     yield tok
@@ -300,18 +434,18 @@ class Lexer(object):
                 if line.startswith('-'):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
-                    yield self.mktok('LISTITEM')
-                    yield self.mktok('BLOCK')
+                    yield LexToken('LISTITEM')
+                    yield LexToken('BLOCK')
                     for token in self.parse_key(key):
                         yield token
-                    yield self.mktok('BLOCK')
+                    yield LexToken('BLOCK')
                     # push in the level so we end the block correctly
                     self.last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
                     for token in self.parse_key(key):
                         yield token
-                    yield self.mktok('BLOCK')
+                    yield LexToken('BLOCK')
                 if value:
                     if value == '|':
                         self.multiline = True
@@ -319,16 +453,16 @@ class Lexer(object):
                     else:
                         for tok in self.parse_value(value):
                             yield tok
-                    yield self.mktok('END')
+                    yield LexToken('END')
             else:
                 if level == 0:
                     raise LexerError("No key found on a top level line", line=self.lineno)
                 elif line.startswith("- "):
-                    yield self.mktok('LISTITEM')
-                    yield self.mktok('BLOCK')
+                    yield LexToken('LISTITEM')
+                    yield LexToken('BLOCK')
                     for tok in self.parse_value(line[1:].strip()):
                         yield tok
-                    yield self.mktok('END')
+                    yield LexToken('END')
                 else:
                     for tok in self.parse_value(line):
                         yield tok
@@ -340,10 +474,10 @@ class Lexer(object):
             
         # finish with sufficient ends
         for x in range(0, self.last_level):
-            yield self.mktok('END')
+            yield LexToken('END')
             
         # final enclosing block
-        yield self.mktok('END')
+        yield LexToken('END')
         
     def token(self):
         try:
@@ -355,6 +489,6 @@ class Lexer(object):
         for i in self._generator:
             yield i
                 
-for r, c in command_terms:
-    Lexer.tokens.append(c)
+for s, t in Lexer.keywords:
+    Lexer.tokens.append(t)
     
