@@ -124,7 +124,7 @@ class Call(AST):
         self.argument_list = argument_list
         
 class ArgumentList(AST):
-    def __init__(self, positional_arguments, keyword_arguments):
+    def __init__(self, positional_arguments, keyword_arguments=None):
         self.positional_arguments = positional_arguments
         self.keyword_arguments = keyword_arguments
       

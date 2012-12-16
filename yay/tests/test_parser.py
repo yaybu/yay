@@ -101,6 +101,16 @@ class TestParser(unittest.TestCase):
                                           Literal(3),
                                           )))))
         
+    def test_set_call(self):
+        res = parse("% set a = func()")
+        self.assertEqual(res, Set('a',
+            Call(Identifier('func'))))
+        
+    def test_set_call_args(self):
+        res = parse("% set a = func(4)")
+        self.assertEqual(res, Set('a',
+            Call(Identifier('func'), 
+                 ArgumentList(PositionalArguments(Literal(4))))))
         
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
