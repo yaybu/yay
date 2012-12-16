@@ -136,8 +136,8 @@ class PositionalArguments(AST):
         self.positional_arguments.append(expression)
         
 class KeywordArguments(AST):
-    def __init__(self, keyword_item):
-        self.keyword_arguments = [keyword_item]
+    def __init__(self, *keyword_items):
+        self.keyword_arguments = list(keyword_items)
         
     def append(self, keyword_item):
         self.keyword_arguments.append(keyword_item)

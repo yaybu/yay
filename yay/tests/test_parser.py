@@ -113,7 +113,7 @@ class TestParser(unittest.TestCase):
                  ArgumentList(PositionalArguments(Literal(4))))))
         
     def test_set_call_args_many(self):
-        res = parse("% set a = func(4, a, foo='bar')")
+        res = parse("% set a = func(4, a, foo='bar', baz='quux')")
         self.assertEqual(res, Set('a',
             Call(Identifier('func'), 
                  ArgumentList(
@@ -123,6 +123,7 @@ class TestParser(unittest.TestCase):
                          ),
                      KeywordArguments(
                          KeywordItem('foo', Literal('bar')),
+                         KeywordItem('baz', Literal('quux')),
                          ),
                      ))))
         
