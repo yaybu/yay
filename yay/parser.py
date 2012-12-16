@@ -365,7 +365,6 @@ def p_call(p):
     '''
     call : primary "(" ")"
          | primary "(" argument_list ")"
-         | primary "(" argument_list "," ")"
     '''
     # some other stuff in here for genexpr_for that i don't grok
     if len(p) == 4:
@@ -377,10 +376,13 @@ def p_argument_list(p):
     '''
     argument_list : positional_arguments
                   | positional_arguments "," keyword_arguments
+                  | argument_list ","
     '''
     # ignore all the * and ** stuff, don't think relevant
     if len(p) == 2:
         p[0] = ast.ArgumentList(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = ast.ArgumentList(p[1], p[3])
     
@@ -790,7 +792,7 @@ def p_node_dict(p):
     p[0] = m
     
 def p_node_list(p):
-    'node : BLOCK list END'
+    'node : BLOCK yaylist END'
     p[0] = nodes.Sequence(p[2])
 
 def p_extend(p):
@@ -815,16 +817,16 @@ def p_dict_emptydict(p):
     p[0] = nodes.Mapping()
     
 def p_list_listitem_node(p):
-    'list : LISTITEM node'
+    'yaylist : LISTITEM node'
     p[0] = [p[2]]
     
 def p_list_list_list(p):
-    'list : list list'
+    'yaylist : yaylist yaylist'
     p[1].extend(p[2])
     p[0] = p[1]
     
 def p_list_emptylist(p):
-    'list : EMPTYLIST'
+    'yaylist : EMPTYLIST'
     p[0] = nodes.Sequence()
     
 parser = yacc.yacc()
