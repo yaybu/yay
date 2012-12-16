@@ -257,7 +257,7 @@ def p_attributeref(p):
     '''
     attributeref : primary "." IDENTIFIER
     '''
-    p[0] = ast.AttributeRef(p[1], p[3])
+    p[0] = ast.AttributeRef(p[1], ast.Identifier(p[3]))
     
 def p_subscription(p):
     '''

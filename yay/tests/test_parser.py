@@ -68,7 +68,16 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set('a', 
                                   AttributeRef(
                                       Identifier('b'), 
-                                      'c')))
+                                      Identifier('c'))))
+        
+    def test_set_subscription(self):
+        res = parse("% set a = b[1]")
+        self.assertEqual(res, Set('a', 
+                                  Subscription(
+                                      Identifier('b'), 
+                                      ExpressionList(
+                                          Literal(1)
+                                          ))))
         
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
