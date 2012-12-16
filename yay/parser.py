@@ -416,7 +416,7 @@ def p_power(p):
           | primary POW u_expr
     '''
     if len(p) == 2:
-        p[0] = ast.Power(p[1])
+        p[0] = p[1]
     else:
         p[0] = ast.Power(p[1], p[3])
 

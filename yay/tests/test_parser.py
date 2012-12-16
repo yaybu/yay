@@ -10,13 +10,17 @@ class TestParser(unittest.TestCase):
         result = parse(value).resolve()
         return result
     
-    def test_expr_basic(self):
+    def test_set_integer_literal(self):
         res = parse("% set a = 2")
-        self.assertEqual(res, Set('a', Power(Literal(2))))
+        self.assertEqual(res, Set('a', Literal(2)))
         
-    def test_expr_addition(self):
+    def test_set_identifier(self):
         res = parse("% set a = b")
-        self.assertEqual(res, Set('a', Power(Identifier('b'))))
+        self.assertEqual(res, Set('a', Identifier('b')))
+    
+    def test_set_addition(self):
+        res = parse("% set a = 2+2")
+        self.assertEqual(res, Set('a', Expr(Literal(2), Literal(2), '+')))
     
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
