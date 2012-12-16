@@ -129,8 +129,8 @@ class ArgumentList(AST):
         self.keyword_arguments = keyword_arguments
       
 class PositionalArguments(AST):
-    def __init__(self, expression):
-        self.positional_arguments = [expression]
+    def __init__(self, *expressions):
+        self.positional_arguments = list(expressions)
         
     def append(self, expression):
         self.positional_arguments.append(expression)

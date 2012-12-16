@@ -106,11 +106,25 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set('a',
             Call(Identifier('func'))))
         
-    def test_set_call_args(self):
+    def test_set_call_args_simple(self):
         res = parse("% set a = func(4)")
         self.assertEqual(res, Set('a',
             Call(Identifier('func'), 
                  ArgumentList(PositionalArguments(Literal(4))))))
+        
+    def test_set_call_args_many(self):
+        res = parse("% set a = func(4, a, foo='bar')")
+        self.assertEqual(res, Set('a',
+            Call(Identifier('func'), 
+                 ArgumentList(
+                     PositionalArguments(
+                         Literal(4),
+                         Identifier('a'),
+                         ),
+                     KeywordArguments(
+                         KeywordItem('foo', Literal('bar')),
+                         ),
+                     ))))
         
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
