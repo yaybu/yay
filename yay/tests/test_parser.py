@@ -34,6 +34,14 @@ class TestParser(unittest.TestCase):
     
     def test_set_dict(self):
         res = parse("% set a = {'b': 4, 'c': 5}")
+        self.assertEqual(res, Set('a', DictDisplay(
+            KeyDatumList(
+                KeyDatum(Literal('b'),
+                         Literal(4)),
+                KeyDatum(Literal('c'),
+                         Literal(5))
+                )
+            )))
         
     def test_emptydict(self):
         self.assertEqual(self._resolve("""

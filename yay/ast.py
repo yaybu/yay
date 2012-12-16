@@ -73,11 +73,11 @@ class DictDisplay(AST):
         
 class KeyDatumList(AST):
     
-    def __init__(self, key_datum):
-        self.value = [key_datum]
+    def __init__(self, *key_data):
+        self.key_data = list(key_data)
         
     def append(self, key_datum):
-        self.value.append(key_datum)
+        self.key_data.append(key_datum)
         
 class KeyDatum(AST):
     
