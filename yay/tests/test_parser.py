@@ -78,6 +78,17 @@ class TestParser(unittest.TestCase):
                                       ExpressionList(
                                           Literal(1)
                                           ))))
+    
+    def test_set_slice(self):
+        res = parse("% set a = b[1:2]")
+        self.assertEqual(res, Set('a', 
+                                  SimpleSlicing(
+                                      Identifier('b'), 
+                                      Slice(
+                                          Literal(1),
+                                          Literal(2),
+                                          ))))
+                                      
         
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
