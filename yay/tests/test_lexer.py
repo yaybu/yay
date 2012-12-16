@@ -21,15 +21,15 @@ class TestLexer(unittest.TestCase):
         def p(l):
             return Lexer().parse_command(l)
         self.compare(p("+"), ['+'])
-        self.compare(p("'foo'"), [t('LITERAL', "'foo'")])
-        self.compare(p("('foo')"), ['(', t('LITERAL', "'foo'"), ')'])
-        self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "'foo'")])
+        self.compare(p("'foo'"), [t('LITERAL', "foo")])
+        self.compare(p("('foo')"), ['(', t('LITERAL', "foo"), ')'])
+        self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "foo")])
         self.compare(p("a+2"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', 2)])
         self.compare(p("a<<5"), [t('IDENTIFIER', 'a'), t('LSHIFT', "<<"), t('LITERAL', 5)])
         self.compare(p("a<5"), [t('IDENTIFIER', 'a'), '<', t('LITERAL', 5)])
         self.compare(p("a and 5"), [t('IDENTIFIER', 'a'), t('AND', 'and'), t('LITERAL', 5)])
         self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
-        self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "'foo'"), ']'])
+        self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "foo"), ']'])
     
     def compare(self, x, y):
         """ Compare two lists of ts """
@@ -276,7 +276,7 @@ class TestLexer(unittest.TestCase):
                t('LDBRACE'),
                t('IDENTIFIER', 'foo'),
                t('(', '('),
-               t('LITERAL', '"bar"'),
+               t('LITERAL', 'bar'),
                t(')', ')'),
                t('RDBRACE'),
                t('SCALAR', ' hard'),
@@ -330,5 +330,5 @@ class TestLexer(unittest.TestCase):
         self.compare(self._lex("""
         % include "foo.yay"
         """), [
-           t('BLOCK'), t('%'), t('INCLUDE', 'include'), t('LITERAL', '"foo.yay"'), t('END')])
+           t('BLOCK'), t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'), t('END')])
         

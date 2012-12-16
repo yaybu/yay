@@ -332,7 +332,7 @@ class Lexer(object):
         # escapeseq       ::=  "\" <any ASCII character>
         m = string_literal_re.match(line)
         if m is not None:
-            return LexToken('LITERAL', m.group())
+            return LexToken('LITERAL', eval(m.group()), orig=m.group())
         
     def match_integer_literal(self, line):
         """ return integers """

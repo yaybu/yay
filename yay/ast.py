@@ -21,8 +21,8 @@ class ParentForm(AST):
         self.expression_list = expression_list
         
 class ExpressionList(AST):
-    def __init__(self, expression):
-        self.expression_list = [expression_list]
+    def __init__(self, *expressions):
+        self.expression_list = list(expressions)
         
     def append(self, expression):
         self.expression_list.append(expression)

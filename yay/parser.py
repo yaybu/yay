@@ -605,11 +605,13 @@ def p_expression_list(p):
     '''
     expression_list : expression
                     | expression_list "," expression
-                    | expression_list "," expression ","
+                    | expression_list ","
     '''
     if len(p) == 2:
         p[0] = ast.ExpressionList(p[1])
-    elif len(p) in (4,5):
+    elif len(p) == 3:
+        p[0] = p[1]
+    else:
         p[0] = p[1]
         p[0].append(p[3])
 
@@ -817,5 +819,5 @@ def p_list_emptylist(p):
     
 parser = yacc.yacc()
 
-def parse(value):
-    return parser.parse(value, lexer=Lexer())
+def parse(value, **kwargs):
+    return parser.parse(value, lexer=Lexer(), **kwargs)

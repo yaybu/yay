@@ -1,8 +1,10 @@
 import unittest
-from yay.parser import parse
-
+from yay import parser
 from yay.nodes import *
 from yay.ast import *
+
+def parse(value):
+    return parser.parse(value, debug=0) 
 
 class TestParser(unittest.TestCase):
     
@@ -14,6 +16,10 @@ class TestParser(unittest.TestCase):
         res = parse("% set a = 2")
         self.assertEqual(res, Set('a', Literal(2)))
         
+    def test_set_string_literal(self):
+        res = parse("% set a = 'foo'")
+        self.assertEqual(res, Set('a', Literal("foo")))
+                
     def test_set_identifier(self):
         res = parse("% set a = b")
         self.assertEqual(res, Set('a', Identifier('b')))
@@ -21,7 +27,14 @@ class TestParser(unittest.TestCase):
     def test_set_addition(self):
         res = parse("% set a = 2+2")
         self.assertEqual(res, Set('a', Expr(Literal(2), Literal(2), '+')))
+        
+    def test_set_list(self):
+        res = parse("% set a = [1,2,3,4]")
+        self.assertEqual(res, Set('a', ListDisplay(ExpressionList(*map(Literal, [1,2,3,4])))))
     
+    def test_set_dict(self):
+        res = parse("% set a = {'b': 4, 'c': 5}")
+        
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
         a: {}
