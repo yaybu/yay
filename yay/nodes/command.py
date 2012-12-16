@@ -35,6 +35,9 @@ class Set(Node):
         else:
             return False
         
+    def __repr__(self):
+        return "<Set %r = %r>" % (self.var, self.expr)
+        
         
 class If(Node):
     

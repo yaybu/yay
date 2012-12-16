@@ -1,5 +1,20 @@
 class AST(object):
-    pass
+    
+    def __repr__(self):
+        return "<%s %s>" % (self.__class__.__name__, self.__dict__)
+    
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.__dict__ == other.__dict__
+
+class Identifier(AST):
+    def __init__(self, identifier):
+        self.identifier = identifier
+        
+class Literal(AST):
+    def __init__(self, literal):
+        self.literal = literal
 
 class ParentForm(AST):
     def __init__(self, expression_list=None):
@@ -11,7 +26,6 @@ class ExpressionList(AST):
         
     def append(self, expression):
         self.expression_list.append(expression)
-        
         
 class Power(AST):
     def __init__(self, primary, power=None):

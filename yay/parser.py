@@ -26,16 +26,27 @@ def p_error(p):
 ########## EXPRESSIONS
 ## http://docs.python.org/2/reference/expressions.html
 
-def p_atom(p):
+# Atoms are the most basic elements of expressions. The simplest atoms
+# are identifiers or literals. Forms enclosed in reverse quotes or in
+# parentheses, brackets or braces are also categorized syntactically as
+# atoms.
+
+def p_atom_identifier(p):
     '''
     atom : IDENTIFIER
-         | LITERAL
-         | enclosure
     '''
-    # Atoms are the most basic elements of expressions. The simplest atoms
-    # are identifiers or literals. Forms enclosed in reverse quotes or in
-    # parentheses, brackets or braces are also categorized syntactically as
-    # atoms.
+    p[0] = ast.Identifier(p[1])
+    
+def p_atom_literal(p):
+    '''
+    atom : LITERAL
+    '''
+    p[0] = ast.Literal(p[1])
+
+def p_atom_enclosure(p):
+    '''
+    atom : enclosure
+    '''
     p[0] = p[1]
     
     
@@ -48,6 +59,7 @@ def p_enclosure(p):
               | set_display
               | string_conversion
     '''
+    p[0] = p[1]
 
 def p_parent_form(p):
     '''
@@ -504,10 +516,13 @@ def p_or_expr(p):
     
 def p_comparison(p):
     '''
-    comparison : or_expr comp_operator or_expr
-               | comparison comp_operator or_expr
+    comparison : or_expr 
+               | or_expr comp_operator or_expr
     '''
-    p[0] = ast.Expr(p[1], p[3], p[2])
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_comp_operator(p):
     '''
@@ -707,7 +722,7 @@ def p_for_directive(p):
     
 def p_set_directive(p):
     '''
-    set_directive : SET target "=" atom
+    set_directive : SET target "=" expression
     '''
     p[0] = nodes.command.Set(p[2], p[4])
     

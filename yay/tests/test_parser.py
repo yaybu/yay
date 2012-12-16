@@ -2,6 +2,7 @@ import unittest
 from yay.parser import parse
 
 from yay.nodes import *
+from yay.ast import *
 
 class TestParser(unittest.TestCase):
     
@@ -11,11 +12,11 @@ class TestParser(unittest.TestCase):
     
     def test_expr_basic(self):
         res = parse("% set a = 2")
-        self.assertEqual(res, Set('a', 2))
+        self.assertEqual(res, Set('a', Power(Literal(2))))
         
     def test_expr_addition(self):
-        res = parse("% set a = 2 + 2")
-        self.assertEqual(res, None)
+        res = parse("% set a = b")
+        self.assertEqual(res, Set('a', Power(Identifier('b'))))
     
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
