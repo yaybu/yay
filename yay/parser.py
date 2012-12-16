@@ -10,6 +10,19 @@ tokens = Lexer.tokens
 
 start = 'node'
 
+class ParseError(Exception):
+    
+    def __init__(self, token, lineno):
+        self.token = token
+        self.lineno = lineno
+        
+    def __str__(self):
+        return "Syntax error at line %d: '%s'" % (self.lineno, self.token)
+
+def p_error(p):
+    raise ParseError(p.value, p.lineno)
+    
+    
 ########## EXPRESSIONS
 ## http://docs.python.org/2/reference/expressions.html
 
@@ -83,17 +96,23 @@ def p_list_display(p):
     # would be produced by considering each of the for or if clauses a block,
     # nesting from left to right, and evaluating the expression to produce a
     # list element each time the innermost block is reached.
+    if len(p) == 3:
+        p[0] = ast.ListDisplay()
+    else:
+        p[0] = ast.ListDisplay(p[2])
     
 def p_list_comprehension(p):
     '''
     list_comprehension : expression list_for
     '''
+    raise NotImplementedError
     
 def p_list_for(p):
     '''
     list_for : FOR target_list IN old_expression_list
              | FOR target_list IN old_expression_list list_iter
     '''
+    raise NotImplementedError
     
 def p_old_expression_list(p):
     '''
@@ -101,41 +120,52 @@ def p_old_expression_list(p):
                         | old_expression_list "," old_expression
                         | old_expression_list "," old_expression ","
     '''
+    if len(p) == 2:
+        p[0] = ast.ExpressionList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_old_expression(p):
     '''
     old_expression : or_test 
                    | old_lambda_form
     '''
+    p[0] = p[1]
     
 def p_list_iter(p):
     '''
     list_iter : list_for
               | list_if
     '''
+    raise NotImplementedError
     
 def p_list_if(p):
     '''
     list_if : IF old_expression
             | IF old_expression list_iter
     '''
+    raise NotImplementedError
     
 def p_comprehension(p):
     '''
     comprehension : expression comp_for
     '''
+    raise NotImplementedError
     
 def p_comp_for(p):
     '''
     comp_for : FOR target_list IN or_test
              | FOR target_list IN or_test comp_iter
     '''
+    raise NotImplementedError
     
 def p_comp_iter(p):
     '''
     comp_iter : comp_for
               | comp_if
     '''
+    raise NotImplementedError
     
 def p_comp_if(p):
     '''
@@ -146,11 +176,13 @@ def p_comp_if(p):
     # expression is actually "expression_nocond" in the grammar
     # i do not know what this means
     # http://docs.python.org/2/reference/expressions.html#displays-for-sets-and-dictionaries
+    raise NotImplementedError
     
 def p_generator_expression(p):
     '''
     generator_expression : "(" expression comp_for ")"
     '''
+    raise NotImplementedError
     
 def p_dict_display(p):
     '''
@@ -158,33 +190,46 @@ def p_dict_display(p):
                  | "{" key_datum_list "}"
                  | "{" dict_comprehension "}"
     '''
+    if len(p) == 3:
+        p[0] = ast.DictDisplay()
+    else:
+        p[0] = ast.DictDisplay(p[2])
     
 def p_key_datum_list(p):
     '''
     key_datum_list : key_datum
                    | key_datum_list "," key_datum
     '''
-
+    if len(p) == 2:
+        p[0] = ast.KeyDatumList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
+    
 def p_key_datum(p):
     '''
     key_datum : expression ":" expression
     '''
+    p[0] = ast.KeyDatum(p[1], p[3])
 
 def p_dict_comprehension(p):
     '''
     dict_comprehension : expression ":" expression comp_for
     '''
-    
+    raise NotImplementedError
+
 def p_set_display(p):
     '''
     set_display : "{" expression_list "}"
                 | "{" comprehension "}"
     '''
+    raise NotImplementedError
     
 def p_string_conversion(p):
     '''
     string_conversion : "`" expression_list "`"
     '''
+    raise NotImplementedError
     
 def p_primary(p):
     '''
@@ -200,27 +245,32 @@ def p_attributeref(p):
     '''
     attributeref : primary "." IDENTIFIER
     '''
+    p[0] = ast.AttributeRef(p[1], p[3])
     
 def p_subscription(p):
     '''
     subscription : primary "[" expression_list "]"
     '''
+    p[0] = ast.Subscription(p[1], p[3])
     
 def p_slicing(p):
     '''
     slicing : simple_slicing
             | extended_slicing
     '''
+    p[0] = p[1]
     
 def p_simple_slicing(p):
     '''
     simple_slicing : primary "[" short_slice "]"
     '''
+    p[0] = ast.SimpleSlicing(p[1], p[3])
     
 def p_extended_slicing(p):
     '''
     extended_slicing : primary "[" slice_list "]"
     '''
+    p[0] = ast.ExtendedSlicing(p[1], p[3])
     
 def p_slice_list(p):
     '''
@@ -228,6 +278,11 @@ def p_slice_list(p):
                | slice_list "," slice_item
                | slice_list "," slice_item ","
     '''
+    if len(p) == 2:
+        p[0] = ast.SliceList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_slice_item(p):
     '''
@@ -235,13 +290,15 @@ def p_slice_item(p):
                | ELLIPSIS
     '''
     # removed expression as a production due to reduce/reduce conflict
-    # should really be there
+    # subscription wins over slicing in the docs, so i think this is correct
+    p[0] = p[1]
     
 def p_proper_slice(p):
     '''
     proper_slice : short_slice
                  | long_slice
     '''
+    p[0] = p[1]
     
 def p_short_slice(p):
     '''
@@ -249,12 +306,26 @@ def p_short_slice(p):
                 | ":" upper_bound
                 | lower_bound ":" upper_bound
     '''
+    if len(p) == 2:
+        if p[2] == ':':
+            lower_bound = p[1]
+            upper_bound = None
+        else:
+            lower_bound = None
+            upper_bound = p[2]
+    else:
+        lower_bound = p[1]
+        upper_bound = p[3]
+    p[0] = ast.Slice(lower_bound, upper_bound)
     
 def p_long_slice(p):
     '''
     long_slice : short_slice ":"
                | short_slice ":" stride
     '''
+    p[0] = p[1]
+    if len(p) == 4:
+        p[0].stride = p[3]
     
 def p_lower_bound(p):
     '''
@@ -272,6 +343,7 @@ def p_stride(p):
     '''
     stride : expression
     '''
+    p[0] = p[1]
 
 def p_call(p):
     '''
@@ -280,6 +352,10 @@ def p_call(p):
          | primary "(" argument_list "," ")"
     '''
     # some other stuff in here for genexpr_for that i don't grok
+    if len(p) == 4:
+        p[0] = ast.Call(p[1])
+    else:
+        p[0] = ast.Call(p[1], p[3])
     
 def p_argument_list(p):
     '''
@@ -287,23 +363,40 @@ def p_argument_list(p):
                   | positional_arguments "," keyword_arguments
     '''
     # ignore all the * and ** stuff, don't think relevant
+    if len(p) == 2:
+        p[0] = ast.ArgumentList(p[1])
+    else:
+        p[0] = ast.ArgumentList(p[1], p[3])
+    
     
 def p_positional_arguments(p):
     '''
     positional_arguments : expression
                          | positional_arguments "," expression
     '''
+    if len(p) == 2:
+        p[0] = ast.PositionalArguments(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_keyword_arguments(p):
     '''
     keyword_arguments : keyword_item
                       | keyword_arguments "," keyword_item
     '''
+    if len(p) == 2:
+        p[0] = ast.KeywordArguments(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_keyword_item(p):
     '''
     keyword_item : IDENTIFIER "=" expression
     '''
+    p[0] = ast.KeywordItem(p[1], p[3])
+    
     
 def p_power(p):
     '''
@@ -387,7 +480,7 @@ def p_and_expr(p):
     if len(p) ==2:
         p[0] = p[1]
     else:
-        p[0] = Expr(p[1], p[3], p[2])
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_xor_expr(p):
     '''
@@ -397,7 +490,7 @@ def p_xor_expr(p):
     if len(p) ==2:
         p[0] = p[1]
     else:
-        p[0] = Expr(p[1], p[3], p[2])
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_or_expr(p):
     '''
@@ -407,14 +500,14 @@ def p_or_expr(p):
     if len(p) ==2:
         p[0] = p[1]
     else:
-        p[0] = Expr(p[1], p[3], p[2])
+        p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_comparison(p):
     '''
     comparison : or_expr comp_operator or_expr
                | comparison comp_operator or_expr
     '''
-    p[0] = Expr(p[1], p[3], p[2])
+    p[0] = ast.Expr(p[1], p[3], p[2])
     
 def p_comp_operator(p):
     '''
@@ -430,6 +523,7 @@ def p_comp_operator(p):
                   | NOT
                   | NOT IN
     '''
+    p[0] = " ".join(p[1:])
     
 def p_or_test(p):
     '''
@@ -513,6 +607,11 @@ def p_target_list(p):
                 | target_list "," target
                 | target_list "," target ","
     '''
+    if len(p) == 2:
+        p[0] = ast.TargetList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_target(p):
     '''
@@ -532,18 +631,31 @@ def p_parameter_list(p):
                    | parameter_list "," defparameter
                    | parameter_list "," defparameter ","
     '''
+    if len(p) == 2:
+        p[0] = ast.ParameterList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_defparameter(p):
     '''
     defparameter : parameter
                  | parameter "=" expression
     '''
+    if len(p) == 2:
+        p[0] = ast.DefParameter(p[1])
+    else:
+        p[0] = ast.DefParameter(p[1], p[3])
     
 def p_parameter(p):
     '''
     parameter : IDENTIFIER
               | "(" sublist ")"
     '''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = p[2]
     
 def p_sublist(p):
     '''
@@ -551,6 +663,11 @@ def p_sublist(p):
             | sublist "," parameter
             | sublist "," parameter ","
     '''
+    if len(p) == 2:
+        p[0] = ast.Sublist(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
 
 #### yay \o/
 
