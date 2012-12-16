@@ -12,6 +12,10 @@ class TestParser(unittest.TestCase):
         result = parse(value).resolve()
         return result
     
+    def test_include(self):
+        res = parse("% include 'foo.yay'")
+        self.assertEqual(res, Include(Literal('foo.yay')))
+    
     def test_set_integer_literal(self):
         res = parse("% set a = 2")
         self.assertEqual(res, Set('a', Literal(2)))

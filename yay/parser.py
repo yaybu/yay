@@ -722,23 +722,29 @@ def p_include_directive(p):
     '''
     include_directive : INCLUDE atom
     '''
+    p[0] = nodes.Include(p[2])
     
 def p_search_directive(p):
     '''
     search_directive : SEARCH atom
     '''
+    p[0] = nodes.Search(p[2])
     
 def p_for_directive(p):
     '''
     for_directive : FOR target IN atom node
                   | FOR target IF atom IN atom node
     '''
+    if len(p) == 6:
+        p[0] = nodes.For(p[2], p[4], p[5])
+    else:
+        p[0] = nodes.For(p[2], p[6], p[7], p[4])
     
 def p_set_directive(p):
     '''
     set_directive : SET target "=" expression
     '''
-    p[0] = nodes.command.Set(p[2], p[4])
+    p[0] = nodes.Set(p[2], p[4])
     
 def p_if_directive(p):
     '''
@@ -747,33 +753,54 @@ def p_if_directive(p):
                  | IF atom node elif_list
                  | IF atom node elif_list ELSE node
     '''
+    if len(p) == 4:
+        p[0] = nodes.If(p[2], p[3])
+    elif len(p) == 6:
+        p[0] = nodes.If(p[2], p[3], else_=p[5])
+    elif len(p) == 5:
+        p[0] = nodes.If(p[2], p[3], p[4])
+    else:
+        p[0] = nodes.If(p[2], p[3], p[4], p[6])
     
 def p_elif_list(p):
     '''
     elif_list : elif
               | elif_list elif
     '''
+    if len(p) == 2:
+        p[0] = nodes.command.ElifList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 def p_elif(p):
     '''
     elif : ELIF atom node
     '''
+    p[0] = nodes.command.Elif(p[2], p[3])
     
 def p_select_directive(p):
     '''
     select_directive : SELECT atom case_list
     '''
+    p[0] = nodes.Select(p[2], p[3])
     
 def p_case_list(p):
     '''
     case_list : case_block
               | case_list case_block
     '''
+    if len(p) == 2:
+        p[0] = nodes.command.CaseList(p[1])
+    else:
+        p[0] = p[1]
+        p[0].append(p[2])
     
 def p_case_block(p):
     '''
     case_block : KEY ":" node
     '''
+    p[0] = nodes.command.Case(p[1], p[3])
     
 def p_command_node(p):
     'node : command'
