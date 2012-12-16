@@ -20,6 +20,10 @@ class TestParser(unittest.TestCase):
         res = parse("% set a = 'foo'")
         self.assertEqual(res, Set('a', Literal("foo")))
                 
+    def test_set_float_literal(self):
+        res = parse("% set a = 2.4")
+        self.assertEqual(res, Set('a', Literal(2.4)))
+        
     def test_set_identifier(self):
         res = parse("% set a = b")
         self.assertEqual(res, Set('a', Identifier('b')))
@@ -27,6 +31,22 @@ class TestParser(unittest.TestCase):
     def test_set_addition(self):
         res = parse("% set a = 2+2")
         self.assertEqual(res, Set('a', Expr(Literal(2), Literal(2), '+')))
+        
+    def test_set_complex_expr(self):
+        res = parse("% set a = (2+2)*5/12.0")
+        self.assertEqual(res, Set('a', 
+            Expr(
+                Expr(
+                    ParentForm(
+                        ExpressionList(
+                            Expr(Literal(2), Literal(2), '+'),
+                            )
+                        ),
+                    Literal(5),
+                    '*'),
+                Literal(12.0),
+                '/')
+            ))
         
     def test_set_list(self):
         res = parse("% set a = [1,2,3,4]")
