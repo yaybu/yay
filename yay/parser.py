@@ -130,10 +130,12 @@ def p_old_expression_list(p):
     '''
     old_expression_list : old_expression
                         | old_expression_list "," old_expression
-                        | old_expression_list "," old_expression ","
+                        | old_expression_list ","
     '''
     if len(p) == 2:
         p[0] = ast.ExpressionList(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -288,10 +290,12 @@ def p_slice_list(p):
     '''
     slice_list : slice_item
                | slice_list "," slice_item
-               | slice_list "," slice_item ","
+               | slice_list "," 
     '''
     if len(p) == 2:
         p[0] = ast.SliceList(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -622,10 +626,12 @@ def p_target_list(p):
     '''
     target_list : target
                 | target_list "," target
-                | target_list "," target ","
+                | target_list ","
     '''
     if len(p) == 2:
         p[0] = ast.TargetList(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -646,10 +652,12 @@ def p_parameter_list(p):
     '''
     parameter_list : defparameter
                    | parameter_list "," defparameter
-                   | parameter_list "," defparameter ","
+                   | parameter_list ","
     '''
     if len(p) == 2:
         p[0] = ast.ParameterList(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -678,10 +686,12 @@ def p_sublist(p):
     '''
     sublist : parameter
             | sublist "," parameter
-            | sublist "," parameter ","
+            | sublist ","
     '''
     if len(p) == 2:
         p[0] = ast.Sublist(p[1])
+    elif len(p) == 3:
+        p[0] = p[1]
     else:
         p[0] = p[1]
         p[0].append(p[3])
