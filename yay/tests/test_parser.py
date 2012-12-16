@@ -63,6 +63,13 @@ class TestParser(unittest.TestCase):
                 )
             )))
         
+    def test_set_attributeref(self):
+        res = parse("% set a = b.c")
+        self.assertEqual(res, Set('a', 
+                                  AttributeRef(
+                                      Identifier('b'), 
+                                      'c')))
+        
     def test_emptydict(self):
         self.assertEqual(self._resolve("""
         a: {}
