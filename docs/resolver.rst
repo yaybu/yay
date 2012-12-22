@@ -254,3 +254,108 @@ This might expand to:
     Context1 -> Sequence1;
 
 
+Early Error Detection
+=====================
+
+When not using the class feature of yay then early error detection is not
+useful. Detecting all errors will cause the graph to be resolved any way, so
+might as well be done JIT.
+
+However the current approach for 'nodes with side effects' means that you might
+not have even finished syntax checking before you have started mutating an
+external system. In this case, any additional checking you can do is worth it.
+
+The topics discussed in this section are currently in the idea stage.
+Navigating the graph without triggering premature expansion is tricky.
+
+Type fixing
+-----------
+
+One type of analysis that we can perform on the graph is to look at the
+predecessors of each node and make sure that the types of fields don't change.
+Once a number, always a number.
+
+For these purposes the only types that matter are::
+
+    * Number
+    * String
+    * List
+    * Dict
+
+Some type inference is possible:
+
+ * We know that a foreach will resolve to a list.
+ * If a variable resolves to a constant, then we can get its type - we can do
+   this without causing resolves in some cases.
+
+However there are problems.
+
+Consider a case like this::
+
+    foo: bar
+    qux: quux
+
+    if somexpr:
+        foo: []
+
+    qux: fozzle
+
+The only way to be certain if the final config is correct is to resolve
+``somexpr``. This could in the worst case actually cause a side effect.
+
+Another possibility is to have speculative type inference: The if knows it
+might return a list for ``foo`` or it might have to defer to its predecessor.
+However actually implementing that might be difficult...
+
+Constant folding
+----------------
+
+By folding as many constants as we can we validate the validity of lots of the
+configuration.
+
+This would work like expand or resolve. We would probably avoid calling expand
+or resolve though: If we need to resolve a variable to proceed then we can't
+expand constants in that section.
+
+That said, ``fold`` could actually cause resolves to happen if they are
+'simple' enough.
+
+Schemas
+-------
+
+Part of the problem with external sources of information is we don't know what
+outputs they have. If we require nodes to declare their inputs and outputs then
+we can do additional checking. This is actually what we do with ``Resources``
+in yaybu atm - there is a schema system in yaybu.
+
+Decoupling
+----------
+
+In 'yaybu' the declarative aspect of the system is decoupled from the
+implementation via ``Resources`` and ``Providers``. If a similar generic
+decoupling is possible that would also allow a node to emit output back in to
+the system, would that be acceptable?
+
+Conclusion
+----------
+
+I think what we actually need is to be able to resolve a node as much as
+possible without resolving its side effects. A combination of aggressive
+constant folding and a schema system for nodes with side effects that allows us
+to validate that we are only using known node outputs.
+
+It would be implemented much like ``expand`` and ``resolve`` are - each node is
+responsible for simplifying itself.
+
+Nodes that have side effects would be able to participate in this stage. This
+is crucial. Consider that a compute node has its own yay config that needs to
+be validated. We want to do that before starting nodes if possible.
+
+Nodes that can't be simplified (because they are already simple or because they
+have side effects) return themselves from this stage.
+
+The graph is frozen to outsiders at this time - though this might just have to
+be a documented thing rather than enforced in code as the graph may be mutated
+during simplification.
+
+
