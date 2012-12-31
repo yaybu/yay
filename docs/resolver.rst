@@ -216,7 +216,6 @@ The folded form is:
     Mapping2 [label="Mapping"];
     Mapping2 -> Boxed2 [label="bar"];
     Boxed2 [label="Boxed('baz')"]
-    And -> Access2;
     Access2 [label="Access('boxcat')"]
 
 The first ``Access`` (to ``foo``) has been simplified away, as has the ``And`` expression. The If node is still present because it depends on an unknown external value - ``boxcat``. This graph is now as simple as it can be without suffering any side effects.
