@@ -51,8 +51,50 @@ With this structure it is then easy to combine the original list with the 2nd
 list.
 
 
-Resolving vs Expanding
-======================
+Just-in-time visiting
+=====================
+
+In order to transform the graph into it's final form we need to perform a series of transformations to the graph.
+
+The standard approach would be a series of transformations performed via the visitor pattern. Each visitor would know one transformation and they would be performed in order. This does approach to graph rewriting does not suit a graph that is as dynamic as ours. To simplify an ``If`` node one might need to have first simplified a ``For`` node. But also vice-versa.
+
+This means that any graph transformation needs to happen just-in-time. Another way of thinking about this is that while a traditional visitor might visit the graph in the order it is parsed, we need to apply the transformations as a depth first exploration of its dependencies.
+
+(FIXME: There are some really icky and hard to qualify things here, really hard to qualify, come back and fix this!)
+
+The main problem with even a depth first visitor is one of context. It becomes harder to know what is appropriate to resolve and how far.
+
+There are essentially 3 target states:
+
+ * Fully resolved - a python simple type like ``str``, ``list`` or ``dict``
+ * Folded - a graph safe simple type like ``Boxed``, ``Sequence`` or ``Mapping``
+ * Traversible - a graph safe type that is solved enough to allow it to be traversed
+
+These states are more fully explored in the following sections. For now it is enough to know that they are target states. Some will be in a 'folded' state from day 1 (like ``Boxed``) and some will be 'traverisble' without any transformations (like ``Mapping``). 'Fully resolved' objects will never exist in the graph.
+
+Given this equilibrium what does a visitor look like when it has to make some nodes folded to make them traversible and resolve others to make their dependants foldable?
+
+The simplest solution is that you don't use a visitor at all. Actually for our situation, each node just needs to know how to simplify itself into the various target states and it needs to know what state its dependents need to be in in order to reach its target state.
+
+For example, consider a node that sums 2 dependent graph members:
+
+    class Addition(object):
+        def __init__(self, dependentA, dependentB):
+            self.a = dependentA
+            self.b = dependentB
+        def traversible(self):
+            self.error(NotTraversible())
+        def folded(self):
+            # We explicitly fold our dependencies and rely on exceptions to bail out when something is unfoldable
+            # This is covered in a later section
+            a, b = self.a.fold(), self.b.fold()
+            return Boxed(a.resolve() + b.resolve())
+        def resolve(self):
+            return self.a.resolve() + self.b.resolve()
+
+
+Expanding (aka Traversible)
+===========================
 
 The power of Yay is its lazyness. In order to make the language sufficiently
 lazy the graph has to avoid resolving any data structues it can until the last
@@ -123,6 +165,61 @@ false and attempt to return its predecessor. However it's predecessor is a
 node it should take care to call ``expand`` upon it. In this case, the 2nd
 ``If`` will expand to a ``Mapping`` and when a ``Mapping`` is expanded it will
 just return itself. This is the correct behaviour.
+
+
+Folding
+========
+
+Of course there are some nodes that cannot be simplified. It helps me to think of the Yay graph as an equation. A completely pure graph can be entirely solved to a single value. However (as discussed later in "Native Classes") not all graph members are pure. An extra stage is required to fully support these non-pure elements. We call this the folding step.
+
+When the graph is folded we are essentially doing a traditional constant folding step that a compiler might do to try and generate better code. The graph is resolved to "simple types" like:
+
+ * Boxed
+ * Mapping
+ * Sequence
+
+I.e. the goal is to remove any of the 'command mode' structures like ``If`` and ``For``.
+
+However, non-pure graph members cannot be folded as we cannot know their value without looking. Let's consider a variable ``boxcat`` that will be ``True`` or ``False``. Our input is this::
+
+    foo: True
+
+    % if foo and boxcat:
+        bar: baz
+
+The initial parsed form is:
+
+.. digraph:: folding_parsed
+
+    Boxed1 [label="Boxed(True)"]
+    Mapping -> Boxed1 [label="foo"];
+    If -> Mapping [label="predecessor"];
+    If -> And [label="cond"];
+    If -> Mapping2 [label="value"];
+    Mapping2 [label="Mapping"];
+    Mapping2 -> Boxed2 [label="bar"];
+    Boxed2 [label="Boxed('baz')"]
+    And -> Access1;
+    And -> Access2;
+    Access1 [label="Access('foo')"]
+    Access2 [label="Access('boxcat')"]
+
+The folded form is:
+
+.. digraph:: folding_folded
+
+    Boxed1 [label="Boxed(True)"]
+    Mapping -> Boxed1 [label="foo"];
+    If -> Mapping [label="predecessor"];
+    If -> Access2 [label="cond"];
+    If -> Mapping2 [label="value"];
+    Mapping2 [label="Mapping"];
+    Mapping2 -> Boxed2 [label="bar"];
+    Boxed2 [label="Boxed('baz')"]
+    And -> Access2;
+    Access2 [label="Access('boxcat')"]
+
+The first ``Access`` (to ``foo``) has been simplified away, as has the ``And`` expression. The If node is still present because it depends on an unknown external value - ``boxcat``. This graph is now as simple as it can be without suffering any side effects.
 
 
 Variable expansion
@@ -254,8 +351,30 @@ This might expand to:
     Context1 -> Sequence1;
 
 
+Native Classes
+==============
+
+You can bind custom code to the yay graph that interfaces with code outside the graph. Code wrapped for consumption by our non-strict graph is called an 'Actor'.
+
+By allowing an engineer to bind their side-effect causing code directly to the graph we gain quite a few powerful features:
+
+ * Implicit dependency graph of relationships between actors
+ * Implicit ability to parallelize actor side effects (e.g. load balancer with 20 backends - we can deploy those backends in parallel)
+
+However there are consequences:
+
+ * It is impossible to completely validate the graph ahead of time (doing so would require us to actually cause our side effects)
+
+Actor nodes must follow certain rules so that we can maximise the safety of any operations.
+
+It is clear that in order to avoid activating the native code too soon they need to be the laziest kind of graph member.
+
+
+
 Early Error Detection
 =====================
+
+(This might be out of date, review.)
 
 When not using the class feature of yay then early error detection is not
 useful. Detecting all errors will cause the graph to be resolved any way, so
