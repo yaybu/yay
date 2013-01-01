@@ -431,7 +431,7 @@ And the second is ``main.yay``::
     % import {{ language }}.yay
     language: fr
 
-An initial parsing of this might be::
+An initial parsing of this might be:
 
 .. digraph:: resolver_import_unfolded
 
@@ -444,7 +444,7 @@ An initial parsing of this might be::
     Mapping -> Boxed2 [label="language"];
     Boxed2 [label="Boxed('fr')"];
 
-After constant folding this would expand to::
+After constant folding this would expand to:
 
 .. digraph:: resolver_import_folded
 
