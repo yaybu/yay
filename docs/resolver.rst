@@ -70,7 +70,7 @@ There are essentially 3 target states:
  * Folded - a graph safe simple type like ``Boxed``, ``Sequence`` or ``Mapping``
  * Traversible - a graph safe type that is solved enough to allow it to be traversed
 
-These states are more fully explored in the following sections. For now it is enough to know that they are target states. Some will be in a 'folded' state from day 1 (like ``Boxed``) and some will be 'traverisble' without any transformations (like ``Mapping``). 'Fully resolved' objects will never exist in the graph.
+These states are more fully explored in the following sections. For now it is enough to know that they are target states. Some will be in a 'folded' state from day 1 (like ``Boxed``) and some will be 'traversible' without any transformations (like ``Mapping``). 'Fully resolved' objects will never exist in the graph.
 
 Given this equilibrium what does a visitor look like when it has to make some nodes folded to make them traversible and resolve others to make their dependants foldable?
 
@@ -117,7 +117,7 @@ We do this with the ``get`` function::
 
     graph.get("foo").get("baz").get("quix").resolve() == 2
 
-Things get a bit more complicated when command expression are involved. Let's
+Things get a bit more complicated when command expressions are involved. Let's
 consider the ``if`` operation::
 
     cond: hello
@@ -178,9 +178,9 @@ When the graph is folded we are essentially doing a traditional constant folding
  * Mapping
  * Sequence
 
-I.e. the goal is to remove any of the 'command mode' structures like ``If`` and ``For``.
+I.e. the goal is to remove any of the 'command mode' structures like ``If`` and ``For``. The results are still in graph form - we haven't simplified them to python simple types.
 
-However, non-pure graph members cannot be folded as we cannot know their value without looking. Let's consider a variable ``boxcat`` that will be ``True`` or ``False``. Our input is this::
+However, non-pure graph members cannot be folded as we cannot know their value without causing side effects. Let's consider a variable ``boxcat`` that will be ``True`` or ``False``. Our input is this::
 
     foo: True
 
@@ -219,6 +219,48 @@ The folded form is:
     Access2 [label="Access('boxcat')"]
 
 The first ``Access`` (to ``foo``) has been simplified away, as has the ``And`` expression. The If node is still present because it depends on an unknown external value - ``boxcat``. This graph is now as simple as it can be without suffering any side effects.
+
+The implementation might look something like this::
+
+    class And(object):
+        def folded(self):
+            uleft, uright = True, True
+            try:
+                left = self.left.folded()
+            except CantFold:
+                left = self.left
+                uleft = True
+            try:
+                right = self.right.folded()
+            except CantFold:
+                right = self.right
+                uright = True
+
+            if uright and uleft:
+                raise CantFold
+
+            elif uright and not uleft:
+                if left.resolve():
+                    raise CantFold(right)
+                else:
+                    return Boxed(False)
+
+            elif uleft and not uright:
+                if right.resolve():
+                    raise CantFold(left)
+                else:
+                    return Boxed(False)
+
+            else:
+                return Boxed(left.resolve() and right.resolve())
+
+Gnarly! But this is just an encapsulation of some really simple rules:
+
+ * If neither side of the ``And`` is a constant then we can't fold
+ * If both sides are then we can fold and return ``True`` or ``False`` via a ``Boxed``
+ * Otherwise we can fold and resolve the constant side of the expression
+   * If it is False then we can short ciruit the dependency on the external value and return ``Boxed(False)``
+   * If it is True then we can't fold, but we can simplify and remove both the ``And`` and the constant side of the expression
 
 
 Variable expansion
@@ -353,9 +395,9 @@ This might expand to:
 Native Classes
 ==============
 
-You can bind custom code to the yay graph that interfaces with code outside the graph. Code wrapped for consumption by our non-strict graph is called an 'Actor'.
+You can bind custom code to the yay graph that interfaces with code outside the graph. Code wrapped for consumption by our non-strict graph is called an 'Actor'. (FIXME: This is subject to change, but Actor is better than further complicating terms like 'Node').
 
-By allowing an engineer to bind their side-effect causing code directly to the graph we gain quite a few powerful features:
+By allowing an engineer to bind their si de-effect causing code directly to the graph we gain quite a few powerful features:
 
  * Implicit dependency graph of relationships between actors
  * Implicit ability to parallelize actor side effects (e.g. load balancer with 20 backends - we can deploy those backends in parallel)
@@ -366,14 +408,12 @@ However there are consequences:
 
 Actor nodes must follow certain rules so that we can maximise the safety of any operations.
 
-It is clear that in order to avoid activating the native code too soon they need to be the laziest kind of graph member.
+It is clear that in order to avoid activating the native code too soon they need to be the laziest kind of graph member. This is the main reason for the folding step.
 
 
 
 Early Error Detection
 =====================
-
-(This might be out of date, review.)
 
 When not using the class feature of yay then early error detection is not
 useful. Detecting all errors will cause the graph to be resolved any way, so
@@ -425,19 +465,6 @@ Another possibility is to have speculative type inference: The if knows it
 might return a list for ``foo`` or it might have to defer to its predecessor.
 However actually implementing that might be difficult...
 
-Constant folding
-----------------
-
-By folding as many constants as we can we validate the validity of lots of the
-configuration.
-
-This would work like expand or resolve. We would probably avoid calling expand
-or resolve though: If we need to resolve a variable to proceed then we can't
-expand constants in that section.
-
-That said, ``fold`` could actually cause resolves to happen if they are
-'simple' enough.
-
 Schemas
 -------
 
@@ -446,34 +473,13 @@ outputs they have. If we require nodes to declare their inputs and outputs then
 we can do additional checking. This is actually what we do with ``Resources``
 in yaybu atm - there is a schema system in yaybu.
 
-Decoupling
-----------
 
-In 'yaybu' the declarative aspect of the system is decoupled from the
-implementation via ``Resources`` and ``Providers``. If a similar generic
-decoupling is possible that would also allow a node to emit output back in to
-the system, would that be acceptable?
+Future Work
+===========
 
-Conclusion
-----------
+Parallelization
+---------------
 
-I think what we actually need is to be able to resolve a node as much as
-possible without resolving its side effects. A combination of aggressive
-constant folding and a schema system for nodes with side effects that allows us
-to validate that we are only using known node outputs.
+The goal here would be to maximise the amount of work that is done in parallel. One way to achieve that is to make it OK for a resolve to end prematurely with a ``ResultNotReady`` exception. When that happens the exception would generally be bubbled up to the root node. However containers could try and resolve their other children at this time. A mapping could resolve its other keys. A sequence could resolve siblings of the node that isn't ready. The result of this would be that 'Actor' nodes could perform side effects in parallel.
 
-It would be implemented much like ``expand`` and ``resolve`` are - each node is
-responsible for simplifying itself.
-
-Nodes that have side effects would be able to participate in this stage. This
-is crucial. Consider that a compute node has its own yay config that needs to
-be validated. We want to do that before starting nodes if possible.
-
-Nodes that can't be simplified (because they are already simple or because they
-have side effects) return themselves from this stage.
-
-The graph is frozen to outsiders at this time - though this might just have to
-be a documented thing rather than enforced in code as the graph may be mutated
-during simplification.
-
-
+This probably shouldn't be tied to twisted - we don't want to complicate supporting gevent or blocking use cases.
