@@ -76,7 +76,7 @@ Given this equilibrium what does a visitor look like when it has to make some no
 
 The simplest solution is that you don't use a visitor at all. Actually for our situation, each node just needs to know how to simplify itself into the various target states and it needs to know what state its dependents need to be in in order to reach its target state.
 
-For example, consider a node that sums 2 dependent graph members:
+For example, consider a node that sums 2 dependent graph members::
 
     class Addition(object):
         def __init__(self, dependentA, dependentB):
@@ -410,6 +410,53 @@ Actor nodes must follow certain rules so that we can maximise the safety of any 
 
 It is clear that in order to avoid activating the native code too soon they need to be the laziest kind of graph member. This is the main reason for the folding step.
 
+
+Incredibly lazy importing
+=========================
+
+One feature of yay1 was that imports were immediate but could consume lazy variables. For example::
+
+    .include: cookbook/entrypoints/${foo}.yay
+
+The consequence of this is that ``foo`` was consumed mid-way through loading the config. But it could be overloaded later in the config. So while ``foo`` might have been ``apache`` when the include was processed, it might be ``gunicorn`` by the time the config is fully parsed. The crude work around was that any variable used to satisfy an include would be 'locked'. Any further attempts to modify that variable should be met with horror.
+
+In yay3 we defer parsing until required.
+
+Imagine 2 simple yay documents. The first is ``fr.yay``::
+
+    hello_world: Bonjour!
+
+And the second is ``main.yay``::
+
+    % import {{ language }}.yay
+    language: fr
+
+An initial parsing of this might be::
+
+.. digraph:: resolver_import_unfolded
+
+    Import -> Concatenation;
+    Concatenation -> Access;
+    Concatenation -> Boxed1;
+    Boxed1 [label="Boxed('.yay')"];
+    Access [label="Access('language')"];
+    Mapping -> Import [label="predecessor"];
+    Mapping -> Boxed2 [label="language"];
+    Boxed2 [label="Boxed('fr')"];
+
+After constant folding this would expand to::
+
+.. digraph:: resolver_import_folded
+
+    Mapping1 [label="Mapping"];
+    Mapping2 [label="Mapping"];
+    Mapping1 -> Boxed1 [label="hello_world"];
+    Boxed1 [label="Boxed('Bonjour!')"];
+    Mapping2 -> Mapping1 [label="predecessor"];
+    Mapping2 -> Boxed2 [label="language"];
+    Boxed2 [label="Boxed('fr')"];
+
+Because we have removed the need to process the import immediately we no longer have complex document locking requirements.
 
 
 Early Error Detection
