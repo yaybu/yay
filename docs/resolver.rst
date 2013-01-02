@@ -531,6 +531,35 @@ The goal here would be to maximise the amount of work that is done in parallel. 
 
 This probably shouldn't be tied to twisted - we don't want to complicate supporting gevent or blocking use cases.
 
+Online graphs
+-------------
+
+Typical simple graphs are run once and then discarded. However with a robust graph API in place we can use yay as a live decision system. Consider an external data source that subscribes to events from ZeroMQ.
+
+    metrics:
+        web_load:
+            % ZeroMQ
+                connect: mq.example.com
+                subscribe: {{ cluster.name }}_load_web
+
+    loadbalancer:
+        % LoadBalancer
+            listen: http
+            members:
+                % for i in range(load_to_boxen_needed(metrics.web_load))
+                    % Compute
+                         name: web{{i}}
+                         cookbook: entrypoints/web.yay
+
+The relationship between a metric and the number of compute nodes isn't interesting so i've just black-boxed it with a function. This graph is interesting because ``metrics.web_load`` is sourced from ZeroMQ. It can and will change over time and we can potentially have a graph that responds to external changes...
+
+Think about:
+
+ * It's easy enough to have a graph node that listens for changes, but what does that actually do? The graph API is pull based. We can't push a new value down the chain.
+ * I think changes that are detected notify the root node.
+ * That node will then resolve itself.
+ * The number of compute nodes then may or may not be changed based up the external event.
+
 
 Terminology
 ===========
