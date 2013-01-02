@@ -2,7 +2,7 @@
 Resolving
 =========
 
-The language is parsed into a graph.
+The language is parsed into a directed acyclic graph, with each node representing some data or an expression that must be evaluated in order to produce some data. This sections describes in detail the properties of members of this graph structure.
 
 
 Parenting
@@ -70,9 +70,9 @@ There are essentially 3 target states:
  * Folded - a graph safe simple type like ``Boxed``, ``Sequence`` or ``Mapping``
  * Traversible - a graph safe type that is solved enough to allow it to be traversed
 
-These states are more fully explored in the following sections. For now it is enough to know that they are target states. Some will be in a 'folded' state from day 1 (like ``Boxed``) and some will be 'traversible' without any transformations (like ``Mapping``). 'Fully resolved' objects will never exist in the graph.
+These states are more fully explored in the following sections. For now it is enough to know that they are target states. Some graph nodes will be in a 'folded' state from day 1 (like ``Boxed``) and some will be 'traversible' without any transformations (like ``Mapping``). 'Fully resolved' objects will never exist in the graph.
 
-Given this equilibrium what does a visitor look like when it has to make some nodes folded to make them traversible and resolve others to make their dependants foldable?
+Given these rules what does a visitor look like when it has to make some nodes folded to make them traversible and resolve others to make their dependants foldable?
 
 The simplest solution is that you don't use a visitor at all. Actually for our situation, each node just needs to know how to simplify itself into the various target states and it needs to know what state its dependents need to be in in order to reach its target state.
 
@@ -218,7 +218,7 @@ The folded form is:
     Boxed2 [label="Boxed('baz')"]
     Access2 [label="Access('boxcat')"]
 
-The first ``Access`` (to ``foo``) has been simplified away, as has the ``And`` expression. The If node is still present because it depends on an unknown external value - ``boxcat``. This graph is now as simple as it can be without suffering any side effects.
+The first ``Access`` (to ``foo``) has been simplified away, as has the ``And`` expression. The ``If`` node is still present because it depends on an unknown external value - ``boxcat``. This graph is now as simple as it can be without suffering any side effects.
 
 The implementation might look something like this::
 
@@ -259,8 +259,8 @@ Gnarly! But this is just an encapsulation of some really simple rules:
  * If neither side of the ``And`` is a constant then we can't fold
  * If both sides are then we can fold and return ``True`` or ``False`` via a ``Boxed``
  * Otherwise we can fold and resolve the constant side of the expression
-   * If it is False then we can short ciruit the dependency on the external value and return ``Boxed(False)``
-   * If it is True then we can't fold, but we can simplify and remove both the ``And`` and the constant side of the expression
+   - If it is False then we can short ciruit the dependency on the external value and return ``Boxed(False)``
+   - If it is True then we can't fold, but we can simplify and remove both the ``And`` and the constant side of the expression
 
 
 Variable expansion
@@ -397,7 +397,7 @@ Native Classes
 
 You can bind custom code to the yay graph that interfaces with code outside the graph. Code wrapped for consumption by our non-strict graph is called an 'Actor'. (FIXME: This is subject to change, but Actor is better than further complicating terms like 'Node').
 
-By allowing an engineer to bind their si de-effect causing code directly to the graph we gain quite a few powerful features:
+By allowing an engineer to bind their side-effect causing code directly to the graph we gain quite a few powerful features:
 
  * Implicit dependency graph of relationships between actors
  * Implicit ability to parallelize actor side effects (e.g. load balancer with 20 backends - we can deploy those backends in parallel)
@@ -530,3 +530,24 @@ Parallelization
 The goal here would be to maximise the amount of work that is done in parallel. One way to achieve that is to make it OK for a resolve to end prematurely with a ``ResultNotReady`` exception. When that happens the exception would generally be bubbled up to the root node. However containers could try and resolve their other children at this time. A mapping could resolve its other keys. A sequence could resolve siblings of the node that isn't ready. The result of this would be that 'Actor' nodes could perform side effects in parallel.
 
 This probably shouldn't be tied to twisted - we don't want to complicate supporting gevent or blocking use cases.
+
+
+Terminology
+===========
+
+The following terms are used in the section, at times without proper thought as to terminology clashes with other yay modules and often with a complete lack of regard for any traditional use of the term.
+
+Node
+    An element or member of the solver graph
+Predecessor
+    An edge (or arc) to an ancestor. Consider key ``foo``. Regardless of how many times you assign a value to it, all of those values are still accessible from the graph by walking the ``predecessor`` edges. Thus a node that has a ``predecessor`` of ``None`` is the oldest version of a key.
+Parent
+    All but the root node of the graph are contained within a ``parent`` node. 
+Actor Node
+    A member of the graph that causes external code to be executed - potentially causing side effects.
+Expression Node
+    A member of the graph that is resolved by performing an expression against other members of the graph. For example, ``1 + 1`` or ``1 + foo``.
+Data Node
+    Mapping, sequence or literal
+Command Node
+    A statement block such as ``if`` or ``for``
