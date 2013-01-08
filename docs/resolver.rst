@@ -346,6 +346,11 @@ raise an exception if there is no such node.
 If
 ==
 
+An ``If`` node will resolve a guard condition and if it is ``True`` then the contents of the node apply, otherwise attempts to use it will be proxied to its ``predecessor``.
+
+In order to be traversed the guard condition has to be resolved.
+
+When folded the node will try to fold the guard condition and if it cannot be folded then the if statement itself will not be factored away. However the guard condition may still be partially simplified, as may the contents of the child node.
 
 
 For
@@ -520,6 +525,12 @@ outputs they have. If we require nodes to declare their inputs and outputs then
 we can do additional checking. This is actually what we do with ``Resources``
 in yaybu atm - there is a schema system in yaybu.
 
+Short term problems to solve
+============================
+
+ * Need to satisfy ourselves of the target states
+ * Need to consider ``.get()`` - in particular how it interacts with ``traversible``. My worry is things that need to be resolved to traverse an ``If`` node might be dynamic and side effect causing. The rules there need qualifying here, I think.
+ 
 
 Future Work
 ===========
@@ -534,7 +545,7 @@ This probably shouldn't be tied to twisted - we don't want to complicate support
 Online graphs
 -------------
 
-Typical simple graphs are run once and then discarded. However with a robust graph API in place we can use yay as a live decision system. Consider an external data source that subscribes to events from ZeroMQ.
+Typical simple graphs are run once and then discarded. However with a robust graph API in place we can use yay as a live decision system. Consider an external data source that subscribes to events from ZeroMQ::
 
     metrics:
         web_load:
