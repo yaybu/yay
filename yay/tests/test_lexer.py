@@ -36,11 +36,11 @@ class TestLexer(unittest.TestCase):
         % include 'foo.yay'
         """)
         self.compare(result, [
-            t('BLOCK'),
+            t('INDENT'),
             t('%', '%'),
             t('INCLUDE', 'include'),
             t('LITERAL', 'foo.yay'),
-            t('END'),
+            t('DEDENT'),
             ])
             
     
@@ -62,18 +62,18 @@ class TestLexer(unittest.TestCase):
                 e: f
               - g
               """)
-        self.compare(result, [ t('BLOCK'),
+        self.compare(result, [ t('INDENT'),
             t('KEY', 'a'),
-            t('BLOCK'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'b'), t('END'),
+            t('INDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
                 t('LISTITEM'),
-                t('BLOCK'),
-                    t('KEY', 'c'), t('BLOCK'), t('SCALAR', 'd'), t('END'),
-                    t('KEY', 'e'), t('BLOCK'), t('SCALAR', 'f'), t('END'),
-                t('END'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'g'), t('END'),
-            t('END'),
-            t('END'), ])
+                t('INDENT'),
+                    t('KEY', 'c'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
+                    t('KEY', 'e'), t('INDENT'), t('SCALAR', 'f'), t('DEDENT'),
+                t('DEDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'g'), t('DEDENT'),
+            t('DEDENT'),
+            t('DEDENT'), ])
 
     def test_list_of_dicts(self):
         self.compare(self._lex("""
@@ -81,40 +81,40 @@ class TestLexer(unittest.TestCase):
               - b
               - c: d
               - e
-        """), [ t('BLOCK'),
+        """), [ t('INDENT'),
             t('KEY', 'a'),
-            t('BLOCK'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'b'), t('END'),
+            t('INDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
                 t('LISTITEM'),
-                t('BLOCK'),
-                    t('KEY', 'c'), t('BLOCK'), t('SCALAR', 'd'), t('END'),
-                t('END'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'e'), t('END'),
-            t('END'),
-        t('END'), ])
+                t('INDENT'),
+                    t('KEY', 'c'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
+                t('DEDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
+            t('DEDENT'),
+        t('DEDENT'), ])
     
     def test_initial1(self):
         self.compare(self._lex("""
                a: b
                c: 
                  d: e
-            """), [ t('BLOCK'),
-            t('KEY', 'a'), t('BLOCK'), t('SCALAR', 'b'), t('END'),
+            """), [ t('INDENT'),
+            t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
             t('KEY', 'c'),
-            t('BLOCK'),
-                t('KEY', 'd'), t('BLOCK'), t('SCALAR', 'e'), t('END'),
-            t('END'),
-            t('END'), ])
+            t('INDENT'),
+                t('KEY', 'd'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
+            t('DEDENT'),
+            t('DEDENT'), ])
     
     def test_emptydict(self):
-        self.compare(self._lex("a: {}"), [ t('BLOCK'),
-            t('KEY', 'a'), t('BLOCK'), t('EMPTYDICT', ), t('END'),
-            t('END'), ])
+        self.compare(self._lex("a: {}"), [ t('INDENT'),
+            t('KEY', 'a'), t('INDENT'), t('EMPTYDICT', ), t('DEDENT'),
+            t('DEDENT'), ])
         
     def test_emptylist(self):
-        self.compare(self._lex("a: []"), [ t('BLOCK'),
-            t('KEY', 'a'), t('BLOCK'), t('EMPTYLIST'), t('END'),
-            t('END'), ])
+        self.compare(self._lex("a: []"), [ t('INDENT'),
+            t('KEY', 'a'), t('INDENT'), t('EMPTYLIST'), t('DEDENT'),
+            t('DEDENT'), ])
     
     def test_comments(self):
         self.compare(self._lex("""
@@ -124,14 +124,14 @@ class TestLexer(unittest.TestCase):
               - d
               # foo
               - e
-            """), [ t('BLOCK'),
-            t('KEY', 'a'), t('BLOCK'), t('SCALAR', 'b'), t('END'),
+            """), [ t('INDENT'),
+            t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
             t('KEY', 'c'),
-            t('BLOCK'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'd'), t('END'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'e'), t('END'),
-            t('END'),
-            t('END'), ])
+            t('INDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
+            t('DEDENT'),
+            t('DEDENT'), ])
         
     
     def test_sample2(self):
@@ -142,21 +142,21 @@ class TestLexer(unittest.TestCase):
                 - f
                 - g
             h:
-                i: j"""), [ t('BLOCK'),
+                i: j"""), [ t('INDENT'),
             t('KEY', 'a'),
-            t('BLOCK'),
-                t('KEY', 'b'), t('BLOCK'), t('SCALAR', 'c'), t('END'),
+            t('INDENT'),
+                t('KEY', 'b'), t('INDENT'), t('SCALAR', 'c'), t('DEDENT'),
                 t('KEY', 'e'),
-                t('BLOCK'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'f'), t('END'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'g'), t('END'),
-                t('END'),
+                t('INDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'f'), t('DEDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'g'), t('DEDENT'),
+                t('DEDENT'),
                 t('KEY', 'h'),
-                t('BLOCK'),
-                    t('KEY', 'i'), t('BLOCK'), t('SCALAR', 'j'), t('END'),
-                    t('END'),
-                t('END'),
-            t('END'), ])
+                t('INDENT'),
+                    t('KEY', 'i'), t('INDENT'), t('SCALAR', 'j'), t('DEDENT'),
+                    t('DEDENT'),
+                t('DEDENT'),
+            t('DEDENT'), ])
     
     def test_sample1(self):
         self.compare(self._lex("""
@@ -172,34 +172,34 @@ class TestLexer(unittest.TestCase):
             key4:
                 key5:
                     key6: key7
-        """), [ t('BLOCK'),
-            t('KEY', 'key1'), t('BLOCK'), t('SCALAR', 'value1'), t('END'),
-            t('KEY', 'key2'), t('BLOCK'), t('SCALAR', 'value2'), t('END'),
+        """), [ t('INDENT'),
+            t('KEY', 'key1'), t('INDENT'), t('SCALAR', 'value1'), t('DEDENT'),
+            t('KEY', 'key2'), t('INDENT'), t('SCALAR', 'value2'), t('DEDENT'),
             t('KEY', 'key3'),
-            t('BLOCK'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'item1'), t('END'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'item2'), t('END'),
-                t('LISTITEM'), t('BLOCK'), t('SCALAR', 'item3'), t('END'),
-            t('END'),
+            t('INDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item1'), t('DEDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item2'), t('DEDENT'),
+                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item3'), t('DEDENT'),
+            t('DEDENT'),
             t('KEY', 'key4'),
-            t('BLOCK'),
+            t('INDENT'),
                 t('KEY', 'key5'),
-                t('BLOCK'),
-                    t('KEY', 'key6'), t('BLOCK'), t('SCALAR', 'key7'), t('END'),
-                t('END'),
-            t('END'),
-            t('END'), ])
+                t('INDENT'),
+                    t('KEY', 'key6'), t('INDENT'), t('SCALAR', 'key7'), t('DEDENT'),
+                t('DEDENT'),
+            t('DEDENT'),
+            t('DEDENT'), ])
 
     def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
-            t('BLOCK'),
+            t('INDENT'),
                 t('KEY', 'foo'),
-                t('BLOCK'), 
+                t('INDENT'), 
                 t('LDBRACE'),
                 t('IDENTIFIER', 'bar'),
                 t('RDBRACE'),
-                t('END'),
-            t('END'),
+                t('DEDENT'),
+            t('DEDENT'),
         ])
         
     def test_multiline(self):
@@ -212,12 +212,12 @@ class TestLexer(unittest.TestCase):
                x y z
                a b c
         """), [
-               t('BLOCK'),
+               t('INDENT'),
                    t('KEY', 'foo'),
-                   t('BLOCK'), t('SCALAR', "bar\nbaz\nquux\n"), t('END'),
+                   t('INDENT'), t('SCALAR', "bar\nbaz\nquux\n"), t('DEDENT'),
                    t('KEY', 'bar'),
-                   t('BLOCK'), t('SCALAR', "x y z\na b c\n"), t('END'),
-                t('END'),
+                   t('INDENT'), t('SCALAR', "x y z\na b c\n"), t('DEDENT'),
+                t('DEDENT'),
         ])
         
     def test_deep_multiline_file_end(self):
@@ -226,13 +226,13 @@ class TestLexer(unittest.TestCase):
                 bar: |
                     quux
         """), [
-               t('BLOCK'),
+               t('INDENT'),
                    t('KEY', 'foo'),
-                   t('BLOCK'),
+                   t('INDENT'),
                        t('KEY', 'bar'),
-                       t('BLOCK'), t('SCALAR', 'quux\n'), t('END'),
-                    t('END'),
-                t('END'),
+                       t('INDENT'), t('SCALAR', 'quux\n'), t('DEDENT'),
+                    t('DEDENT'),
+                t('DEDENT'),
             ])
         
     def test_multiline_implicit_template(self):
@@ -242,16 +242,16 @@ class TestLexer(unittest.TestCase):
           baz
           {{quux}}
         """), [
-            t('BLOCK'),
+            t('INDENT'),
                 t('KEY', 'foo'),
-                t('BLOCK'),
+                t('INDENT'),
                 t('SCALAR', 'bar\nbaz\n'),
                 t('LDBRACE'),
                 t('IDENTIFIER', 'quux'),
                 t('RDBRACE'),
                 t('SCALAR', '\n'),
-                t('END'),
-            t('END'),
+                t('DEDENT'),
+            t('DEDENT'),
         ])
         
     def test_extend(self):
@@ -260,23 +260,23 @@ class TestLexer(unittest.TestCase):
             - baz
             - quux
         """), [
-            t('BLOCK'),
+            t('INDENT'),
                 t('EXTEND'),
                 t('KEY', 'foo'),
-                t('BLOCK'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'baz'), t('END'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'quux'), t('END'),
-                t('END'),
-            t('END'),
+                t('INDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'baz'), t('DEDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'quux'), t('DEDENT'),
+                t('DEDENT'),
+            t('DEDENT'),
             ])
         
     def test_complex_expressions_in_templates(self):
         self.compare(self._lex("""
         foo: this {{a+b+c}} is {{foo("bar")}} hard
         """), [
-               t('BLOCK'),
+               t('INDENT'),
                t('KEY', 'foo'),
-               t('BLOCK'),
+               t('INDENT'),
                t('SCALAR', 'this '),
                t('LDBRACE'),
                t('IDENTIFIER', 'a'),
@@ -293,8 +293,8 @@ class TestLexer(unittest.TestCase):
                t(')', ')'),
                t('RDBRACE'),
                t('SCALAR', ' hard'),
-               t('END'),
-               t('END'),
+               t('DEDENT'),
+               t('DEDENT'),
             ])
         
     def test_template_in_listitem(self):
@@ -304,18 +304,18 @@ class TestLexer(unittest.TestCase):
           - {{bar}}
           - c
         """), [
-            t('BLOCK'),
+            t('INDENT'),
                 t('KEY', 'foo'),
-                t('BLOCK'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'a'), t('END'),
-                    t('LISTITEM'), t('BLOCK'), 
+                t('INDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'a'), t('DEDENT'),
+                    t('LISTITEM'), t('INDENT'), 
                         t('LDBRACE'),
                         t('IDENTIFIER', 'bar'), 
                         t('RDBRACE'),
-                        t('END'),
-                    t('LISTITEM'), t('BLOCK'), t('SCALAR', 'c'), t('END'),
-                t('END'),
-            t('END'),
+                        t('DEDENT'),
+                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'c'), t('DEDENT'),
+                t('DEDENT'),
+            t('DEDENT'),
         ])
 
     def test_token(self):
@@ -325,23 +325,23 @@ class TestLexer(unittest.TestCase):
                c: 
                  d: e
             """)
-        self.compare([l.token()], [t('BLOCK')])
+        self.compare([l.token()], [t('INDENT')])
         self.compare([l.token()], [t('KEY', 'a')])
-        self.compare([l.token()], [t('BLOCK')])
+        self.compare([l.token()], [t('INDENT')])
         self.compare([l.token()], [t('SCALAR', 'b')])
-        self.compare([l.token()], [t('END')])
+        self.compare([l.token()], [t('DEDENT')])
         self.compare([l.token()], [t('KEY', 'c')])
-        self.compare([l.token()], [t('BLOCK')])
+        self.compare([l.token()], [t('INDENT')])
         self.compare([l.token()], [t('KEY', 'd')])
-        self.compare([l.token()], [t('BLOCK')])
+        self.compare([l.token()], [t('INDENT')])
         self.compare([l.token()], [t('SCALAR', 'e')])
-        self.compare([l.token()], [t('END')])
-        self.compare([l.token()], [t('END')])
-        self.compare([l.token()], [t('END')])
+        self.compare([l.token()], [t('DEDENT')])
+        self.compare([l.token()], [t('DEDENT')])
+        self.compare([l.token()], [t('DEDENT')])
     
     def test_include(self):
         self.compare(self._lex("""
         % include "foo.yay"
         """), [
-           t('BLOCK'), t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'), t('END')])
+           t('INDENT'), t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'), t('DEDENT')])
         

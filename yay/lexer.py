@@ -137,9 +137,9 @@ class Lexer(object):
 
     # tokens also includes all the tokens defined in the keywords list above
     tokens = [
-        'BLOCK',
+        'INDENT',
         'CONFIGURE',
-        'END',
+        'DEDENT',
         'EMPTYDICT',
         'EMPTYLIST',
         'EXTEND',
@@ -423,7 +423,7 @@ class Lexer(object):
         # but it is very hard to make shorter
         
         # initial block to wrap them all
-        yield LexToken('BLOCK')
+        yield LexToken('INDENT')
         
         for raw_line in self.read_line():
             # handle indents
@@ -462,7 +462,7 @@ class Lexer(object):
             # dedent with END tokens as required to achieve the correct level
             if level < self.last_level:
                 for x in range(level, self.last_level):
-                    yield LexToken('END')
+                    yield LexToken('DEDENT')
                     
             # stash the level
             self.last_level = level
@@ -482,17 +482,17 @@ class Lexer(object):
                     key, value = [x.strip() for x in line.split(":", 1)]
                     key = key[1:].strip()
                     yield LexToken('LISTITEM')
-                    yield LexToken('BLOCK')
+                    yield LexToken('INDENT')
                     for token in self.parse_key(key):
                         yield token
-                    yield LexToken('BLOCK')
+                    yield LexToken('INDENT')
                     # push in the level so we end the block correctly
                     self.last_level = self.list_key_indent_level(raw_line)
                 else:
                     key, value = [x.strip() for x in line.split(":", 1)]
                     for token in self.parse_key(key):
                         yield token
-                    yield LexToken('BLOCK')
+                    yield LexToken('INDENT')
                 if value:
                     if value == '|':
                         self.multiline = True
@@ -500,16 +500,16 @@ class Lexer(object):
                     else:
                         for tok in self.parse_value(value):
                             yield tok
-                    yield LexToken('END')
+                    yield LexToken('DEDENT')
             else:
                 if level == 0:
                     raise LexerError("No key found on a top level line", line=self.lineno)
                 elif line.startswith("- "):
                     yield LexToken('LISTITEM')
-                    yield LexToken('BLOCK')
+                    yield LexToken('INDENT')
                     for tok in self.parse_value(line[1:].strip()):
                         yield tok
-                    yield LexToken('END')
+                    yield LexToken('DEDENT')
                 else:
                     for tok in self.parse_value(line):
                         yield tok
@@ -521,10 +521,10 @@ class Lexer(object):
             
         # finish with sufficient ends
         for x in range(0, self.last_level):
-            yield LexToken('END')
+            yield LexToken('DEDENT')
             
         # final enclosing block
-        yield LexToken('END')
+        yield LexToken('DEDENT')
         
     def token(self):
         try:

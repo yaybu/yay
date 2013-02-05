@@ -804,19 +804,19 @@ def p_case_block(p):
     
 def p_node_command(p):
     '''
-    node : BLOCK command END
+    node : INDENT command DEDENT
     '''
     p[0] = p[2]
 
 def p_node_scalar(p):
     '''
-    node : BLOCK SCALAR END
+    node : INDENT SCALAR DEDENT
     '''
     p[0] = nodes.Boxed(p[2])
     
 def p_node_dict(p):
     '''
-    node : BLOCK dict END
+    node : INDENT dict DEDENT
     '''
     m = nodes.Mapping()
     for key, value in p[2]:
@@ -826,7 +826,7 @@ def p_node_dict(p):
     
 def p_node_list(p):
     '''
-    node : BLOCK yaylist END
+    node : INDENT yaylist DEDENT
     '''
     p[0] = nodes.Sequence(p[2])
 
