@@ -173,3 +173,104 @@ class Sublist(AST):
     def append(self, parameter):
         self.sublist.append(parameter)
         
+class YayList(AST):
+    def __init__(self, *items):
+        self.value = list(items)
+        
+    def append(self, item):
+        self.value.append(item)
+        
+class YayDict(AST):
+    def __init__(self):
+        self.value = {}
+        
+    def update(self, key, value):
+        self.value[key] = value
+        
+class YayExtend(AST):
+    def __init__(self, key, value):
+        self.value = {key: value}
+        
+class YayScalar(AST):
+    def __init__(self, value):
+        self.value = value
+
+class Stanzas(AST):
+    def __init__(self, stanza):
+        self.value = [stanza]
+        
+    def append(self, stanza):
+        self.value.append(stanza)
+        
+class Include(AST):
+    
+    def __init__(self, expr):
+        self.expr = expr
+        
+class Search(AST):
+    
+    def __init__(self, expr):
+        self.expr = expr
+
+class Configure(AST):
+    
+    def __init__(self, key, node):
+        self.key = key
+        self.node = node
+        
+class Set(AST):
+    
+    def __init__(self, var, expr):
+        self.var = var
+        self.expr = expr
+        
+    def __repr__(self):
+        return "<Set %r = %r>" % (self.var, self.expr)
+        
+        
+class If(AST):
+    
+    def __init__(self, condition, result, elifs=None, else_=None):
+        self.condition = condition
+        self.result = result
+        self.elifs = elifs
+        self.else_ = else_
+        
+class ElifList(object):
+    def __init__(self, *elifs):
+        self.elifs = list(elifs)
+        
+    def append(self, elif_):
+        self.elifs.append(elif_)
+        
+class Elif(object):
+    def __init__(self, condition, node):
+        self.condition = condition
+        self.node = node
+        
+class Select(AST):
+    
+    def __init__(self, expr, cases):
+        self.expr = expr
+        self.cases = cases
+        
+class CaseList(object):
+    def __init__(self, *cases):
+        self.cases = list(cases)
+        
+    def append(self, case):
+        self.cases.append(case)
+        
+class Case(object):
+    def __init__(self, key, node):
+        self.key = key
+        self.node = node
+        
+class For(AST):
+    
+    def __init__(self, target, in_clause, node, if_clause=None):
+        self.target = target
+        self.if_clause = if_clause
+        self.in_clause = in_clause
+        self.node = node        
+        

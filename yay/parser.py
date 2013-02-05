@@ -3,12 +3,11 @@
 from ply import yacc
 
 from lexer import Lexer
-from . import nodes
 from . import ast
 
 tokens = Lexer.tokens
 
-start = 'node'
+start = 'stanzas'
 
 class ParseError(Exception):
     
@@ -722,45 +721,45 @@ def p_include_directive(p):
     '''
     include_directive : INCLUDE atom
     '''
-    p[0] = nodes.Include(p[2])
+    p[0] = ast.Include(p[2])
     
 def p_search_directive(p):
     '''
     search_directive : SEARCH atom
     '''
-    p[0] = nodes.Search(p[2])
+    p[0] = ast.Search(p[2])
     
 def p_for_directive(p):
     '''
-    for_directive : FOR target IN atom node
-                  | FOR target IF atom IN atom node
+    for_directive : FOR target IN atom stanza
+                  | FOR target IF atom IN atom stanza
     '''
     if len(p) == 6:
-        p[0] = nodes.For(p[2], p[4], p[5])
+        p[0] = ast.For(p[2], p[4], p[5])
     else:
-        p[0] = nodes.For(p[2], p[6], p[7], p[4])
+        p[0] = ast.For(p[2], p[6], p[7], p[4])
     
 def p_set_directive(p):
     '''
     set_directive : SET target "=" expression
     '''
-    p[0] = nodes.Set(p[2], p[4])
+    p[0] = ast.Set(p[2], p[4])
     
 def p_if_directive(p):
     '''
-    if_directive : IF atom node
-                 | IF atom node ELSE node
-                 | IF atom node elif_list
-                 | IF atom node elif_list ELSE node
+    if_directive : IF atom stanza
+                 | IF atom stanza ELSE stanza
+                 | IF atom stanza elif_list
+                 | IF atom stanza elif_list ELSE stanza
     '''
     if len(p) == 4:
-        p[0] = nodes.If(p[2], p[3])
+        p[0] = ast.If(p[2], p[3])
     elif len(p) == 6:
-        p[0] = nodes.If(p[2], p[3], else_=p[5])
+        p[0] = ast.If(p[2], p[3], else_=p[5])
     elif len(p) == 5:
-        p[0] = nodes.If(p[2], p[3], p[4])
+        p[0] = ast.If(p[2], p[3], p[4])
     else:
-        p[0] = nodes.If(p[2], p[3], p[4], p[6])
+        p[0] = ast.If(p[2], p[3], p[4], p[6])
     
 def p_elif_list(p):
     '''
@@ -768,22 +767,22 @@ def p_elif_list(p):
               | elif_list elif
     '''
     if len(p) == 2:
-        p[0] = nodes.command.ElifList(p[1])
+        p[0] = ast.ElifList(p[1])
     else:
         p[0] = p[1]
         p[0].append(p[3])
     
 def p_elif(p):
     '''
-    elif : ELIF atom node
+    elif : ELIF atom stanza
     '''
-    p[0] = nodes.command.Elif(p[2], p[3])
+    p[0] = ast.Elif(p[2], p[3])
     
 def p_select_directive(p):
     '''
     select_directive : SELECT atom case_list
     '''
-    p[0] = nodes.Select(p[2], p[3])
+    p[0] = ast.Select(p[2], p[3])
     
 def p_case_list(p):
     '''
@@ -791,94 +790,82 @@ def p_case_list(p):
               | case_list case_block
     '''
     if len(p) == 2:
-        p[0] = nodes.command.CaseList(p[1])
+        p[0] = ast.CaseList(p[1])
     else:
         p[0] = p[1]
         p[0].append(p[2])
     
 def p_case_block(p):
     '''
-    case_block : KEY ":" node
+    case_block : KEY ":" stanza
     '''
-    p[0] = nodes.command.Case(p[1], p[3])
-    
-def p_node_command(p):
-    '''
-    node : INDENT command DEDENT
-    '''
-    p[0] = p[2]
+    p[0] = ast.Case(p[1], p[3])
 
-def p_node_scalar(p):
+def p_stanza(p):
     '''
-    node : INDENT SCALAR DEDENT
+    stanza : command
+           | scalar
+           | yaydict
+           | yaylist
+           | extend
+           | INDENT stanzas DEDENT
     '''
-    p[0] = nodes.Boxed(p[2])
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = p[2]
     
-def p_node_dict(p):
+def p_stanzas(p):
     '''
-    node : INDENT dict DEDENT
+     stanzas : stanza
+             | stanzas stanza
     '''
-    m = nodes.Mapping()
-    for key, value in p[2]:
-        value.set_predecessor(m.get(key))
-        m.set(key, value)
-    p[0] = m
-    
-def p_node_list(p):
-    '''
-    node : INDENT yaylist DEDENT
-    '''
-    p[0] = nodes.Sequence(p[2])
+    if len(p) == 2:
+        p[0] = ast.Stanzas(p[1])
+    else:
+        p[0] = [1]
+        p[0].append(p[2])
 
+def p_scalar(p):
+    '''
+    scalar : INDENT SCALAR DEDENT
+    '''
+    p[0] = ast.YayScalar(p[2])
+    
 def p_extend(p):
     '''
-    extend : EXTEND KEY node
+    extend : EXTEND KEY stanza
     '''
-    p[0] = (p[2], nodes.Extend(p[3]))
+    p[0] = ast.YayExtend(p[2], p[3])
     
-def p_dict_extend(p):
+def p_yaydict(p):
     '''
-    dict : extend
+    yaydict : EMPTYDICT
+            | KEY stanza
+            | yaydict KEY stanza
     '''
-    p[0] = [(p[1][0], p[1][1])]
-    
-def p_dict_key_node(p):
-    '''
-    dict : KEY node
-    '''
-    p[0] = [(p[1], p[2])]
-    
-def p_dict_dict_dict(p):
-    '''
-    dict : dict dict
-    '''
-    p[1].extend(p[2])
-    p[0] = p[1]
-
-def p_dict_emptydict(p):
-    '''
-    dict : EMPTYDICT
-    '''
-    p[0] = nodes.Mapping()
-    
-def p_list_listitem_node(p):
-    '''
-    yaylist : LISTITEM node
-    '''
-    p[0] = [p[2]]
-    
-def p_list_list_list(p):
-    '''
-    yaylist : yaylist yaylist
-    '''
-    p[1].extend(p[2])
-    p[0] = p[1]
-    
-def p_list_emptylist(p):
+    if len(p) == 2:
+        p[0] = ast.YayDict()
+    elif len(p) == 3:
+        p[0] = ast.YayDict()
+        p[0].update(p[1], p[2])
+    elif len(p) == 4:
+        p[0] = p[1]
+        p[0].update(p[2], p[3])
+        
+def p_yaylist(p):
     '''
     yaylist : EMPTYLIST
+            | LISTITEM stanza
+            | yaylist LISTITEM stanza
     '''
-    p[0] = nodes.Sequence()
+    if len(p) == 2:
+        p[0] = ast.YayList()
+    elif len(p) == 3:
+        p[0] = ast.YayList(p[2])
+    elif len(p) == 4:
+        p[0] = p[1]
+        p[0].append(p[3])
     
 parser = yacc.yacc()
 

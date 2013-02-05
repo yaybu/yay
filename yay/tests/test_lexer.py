@@ -345,3 +345,19 @@ class TestLexer(unittest.TestCase):
         """), [
            t('INDENT'), t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'), t('DEDENT')])
         
+    def test_leading_command(self):
+        self.compare(self._lex("""
+            % include 'foo.yay'
+        
+            a: b
+            """), [
+                t('INDENT'), 
+                t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'),
+                t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
+                t('DEDENT'),
+                ])
+                
+                
+                
+        
+                     
