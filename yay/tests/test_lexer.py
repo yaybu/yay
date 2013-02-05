@@ -31,6 +31,19 @@ class TestLexer(unittest.TestCase):
         self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
         self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "foo"), ']'])
     
+    def test_whole_command(self):
+        result = self._lex("""
+        % include 'foo.yay'
+        """)
+        self.compare(result, [
+            t('BLOCK'),
+            t('%', '%'),
+            t('INCLUDE', 'include'),
+            t('LITERAL', 'foo.yay'),
+            t('END'),
+            ])
+            
+    
     def compare(self, x, y):
         """ Compare two lists of ts """
         if type(x) == types.GeneratorType:

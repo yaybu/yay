@@ -703,9 +703,9 @@ def p_sublist(p):
 
 def p_command(p):
     '''
-    command : BLOCK '%' directive END
+    command : '%' directive
     '''
-    p[0] = p[3]
+    p[0] = p[2]
     
 def p_directive(p):
     '''
@@ -802,16 +802,22 @@ def p_case_block(p):
     '''
     p[0] = nodes.command.Case(p[1], p[3])
     
-def p_command_node(p):
-    'node : command'
-    p[0] = p[1]
+def p_node_command(p):
+    '''
+    node : BLOCK command END
+    '''
+    p[0] = p[2]
 
 def p_node_scalar(p):
-    'node : BLOCK SCALAR END'
+    '''
+    node : BLOCK SCALAR END
+    '''
     p[0] = nodes.Boxed(p[2])
     
 def p_node_dict(p):
-    'node : BLOCK dict END'
+    '''
+    node : BLOCK dict END
+    '''
     m = nodes.Mapping()
     for key, value in p[2]:
         value.set_predecessor(m.get(key))
@@ -819,41 +825,59 @@ def p_node_dict(p):
     p[0] = m
     
 def p_node_list(p):
-    'node : BLOCK yaylist END'
+    '''
+    node : BLOCK yaylist END
+    '''
     p[0] = nodes.Sequence(p[2])
 
 def p_extend(p):
-    'extend : EXTEND KEY node'
+    '''
+    extend : EXTEND KEY node
+    '''
     p[0] = (p[2], nodes.Extend(p[3]))
     
 def p_dict_extend(p):
-    'dict : extend'
+    '''
+    dict : extend
+    '''
     p[0] = [(p[1][0], p[1][1])]
     
 def p_dict_key_node(p):
-    'dict : KEY node'
+    '''
+    dict : KEY node
+    '''
     p[0] = [(p[1], p[2])]
     
 def p_dict_dict_dict(p):
-    'dict : dict dict'
+    '''
+    dict : dict dict
+    '''
     p[1].extend(p[2])
     p[0] = p[1]
 
 def p_dict_emptydict(p):
-    'dict : EMPTYDICT'
+    '''
+    dict : EMPTYDICT
+    '''
     p[0] = nodes.Mapping()
     
 def p_list_listitem_node(p):
-    'yaylist : LISTITEM node'
+    '''
+    yaylist : LISTITEM node
+    '''
     p[0] = [p[2]]
     
 def p_list_list_list(p):
-    'yaylist : yaylist yaylist'
+    '''
+    yaylist : yaylist yaylist
+    '''
     p[1].extend(p[2])
     p[0] = p[1]
     
 def p_list_emptylist(p):
-    'yaylist : EMPTYLIST'
+    '''
+    yaylist : EMPTYLIST
+    '''
     p[0] = nodes.Sequence()
     
 parser = yacc.yacc()

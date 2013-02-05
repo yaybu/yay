@@ -4,7 +4,7 @@ from yay.nodes import *
 from yay.ast import *
 
 def parse(value):
-    return parser.parse(value, debug=0) 
+    return parser.parse(value, debug=1) 
 
 class TestParser(unittest.TestCase):
     
@@ -253,4 +253,20 @@ class TestParser(unittest.TestCase):
                    'c': 'd',
                    }
                })
+        
+
+    def test_mix(self):
+        res = parse("""
+        % include 'foo.yay'
+        
+        bar:
+            % set a = 2
+            % for x in range(a)
+                - {{x}}
+
+        quux:
+            - a
+            - b
+        """)
+        self.assertEqual(res, None)
         
