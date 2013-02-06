@@ -15,29 +15,29 @@
 
 from .base import TestCase
 
-class TestExtend(TestCase):
+#class TestExtend(TestCase):
 
-    def test_extend_list(self):
-        source = """
-            foo:
-              - 1
-              - 9
-            extend foo:
-              - 8
-              - 5
-            """
-        expected = {
-            "foo": [1, 9, 8, 5],
-            }
+    #def test_extend_list(self):
+        #source = """
+            #foo:
+              #- 1
+              #- 9
+            #extend foo:
+              #- 8
+              #- 5
+            #"""
+        #expected = {
+            #"foo": [1, 9, 8, 5],
+            #}
 
-        self.assertResolves(source, expected)
+        #self.assertResolves(source, expected)
 
-    def test_extend_no_predecessor(self):
-        source = """
-            extend foo:
-              - 1
-              - 2
-              - 3
-            """
-        self.assertResolves(source, {"foo": [1,2,3]})
+    #def test_extend_no_predecessor(self):
+        #source = """
+            #extend foo:
+              #- 1
+              #- 2
+              #- 3
+            #"""
+        #self.assertResolves(source, {"foo": [1,2,3]})
 

@@ -1,7 +1,41 @@
 
 import unittest
 import types
-from yay.lexer import Lexer, LexToken, identifier_re
+from yay.lexer import Lexer
+from ply import lex
+
+class LexToken(lex.LexToken):
+    
+    def __init__(self, name, value=None, lineno=0, lexpos=0, orig=None):
+        self.type = name
+        self.value = value
+        self.lineno = lineno
+        self.lexpos = lexpos
+        self.orig = orig or value
+    
+    def __len__(self):
+        if self.orig is None:
+            return 0
+        return len(self.orig)
+    
+    def __nonzero__(self):
+        # work around some evil code in PLY
+        return True
+    
+    def __eq__(self, other):
+        """ Used in tests only """
+        if type(other) == type(""):
+            if self.type == other and self.value == other:
+                return True
+        elif type(other) != type(self):
+            return False
+        else:
+            if self.type == other.type and self.value == other.value:
+                return True
+        return False
+    
+    def __ne__(self, other):
+        return not self == other
 
 t = LexToken
 
@@ -10,12 +44,11 @@ class TestLexer(unittest.TestCase):
     def _lex(self, value):
         l = Lexer()
         l.input(value)
-        l.done()
         return list(l)
     
-    def test_re(self):
-        self.assertEqual(identifier_re.match("foo").group(), "foo")
-        self.assertEqual(identifier_re.match("f9").group(), "f9")
+#    def test_re(self):
+#        self.assertEqual(identifier_re.match("foo").group(), "foo")
+#        self.assertEqual(identifier_re.match("f9").group(), "f9")
     
     def test_parse_command(self):
         def p(l):
