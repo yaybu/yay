@@ -4,40 +4,51 @@ import types
 from yay.lexer import Lexer
 from ply import lex
 
-class LexToken(lex.LexToken):
-    
-    def __init__(self, name, value=None, lineno=0, lexpos=0, orig=None):
-        self.type = name
-        self.value = value
-        self.lineno = lineno
-        self.lexpos = lexpos
-        self.orig = orig or value
-    
-    def __len__(self):
-        if self.orig is None:
-            return 0
-        return len(self.orig)
-    
-    def __nonzero__(self):
-        # work around some evil code in PLY
-        return True
-    
-    def __eq__(self, other):
-        """ Used in tests only """
-        if type(other) == type(""):
-            if self.type == other and self.value == other:
-                return True
-        elif type(other) != type(self):
-            return False
-        else:
-            if self.type == other.type and self.value == other.value:
-                return True
-        return False
-    
-    def __ne__(self, other):
-        return not self == other
 
-t = LexToken
+# ply works great but the implementation is a bit fugly
+
+def lt__repr__(self):
+    if self.value == '\n':
+        return "<NEWLINE>"
+    else:
+        return "<%s(%s)>" % (self.type, self.value)
+
+def lt__nonzero__(self):
+    # work around some evil code in PLY
+    return True
+
+def lt__eq__(self, other):
+    """ Used in tests only """
+    if type(other) == type(""):
+        if self.type == other and self.value == other:
+            return True
+    elif type(other) != type(self):
+        return False
+    else:
+        if self.type == other.type and self.value == other.value:
+            return True
+    return False
+
+def lt__ne__(self, other):
+    return not self == other
+
+lex.LexToken.__repr__ = lt__repr__
+lex.LexToken.__nonzero__ = lt__nonzero__
+lex.LexToken.__eq__ = lt__eq__
+lex.LexToken.__ne__ = lt__ne__
+
+def t(name, value=None, lineno=0, lexpos=0, orig=None):
+    tok = lex.LexToken()
+    tok.type = name
+    tok.value = value
+    tok.lineno = lineno
+    tok.lexpos = lexpos
+    tok.orig = orig
+    return tok
+
+newline = t('NEWLINE', '\n')
+indent = t('INDENT', None)
+dedent = t('DEDENT', None)
 
 class TestLexer(unittest.TestCase):
     
@@ -45,38 +56,7 @@ class TestLexer(unittest.TestCase):
         l = Lexer()
         l.input(value)
         return list(l)
-    
-#    def test_re(self):
-#        self.assertEqual(identifier_re.match("foo").group(), "foo")
-#        self.assertEqual(identifier_re.match("f9").group(), "f9")
-    
-    def test_parse_command(self):
-        def p(l):
-            return Lexer().parse_command(l)
-        self.compare(p("+"), ['+'])
-        self.compare(p("'foo'"), [t('LITERAL', "foo")])
-        self.compare(p("('foo')"), ['(', t('LITERAL', "foo"), ')'])
-        self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "foo")])
-        self.compare(p("a+2"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', 2)])
-        self.compare(p("a<<5"), [t('IDENTIFIER', 'a'), t('LSHIFT', "<<"), t('LITERAL', 5)])
-        self.compare(p("a<5"), [t('IDENTIFIER', 'a'), '<', t('LITERAL', 5)])
-        self.compare(p("a and 5"), [t('IDENTIFIER', 'a'), t('AND', 'and'), t('LITERAL', 5)])
-        self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
-        self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "foo"), ']'])
-    
-    def test_whole_command(self):
-        result = self._lex("""
-        % include 'foo.yay'
-        """)
-        self.compare(result, [
-            t('INDENT'),
-            t('%', '%'),
-            t('INCLUDE', 'include'),
-            t('LITERAL', 'foo.yay'),
-            t('DEDENT'),
-            ])
-            
-    
+
     def compare(self, x, y):
         """ Compare two lists of ts """
         if type(x) == types.GeneratorType:
@@ -86,6 +66,69 @@ class TestLexer(unittest.TestCase):
         for a, b in zip(x,y):
             if a != b:
                 raise self.failureException("Tokens %r %r differ" % (a,b))                
+    
+    def test_simplest(self):
+        self.compare(self._lex("a: b"), [
+        t('IDENTIFIER', 'a'),
+        t(':', ':'),
+        t('IDENTIFIER', 'b'),
+        ])
+    
+    #def test_parse_command(self):
+        #def p(l):
+            #return Lexer().parse_command(l)
+        #self.compare(p("+"), ['+'])
+        #self.compare(p("'foo'"), [t('LITERAL', "foo")])
+        #self.compare(p("('foo')"), ['(', t('LITERAL', "foo"), ')'])
+        #self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "foo")])
+        #self.compare(p("a+2"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', 2)])
+        #self.compare(p("a<<5"), [t('IDENTIFIER', 'a'), t('LSHIFT', "<<"), t('LITERAL', 5)])
+        #self.compare(p("a<5"), [t('IDENTIFIER', 'a'), '<', t('LITERAL', 5)])
+        #self.compare(p("a and 5"), [t('IDENTIFIER', 'a'), t('AND', 'and'), t('LITERAL', 5)])
+        #self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
+        #self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "foo"), ']'])
+    
+    def test_whole_command(self):
+        result = self._lex("""% include 'foo.yay'""")
+        self.compare(result, [
+            t('%', '%'),
+            t('INCLUDE', 'include'),
+            t('STRING', 'foo.yay'),
+            ])
+    
+    def test_no_indents(self):
+        result = self._lex("""
+        a: b
+           c
+        """)
+        self.compare(result, [
+            t('IDENTIFIER', 'a'),
+            t(':', ':'),
+            t('IDENTIFIER', 'b'),
+            newline,
+            indent,
+            t('IDENTIFIER', 'c'),
+            newline,
+            dedent
+        ])  
+        
+    def test_simple_indent(self):
+        result = self._lex("""
+        a:
+          b: c
+        """)
+        self.compare(result, [
+            t('IDENTIFIER', 'a'),
+            t(':', ':'),
+            newline,
+            indent,
+            t('IDENTIFIER', 'b'),
+            t(':', ':'),
+            t('IDENTIFIER', 'c'),
+            newline,
+            dedent,
+        ])
+        
     
     def test_list_of_multikey_dicts(self):
         result = self._lex("""

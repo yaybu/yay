@@ -2,10 +2,8 @@
 
 from ply import yacc
 
-from lexer import Lexer
+from lexer import Lexer, tokens
 from . import ast
-
-tokens = Lexer.tokens
 
 start = 'stanzas'
 
@@ -38,7 +36,9 @@ def p_atom_identifier(p):
     
 def p_atom_literal(p):
     '''
-    atom : LITERAL
+    atom : STRING
+         | INTEGER
+         | FLOAT
     '''
     p[0] = ast.Literal(p[1])
 
