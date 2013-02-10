@@ -542,8 +542,21 @@ The goal here would be to maximise the amount of work that is done in parallel. 
 
 This probably shouldn't be tied to twisted - we don't want to complicate supporting gevent or blocking use cases.
 
+
 Online graphs
 -------------
+
+The key problem with a live graph is that data flows are push rather than pull based, and this inverts some of the approaches we'd normally take.
+
+In particular, our approach to ``{{ binding.a.variable }}`` needs rethinking. At the very least we need to have bound variables be notified which part of the graph is trying to ``.get()`` them. That way, if and when they change we can notify any neighbouring regions to readjust.
+
+Allowing the graph to 'settle' when dealing with events its also an interesting challenge. Several event sources saturating the graph with information will fail in much the way a human mind would - too much information, too many plates spinning. One event could impact multiple 'Actor' nodes. Those actor nodes might depend on each other, and some of the cloud services have slllloooow API's.  So an event/second could quickly be too much.
+
+If an online graph is what is most desirable that it is worth considering ways to remove the k/v underpinnings. Maybe the k/v rooted approach is actually just scaffolding to wire a big pipeline. What if our airship didn't need that scaffolding when we had done the initial parse. The notion of outputting a YAML like document of this monster could actually limit how we build some of the interfaces...
+
+
+Event to scalar
+~~~~~~~~~~~~~~~
 
 Typical simple graphs are run once and then discarded. However with a robust graph API in place we can use yay as a live decision system. Consider an external data source that subscribes to events from ZeroMQ::
 
@@ -564,9 +577,29 @@ Typical simple graphs are run once and then discarded. However with a robust gra
 
 The relationship between a metric and the number of compute nodes isn't interesting so i've just black-boxed it with a function. This graph is interesting because ``metrics.web_load`` is sourced from ZeroMQ. It can and will change over time and we can potentially have a graph that responds to external changes...
 
+
+Events to lists
+~~~~~~~~~~~~~~~
+
+Imagine a database that holds information about services in a cluster. If we represented it with YAML we might see:
+
+services:
+  - name: 1.example.com
+    type: node.js
+  - name: 2.example.com
+    type: php
+
+Imagine this data can optionally be fed from ZeroMQ or a Websocket so it is always up to date. We can actually feed those events in to the initial list state to keep it up to date, those nodes then in turn notify other nodes.
+
+In other words, as soon as you add a new site to your configuration management system several nodes would be notified that their configuration was out of date and that they needed to redeploy. But because of the magic of the graph, it would be only the nodes that needed to be updated!
+
+
+Gotchas / Headscratching
+~~~~~~~~~~~~~~~~~~~~~~~~
+
 Think about:
 
- * It's easy enough to have a graph node that listens for changes, but what does that actually do? The graph API is pull based. We can't push a new value down the chain.
+ * It's easy enough to have a graph node that listens for changes, but what does that actually do? The graph API is pull based. *Right now* we can't push a new value down the chain.
  * I think changes that are detected notify the root node.
  * That node will then resolve itself.
  * The number of compute nodes then may or may not be changed based up the external event.
