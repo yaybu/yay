@@ -175,6 +175,8 @@ reserved = {
     'configure': 'CONFIGURE',
 }
 
+t_INITIAL_EXTEND = "extend"
+    
 def t_INITIAL_listvalue_KEY(t):
     """[^:\n ]+:[ \t]*"""
     t.value = t.value.split(":", 1)[0]
@@ -207,10 +209,9 @@ def t_value_listvalue_LDBRACE(t):
     """{{"""
     t.lexer.begin("template")
     return t
-    
+
 def t_value_listvalue_VALUE(t):
-    """[^\n]+\n"""
-    t.lexer.begin("INITIAL")
+    """[^\{\n]+"""
     return t
 
 def t_command_template_IDENTIFIER(t):

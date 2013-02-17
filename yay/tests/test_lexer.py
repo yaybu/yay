@@ -55,12 +55,16 @@ ldbrace = t('LDBRACE', '{{')
 rdbrace = t('RDBRACE', '}}')
 hyphen = t('HYPHEN', '-')
 percent = t('PERCENT', '%')
+plus = t('+', '+')
 
 def key(x):
     return t('KEY', x)
 
 def value(x):
     return t('VALUE', x)
+
+def identifier(x):
+    return t('IDENTIFIER', x)
 
 class TestLexer(unittest.TestCase):
     
@@ -88,6 +92,8 @@ class TestLexer(unittest.TestCase):
             if a != b:
                 raise self.failureException("Tokens differ:\n%s" % self.show_error(x,y))           
     
+    ##### Base YAY tests
+    
     def test_simplest(self):
         self.compare(self._lex("""
             a: b
@@ -95,17 +101,6 @@ class TestLexer(unittest.TestCase):
         key('a'), value('b'), newline,
         ])
     
-    def test_whole_command(self):
-        result = self._lex("""
-            % include 'foo.yay'
-        """)
-        self.compare(result, [
-            percent,
-            t('INCLUDE', 'include'),
-            t('STRING', 'foo.yay'),
-            newline,
-            ])
-        
     def test_list(self):
         result = self._lex("""
         a:
@@ -272,7 +267,85 @@ class TestLexer(unittest.TestCase):
                    dedent,
                dedent,
         ])
+    
+    #def test_multiline(self):
+        #self.compare(self._lex("""
+            #foo: |
+               #bar
+               #baz
+               #quux
+            #bar: |
+               #x y z
+               #a b c
+        #"""), [])
+        
+    #def test_deep_multiline_file_end(self):
+        #self.compare(self._lex("""
+            #foo:
+                #bar: |
+                    #quux
+        #"""), [])
+        
+    #def test_multiline_template(self):
+        #self.compare(self._lex("""
+        #foo: |
+          #bar
+          #baz
+          #{{quux}}
+        #"""), [
 
+        #])
+        
+    def test_extend(self):
+        self.compare(self._lex("""
+        extend foo:
+            - baz
+            - quux
+        """), [
+               t('EXTEND', 'extend'), key('foo'), newline,
+               indent,
+               hyphen, value('baz'), newline,
+               hyphen, value('quux'), newline,
+               dedent,
+               
+           ])
+        
+    ##### command mode tests    
+    
+    def test_whole_command(self):
+        result = self._lex("""
+            % include 'foo.yay'
+        """)
+        self.compare(result, [
+            percent,
+            t('INCLUDE', 'include'),
+            t('STRING', 'foo.yay'),
+            newline,
+            ])
+        
+    def test_leading_command(self):
+        self.compare(self._lex("""
+            % include 'foo.yay'
+        
+            a: b
+            """), [
+                percent, t('INCLUDE', 'include'), t('STRING', 'foo.yay'), newline,
+                key('a'), value('b'), newline,
+                ])
+                
+    ##### template tests
+    
+    def test_single_brace(self):
+        self.compare(self._lex("""
+            foo: hello {world}
+        """), [
+               key('foo'), 
+               value('hello '),
+               t('{', '{'),
+               value('world}'),
+               newline,
+           ])
+        
     def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
                 key('foo'),
@@ -281,100 +354,28 @@ class TestLexer(unittest.TestCase):
                 t('RDBRACE', '}}'),
         ])
         
-    def test_multiline(self):
-        self.compare(self._lex("""
-            foo: |
-               bar
-               baz
-               quux
-            bar: |
-               x y z
-               a b c
-        """), [
-               t('INDENT'),
-                   t('KEY', 'foo'),
-                   t('INDENT'), t('SCALAR', "bar\nbaz\nquux\n"), t('DEDENT'),
-                   t('KEY', 'bar'),
-                   t('INDENT'), t('SCALAR', "x y z\na b c\n"), t('DEDENT'),
-                t('DEDENT'),
-        ])
-        
-    def test_deep_multiline_file_end(self):
-        self.compare(self._lex("""
-            foo:
-                bar: |
-                    quux
-        """), [
-               t('INDENT'),
-                   t('KEY', 'foo'),
-                   t('INDENT'),
-                       t('KEY', 'bar'),
-                       t('INDENT'), t('SCALAR', 'quux\n'), t('DEDENT'),
-                    t('DEDENT'),
-                t('DEDENT'),
-            ])
-        
-    def test_multiline_implicit_template(self):
-        self.compare(self._lex("""
-        foo: |
-          bar
-          baz
-          {{quux}}
-        """), [
-            t('INDENT'),
-                t('KEY', 'foo'),
-                t('INDENT'),
-                t('SCALAR', 'bar\nbaz\n'),
-                t('LDBRACE'),
-                t('IDENTIFIER', 'quux'),
-                t('RDBRACE'),
-                t('SCALAR', '\n'),
-                t('DEDENT'),
-            t('DEDENT'),
-        ])
-        
-    def test_extend(self):
-        self.compare(self._lex("""
-        extend foo:
-            - baz
-            - quux
-        """), [
-            t('INDENT'),
-                t('EXTEND'),
-                t('KEY', 'foo'),
-                t('INDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'baz'), t('DEDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'quux'), t('DEDENT'),
-                t('DEDENT'),
-            t('DEDENT'),
-            ])
-        
     def test_complex_expressions_in_templates(self):
         self.compare(self._lex("""
         a: this {{a+b+c}} is {{foo("bar")}} hard
         """), [
-               a, colon, 
-               t('INDENT'),
-               t('KEY', 'foo'),
-               t('INDENT'),
-               t('SCALAR', 'this '),
-               t('LDBRACE'),
-               t('IDENTIFIER', 'a'),
-               t('+', '+'),
-               t('IDENTIFIER', 'b'),
-               t('+', '+'),
-               t('IDENTIFIER', 'c'),
-               t('RDBRACE'),
-               t('SCALAR', ' is '),
-               t('LDBRACE'),
-               t('IDENTIFIER', 'foo'),
+               key('a'), 
+               value('this '),
+               ldbrace,
+               identifier('a'),
+               plus,
+               identifier('b'),
+               plus,
+               identifier('c'),
+               rdbrace,
+               value(' is '),
+               ldbrace,
+               identifier('foo'),
                t('(', '('),
-               t('LITERAL', 'bar'),
+               t('STRING', 'bar'),
                t(')', ')'),
-               t('RDBRACE'),
-               t('SCALAR', ' hard'),
-               t('DEDENT'),
-               t('DEDENT'),
+               rdbrace,
+               value(' hard'),
+               newline,
             ])
         
     def test_template_in_listitem(self):
@@ -392,17 +393,4 @@ class TestLexer(unittest.TestCase):
             dedent,
         ])
     
-    def test_leading_command(self):
-        self.compare(self._lex("""
-            % include 'foo.yay'
-        
-            a: b
-            """), [
-                percent, t('INCLUDE', 'include'), t('STRING', 'foo.yay'), newline,
-                key('a'), value('b'), newline,
-                ])
-                
-                
-                
-        
                      
