@@ -187,8 +187,12 @@ class YayDict(AST):
         else:
             self.value = value
         
-    def update(self, key, value):
-        self.value[key] = value
+    def update(self, d):
+        for k, v in d.items():
+            self.value[k] = v
+            
+    def items(self):
+        return self.value.items()
         
 class YayExtend(AST):
     def __init__(self, key, value):
@@ -199,8 +203,8 @@ class YayScalar(AST):
         self.value = value
 
 class Stanzas(AST):
-    def __init__(self, stanza):
-        self.value = [stanza]
+    def __init__(self, *stanzas):
+        self.value = list(stanzas)
         
     def append(self, stanza):
         self.value.append(stanza)

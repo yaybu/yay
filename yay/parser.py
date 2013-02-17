@@ -5,7 +5,7 @@ from ply import yacc
 from lexer import Lexer, tokens
 from . import ast
 
-start = 'stanzas'
+start = 'root'
 
 class ParseError(Exception):
     
@@ -718,7 +718,7 @@ def p_directive(p):
     
 def p_include_directive(p):
     '''
-    include_directive : INCLUDE atom
+    include_directive : INCLUDE atom NEWLINE
     '''
     p[0] = ast.Include(p[2])
     
@@ -806,13 +806,20 @@ def p_stanza_VALUE(p):
     '''
     p[0] = p[1]
 
+def p_root(p):
+    '''
+    root : stanza 
+         | stanzas
+    '''
+    p[0] = p[1]
+    
 def p_stanza(p):
     '''
     stanza : command
            | yaydict
            | yaylist
            | extend
-           | INDENT stanzas DEDENT
+           | INDENT stanza DEDENT
     '''
     if len(p) == 2:
         p[0] = p[1]
@@ -821,14 +828,16 @@ def p_stanza(p):
     
 def p_stanzas(p):
     '''
-     stanzas : stanza
-             | stanzas stanza
+    stanzas : stanza stanza
     '''
-    if len(p) == 2:
-        p[0] = ast.Stanzas(p[1])
-    else:
-        p[0] = [1]
-        p[0].append(p[2])
+    p[0] = ast.Stanzas(p[1], p[2])
+    
+def p_stanzas_merge(p):
+    '''
+    stanzas : stanzas stanza
+    '''
+    p[0] = p[1]
+    p[0].append(p[2])
 
 def p_extend(p):
     '''
@@ -868,10 +877,10 @@ def p_yaydict_keystanza(p):
     
 def p_yaydict_merge(p):
     '''
-    yaydict : yaydict KEY scalar NEWLINE
+    yaydict : yaydict yaydict
     '''
     p[0] = p[1]
-    p[0].update(p[2], p[3])
+    p[0].update(p[2])
         
 def p_yaylist(p):
     '''
