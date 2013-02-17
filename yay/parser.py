@@ -866,6 +866,8 @@ def p_yaylist(p):
     elif len(p) == 4:
         p[0] = p[1]
         p[0].append(p[3])
+        
+    
     
 parser = yacc.yacc()
 

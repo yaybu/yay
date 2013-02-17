@@ -49,83 +49,88 @@ def t(name, value=None, lineno=0, lexpos=0, orig=None):
 newline = t('NEWLINE', '\n')
 indent = t('INDENT', None)
 dedent = t('DEDENT', None)
+emptydict = t('EMPTYDICT', '{}')
+emptylist = t('EMPTYLIST', '[]')
+ldbrace = t('LDBRACE', '{{')
+rdbrace = t('RDBRACE', '}}')
+hyphen = t('HYPHEN', '-')
+percent = t('PERCENT', '%')
+
+def key(x):
+    return t('KEY', x)
+
+def value(x):
+    return t('VALUE', x)
 
 class TestLexer(unittest.TestCase):
     
     def _lex(self, value):
-        l = Lexer()
+        l = Lexer(debug=0)
         l.input(value)
         return list(l)
+    
+    def show_error(self, x, y):
+        compar = []
+        for a, b in map(None, x, y): 
+            if a == b:
+                compar.append("     %-20r %-20r" % (a, b))
+            else:
+                compar.append(">    %-20r %-20r" % (a, b))
+        return "\n".join(compar)
 
     def compare(self, x, y):
         """ Compare two lists of ts """
         if type(x) == types.GeneratorType:
             x = list(x)
         if len(x) != len(y):
-            raise self.failureException("Token lists are of different lengths: %r %r", (x, y))
+            raise self.failureException("Token lists are of different lengths:\n%s" % self.show_error(x, y))
         for a, b in zip(x,y):
             if a != b:
-                raise self.failureException("Tokens %r %r differ" % (a,b))                
+                raise self.failureException("Tokens differ:\n%s" % self.show_error(x,y))           
     
     def test_simplest(self):
-        self.compare(self._lex("a: b"), [
-        t('IDENTIFIER', 'a'),
-        t(':', ':'),
-        t('IDENTIFIER', 'b'),
+        self.compare(self._lex("""
+            a: b
+        """), [
+        key('a'), value('b'), newline,
         ])
     
-    #def test_parse_command(self):
-        #def p(l):
-            #return Lexer().parse_command(l)
-        #self.compare(p("+"), ['+'])
-        #self.compare(p("'foo'"), [t('LITERAL', "foo")])
-        #self.compare(p("('foo')"), ['(', t('LITERAL', "foo"), ')'])
-        #self.compare(p("a + 'foo'"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', "foo")])
-        #self.compare(p("a+2"), [t('IDENTIFIER', 'a'), '+', t('LITERAL', 2)])
-        #self.compare(p("a<<5"), [t('IDENTIFIER', 'a'), t('LSHIFT', "<<"), t('LITERAL', 5)])
-        #self.compare(p("a<5"), [t('IDENTIFIER', 'a'), '<', t('LITERAL', 5)])
-        #self.compare(p("a and 5"), [t('IDENTIFIER', 'a'), t('AND', 'and'), t('LITERAL', 5)])
-        #self.compare(p("a andy 5"), [t('IDENTIFIER', 'a'), t('IDENTIFIER', 'andy'), t('LITERAL', 5)])
-        #self.compare(p("[1,2.0,'foo']"), ['[', t('LITERAL', 1), ',', t('LITERAL', 2.0), ',', t('LITERAL', "foo"), ']'])
-    
     def test_whole_command(self):
-        result = self._lex("""% include 'foo.yay'""")
-        self.compare(result, [
-            t('%', '%'),
-            t('INCLUDE', 'include'),
-            t('STRING', 'foo.yay'),
-            ])
-    
-    def test_no_indents(self):
         result = self._lex("""
-        a: b
-           c
+            % include 'foo.yay'
         """)
         self.compare(result, [
-            t('IDENTIFIER', 'a'),
-            t(':', ':'),
-            t('IDENTIFIER', 'b'),
+            percent,
+            t('INCLUDE', 'include'),
+            t('STRING', 'foo.yay'),
             newline,
-            indent,
-            t('IDENTIFIER', 'c'),
-            newline,
-            dedent
-        ])  
+            ])
         
+    def test_list(self):
+        result = self._lex("""
+        a:
+          - b
+          - c
+          - d
+        """)
+        self.compare(result, [
+            key('a'), newline,
+            indent, 
+            hyphen, value('b'), newline,
+            hyphen, value('c'), newline,
+            hyphen, value('d'), newline,
+            dedent,
+            ])
+    
     def test_simple_indent(self):
         result = self._lex("""
         a:
           b: c
         """)
         self.compare(result, [
-            t('IDENTIFIER', 'a'),
-            t(':', ':'),
-            newline,
+            key('a'), newline,
             indent,
-            t('IDENTIFIER', 'b'),
-            t(':', ':'),
-            t('IDENTIFIER', 'c'),
-            newline,
+                key('b'), value('c'), newline,
             dedent,
         ])
         
@@ -138,18 +143,17 @@ class TestLexer(unittest.TestCase):
                 e: f
               - g
               """)
-        self.compare(result, [ t('INDENT'),
-            t('KEY', 'a'),
-            t('INDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
-                t('LISTITEM'),
-                t('INDENT'),
-                    t('KEY', 'c'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
-                    t('KEY', 'e'), t('INDENT'), t('SCALAR', 'f'), t('DEDENT'),
-                t('DEDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'g'), t('DEDENT'),
-            t('DEDENT'),
-            t('DEDENT'), ])
+        self.compare(result, [
+        key('a'), newline,
+        indent,
+            hyphen, value('b'), newline,
+            hyphen, key('c'), value('d'), newline,
+            indent,
+                key('e'), value('f'), newline,
+            dedent,
+            hyphen, value('g'), newline,
+        dedent,
+        ])
 
     def test_list_of_dicts(self):
         self.compare(self._lex("""
@@ -157,40 +161,41 @@ class TestLexer(unittest.TestCase):
               - b
               - c: d
               - e
-        """), [ t('INDENT'),
-            t('KEY', 'a'),
-            t('INDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
-                t('LISTITEM'),
-                t('INDENT'),
-                    t('KEY', 'c'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
-                t('DEDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
-            t('DEDENT'),
-        t('DEDENT'), ])
+        """), [
+            key('a'), newline,
+            indent,
+                hyphen, value('b'), newline,
+                hyphen, key('c'), value('d'), newline,
+                hyphen, value('e'), newline,
+            dedent,
+            ])
     
     def test_initial1(self):
         self.compare(self._lex("""
                a: b
                c: 
                  d: e
-            """), [ t('INDENT'),
-            t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
-            t('KEY', 'c'),
-            t('INDENT'),
-                t('KEY', 'd'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
-            t('DEDENT'),
-            t('DEDENT'), ])
+            """), [
+                key('a'), value('b'), newline,
+                key('c'), newline,
+                indent,
+                    key('d'), value('e'), newline,
+                dedent,
+            ])
     
     def test_emptydict(self):
-        self.compare(self._lex("a: {}"), [ t('INDENT'),
-            t('KEY', 'a'), t('INDENT'), t('EMPTYDICT', ), t('DEDENT'),
-            t('DEDENT'), ])
+        self.compare(self._lex("""
+            a: {}
+        """), [
+            key('a'), emptydict, newline,
+        ])
         
     def test_emptylist(self):
-        self.compare(self._lex("a: []"), [ t('INDENT'),
-            t('KEY', 'a'), t('INDENT'), t('EMPTYLIST'), t('DEDENT'),
-            t('DEDENT'), ])
+        self.compare(self._lex("""
+            a: []
+        """), [
+            key('a'), emptylist, newline,
+        ])
     
     def test_comments(self):
         self.compare(self._lex("""
@@ -200,15 +205,16 @@ class TestLexer(unittest.TestCase):
               - d
               # foo
               - e
-            """), [ t('INDENT'),
-            t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
-            t('KEY', 'c'),
-            t('INDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'd'), t('DEDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'e'), t('DEDENT'),
-            t('DEDENT'),
-            t('DEDENT'), ])
-        
+            """), [ 
+                   t('COMMENT', '# example'),  newline, 
+                   key('a'), value('b'), newline,
+                   key('c'), newline,
+                   indent,
+                   hyphen, value('d'), newline,
+                   t('COMMENT', '# foo'), newline,
+                   hyphen, value('e'), newline,
+                   dedent,
+            ])        
     
     def test_sample2(self):
         self.compare(self._lex("""
@@ -218,21 +224,22 @@ class TestLexer(unittest.TestCase):
                 - f
                 - g
             h:
-                i: j"""), [ t('INDENT'),
-            t('KEY', 'a'),
-            t('INDENT'),
-                t('KEY', 'b'), t('INDENT'), t('SCALAR', 'c'), t('DEDENT'),
-                t('KEY', 'e'),
-                t('INDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'f'), t('DEDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'g'), t('DEDENT'),
-                t('DEDENT'),
-                t('KEY', 'h'),
-                t('INDENT'),
-                    t('KEY', 'i'), t('INDENT'), t('SCALAR', 'j'), t('DEDENT'),
-                    t('DEDENT'),
-                t('DEDENT'),
-            t('DEDENT'), ])
+                i: j
+        """), [
+               key('a'), newline,
+               indent, 
+                key('b'), value('c'), newline,
+                key('e'), newline,
+                indent,
+                    hyphen, value('f'), newline,
+                    hyphen, value('g'), newline,
+                dedent,
+                key('h'), newline,
+                indent,
+                    key('i'), value('j'), newline,
+                dedent,
+               dedent
+           ])
     
     def test_sample1(self):
         self.compare(self._lex("""
@@ -248,34 +255,30 @@ class TestLexer(unittest.TestCase):
             key4:
                 key5:
                     key6: key7
-        """), [ t('INDENT'),
-            t('KEY', 'key1'), t('INDENT'), t('SCALAR', 'value1'), t('DEDENT'),
-            t('KEY', 'key2'), t('INDENT'), t('SCALAR', 'value2'), t('DEDENT'),
-            t('KEY', 'key3'),
-            t('INDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item1'), t('DEDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item2'), t('DEDENT'),
-                t('LISTITEM'), t('INDENT'), t('SCALAR', 'item3'), t('DEDENT'),
-            t('DEDENT'),
-            t('KEY', 'key4'),
-            t('INDENT'),
-                t('KEY', 'key5'),
-                t('INDENT'),
-                    t('KEY', 'key6'), t('INDENT'), t('SCALAR', 'key7'), t('DEDENT'),
-                t('DEDENT'),
-            t('DEDENT'),
-            t('DEDENT'), ])
+        """), [
+               key('key1'), value('value1'), newline,
+               key('key2'), value('value2'), newline,
+               key('key3'), newline,
+               indent,
+                   hyphen, value('item1'), newline,
+                   hyphen, value('item2'), newline,
+                   hyphen, value('item3'), newline,
+               dedent,
+               key('key4'), newline,
+               indent,
+                   key('key5'), newline,
+                   indent,
+                       key('key6'), value('key7'), newline,
+                   dedent,
+               dedent,
+        ])
 
     def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
-            t('INDENT'),
-                t('KEY', 'foo'),
-                t('INDENT'), 
-                t('LDBRACE'),
+                key('foo'),
+                t('LDBRACE', '{{'),
                 t('IDENTIFIER', 'bar'),
-                t('RDBRACE'),
-                t('DEDENT'),
-            t('DEDENT'),
+                t('RDBRACE', '}}'),
         ])
         
     def test_multiline(self):
@@ -348,8 +351,9 @@ class TestLexer(unittest.TestCase):
         
     def test_complex_expressions_in_templates(self):
         self.compare(self._lex("""
-        foo: this {{a+b+c}} is {{foo("bar")}} hard
+        a: this {{a+b+c}} is {{foo("bar")}} hard
         """), [
+               a, colon, 
                t('INDENT'),
                t('KEY', 'foo'),
                t('INDENT'),
@@ -380,57 +384,22 @@ class TestLexer(unittest.TestCase):
           - {{bar}}
           - c
         """), [
-            t('INDENT'),
-                t('KEY', 'foo'),
-                t('INDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'a'), t('DEDENT'),
-                    t('LISTITEM'), t('INDENT'), 
-                        t('LDBRACE'),
-                        t('IDENTIFIER', 'bar'), 
-                        t('RDBRACE'),
-                        t('DEDENT'),
-                    t('LISTITEM'), t('INDENT'), t('SCALAR', 'c'), t('DEDENT'),
-                t('DEDENT'),
-            t('DEDENT'),
+           key('foo'), newline,
+           indent,
+               hyphen, value('a'), newline,
+               hyphen, ldbrace, t('IDENTIFIER', 'bar'), rdbrace, newline,
+               hyphen, value('c'), newline,
+            dedent,
         ])
-
-    def test_token(self):
-        l = Lexer()
-        l.input("""
-               a: b
-               c: 
-                 d: e
-            """)
-        self.compare([l.token()], [t('INDENT')])
-        self.compare([l.token()], [t('KEY', 'a')])
-        self.compare([l.token()], [t('INDENT')])
-        self.compare([l.token()], [t('SCALAR', 'b')])
-        self.compare([l.token()], [t('DEDENT')])
-        self.compare([l.token()], [t('KEY', 'c')])
-        self.compare([l.token()], [t('INDENT')])
-        self.compare([l.token()], [t('KEY', 'd')])
-        self.compare([l.token()], [t('INDENT')])
-        self.compare([l.token()], [t('SCALAR', 'e')])
-        self.compare([l.token()], [t('DEDENT')])
-        self.compare([l.token()], [t('DEDENT')])
-        self.compare([l.token()], [t('DEDENT')])
     
-    def test_include(self):
-        self.compare(self._lex("""
-        % include "foo.yay"
-        """), [
-           t('INDENT'), t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'), t('DEDENT')])
-        
     def test_leading_command(self):
         self.compare(self._lex("""
             % include 'foo.yay'
         
             a: b
             """), [
-                t('INDENT'), 
-                t('%', '%'), t('INCLUDE', 'include'), t('LITERAL', 'foo.yay'),
-                t('KEY', 'a'), t('INDENT'), t('SCALAR', 'b'), t('DEDENT'),
-                t('DEDENT'),
+                percent, t('INCLUDE', 'include'), t('STRING', 'foo.yay'), newline,
+                key('a'), value('b'), newline,
                 ])
                 
                 

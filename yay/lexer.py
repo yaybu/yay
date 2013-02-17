@@ -1,11 +1,23 @@
-
-
-
-
-# Some of this code is (amusingly) taken from "lolpython"
-# I am indebted to Andrew Dalke, author of lolpython, for the whitespace filters in particular
-# the original copyright statement from lolpython follows
+# Copyright 2012 Isotoma Limited
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" Lexing Yay 3 """
+
+# Some of this code is (amusingly) taken from "lolpython" I am indebted to
+# Andrew Dalke, author of lolpython, for the whitespace filters in particular
+# the original copyright statement from lolpython follows
+
 # Written by Andrew Dalke <dalke@dalkescientific.com>
 # Dalke Scientific Software, LLC
 # 1 June 2007, Gothenburg, Sweden
@@ -13,9 +25,14 @@
 # This software is in the public domain.  For details see:
 #   http://creativecommons.org/licenses/publicdomain/
 
-
-
 from ply import lex
+
+states = (
+    ('value', 'exclusive'),
+    ('listvalue', 'exclusive'),
+    ('template', 'exclusive'),
+    ('command', 'exclusive'),
+)
 
 # literals are checked last, after all of the other rules
 
@@ -26,6 +43,9 @@ literals = [
 ]
 
 tokens = (
+    'PERCENT',
+    'HYPHEN',
+    'COMMENT',
     'INDENT',
     'CONFIGURE',
     'DEDENT',
@@ -36,7 +56,7 @@ tokens = (
     'LDBRACE',
     'LISTITEM',
     'RDBRACE',
-    'SCALAR',
+    'VALUE',
     'IDENTIFIER',
     'STRING',
     'INTEGER',
@@ -72,25 +92,26 @@ tokens = (
     'NEWLINE',
 )
 
-t_LSHIFT = '<<'
-t_RSHIFT = '>>'
-t_LE = '<='
-t_GE = '>='
-t_EQ = '=='
-t_NE = '!='
-t_GTLT = '<>'
-t_ELLIPSIS = r'\.\.\.'
-t_POW = '\*\*'
-t_FLOOR_DIVIDE = '//'
+t_command_template_LSHIFT = '<<'
+t_command_template_RSHIFT = '>>'
+t_command_template_LE = '<='
+t_command_template_GE = '>='
+t_command_template_EQ = '=='
+t_command_template_NE = '!='
+t_command_template_GTLT = '<>'
+t_command_template_ELLIPSIS = r'\.\.\.'
+t_command_template_POW = '\*\*'
+t_command_template_FLOOR_DIVIDE = '//'
+
+def t_template_RDBRACE(t):
+    """}}"""
+    t.lexer.begin('value')
+    return t
 
 # Literals
 
-def t_STRING(t):
-    t.value = eval(t.value)
-    return t
-
 # just too complicated to put literally in a docstring
-t_STRING.__doc__ =  (r"""
+string_expr =  (r"""
                      [uU]?[rR]?
                      (?:              # Single-quote (') strings
                      '''(?:                 # Triple-quoted can contain...
@@ -114,7 +135,12 @@ t_STRING.__doc__ =  (r"""
                                    )*"(?!")
                                    )''')
 
-t_INTEGER = r"""
+@lex.TOKEN(string_expr)
+def t_command_template_STRING(t):
+    t.value = eval(t.value)
+    return t
+
+t_command_template_INTEGER = r"""
 (?<![\w.])               #Start of string or non-alpha non-decimal point
     0[X][0-9A-F]+L?|     #Hexadecimal
     0[O][0-7]+L?|        #Octal
@@ -123,7 +149,9 @@ t_INTEGER = r"""
 (?![\w.])                #End of string or non-alpha non-decimal point
 """
 
-t_FLOAT = r'([+-]?\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
+t_command_template_FLOAT = r'([+-]?\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
+
+t_ANY_COMMENT = r"""\#[^\n]*"""
 
 # Keywords
 
@@ -147,32 +175,65 @@ reserved = {
     'configure': 'CONFIGURE',
 }
 
-# Identifiers
+def t_INITIAL_listvalue_KEY(t):
+    """[^:\n ]+:[ \t]*"""
+    t.value = t.value.split(":", 1)[0]
+    t.lexer.begin('value')
+    return t
 
-def t_IDENTIFIER(t):
+def t_INITIAL_HYPHEN(t):
+    """-[ \t]*"""
+    t.value = '-'
+    t.lexer.begin('listvalue')
+    return t
+
+def t_INITIAL_PERCENT(t):
+    """%[ \t]*"""
+    t.value = '%'
+    t.lexer.begin("command")
+    return t
+
+def t_value_listvalue_EMPTYDICT(t):
+    """{}"""
+    t.lexer.begin("INITIAL")
+    return t
+
+def t_value_listvalue_EMPTYLIST(t):
+    """\[\]"""
+    t.lexer.begin("INITIAL")
+    return t
+
+def t_value_listvalue_LDBRACE(t):
+    """{{"""
+    t.lexer.begin("template")
+    return t
+    
+def t_value_listvalue_VALUE(t):
+    """[^\n]+\n"""
+    t.lexer.begin("INITIAL")
+    return t
+
+def t_command_template_IDENTIFIER(t):
     """[A-Za-z_][A-Za-z0-9_]*"""
     # check for reserved words
     t.type = reserved.get(t.value, 'IDENTIFIER')
     return t
 
-
-def t_WS(t):
+def t_ANY_WS(t):
     r' [ ]+ '
     if t.lexer.at_line_start and not t.lexer.paren_stack:
         return t   
 
-# Don't generate newline tokens when inside of parens
-def t_newline(t):
+def t_ANY_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
     t.type = "NEWLINE"
+    t.lexer.begin("INITIAL")
     return t
 
-def t_error(t):
-    raise SyntaxError("Unknown symbol %r" % (t.value[0],))
+def t_ANY_error(t):
+    raise SyntaxError("Unknown symbol %r at line %d" % (t.value[0], t.lineno))
 
-
-# I implemented INDENT / DEDENT generation as a post-processing filter
 
 # The original lex token stream contains WS and NEWLINE characters.
 # WS will only occur before any other tokens on a line.
@@ -333,3 +394,4 @@ class Lexer(object):
     def __iter__(self):
         while True:
             yield self.token_stream.next()
+ 
