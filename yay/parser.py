@@ -699,10 +699,9 @@ def p_sublist(p):
 
 #### yay \o/
 
-
 def p_command(p):
     '''
-    command : '%' directive
+    command : PERCENT directive
     '''
     p[0] = p[2]
     
@@ -804,7 +803,6 @@ def p_case_block(p):
 def p_stanza(p):
     '''
     stanza : command
-           | scalar
            | yaydict
            | yaylist
            | extend
@@ -826,12 +824,6 @@ def p_stanzas(p):
         p[0] = [1]
         p[0].append(p[2])
 
-def p_scalar(p):
-    '''
-    scalar : INDENT SCALAR DEDENT
-    '''
-    p[0] = ast.YayScalar(p[2])
-    
 def p_extend(p):
     '''
     extend : EXTEND KEY stanza
@@ -856,8 +848,8 @@ def p_yaydict(p):
 def p_yaylist(p):
     '''
     yaylist : EMPTYLIST
-            | LISTITEM stanza
-            | yaylist LISTITEM stanza
+            | HYPHEN stanza
+            | yaylist HYPHEN stanza
     '''
     if len(p) == 2:
         p[0] = ast.YayList()
@@ -867,8 +859,6 @@ def p_yaylist(p):
         p[0] = p[1]
         p[0].append(p[3])
         
-    
-    
 parser = yacc.yacc()
 
 def parse(value, **kwargs):

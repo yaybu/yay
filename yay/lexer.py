@@ -140,16 +140,22 @@ def t_command_template_STRING(t):
     t.value = eval(t.value)
     return t
 
-t_command_template_INTEGER = r"""
-(?<![\w.])               #Start of string or non-alpha non-decimal point
-    0[X][0-9A-F]+L?|     #Hexadecimal
-    0[O][0-7]+L?|        #Octal
-    0[B][01]+L?|         #Binary
-    [1-9]\d*L?           #Decimal/Long Decimal, will not match 0____
-(?![\w.])                #End of string or non-alpha non-decimal point
-"""
+def t_command_template_INTEGER(t):
+    r"""
+    (?<![\w.])               #Start of string or non-alpha non-decimal point
+        0[X][0-9A-F]+L?|     #Hexadecimal
+        0[O][0-7]+L?|        #Octal
+        0[B][01]+L?|         #Binary
+        [1-9]\d*L?           #Decimal/Long Decimal, will not match 0____
+    (?![\w.])                #End of string or non-alpha non-decimal point
+    """
+    t.value = eval(t.value)
+    return t
 
-t_command_template_FLOAT = r'([+-]?\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
+def t_command_template_FLOAT(t):
+    r'(\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
+    t.value = eval(t.value)
+    return t
 
 t_ANY_COMMENT = r"""\#[^\n]*"""
 

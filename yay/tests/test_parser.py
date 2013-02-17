@@ -9,31 +9,31 @@ class TestParser(unittest.TestCase):
     
     def test_include(self):
         res = parse("% include 'foo.yay'")
-        self.assertEqual(res.value[0].value[0], Include(Literal('foo.yay')))
+        self.assertEqual(res.value[0], Include(Literal('foo.yay')))
     
     def test_set_integer_literal(self):
         res = parse("% set a = 2")
-        self.assertEqual(res.value[0].value[0], Set('a', Literal(2)))
+        self.assertEqual(res.value[0], Set('a', Literal(2)))
         
     def test_set_string_literal(self):
         res = parse("% set a = 'foo'")
-        self.assertEqual(res.value[0].value[0], Set('a', Literal("foo")))
+        self.assertEqual(res.value[0], Set('a', Literal("foo")))
                 
     def test_set_float_literal(self):
         res = parse("% set a = 2.4")
-        self.assertEqual(res.value[0].value[0], Set('a', Literal(2.4)))
+        self.assertEqual(res.value[0], Set('a', Literal(2.4)))
         
     def test_set_identifier(self):
         res = parse("% set a = b")
-        self.assertEqual(res.value[0].value[0], Set('a', Identifier('b')))
+        self.assertEqual(res.value[0], Set('a', Identifier('b')))
     
     def test_set_addition(self):
         res = parse("% set a = 2+2")
-        self.assertEqual(res.value[0].value[0], Set('a', Expr(Literal(2), Literal(2), '+')))
+        self.assertEqual(res.value[0], Set('a', Expr(Literal(2), Literal(2), '+')))
         
     def test_set_complex_expr(self):
         res = parse("% set a = (2+2)*5/12.0")
-        self.assertEqual(res.value[0].value[0], Set('a', 
+        self.assertEqual(res.value[0], Set('a', 
             Expr(
                 Expr(
                     ParentForm(
@@ -49,11 +49,11 @@ class TestParser(unittest.TestCase):
         
     def test_set_list(self):
         res = parse("% set a = [1,2,3,4]")
-        self.assertEqual(res.value[0].value[0], Set('a', ListDisplay(ExpressionList(*map(Literal, [1,2,3,4])))))
+        self.assertEqual(res.value[0], Set('a', ListDisplay(ExpressionList(*map(Literal, [1,2,3,4])))))
     
     def test_set_dict(self):
         res = parse("% set a = {'b': 4, 'c': 5}")
-        self.assertEqual(res.value[0].value[0], Set('a', DictDisplay(
+        self.assertEqual(res.value[0], Set('a', DictDisplay(
             KeyDatumList(
                 KeyDatum(Literal('b'),
                          Literal(4)),
@@ -64,14 +64,14 @@ class TestParser(unittest.TestCase):
         
     def test_set_attributeref(self):
         res = parse("% set a = b.c")
-        self.assertEqual(res.value[0].value[0], Set('a', 
+        self.assertEqual(res.value[0], Set('a', 
                                   AttributeRef(
                                       Identifier('b'), 
                                       Identifier('c'))))
         
     def test_set_subscription(self):
         res = parse("% set a = b[1]")
-        self.assertEqual(res.value[0].value[0], Set('a', 
+        self.assertEqual(res.value[0], Set('a', 
                                   Subscription(
                                       Identifier('b'), 
                                       ExpressionList(
@@ -80,7 +80,7 @@ class TestParser(unittest.TestCase):
     
     def test_set_slice(self):
         res = parse("% set a = b[1:2]")
-        self.assertEqual(res.value[0].value[0], Set('a', 
+        self.assertEqual(res.value[0], Set('a', 
                                   SimpleSlicing(
                                       Identifier('b'), 
                                       Slice(
@@ -90,7 +90,7 @@ class TestParser(unittest.TestCase):
                                       
     def test_set_extended_slice(self):
         res = parse("% set a = b[1:2:3]")
-        self.assertEqual(res.value[0].value[0], Set('a', 
+        self.assertEqual(res.value[0], Set('a', 
                                   ExtendedSlicing(
                                       Identifier('b'), 
                                       SliceList(
@@ -102,18 +102,18 @@ class TestParser(unittest.TestCase):
         
     def test_set_call(self):
         res = parse("% set a = func()")
-        self.assertEqual(res.value[0].value[0], Set('a',
+        self.assertEqual(res.value[0], Set('a',
             Call(Identifier('func'))))
         
     def test_set_call_args_simple(self):
         res = parse("% set a = func(4)")
-        self.assertEqual(res.value[0].value[0], Set('a',
+        self.assertEqual(res.value[0], Set('a',
             Call(Identifier('func'), 
                  ArgumentList(PositionalArguments(Literal(4))))))
         
     def test_set_call_args_many(self):
         res = parse("% set a = func(4, a, foo='bar', baz='quux')")
-        self.assertEqual(res.value[0].value[0], Set('a',
+        self.assertEqual(res.value[0], Set('a',
             Call(Identifier('func'), 
                  ArgumentList(
                      PositionalArguments(

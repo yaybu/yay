@@ -312,7 +312,7 @@ class TestLexer(unittest.TestCase):
         
     ##### command mode tests    
     
-    def test_whole_command(self):
+    def test_command(self):
         result = self._lex("""
             % include 'foo.yay'
         """)
@@ -322,6 +322,35 @@ class TestLexer(unittest.TestCase):
             t('STRING', 'foo.yay'),
             newline,
             ])
+        
+    def test_integer(self):
+        result = self._lex("""
+        % set a = 2
+        """)
+        self.compare(result, [
+            percent,
+            t('SET', 'set'),
+            identifier('a'),
+            t('=', '='),
+            t('INTEGER', 2),
+            newline,
+            ])
+        
+    def test_addition(self):
+        result = self._lex("""
+        % set a = 2+2
+        """)
+        self.compare(result, [
+            percent,
+            t('SET', 'set'),
+            identifier('a'),
+            t('=', '='),
+            t('INTEGER', 2),
+            t('+', '+'),
+            t('INTEGER', 2),
+            newline,
+            ])
+        
         
     def test_leading_command(self):
         self.compare(self._lex("""
