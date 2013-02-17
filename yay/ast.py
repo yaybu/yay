@@ -181,8 +181,11 @@ class YayList(AST):
         self.value.append(item)
         
 class YayDict(AST):
-    def __init__(self):
-        self.value = {}
+    def __init__(self, value=None):
+        if value is None:
+            self.value = {}
+        else:
+            self.value = value
         
     def update(self, key, value):
         self.value[key] = value

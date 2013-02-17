@@ -3,7 +3,7 @@ from yay import parser
 from yay.ast import *
 
 def parse(value):
-    return parser.parse(value, debug=0) 
+    return parser.parse(value, debug=1) 
 
 class TestParser(unittest.TestCase):
     
@@ -107,13 +107,13 @@ class TestParser(unittest.TestCase):
         
     def test_set_call_args_simple(self):
         res = parse("% set a = func(4)")
-        self.assertEqual(res.value[0], Set('a',
+        self.assertEqual(res, Stanzas(Set('a',
             Call(Identifier('func'), 
-                 ArgumentList(PositionalArguments(Literal(4))))))
+                 ArgumentList(PositionalArguments(Literal(4)))))))
         
     def test_set_call_args_many(self):
         res = parse("% set a = func(4, a, foo='bar', baz='quux')")
-        self.assertEqual(res.value[0], Set('a',
+        self.assertEqual(res, Stanzas(Set('a',
             Call(Identifier('func'), 
                  ArgumentList(
                      PositionalArguments(
@@ -124,38 +124,46 @@ class TestParser(unittest.TestCase):
                          KeywordItem('foo', Literal('bar')),
                          KeywordItem('baz', Literal('quux')),
                          ),
-                     ))))
+                     )))))
+       
+    def test_emptydict(self):
+        res = parse("""
+            a: {}
+        """)
+        self.assertEqual(res, Stanzas(YayDict({'a': YayDict()})))
         
+    def test_emptylist(self):
+        res = parse("""
+            a: []
+        """)
+        self.assertEqual(res, Stanzas(YayDict({'a': YayList()})))
         
-#class TestResolver(unittest.TestCase):
-    
-    #def test_emptydict(self):
-        #self.assertEqual(resolve("""
-        #a: {}
-        #"""), {'a': {}})
+    def test_simple_dict(self):
+        res = parse("""
+            a: b
+        """)
+        self.assertEqual(res, Stanzas(YayDict({'a': 'b'})))
         
-    #def test_emptylist(self):
-        #self.assertEqual(resolve("""
-        #a: []
-        #"""), {'a': []})
-    
-    #def test_simple_dict(self):
-        #self.assertEqual(resolve("""
-        #a: b
-        #"""), {'a': 'b'})
+    def test_two_item_dict(self):
+        res = parse("""
+        a: b
+        c: d
+        """)
+        self.assertEqual(res, Stanzas(YayDict({
+            'a': 'b',
+            'c': 'd',
+        })))
         
-        
-    #def test_two_item_dict(self):
-        #self.assertEqual(resolve("""
-        #a: b
-        #c: d
-        #"""), {'a': 'b', 'c': 'd'})
-        
-    #def test_nested_dict(self):
-        #self.assertEqual(resolve("""
-        #a:
-         #b: c
-        #"""), {'a': {'b': 'c'}})
+    def test_nested_dict(self):
+        res = parse("""
+        a:
+            b: c
+        """)
+        self.assertEqual(res, Stanzas(YayDict({
+            'a': Stanzas(YayDict({
+                'b': 'c'
+            }))
+        })))
     
     #def test_sample1(self):
         #self.assertEqual(resolve("""

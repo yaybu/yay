@@ -800,6 +800,12 @@ def p_case_block(p):
     '''
     p[0] = ast.Case(p[1], p[3])
 
+def p_stanza_VALUE(p):
+    '''
+    stanza : VALUE NEWLINE
+    '''
+    p[0] = p[1]
+
 def p_stanza(p):
     '''
     stanza : command
@@ -830,30 +836,49 @@ def p_extend(p):
     '''
     p[0] = ast.YayExtend(p[2], p[3])
     
-def p_yaydict(p):
+def p_scalar_emptydict(p):
     '''
-    yaydict : EMPTYDICT
-            | KEY stanza
-            | yaydict KEY stanza
+    scalar : EMPTYDICT
     '''
-    if len(p) == 2:
-        p[0] = ast.YayDict()
-    elif len(p) == 3:
-        p[0] = ast.YayDict()
-        p[0].update(p[1], p[2])
-    elif len(p) == 4:
-        p[0] = p[1]
-        p[0].update(p[2], p[3])
+    p[0] = ast.YayDict()
+    
+def p_scalar_emptylist(p):
+    '''
+    scalar : EMPTYLIST
+    '''
+    p[0] = ast.YayList()
+    
+def p_scalar_value(p):
+    '''
+    scalar : VALUE
+    '''
+    p[0] = p[1]
+    
+def p_yaydict_keyscalar(p):
+    '''
+    yaydict : KEY scalar NEWLINE
+    '''
+    p[0] = ast.YayDict({p[1]: p[2]})
+    
+def p_yaydict_keystanza(p):
+    '''
+    yaydict : KEY NEWLINE stanza
+    '''
+    p[0] = ast.YayDict({p[1]: p[3]})
+    
+def p_yaydict_merge(p):
+    '''
+    yaydict : yaydict KEY scalar NEWLINE
+    '''
+    p[0] = p[1]
+    p[0].update(p[2], p[3])
         
 def p_yaylist(p):
     '''
-    yaylist : EMPTYLIST
-            | HYPHEN stanza
+    yaylist : HYPHEN stanza
             | yaylist HYPHEN stanza
     '''
-    if len(p) == 2:
-        p[0] = ast.YayList()
-    elif len(p) == 3:
+    if len(p) == 3:
         p[0] = ast.YayList(p[2])
     elif len(p) == 4:
         p[0] = p[1]
