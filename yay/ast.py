@@ -181,18 +181,21 @@ class YayList(AST):
         self.value.append(item)
         
 class YayDict(AST):
+    
+    """ A dictionary in yay may redefine items, so update merely appends. The
+    value is a list of 2-tuples """
+    
     def __init__(self, value=None):
         if value is None:
-            self.value = {}
+            self.value = []
         else:
             self.value = value
         
-    def update(self, d):
-        for k, v in d.items():
-            self.value[k] = v
+    def update(self, l):
+        self.value.extend(l)
             
-    def items(self):
-        return self.value.items()
+    def __iter__(self):
+        return iter(self.value)
         
 class YayExtend(AST):
     def __init__(self, key, value):

@@ -867,13 +867,13 @@ def p_yaydict_keyscalar(p):
     '''
     yaydict : KEY scalar NEWLINE
     '''
-    p[0] = ast.YayDict({p[1]: p[2]})
+    p[0] = ast.YayDict([(p[1], p[2])])
     
 def p_yaydict_keystanza(p):
     '''
     yaydict : KEY NEWLINE stanza
     '''
-    p[0] = ast.YayDict({p[1]: p[3]})
+    p[0] = ast.YayDict([(p[1], p[3])])
     
 def p_yaydict_merge(p):
     '''
@@ -894,14 +894,14 @@ def p_listitem(p):
         p[0] = p[2]
     elif len(p) == 7:
         # dict of things
-        p[0] = ast.YayDict({p[2]: p[5]})
+        p[0] = ast.YayDict([(p[2], p[5])])
     elif len(p) == 5:
         # single item dictionary
-        p[0] = ast.YayDict({p[2]: p[3]})
+        p[0] = ast.YayDict([(p[2], p[3])])
     else:
         # multi item dict
-        p[0] = p[6]
-        p[0].update({p[2]: p[3]})
+        p[0] = ast.YayDict([(p[2], p[3])])
+        p[0].update(p[6])
 
 def p_yaylist(p):
     '''

@@ -132,29 +132,29 @@ class TestParser(unittest.TestCase):
         res = parse("""
             a: {}
         """)
-        self.assertEqual(res, YayDict({'a': YayDict()}))
+        self.assertEqual(res, YayDict([('a', YayDict())]))
         
     def test_emptylist(self):
         res = parse("""
             a: []
         """)
-        self.assertEqual(res, YayDict({'a': YayList()}))
+        self.assertEqual(res, YayDict([('a', YayList())]))
         
     def test_simple_dict(self):
         res = parse("""
             a: b
         """)
-        self.assertEqual(res, YayDict({'a': 'b'}))
+        self.assertEqual(res, YayDict([('a', 'b')]))
         
     def test_two_item_dict(self):
         res = parse("""
         a: b
         c: d
         """)
-        self.assertEqual(res, YayDict({
-            'a': 'b',
-            'c': 'd',
-        }))
+        self.assertEqual(res, YayDict([
+            ('a', 'b'),
+            ('c', 'd'),
+        ]))
     
     def test_command_and_dict(self):
         res = parse("""
@@ -162,18 +162,18 @@ class TestParser(unittest.TestCase):
         
         a: b
         """)
-        self.assertEqual(res, Stanzas(Include(Literal('foo.yay')), YayDict({'a': 'b'})))
+        self.assertEqual(res, Stanzas(Include(Literal('foo.yay')), YayDict([('a', 'b')])))
         
     def test_nested_dict(self):
         res = parse("""
         a:
             b: c
         """)
-        self.assertEqual(res, YayDict({
-            'a': YayDict({
-                'b': 'c'
-            })
-        }))
+        self.assertEqual(res, YayDict([
+            ('a', YayDict([
+                ('b', 'c')
+            ]))
+        ]))
     
     def test_sample1(self):
         res = parse("""
@@ -190,16 +190,16 @@ class TestParser(unittest.TestCase):
             key5:
                 key6: key7
         """)
-        self.assertEqual(res, YayDict({
-            'key1': 'value1',
-            'key2': 'value2',
-            'key3': YayList('item1', 'item2', 'item3'),
-            'key4': YayDict({
-                'key5': YayDict({
-                    'key6': 'key7',
-                })
-            }),
-            }))
+        self.assertEqual(res, YayDict([
+            ('key1', 'value1'),
+            ('key2', 'value2'),
+            ('key3', YayList('item1', 'item2', 'item3')),
+            ('key4', YayDict([
+                ('key5', YayDict([
+                    ('key6', 'key7'),
+                ]))
+            ])),
+            ]))
         print res
 
     def test_list_of_dicts(self):
@@ -209,9 +209,9 @@ class TestParser(unittest.TestCase):
               - c: d
               - e
               """)
-        self.assertEqual(res, YayDict({
-            'a': YayList('b', YayDict({'c': 'd'}), 'e')
-            }))
+        self.assertEqual(res, YayDict([
+            ('a', YayList('b', YayDict([('c', 'd')]), 'e'))
+            ]))
 
     def test_list_of_complex_dicts(self):
         res = parse("""
@@ -221,8 +221,8 @@ class TestParser(unittest.TestCase):
                 - e
                 - f
             """)
-        self.assertEqual(res, YayDict({
-            'a': YayList('b', YayDict({'c': YayList('e', 'f')}))}))
+        self.assertEqual(res, YayDict([
+            ('a', YayList('b', YayDict([('c', YayList('e', 'f'))])))]))
         
     def test_list_of_multikey_dicts(self):
         res = parse("""
@@ -232,34 +232,38 @@ class TestParser(unittest.TestCase):
                 e: f
               - g
               """)
-        self.assertEqual(res, YayDict({
-            'a': YayList('b', YayDict({'c': 'd', 'e': 'f'}), 'g')
-        }))
+        self.assertEqual(res, YayDict([
+            ('a', YayList('b', YayDict([('c', 'd'), ('e', 'f')]), 'g'))
+        ]))
 
-    #def test_list_of_dicts_with_lists_in(self):
-        #self.assertEqual(resolve("""
-            #a:
-             #- b: c
-               #d:
-                 #- e
-                 #- f
-                 #- g
-              #"""), {'a': [{'b': 'c', 'd': ['e', 'f', 'g']}]})
+    def test_list_of_dicts_with_lists_in(self):
+        res = parse("""
+            a:
+             - b: c
+               d:
+                 - e
+                 - f
+                 - g
+              """)
+        self.assertEqual(res, YayDict([
+            ('a', YayList(YayDict([
+                ('b', 'c'), 
+                ('d', YayList('e', 'f', 'g'))
+            ])))
+            ]))
 
-    #def test_simple_overlay(self):
-        #self.assertEqual(resolve("""
-        #foo: 
-          #a: b
+    def test_simple_overlay(self):
+        res = parse("""
+        foo: 
+          a: b
           
-        #foo:
-          #c: d
-        #"""), {
-               #'foo': {
-                   #'a': 'b',
-                   #'c': 'd',
-                   #}
-               #})
-        
+        foo:
+          c: d
+        """)
+        self.assertEqual(res, YayDict([
+            ('foo', YayDict([('a', 'b')])),
+            ('foo', YayDict([('c', 'd')])),
+            ]))
 
     #def test_mix(self):
         #res = resolve("""
