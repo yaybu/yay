@@ -17,7 +17,10 @@ class ParseError(Exception):
         return "Syntax error at line %d: '%s'" % (self.lineno, self.token)
 
 def p_error(p):
-    raise ParseError(p.value, p.lineno)
+    if p is None:
+        raise ParseError("End of file reached unexpectedly", 0)
+    else:
+        raise ParseError(p.value, p.lineno)
     
     
 ########## EXPRESSIONS
@@ -699,22 +702,29 @@ def p_sublist(p):
 
 #### yay \o/
 
-def p_command(p):
-    '''
-    command : PERCENT directive
-    '''
-    p[0] = p[2]
-    
 def p_directive(p):
     '''
-    directive : include_directive
-              | search_directive
-              | for_directive
-              | set_directive
-              | if_directive
-              | select_directive
+    directive : PERCENT include_directive
+              | PERCENT search_directive
+              | PERCENT for_directive
+              | PERCENT set_directive
+              | PERCENT if_directive
+              | PERCENT select_directive
+    '''
+    p[0] = p[2]
+
+def p_directives(p):
+    '''
+    directives : directive directive
+    '''
+    p[0] = ast.Directives(p[1], p[2])
+    
+def p_directives_merge(p):
+    '''
+    directives : directives directive
     '''
     p[0] = p[1]
+    p[0].append(p[2])
     
 def p_include_directive(p):
     '''
@@ -724,32 +734,32 @@ def p_include_directive(p):
     
 def p_search_directive(p):
     '''
-    search_directive : SEARCH atom
+    search_directive : SEARCH atom NEWLINE
     '''
     p[0] = ast.Search(p[2])
     
 def p_for_directive(p):
     '''
-    for_directive : FOR target IN atom stanza
-                  | FOR target IF atom IN atom stanza
+    for_directive : FOR target IN primary NEWLINE INDENT stanza DEDENT
+                  | FOR target IF primary IN primary NEWLINE INDENT stanza DEDENT
     '''
-    if len(p) == 6:
-        p[0] = ast.For(p[2], p[4], p[5])
+    if len(p) == 9:
+        p[0] = ast.For(p[2], p[4], p[7])
     else:
-        p[0] = ast.For(p[2], p[6], p[7], p[4])
+        p[0] = ast.For(p[2], p[6], p[9], p[4])
     
 def p_set_directive(p):
     '''
-    set_directive : SET target "=" expression
+    set_directive : SET target "=" expression NEWLINE
     '''
     p[0] = ast.Set(p[2], p[4])
     
 def p_if_directive(p):
     '''
-    if_directive : IF atom stanza
-                 | IF atom stanza ELSE stanza
-                 | IF atom stanza elif_list
-                 | IF atom stanza elif_list ELSE stanza
+    if_directive : IF atom stanza NEWLINE
+                 | IF atom stanza ELSE stanza NEWLINE
+                 | IF atom stanza elif_list NEWLINE
+                 | IF atom stanza elif_list ELSE stanza NEWLINE
     '''
     if len(p) == 4:
         p[0] = ast.If(p[2], p[3])
@@ -779,7 +789,7 @@ def p_elif(p):
     
 def p_select_directive(p):
     '''
-    select_directive : SELECT atom case_list
+    select_directive : SELECT atom case_list NEWLINE
     '''
     p[0] = ast.Select(p[2], p[3])
     
@@ -815,11 +825,11 @@ def p_root(p):
     
 def p_stanza(p):
     '''
-    stanza : command
-           | yaydict
+    stanza : yaydict
            | yaylist
            | extend
-           | INDENT stanza DEDENT
+           | directives
+           | directive
     '''
     if len(p) == 2:
         p[0] = p[1]
@@ -862,7 +872,13 @@ def p_scalar_value(p):
     scalar : VALUE
     '''
     p[0] = p[1]
-    
+
+def p_template(p):
+    '''
+    scalar : LDBRACE atom RDBRACE
+    '''
+    p[0] = ast.Template(p[2])
+        
 def p_yaydict_keyscalar(p):
     '''
     yaydict : KEY scalar NEWLINE
@@ -871,9 +887,9 @@ def p_yaydict_keyscalar(p):
     
 def p_yaydict_keystanza(p):
     '''
-    yaydict : KEY NEWLINE stanza
+    yaydict : KEY NEWLINE INDENT stanza DEDENT
     '''
-    p[0] = ast.YayDict([(p[1], p[3])])
+    p[0] = ast.YayDict([(p[1], p[4])])
     
 def p_yaydict_merge(p):
     '''

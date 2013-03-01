@@ -211,6 +211,13 @@ class Stanzas(AST):
         
     def append(self, stanza):
         self.value.append(stanza)
+
+class Directives(AST):
+    def __init__(self, *directives):
+        self.value = list(directives)
+        
+    def append(self, directive):
+        self.value.append(directive)
         
 class Include(AST):
     
@@ -283,4 +290,13 @@ class For(AST):
         self.if_clause = if_clause
         self.in_clause = in_clause
         self.node = node        
+
+class Template(AST):
+    def __init__(self, *value):
+        self.value = list(value)
         
+    def append(self, value):
+        self.value.append(value)
+        
+    def prepend(self, value):
+        self.value.insert(0, value)
