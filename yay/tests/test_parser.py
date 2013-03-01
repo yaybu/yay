@@ -202,51 +202,39 @@ class TestParser(unittest.TestCase):
             }))
         print res
 
-    #def test_sample2(self):
-        #self.assertEqual(resolve("""
-        #key1:
-            #key2:
-                #- a
-                #- b
-            #key3: c
-            #key4:
-                #key5: d
-        #"""), {
-            #'key1': {
-                #'key2': ['a', 'b'],
-                #'key3': 'c',
-                #'key4': {
-                    #'key5': 'd'
-                    #}
-                #}
-            #})
-    
-    #def test_list_of_dicts(self):
-        #self.assertEqual(resolve("""
-            #a: 
-              #- b
-              #- c: d
-              #- e
-              #"""), {
-                #'a': [
-                #'b',
-                #{'c': 'd'},
-                #'e',
-                #]})
+    def test_list_of_dicts(self):
+        res = parse("""
+            a: 
+              - b
+              - c: d
+              - e
+              """)
+        self.assertEqual(res, YayDict({
+            'a': YayList('b', YayDict({'c': 'd'}), 'e')
+            }))
 
-    #def test_list_of_multikey_dicts(self):
-        #self.assertEqual(resolve("""
-            #a: 
-              #- b
-              #- c: d
-                #e: f
-              #- g
-              #"""), {
-                #'a': [
-                #'b',
-                #{'c': 'd', 'e': 'f'},
-                #'g',
-                #]})
+    def test_list_of_complex_dicts(self):
+        res = parse("""
+            a:
+              - b
+              - c:
+                - e
+                - f
+            """)
+        self.assertEqual(res, YayDict({
+            'a': YayList('b', YayDict({'c': YayList('e', 'f')}))}))
+        
+    def test_list_of_multikey_dicts(self):
+        res = parse("""
+            a: 
+              - b
+              - c: d
+                e: f
+              - g
+              """)
+        self.assertEqual(res, YayDict({
+            'a': YayList('b', YayDict({'c': 'd', 'e': 'f'}), 'g')
+        }))
 
     #def test_list_of_dicts_with_lists_in(self):
         #self.assertEqual(resolve("""

@@ -882,16 +882,37 @@ def p_yaydict_merge(p):
     p[0] = p[1]
     p[0].update(p[2])
         
+def p_listitem(p):
+    '''
+    listitem : HYPHEN scalar NEWLINE
+             | HYPHEN KEY NEWLINE INDENT stanza DEDENT
+             | HYPHEN KEY scalar NEWLINE
+             | HYPHEN KEY scalar NEWLINE INDENT yaydict DEDENT
+    '''
+    if len(p) == 4:
+        # simple item
+        p[0] = p[2]
+    elif len(p) == 7:
+        # dict of things
+        p[0] = ast.YayDict({p[2]: p[5]})
+    elif len(p) == 5:
+        # single item dictionary
+        p[0] = ast.YayDict({p[2]: p[3]})
+    else:
+        # multi item dict
+        p[0] = p[6]
+        p[0].update({p[2]: p[3]})
+
 def p_yaylist(p):
     '''
-    yaylist : HYPHEN stanza
-            | yaylist HYPHEN stanza
+    yaylist : listitem
+            | yaylist listitem
     '''
-    if len(p) == 3:
-        p[0] = ast.YayList(p[2])
-    elif len(p) == 4:
+    if len(p) == 2:
+        p[0] = ast.YayList(p[1])
+    elif len(p) == 3:
         p[0] = p[1]
-        p[0].append(p[3])
+        p[0].append(p[2])
         
 parser = yacc.yacc()
 
