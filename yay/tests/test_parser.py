@@ -2,6 +2,8 @@ import unittest
 from yay import parser
 from yay.ast import *
 
+import os
+
 def parse(value):
     return parser.parse(value, debug=0) 
 
@@ -24,6 +26,12 @@ class TestParser(unittest.TestCase):
         % set a = 'foo'
         """)
         self.assertEqual(res, Set('a', Literal("foo")))
+        
+    def test_set_string_arithmetic(self):
+        res = parse("""
+        % set a = 'foo ' + 'bar'
+        """)
+        self.assertEqual(res, Set('a', Expr(Literal('foo '), Literal('bar'), '+')))
                 
     def test_set_float_literal(self):
         res = parse("""
@@ -51,9 +59,7 @@ class TestParser(unittest.TestCase):
             Expr(
                 Expr(
                     ParentForm(
-                        ExpressionList(
                             Expr(Literal(2), Literal(2), '+'),
-                            )
                         ),
                     Literal(5),
                     '*'),
@@ -96,9 +102,8 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set('a', 
                                   Subscription(
                                       Identifier('b'), 
-                                      ExpressionList(
                                           Literal(1)
-                                          ))))
+                                          )))
     
     def test_set_slice(self):
         res = parse("""
@@ -257,6 +262,57 @@ class TestParser(unittest.TestCase):
                           ))
             ]))
 
+    def test_template_1(self):
+        res = parse("""
+        a: b
+        c: {{a}}
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', Template(Identifier('a'))),
+        ]))
+        
+    def test_template_2(self):
+        res = parse("""
+        a: b
+        c: hello {{a}}
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', YayMerged(YayScalar('hello '), Template(Identifier('a')))),
+        ]))
+
+    def test_template_3(self):
+        res = parse("""
+        a:b
+        c: {{a}} hello
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', YayMerged(Template(Identifier('a')), YayScalar(' hello'))),
+        ]))
+        
+    def test_template_4(self):
+        res = parse("""
+        a:b
+        c: woo {{a}} hello
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', YayMerged(YayScalar('woo '), Template(Identifier('a')), YayScalar(' hello'))),
+        ]))
+        
+    def test_template_5(self):
+        res = parse("""
+        a:b
+        c: {{"this " + a + " that"}}
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', Template(Expr(Expr(Literal('this '), Identifier('a'), '+'), Literal(" that"), "+")))
+        ]))
+        
+        
     def test_list_of_complex_dicts(self):
         res = parse("""
             a:
@@ -272,6 +328,12 @@ class TestParser(unittest.TestCase):
                     YayScalar('e'), 
                     YayScalar('f')
                 ))])))]))
+        self.assertEqual(res.resolve(), {
+            'a': [
+                'b',
+                {'c': ['e', 'f']},
+                ]
+            })
         
     def test_list_of_multikey_dicts(self):
         res = parse("""
@@ -320,6 +382,10 @@ class TestParser(unittest.TestCase):
             ('foo', YayDict([('a', YayScalar('b'))])),
             ('foo', YayDict([('c', YayScalar('d'))])),
             ]))
+        self.assertEqual(res.resolve(), {
+            'foo': {
+                'c': 'd',
+                }})
 
     def test_mix(self):
         res = parse("""

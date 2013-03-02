@@ -648,14 +648,18 @@ def p_expression_list(p):
                     | expression_list "," expression
                     | expression_list ","
     '''
+    # we only create actual expression list objects if we need them
     if len(p) == 2:
-        p[0] = ast.ExpressionList(p[1])
-        p[0].lineno = p[1].lineno
+        p[0] = p[1]
     elif len(p) == 3:
         p[0] = p[1]
     else:
-        p[0] = p[1]
-        p[0].append(p[3])
+        if isinstance(p[1], ast.ExpressionList):
+            p[0] = p[1]
+            p[0].append(p[3])
+        else:
+            p[0] = ast.ExpressionList(p[1], p[3])
+            p[0].lineno = p[1].lineno
 
 #### SIMPLE STATEMENTS
 # http://docs.python.org/2/reference/simple_stmts.html
@@ -930,10 +934,24 @@ def p_scalar_value(p):
 
 def p_template(p):
     '''
-    scalar : LDBRACE atom RDBRACE
+    scalar : LDBRACE expression_list RDBRACE
     '''
     p[0] = ast.Template(p[2])
     p[0].lineno = p.lineno(1)
+    
+def p_scalar_merge(p):
+    '''
+    scalar : scalar scalar
+    '''
+    if isinstance(p[1], ast.YayMerged):
+        p[0] = p[1]
+        p[0].append(p[2])
+    elif isinstance(p[2], ast.YayMerged):
+        p[0] = p[2]
+        p[0].prepend(p[1])
+    else:
+        p[0] = ast.YayMerged(p[1], p[2])
+        p[0].lineno = p[1].lineno
         
 def p_yaydict_keyscalar(p):
     '''

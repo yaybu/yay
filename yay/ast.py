@@ -4,7 +4,7 @@ class AST(object):
     lineno = 0
     
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.__dict__)
+        return "<%s %s>" % (self.__class__.__name__, self.__vars())
 
     def __vars(self):
         """ Return the members without the lineno """
@@ -232,7 +232,19 @@ class YayScalar(AST):
         
     def resolve(self):
         return self.value
+    
+class YayMerged(AST):
+    """ Combined scalars and templates """
+    
+    def __init__(self, *v):
+        self.value = list(v)
+        
+    def append(self, v):
+        self.value.append(v)
 
+    def prepend(self, value):
+        self.value.insert(0, value)
+        
 class Stanzas(AST):
     def __init__(self, *stanzas):
         self.value = list(stanzas)
@@ -329,8 +341,3 @@ class Template(AST):
     def __init__(self, *value):
         self.value = list(value)
         
-    def append(self, value):
-        self.value.append(value)
-        
-    def prepend(self, value):
-        self.value.insert(0, value)
