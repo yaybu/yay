@@ -606,9 +606,10 @@ def p_not_test(p):
     '''
     if len(p) == 2:
         p[0] = p[1]
+        p[0].lineno = p[1].lineno
     else:
         p[0] = ast.Not(p[2])
-        p[0].lineno = p[1].lineno
+        p[0].lineno = p.lineno(1)
     
 def p_conditional_expression(p):
     '''

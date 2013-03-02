@@ -138,6 +138,25 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set('a',
             Call(Identifier('func'))))
         
+    def test_set_parentheses(self):
+        res = parse("""
+        % set a = (1,2,3)
+        """)
+        self.assertEqual(res, Set('a',
+            ParentForm(ExpressionList(Literal(1), Literal(2), Literal(3)))))
+        
+    def test_set_parentheses_empty(self):
+        res = parse("""
+        % set a = ()
+        """)
+        self.assertEqual(res, Set('a', ParentForm()))
+        
+    def test_set_not(self):
+        res = parse("""
+        % set a = not b
+        """)
+        self.assertEqual(res, Set('a', Not(Identifier('b'))))
+        
     def test_for(self):
         res = parse("""
         % for a in b
@@ -312,7 +331,16 @@ class TestParser(unittest.TestCase):
             ('c', Template(Expr(Expr(Literal('this '), Identifier('a'), '+'), Literal(" that"), "+")))
         ]))
         
-        
+    def test_template_6(self):
+        res = parse("""
+        a:b
+        c: {{1.0 + 2}}
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b')),
+            ('c', Template(Expr(Literal(1.0), Literal(2), "+")))
+        ]))
+    
     def test_list_of_complex_dicts(self):
         res = parse("""
             a:
