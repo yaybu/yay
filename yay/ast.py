@@ -190,6 +190,12 @@ class YayList(AST):
     def append(self, item):
         self.value.append(item)
         
+    def resolve(self):
+        l = []
+        for i in self.value:
+            l.append(i.resolve())
+        return l
+        
 class YayDict(AST):
     
     """ A dictionary in yay may redefine items, so update merely appends. The
@@ -206,6 +212,15 @@ class YayDict(AST):
             
     def __iter__(self):
         return iter(self.value)
+    
+    def resolve(self):
+        d = {}
+        for a, b in self.value:
+            d[a] = b
+        e = {}
+        for k, v in d.items():
+            e[k] = v.resolve()
+        return e
         
 class YayExtend(AST):
     def __init__(self, key, value):
@@ -214,6 +229,9 @@ class YayExtend(AST):
 class YayScalar(AST):
     def __init__(self, value):
         self.value = value
+        
+    def resolve(self):
+        return self.value
 
 class Stanzas(AST):
     def __init__(self, *stanzas):
@@ -221,6 +239,12 @@ class Stanzas(AST):
         
     def append(self, stanza):
         self.value.append(stanza)
+        
+    def resolve(self):
+        l = []
+        for i in self.value:
+            l.append(i.resolve())
+        return l
 
 class Directives(AST):
     def __init__(self, *directives):

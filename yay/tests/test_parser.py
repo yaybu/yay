@@ -303,6 +303,10 @@ class TestParser(unittest.TestCase):
                 ('d', YayList(YayScalar('e'), YayScalar('f'), YayScalar('g')))
             ])))
             ]))
+        self.assertEqual(res.resolve(), {'a': [
+            {'b': 'c',
+             'd': ['e', 'f', 'g'],
+             }]})
 
     def test_simple_overlay(self):
         res = parse("""
