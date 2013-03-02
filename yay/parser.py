@@ -783,22 +783,22 @@ def p_directives_merge(p):
     
 def p_include_directive(p):
     '''
-    include_directive : INCLUDE atom NEWLINE
+    include_directive : INCLUDE expression_list NEWLINE
     '''
     p[0] = ast.Include(p[2])
     p[0].lineno = p.lineno(1)
     
 def p_search_directive(p):
     '''
-    search_directive : SEARCH atom NEWLINE
+    search_directive : SEARCH expression_list NEWLINE
     '''
     p[0] = ast.Search(p[2])
     p[0].lineno = p.lineno(1)
     
 def p_for_directive(p):
     '''
-    for_directive : FOR target IN primary NEWLINE INDENT stanza DEDENT
-                  | FOR target IF primary IN primary NEWLINE INDENT stanza DEDENT
+    for_directive : FOR target_list IN expression_list NEWLINE INDENT stanza DEDENT
+                  | FOR target_list IF expression IN expression_list NEWLINE INDENT stanza DEDENT
     '''
     if len(p) == 9:
         p[0] = ast.For(p[2], p[4], p[7])
@@ -815,10 +815,10 @@ def p_set_directive(p):
     
 def p_if_directive(p):
     '''
-    if_directive : IF atom stanza NEWLINE
-                 | IF atom stanza ELSE stanza NEWLINE
-                 | IF atom stanza elif_list NEWLINE
-                 | IF atom stanza elif_list ELSE stanza NEWLINE
+    if_directive : IF expression_list stanza NEWLINE
+                 | IF expression_list stanza ELSE stanza NEWLINE
+                 | IF expression_list stanza elif_list NEWLINE
+                 | IF expression_list stanza elif_list ELSE stanza NEWLINE
     '''
     if len(p) == 4:
         p[0] = ast.If(p[2], p[3])
@@ -844,14 +844,14 @@ def p_elif_list(p):
     
 def p_elif(p):
     '''
-    elif : ELIF atom stanza
+    elif : ELIF expression_list stanza
     '''
     p[0] = ast.Elif(p[2], p[3])
     p[0].lineno = p.lineno(1)
     
 def p_select_directive(p):
     '''
-    select_directive : SELECT atom case_list NEWLINE
+    select_directive : SELECT expression_list case_list NEWLINE
     '''
     p[0] = ast.Select(p[2], p[3])
     p[0].lineno = p.lineno(1)
