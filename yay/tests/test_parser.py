@@ -244,6 +244,20 @@ class TestParser(unittest.TestCase):
                                        Expr(Identifier('c'), Identifier('d'), '*'),
                                        '+')))
         
+    def test_comparison_1(self):
+        res = parse("""
+        % set a = b < c
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  Expr(Identifier('b'), Identifier('c'), '<')))
+        
+    def test_comparison_2(self):
+        res = parse("""
+        % set a = b not in c
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  Expr(Identifier('b'), Identifier('c'), 'not in')))
+        
     def test_emptydict(self):
         res = parse("""
             a: {}

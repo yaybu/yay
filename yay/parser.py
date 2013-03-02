@@ -576,7 +576,6 @@ def p_comp_operator(p):
                   | NOT IN
     '''
     p[0] = " ".join(p[1:])
-    p[0].lineno = p.lineno(1)
     
 def p_or_test(p):
     '''
@@ -732,7 +731,7 @@ def p_defparameter(p):
     
 def p_parameter(p):
     '''
-    parameter : IDENTIFIER
+    parameter : identifier
               | "(" sublist ")"
     '''
     if len(p) == 2:
