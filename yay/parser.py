@@ -420,8 +420,8 @@ def p_positional_arguments(p):
     
 def p_keyword_arguments(p):
     '''
-    keyword_arguments : keyword_item
-                      | keyword_arguments "," keyword_item
+    keyword_arguments : kwarg
+                      | keyword_arguments "," kwarg
     '''
     if len(p) == 2:
         p[0] = ast.KeywordArguments(p[1])
@@ -430,9 +430,9 @@ def p_keyword_arguments(p):
         p[0] = p[1]
         p[0].append(p[3])
     
-def p_keyword_item(p):
+def p_kwarg(p):
     '''
-    keyword_item : identifier "=" expression
+    kwarg : identifier "=" expression
     '''
     p[0] = ast.Kwarg(p[1], p[3])
     p[0].lineno = p.lineno(1)

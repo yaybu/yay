@@ -219,6 +219,31 @@ class TestParser(unittest.TestCase):
                          ]
                      )))
        
+    def test_set_unary_minus(self):
+        res = parse("""
+        % set a = -b
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  UnaryMinus(Identifier('b'))))
+        
+    def test_set_precedence_1(self):
+        res = parse("""
+        % set a = b * c + d
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  Expr(Expr(Identifier('b'), Identifier('c'), '*'),
+                                       Identifier('d'),
+                                       '+')))
+
+    def test_set_precedence_2(self):
+        res = parse("""
+        % set a = b + c * d
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  Expr(Identifier('b'), 
+                                       Expr(Identifier('c'), Identifier('d'), '*'),
+                                       '+')))
+        
     def test_emptydict(self):
         res = parse("""
             a: {}
