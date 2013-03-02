@@ -129,30 +129,31 @@ class Slice(AST):
         self.stride = stride
         
 class Call(AST):
-    def __init__(self, primary, argument_list=None):
+    def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
-        self.argument_list = argument_list
+        self.args = args
+        self.kwargs = kwargs
         
 class ArgumentList(AST):
-    def __init__(self, positional_arguments, keyword_arguments=None):
-        self.positional_arguments = positional_arguments
-        self.keyword_arguments = keyword_arguments
+    def __init__(self, args, kwargs=None):
+        self.args = args
+        self.kwargs = kwargs
       
 class PositionalArguments(AST):
     def __init__(self, *expressions):
-        self.positional_arguments = list(expressions)
+        self.args = list(expressions)
         
     def append(self, expression):
-        self.positional_arguments.append(expression)
+        self.args.append(expression)
         
 class KeywordArguments(AST):
     def __init__(self, *keyword_items):
-        self.keyword_arguments = list(keyword_items)
+        self.kwargs = list(keyword_items)
         
     def append(self, keyword_item):
-        self.keyword_arguments.append(keyword_item)
+        self.kwargs.append(keyword_item)
         
-class KeywordItem(AST):
+class Kwarg(AST):
     def __init__(self, identifier, expression):
         self.identifier = identifier
         self.expression = expression

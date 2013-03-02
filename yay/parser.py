@@ -386,7 +386,7 @@ def p_call(p):
     if len(p) == 4:
         p[0] = ast.Call(p[1])
     else:
-        p[0] = ast.Call(p[1], p[3])
+        p[0] = ast.Call(p[1], p[3].args, p[3].kwargs)
     p[0].lineno = p[1].lineno
     
 def p_argument_list(p):
@@ -396,12 +396,14 @@ def p_argument_list(p):
                   | argument_list ","
     '''
     # ignore all the * and ** stuff, don't think relevant
+    # can't see the value in nodes for the lists either, 
+    # can provide the semantics
     if len(p) == 2:
-        p[0] = ast.ArgumentList(p[1])
+        p[0] = ast.ArgumentList(p[1].args)
     elif len(p) == 3:
         p[0] = p[1]
     else:
-        p[0] = ast.ArgumentList(p[1], p[3])
+        p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
     p[0].lineno = p[1].lineno
     
 def p_positional_arguments(p):
@@ -430,9 +432,9 @@ def p_keyword_arguments(p):
     
 def p_keyword_item(p):
     '''
-    keyword_item : IDENTIFIER "=" expression
+    keyword_item : identifier "=" expression
     '''
-    p[0] = ast.KeywordItem(p[1], p[3])
+    p[0] = ast.Kwarg(p[1], p[3])
     p[0].lineno = p.lineno(1)
     
 def p_power(p):

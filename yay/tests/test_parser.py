@@ -138,6 +138,14 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'))))
         
+    def test_set_call_args_1(self):
+        res = parse("""
+        % set a = func(1)
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+            Call(Identifier('func'), [Literal(1)])))
+        
+        
     def test_set_parentheses(self):
         res = parse("""
         % set a = (1,2,3)
@@ -195,25 +203,21 @@ class TestParser(unittest.TestCase):
         % set a = func(4)
         """)
         self.assertEqual(res, Set(Identifier('a'),
-            Call(Identifier('func'), 
-                 ArgumentList(PositionalArguments(Literal(4))))))
+            Call(Identifier('func'), [Literal(4)])))
         
     def test_set_call_args_many(self):
         res = parse("""
         % set a = func(4, a, foo='bar', baz='quux')
         """)
         self.assertEqual(res, Set(Identifier('a'),
-            Call(Identifier('func'), 
-                 ArgumentList(
-                     PositionalArguments(
+            Call(Identifier('func'), [
                          Literal(4),
                          Identifier('a'),
-                         ),
-                     KeywordArguments(
-                         KeywordItem('foo', Literal('bar')),
-                         KeywordItem('baz', Literal('quux')),
-                         ),
-                     ))))
+                         ], [
+                         Kwarg(Identifier('foo'), Literal('bar')),
+                         Kwarg(Identifier('baz'), Literal('quux')),
+                         ]
+                     )))
        
     def test_emptydict(self):
         res = parse("""
@@ -459,9 +463,8 @@ class TestParser(unittest.TestCase):
             YayDict([
                 ('bar', Directives(
                 Set(Identifier('a'), Literal(2)),
-                For(Identifier('x'), Call(Identifier('range'), ArgumentList(
-                    PositionalArguments(Identifier('a')))
-                              ), YayList(Template(Identifier('x'))))
+                For(Identifier('x'), Call(Identifier('range'), [Identifier('a')])
+                              , YayList(Template(Identifier('x'))))
                 )),
                 ('quux', YayList(YayScalar('a'), YayScalar('b')))
                 ]),
