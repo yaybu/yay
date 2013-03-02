@@ -36,6 +36,7 @@ def p_atom_identifier(p):
     atom : IDENTIFIER
     '''
     p[0] = ast.Identifier(p[1])
+    p[0].lineno = p.lineno(1)
     
 def p_atom_literal(p):
     '''
@@ -44,13 +45,13 @@ def p_atom_literal(p):
          | FLOAT
     '''
     p[0] = ast.Literal(p[1])
+    p[0].lineno = p.lineno(1)
 
 def p_atom_enclosure(p):
     '''
     atom : enclosure
     '''
     p[0] = p[1]
-    
     
 def p_enclosure(p):
     '''
@@ -90,6 +91,7 @@ def p_parent_form(p):
         p[0] = ast.ParentForm()
     else:
         p[0] = ast.ParentForm(p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_list_display(p):
     '''
@@ -114,6 +116,7 @@ def p_list_display(p):
         p[0] = ast.ListDisplay()
     else:
         p[0] = ast.ListDisplay(p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_list_comprehension(p):
     '''
@@ -136,6 +139,7 @@ def p_old_expression_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.ExpressionList(p[1])
+        p[0].lineno = p.lineno(1)
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -210,6 +214,7 @@ def p_dict_display(p):
         p[0] = ast.DictDisplay()
     else:
         p[0] = ast.DictDisplay(p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_key_datum_list(p):
     '''
@@ -227,6 +232,7 @@ def p_key_datum(p):
     key_datum : expression ":" expression
     '''
     p[0] = ast.KeyDatum(p[1], p[3])
+    p[0].lineno = p.lineno(2)
 
 def p_dict_comprehension(p):
     '''
@@ -262,12 +268,14 @@ def p_attributeref(p):
     attributeref : primary "." IDENTIFIER
     '''
     p[0] = ast.AttributeRef(p[1], ast.Identifier(p[3]))
+    p[0].lineno = p[1].lineno
     
 def p_subscription(p):
     '''
     subscription : primary "[" expression_list "]"
     '''
     p[0] = ast.Subscription(p[1], p[3])
+    p[0].lineno = p[1].lineno
     
 def p_slicing(p):
     '''
@@ -281,12 +289,14 @@ def p_simple_slicing(p):
     simple_slicing : primary "[" short_slice "]"
     '''
     p[0] = ast.SimpleSlicing(p[1], p[3])
+    p[0].lineno = p.lineno(2)
     
 def p_extended_slicing(p):
     '''
     extended_slicing : primary "[" slice_list "]"
     '''
     p[0] = ast.ExtendedSlicing(p[1], p[3])
+    p[0].lineno = p.lineno(2)
     
 def p_slice_list(p):
     '''
@@ -301,6 +311,7 @@ def p_slice_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
+    p[0].lineno = p[1].lineno
     
 def p_slice_item(p):
     '''
@@ -328,13 +339,17 @@ def p_short_slice(p):
         if p[2] == ':':
             lower_bound = p[1]
             upper_bound = None
+            lineno = p.lineno(2)
         else:
             lower_bound = None
             upper_bound = p[2]
+            lineno = p.lineno(1)
     else:
         lower_bound = p[1]
         upper_bound = p[3]
+        lineno = p.lineno(2)
     p[0] = ast.Slice(lower_bound, upper_bound)
+    p[0].lineno = lineno
     
 def p_long_slice(p):
     '''
@@ -373,6 +388,7 @@ def p_call(p):
         p[0] = ast.Call(p[1])
     else:
         p[0] = ast.Call(p[1], p[3])
+    p[0].lineno = p[1].lineno
     
 def p_argument_list(p):
     '''
@@ -387,7 +403,7 @@ def p_argument_list(p):
         p[0] = p[1]
     else:
         p[0] = ast.ArgumentList(p[1], p[3])
-    
+    p[0].lineno = p[1].lineno
     
 def p_positional_arguments(p):
     '''
@@ -396,6 +412,7 @@ def p_positional_arguments(p):
     '''
     if len(p) == 2:
         p[0] = ast.PositionalArguments(p[1])
+        p[0].lineno = p[1].lineno
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -407,6 +424,7 @@ def p_keyword_arguments(p):
     '''
     if len(p) == 2:
         p[0] = ast.KeywordArguments(p[1])
+        p[0].lineno = p[1].lineno
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -416,7 +434,7 @@ def p_keyword_item(p):
     keyword_item : IDENTIFIER "=" expression
     '''
     p[0] = ast.KeywordItem(p[1], p[3])
-    
+    p[0].lineno = p.lineno(1)
     
 def p_power(p):
     '''
@@ -427,6 +445,7 @@ def p_power(p):
         p[0] = p[1]
     else:
         p[0] = ast.Power(p[1], p[3])
+        p[0].lineno = p[1].lineno
 
 def p_u_expr(p):
     '''
@@ -451,10 +470,12 @@ def p_u_expr(p):
     else:
         if p[1] == '-':
             p[0] = ast.UnaryMinus(p[2])
+            p[0].lineno = p.lineno(1)
         elif p[1] == '+':
             p[0] == p[2]
         elif p[1] == '~':
             p[0] = ast.Invert(p[2])
+            p[0].lineno = p.lineno(1)
     
 def p_m_expr(p):
     '''
@@ -468,6 +489,7 @@ def p_m_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
     
 def p_a_expr(p):
@@ -480,6 +502,7 @@ def p_a_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_shift_expr(p):
     '''
@@ -491,6 +514,7 @@ def p_shift_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_and_expr(p):
     '''
@@ -501,6 +525,7 @@ def p_and_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_xor_expr(p):
     '''
@@ -511,6 +536,7 @@ def p_xor_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_or_expr(p):
     '''
@@ -521,6 +547,7 @@ def p_or_expr(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_comparison(p):
     '''
@@ -531,6 +558,7 @@ def p_comparison(p):
         p[0] = p[1]
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_comp_operator(p):
     '''
@@ -547,6 +575,7 @@ def p_comp_operator(p):
                   | NOT IN
     '''
     p[0] = " ".join(p[1:])
+    p[0].lineno = p.lineno(1)
     
 def p_or_test(p):
     '''
@@ -557,6 +586,7 @@ def p_or_test(p):
         p[0] = p[1]
     else:
         p[0] = Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_and_test(p):
     '''
@@ -567,6 +597,7 @@ def p_and_test(p):
         p[0] = p[1]
     else:
         p[0] = Expr(p[1], p[3], p[2])
+        p[0].lineno = p[1].lineno
     
 def p_not_test(p):
     '''
@@ -577,6 +608,7 @@ def p_not_test(p):
         p[0] = p[1]
     else:
         p[0] = ast.Not(p[2])
+        p[0].lineno = p[1].lineno
     
 def p_conditional_expression(p):
     '''
@@ -587,6 +619,7 @@ def p_conditional_expression(p):
         p[0] = p[1]
     else:
         p[0] = ast.ConditionalExpression(p[1], p[3], p[5])
+        p[0].lineno = p[1].lineno
         
 def p_expression(p):
     '''
@@ -617,6 +650,7 @@ def p_expression_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.ExpressionList(p[1])
+        p[0].lineno = p[1].lineno
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -634,6 +668,7 @@ def p_target_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.TargetList(p[1])
+        p[0].lineno = p[1].lineno
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -660,6 +695,7 @@ def p_parameter_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.ParameterList(p[1])
+        p[0].lineno = p[1].lineno
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -673,8 +709,10 @@ def p_defparameter(p):
     '''
     if len(p) == 2:
         p[0] = ast.DefParameter(p[1])
+        p[0].lineno = p[1].lineno
     else:
         p[0] = ast.DefParameter(p[1], p[3])
+        p[0].lineno = p[1].lineno
     
 def p_parameter(p):
     '''
@@ -694,6 +732,7 @@ def p_sublist(p):
     '''
     if len(p) == 2:
         p[0] = ast.Sublist(p[1])
+        p[0].lineno = p[1].lineno
     elif len(p) == 3:
         p[0] = p[1]
     else:
@@ -718,6 +757,7 @@ def p_directives(p):
     directives : directive directive
     '''
     p[0] = ast.Directives(p[1], p[2])
+    p[0].lineno = p[1].lineno
     
 def p_directives_merge(p):
     '''
@@ -731,12 +771,14 @@ def p_include_directive(p):
     include_directive : INCLUDE atom NEWLINE
     '''
     p[0] = ast.Include(p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_search_directive(p):
     '''
     search_directive : SEARCH atom NEWLINE
     '''
     p[0] = ast.Search(p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_for_directive(p):
     '''
@@ -747,12 +789,14 @@ def p_for_directive(p):
         p[0] = ast.For(p[2], p[4], p[7])
     else:
         p[0] = ast.For(p[2], p[6], p[9], p[4])
+    p[0].lineno = p.lineno(1)
     
 def p_set_directive(p):
     '''
     set_directive : SET target "=" expression NEWLINE
     '''
     p[0] = ast.Set(p[2], p[4])
+    p[0].lineno = p.lineno(1)
     
 def p_if_directive(p):
     '''
@@ -769,6 +813,7 @@ def p_if_directive(p):
         p[0] = ast.If(p[2], p[3], p[4])
     else:
         p[0] = ast.If(p[2], p[3], p[4], p[6])
+    p[0].lineno = p.lineno(1)
     
 def p_elif_list(p):
     '''
@@ -777,6 +822,7 @@ def p_elif_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.ElifList(p[1])
+        p[0].lineno = p[1].lineno
     else:
         p[0] = p[1]
         p[0].append(p[3])
@@ -786,12 +832,14 @@ def p_elif(p):
     elif : ELIF atom stanza
     '''
     p[0] = ast.Elif(p[2], p[3])
+    p[0].lineno = p.lineno(1)
     
 def p_select_directive(p):
     '''
     select_directive : SELECT atom case_list NEWLINE
     '''
     p[0] = ast.Select(p[2], p[3])
+    p[0].lineno = p.lineno(1)
     
 def p_case_list(p):
     '''
@@ -800,6 +848,7 @@ def p_case_list(p):
     '''
     if len(p) == 2:
         p[0] = ast.CaseList(p[1])
+        p[0].lineno = p[1].lineno
     else:
         p[0] = p[1]
         p[0].append(p[2])
@@ -809,12 +858,14 @@ def p_case_block(p):
     case_block : KEY ":" stanza
     '''
     p[0] = ast.Case(p[1], p[3])
+    p[0].lineno = p.lineno(1)
 
 def p_stanza_VALUE(p):
     '''
     stanza : VALUE NEWLINE
     '''
     p[0] = p[1]
+    p[0].lineno = p.lineno(1)
 
 def p_root(p):
     '''
@@ -841,6 +892,7 @@ def p_stanzas(p):
     stanzas : stanza stanza
     '''
     p[0] = ast.Stanzas(p[1], p[2])
+    p[0].lineno = p.lineno(1)
     
 def p_stanzas_merge(p):
     '''
@@ -854,42 +906,48 @@ def p_extend(p):
     extend : EXTEND KEY stanza
     '''
     p[0] = ast.YayExtend(p[2], p[3])
+    p[0].lineno = p.lineno(1)
     
 def p_scalar_emptydict(p):
     '''
     scalar : EMPTYDICT
     '''
     p[0] = ast.YayDict()
+    p[0].lineno = p.lineno(1)
     
 def p_scalar_emptylist(p):
     '''
     scalar : EMPTYLIST
     '''
     p[0] = ast.YayList()
+    p[0].lineno = p.lineno(1)
     
 def p_scalar_value(p):
     '''
     scalar : VALUE
     '''
-    p[0] = p[1]
+    p[0] = ast.YayScalar(p[1])
 
 def p_template(p):
     '''
     scalar : LDBRACE atom RDBRACE
     '''
     p[0] = ast.Template(p[2])
+    p[0].lineno = p.lineno(1)
         
 def p_yaydict_keyscalar(p):
     '''
     yaydict : KEY scalar NEWLINE
     '''
     p[0] = ast.YayDict([(p[1], p[2])])
+    p[0].lineno = p.lineno(1)
     
 def p_yaydict_keystanza(p):
     '''
     yaydict : KEY NEWLINE INDENT stanza DEDENT
     '''
     p[0] = ast.YayDict([(p[1], p[4])])
+    p[0].lineno = p.lineno(1)
     
 def p_yaydict_merge(p):
     '''
@@ -918,6 +976,7 @@ def p_listitem(p):
         # multi item dict
         p[0] = ast.YayDict([(p[2], p[3])])
         p[0].update(p[6])
+    p[0].lineno = p.lineno(1)
 
 def p_yaylist(p):
     '''
@@ -926,6 +985,7 @@ def p_yaylist(p):
     '''
     if len(p) == 2:
         p[0] = ast.YayList(p[1])
+        p[0].lineno = p[1].lineno
     elif len(p) == 3:
         p[0] = p[1]
         p[0].append(p[2])

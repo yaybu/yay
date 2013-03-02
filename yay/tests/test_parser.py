@@ -138,7 +138,7 @@ class TestParser(unittest.TestCase):
         % for a in b
              - x
         """)
-        self.assertEqual(res, For('a', Identifier('b'), YayList('x')))
+        self.assertEqual(res, For('a', Identifier('b'), YayList(YayScalar('x'))))
         
     def test_set_call_args_simple(self):
         res = parse("""
@@ -181,7 +181,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
             a: b
         """)
-        self.assertEqual(res, YayDict([('a', 'b')]))
+        self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
         
     def test_two_item_dict(self):
         res = parse("""
@@ -189,8 +189,8 @@ class TestParser(unittest.TestCase):
         c: d
         """)
         self.assertEqual(res, YayDict([
-            ('a', 'b'),
-            ('c', 'd'),
+            ('a', YayScalar('b')),
+            ('c', YayScalar('d')),
         ]))
     
     def test_command_and_dict(self):
@@ -199,7 +199,9 @@ class TestParser(unittest.TestCase):
         
         a: b
         """)
-        self.assertEqual(res, Stanzas(Include(Literal('foo.yay')), YayDict([('a', 'b')])))
+        self.assertEqual(res, Stanzas(
+            Include(Literal('foo.yay')), 
+            YayDict([('a', YayScalar('b'))])))
         
     def test_nested_dict(self):
         res = parse("""
@@ -208,7 +210,7 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayDict([
-                ('b', 'c')
+                ('b', YayScalar('c'))
             ]))
         ]))
     
@@ -228,12 +230,12 @@ class TestParser(unittest.TestCase):
                 key6: key7
         """)
         self.assertEqual(res, YayDict([
-            ('key1', 'value1'),
-            ('key2', 'value2'),
-            ('key3', YayList('item1', 'item2', 'item3')),
+            ('key1', YayScalar('value1')),
+            ('key2', YayScalar('value2')),
+            ('key3', YayList(YayScalar('item1'), YayScalar('item2'), YayScalar('item3'))),
             ('key4', YayDict([
                 ('key5', YayDict([
-                    ('key6', 'key7'),
+                    ('key6', YayScalar('key7')),
                 ]))
             ])),
             ]))
@@ -247,7 +249,12 @@ class TestParser(unittest.TestCase):
               - e
               """)
         self.assertEqual(res, YayDict([
-            ('a', YayList('b', YayDict([('c', 'd')]), 'e'))
+            ('a', YayList(YayScalar('b'), 
+                          YayDict([
+                              ('c', YayScalar('d'))
+                              ]), 
+                          YayScalar('e')
+                          ))
             ]))
 
     def test_list_of_complex_dicts(self):
@@ -259,7 +266,12 @@ class TestParser(unittest.TestCase):
                 - f
             """)
         self.assertEqual(res, YayDict([
-            ('a', YayList('b', YayDict([('c', YayList('e', 'f'))])))]))
+            ('a', YayList(
+                YayScalar('b'), 
+                YayDict([('c', YayList(
+                    YayScalar('e'), 
+                    YayScalar('f')
+                ))])))]))
         
     def test_list_of_multikey_dicts(self):
         res = parse("""
@@ -270,7 +282,10 @@ class TestParser(unittest.TestCase):
               - g
               """)
         self.assertEqual(res, YayDict([
-            ('a', YayList('b', YayDict([('c', 'd'), ('e', 'f')]), 'g'))
+            ('a', YayList(YayScalar('b'), YayDict([
+                ('c', YayScalar('d')), 
+                ('e', YayScalar('f'))
+                ]), YayScalar('g')))
         ]))
 
     def test_list_of_dicts_with_lists_in(self):
@@ -284,8 +299,8 @@ class TestParser(unittest.TestCase):
               """)
         self.assertEqual(res, YayDict([
             ('a', YayList(YayDict([
-                ('b', 'c'), 
-                ('d', YayList('e', 'f', 'g'))
+                ('b', YayScalar('c')), 
+                ('d', YayList(YayScalar('e'), YayScalar('f'), YayScalar('g')))
             ])))
             ]))
 
@@ -298,8 +313,8 @@ class TestParser(unittest.TestCase):
           c: d
         """)
         self.assertEqual(res, YayDict([
-            ('foo', YayDict([('a', 'b')])),
-            ('foo', YayDict([('c', 'd')])),
+            ('foo', YayDict([('a', YayScalar('b'))])),
+            ('foo', YayDict([('c', YayScalar('d'))])),
             ]))
 
     def test_mix(self):
@@ -324,7 +339,7 @@ class TestParser(unittest.TestCase):
                     PositionalArguments(Identifier('a')))
                               ), YayList(Template(Identifier('x'))))
                 )),
-                ('quux', YayList('a', 'b'))
+                ('quux', YayList(YayScalar('a'), YayScalar('b')))
                 ]),
         ))
         

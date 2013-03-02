@@ -1,12 +1,22 @@
+
 class AST(object):
+    
+    lineno = 0
     
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.__dict__)
+
+    def __vars(self):
+        """ Return the members without the lineno """
+        d = self.__dict__.copy()
+        if 'lineno' in d:
+            del d['lineno']
+        return d
     
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return self.__dict__ == other.__dict__
+        return self.__vars() == other.__vars()
 
 class Identifier(AST):
     def __init__(self, identifier):
