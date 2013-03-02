@@ -158,11 +158,11 @@ class KeywordItem(AST):
         self.expression = expression
       
 class TargetList(AST):
-    def __init__(self, target):
-        self.target_list = [target]
+    def __init__(self, *targets):
+        self.v = list(targets)
         
     def append(self, target):
-        self.target_list.append(target)
+        self.v.append(target)
         
 class ParameterList(AST):
     def __init__(self, defparameter):

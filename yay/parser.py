@@ -33,10 +33,9 @@ def p_error(p):
 
 def p_atom_identifier(p):
     '''
-    atom : IDENTIFIER
+    atom : identifier
     '''
-    p[0] = ast.Identifier(p[1])
-    p[0].lineno = p.lineno(1)
+    p[0] = p[1]
     
 def p_atom_literal(p):
     '''
@@ -585,7 +584,7 @@ def p_or_test(p):
     if len(p) ==2:
         p[0] = p[1]
     else:
-        p[0] = Expr(p[1], p[3], p[2])
+        p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
     
 def p_and_test(p):
@@ -596,7 +595,7 @@ def p_and_test(p):
     if len(p) ==2:
         p[0] = p[1]
     else:
-        p[0] = Expr(p[1], p[3], p[2])
+        p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
     
 def p_not_test(p):
@@ -672,17 +671,27 @@ def p_target_list(p):
                 | target_list ","
     '''
     if len(p) == 2:
-        p[0] = ast.TargetList(p[1])
-        p[0].lineno = p[1].lineno
+        p[0] = p[1]
     elif len(p) == 3:
         p[0] = p[1]
     else:
-        p[0] = p[1]
-        p[0].append(p[3])
+        if isinstance(p[1], ast.TargetList):
+            p[0] = p[1]
+            p[0].append(p[3])
+        else:
+            p[0] = ast.TargetList(p[1], p[3])
+            p[0].lineno = p[1].lineno
+    
+def p_identifier(p):
+    '''
+    identifier : IDENTIFIER
+    '''
+    p[0] = ast.Identifier(p[1])
+    p[0].lineno = p.lineno(1)
     
 def p_target(p):
     '''
-    target : IDENTIFIER
+    target : identifier
            | attributeref
            | subscription
            | slicing
@@ -798,7 +807,7 @@ def p_for_directive(p):
     
 def p_set_directive(p):
     '''
-    set_directive : SET target "=" expression NEWLINE
+    set_directive : SET target_list "=" expression_list NEWLINE
     '''
     p[0] = ast.Set(p[2], p[4])
     p[0].lineno = p.lineno(1)

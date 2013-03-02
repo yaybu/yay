@@ -5,7 +5,7 @@ from yay.ast import *
 import os
 
 def parse(value):
-    return parser.parse(value, debug=0) 
+    return parser.parse(value, debug=0)
 
 class TestParser(unittest.TestCase):
     
@@ -19,43 +19,43 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = 2
         """)
-        self.assertEqual(res, Set('a', Literal(2)))
+        self.assertEqual(res, Set(Identifier('a'), Literal(2)))
         
     def test_set_string_literal(self):
         res = parse("""
         % set a = 'foo'
         """)
-        self.assertEqual(res, Set('a', Literal("foo")))
+        self.assertEqual(res, Set(Identifier('a'), Literal("foo")))
         
     def test_set_string_arithmetic(self):
         res = parse("""
         % set a = 'foo ' + 'bar'
         """)
-        self.assertEqual(res, Set('a', Expr(Literal('foo '), Literal('bar'), '+')))
+        self.assertEqual(res, Set(Identifier('a'), Expr(Literal('foo '), Literal('bar'), '+')))
                 
     def test_set_float_literal(self):
         res = parse("""
         % set a = 2.4
         """)
-        self.assertEqual(res, Set('a', Literal(2.4)))
+        self.assertEqual(res, Set(Identifier('a'), Literal(2.4)))
         
     def test_set_identifier(self):
         res = parse("""
         % set a = b
         """)
-        self.assertEqual(res, Set('a', Identifier('b')))
+        self.assertEqual(res, Set(Identifier('a'), Identifier('b')))
     
     def test_set_addition(self):
         res = parse("""
         % set a = 2+2
         """)
-        self.assertEqual(res, Set('a', Expr(Literal(2), Literal(2), '+')))
+        self.assertEqual(res, Set(Identifier('a'), Expr(Literal(2), Literal(2), '+')))
         
     def test_set_complex_expr(self):
         res = parse("""
         % set a = (2+2)*5/12.0
         """)
-        self.assertEqual(res, Set('a', 
+        self.assertEqual(res, Set(Identifier('a'), 
             Expr(
                 Expr(
                     ParentForm(
@@ -71,13 +71,13 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = [1,2,3,4]
         """)
-        self.assertEqual(res, Set('a', ListDisplay(ExpressionList(*map(Literal, [1,2,3,4])))))
+        self.assertEqual(res, Set(Identifier('a'), ListDisplay(ExpressionList(*map(Literal, [1,2,3,4])))))
     
     def test_set_dict(self):
         res = parse("""
         % set a = {'b': 4, 'c': 5}
         """)
-        self.assertEqual(res, Set('a', DictDisplay(
+        self.assertEqual(res, Set(Identifier('a'), DictDisplay(
             KeyDatumList(
                 KeyDatum(Literal('b'),
                          Literal(4)),
@@ -90,7 +90,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = b.c
         """)
-        self.assertEqual(res, Set('a', 
+        self.assertEqual(res, Set(Identifier('a'), 
                                   AttributeRef(
                                       Identifier('b'), 
                                       Identifier('c'))))
@@ -99,7 +99,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = b[1]
         """)
-        self.assertEqual(res, Set('a', 
+        self.assertEqual(res, Set(Identifier('a'), 
                                   Subscription(
                                       Identifier('b'), 
                                           Literal(1)
@@ -109,7 +109,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = b[1:2]
         """)
-        self.assertEqual(res, Set('a', 
+        self.assertEqual(res, Set(Identifier('a'), 
                                   SimpleSlicing(
                                       Identifier('b'), 
                                       Slice(
@@ -121,7 +121,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = b[1:2:3]
         """)
-        self.assertEqual(res, Set('a', 
+        self.assertEqual(res, Set(Identifier('a'), 
                                   ExtendedSlicing(
                                       Identifier('b'), 
                                       SliceList(
@@ -135,40 +135,66 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = func()
         """)
-        self.assertEqual(res, Set('a',
+        self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'))))
         
     def test_set_parentheses(self):
         res = parse("""
         % set a = (1,2,3)
         """)
-        self.assertEqual(res, Set('a',
+        self.assertEqual(res, Set(Identifier('a'),
             ParentForm(ExpressionList(Literal(1), Literal(2), Literal(3)))))
         
     def test_set_parentheses_empty(self):
         res = parse("""
         % set a = ()
         """)
-        self.assertEqual(res, Set('a', ParentForm()))
+        self.assertEqual(res, Set(Identifier('a'), ParentForm()))
         
     def test_set_not(self):
         res = parse("""
         % set a = not b
         """)
-        self.assertEqual(res, Set('a', Not(Identifier('b'))))
+        self.assertEqual(res, Set(Identifier('a'), Not(Identifier('b'))))
+        
+    def test_set_and(self):
+        res = parse("""
+        % set a = b and c
+        """)
+        self.assertEqual(res, Set(Identifier('a'), Expr(Identifier('b'), Identifier('c'), 'and')))
+
+    def test_set_or(self):
+        res = parse("""
+        % set a = b or c
+        """)
+        self.assertEqual(res, Set(Identifier('a'), Expr(Identifier('b'), Identifier('c'), 'or')))
+        
+    def test_set_conditional_expression(self):
+        res = parse("""
+        % set a = b if c else d
+        """)
+        self.assertEqual(res, Set(Identifier('a'), ConditionalExpression(Identifier('b'), Identifier('c'), Identifier('d'))))
+
+    def test_set_multiple(self):
+        res = parse("""
+        % set a,b = c,d
+        """)
+        self.assertEqual(res, Set(
+            TargetList(Identifier('a'), Identifier('b')),
+            ExpressionList(Identifier('c'), Identifier('d'))))
         
     def test_for(self):
         res = parse("""
         % for a in b
              - x
         """)
-        self.assertEqual(res, For('a', Identifier('b'), YayList(YayScalar('x'))))
+        self.assertEqual(res, For(Identifier('a'), Identifier('b'), YayList(YayScalar('x'))))
         
     def test_set_call_args_simple(self):
         res = parse("""
         % set a = func(4)
         """)
-        self.assertEqual(res, Set('a',
+        self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), 
                  ArgumentList(PositionalArguments(Literal(4))))))
         
@@ -176,7 +202,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         % set a = func(4, a, foo='bar', baz='quux')
         """)
-        self.assertEqual(res, Set('a',
+        self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), 
                  ArgumentList(
                      PositionalArguments(
@@ -432,8 +458,8 @@ class TestParser(unittest.TestCase):
             Include(Literal('foo.yay')),
             YayDict([
                 ('bar', Directives(
-                Set('a', Literal(2)),
-                For('x', Call(Identifier('range'), ArgumentList(
+                Set(Identifier('a'), Literal(2)),
+                For(Identifier('x'), Call(Identifier('range'), ArgumentList(
                     PositionalArguments(Identifier('a')))
                               ), YayList(Template(Identifier('x'))))
                 )),
