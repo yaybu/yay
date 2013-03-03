@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from yay.openers import Openers
-from yay.nodes import BoxingFactory, Mapping, Access
 from yay.errors import ProgrammingError
 
 
@@ -41,19 +40,7 @@ class Config(object):
         self.mapping = data
 
     def add(self, data):
-        __context__ = "Boxing python data to overlay on node graph"
-
-        boxed = BoxingFactory.box(data, predecessor=self.mapping)
-        if not isinstance(boxed, Mapping):
-            raise ProgrammingError("Tried to call Config.add on type '%s'. This cannot be boxed as a 'Mapping'." % type(data))
-
-        __context__ = "Overlaying boxed python data on node graph"
-
-        #boxed.predecessor = self.mapping
-        #if boxed.predecessor:
-        #    boxed.predecessor.set_parent(boxed)
-
-        self.mapping = boxed
+        raise NotImplementedError()
 
     def clear(self):
         self.mapping = None
