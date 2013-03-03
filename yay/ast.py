@@ -6,6 +6,18 @@ class AST(object):
     lineno = 0
     predecessor = None
 
+    def dynamic(self):
+        """
+        Does this graph member change over time?
+        """
+        return False
+
+    def simplify(self):
+        """
+        Resolve any parts of the graph that are constant
+        """
+        return self
+
     def resolve(self):
         """
         Resolve an object into a simple type, like a string or a dictionary.
@@ -162,6 +174,21 @@ class Invert(AST):
         return ~self.u_expr.resolve()
 
 class Expr(AST):
+
+    """
+    The ``Expr`` node tests for equality between a left and a right child. The
+    result is either True or False.
+
+    Tree reduction rules
+    --------------------
+
+    If both children are constant then this node can be reduced to a
+    ``Literal``
+
+    Otherwise, an equivalent ``Expr`` node is returned that has had its children
+    simplified.
+    """
+
     operators = {
         "==": operator.eq,
         "!=": operator.ne,
@@ -190,6 +217,79 @@ class Expr(AST):
         l = self.lhs.resolve()
         r = self.rhs.resolve()
         return self.op(l, r)
+
+    def dynamic(self):
+        for c in (self.lhs, self.rhs):
+            if c.dynamic():
+                return True
+        return False
+
+    def simplify(self):
+        # FIXME: Would be kind of nice if parser could directly spawn And nodes, i guess...
+        # (And and Or can be more agressively simplified than the others)
+        if self.operator == "and":
+            return And(self.lhs.simplify(), self.rhs.simplify()).simplify()
+        if not self.dynamic():
+            return Literal(self.op(self.lhs.resolve(), self.rhs.resolve()))
+        else:
+            return Expr(self.lhs.simplify(), self.rhs.simplify(), self.operator)
+
+    def resolve(self):
+        return self.op(self.lhs.resolve(), self.rhs.resolve())
+
+
+class And(AST):
+
+    """
+    An ``And`` expression behaves much like the ``and`` keyword in python.
+
+    Tree reduction rules
+    --------------------
+
+    If both parts of the expression are constant then the expression can be
+    reduced to a Literal.
+
+    If only one part is constant then it is tested to see if it is False.
+    If so, the entire expression is simplified to ``Literal(False)``. If it is
+    ``True`` then the ``And`` expression is reduced to the dynamic part of the
+    expression.
+
+    If both parts are dynamic then the And cannot be reduced. (However, a new
+    And is returned that has its contents reduced).
+    """
+
+    def __init__(self, left, right):
+        self.left = left
+        self.left.parent = self
+        self.right = right
+        self.right.parent = self
+
+    def dynamic(self):
+        for c in (self.left, self.right):
+            if c.dynamic():
+                return True
+        return False
+
+    def simplify(self):
+        if self.left.dynamic():
+            if self.right.dynamic():
+                return And(self.left.simplify(), self.right.simplify())
+            elif self.right.resolve():
+                return self.left.simplify()
+            else:
+                return Literal(False)
+
+        elif self.right.dynamic():
+            if self.left.resolve():
+                return self.right.simplify()
+            else:
+                return Literal(False)
+
+        return Literal(self.left.resolve() and self.right.resolve())
+
+    def resolve(self):
+        return self.left.resolve() and self.right.resolve()
+
 
 class Not(AST):
     def __init__(self, value):
@@ -504,12 +604,50 @@ class Set(AST):
 
 
 class If(AST):
+    # FIXME: This implementation ignores the elifs...
+
+    """
+    An If block has a guard condition. If that condition is True the
+    result expression is returned. Otherwise the else_ expression is.
+
+    Tree reduction rules
+    --------------------
+
+    If the guard condition is constant then the If expression can be
+    simplified out of the graph.
+    """
 
     def __init__(self, condition, result, elifs=None, else_=None):
         self.condition = condition
         self.result = result
         self.elifs = elifs
         self.else_ = else_
+
+    def dynamic(self):
+        if self.condition.dynamic():
+            return True
+        if self.condition.resolve():
+            if self.result.dynamic():
+                return True
+        else:
+            if self.else_.dynamic():
+                return True
+        return False
+
+    def simplify(self):
+        if self.condition.dynamic():
+            return If(self.condition.simplify(), self.result.simplify(), else_=self.else_.simplify())
+        if self.condition.resolve():
+            return self.result.simplify()
+        else:
+            return self.else_.simplify()
+
+    def resolve(self):
+        if self.condition.resolve():
+            return self.result.resolve()
+        else:
+            return self.else_.resolve()
+
 
 class ElifList(object):
     def __init__(self, *elifs):
