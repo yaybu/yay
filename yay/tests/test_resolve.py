@@ -131,22 +131,6 @@ class TestResolver(unittest.TestCase):
             "quux": ['a', 'b'],
             })
 
-    def test_expr_equals(self):
-        res = resolve("bar: {{ 1 == 2}}\n")
-        self.assertEqual(res, {"bar": 'False'})
-
-    def test_expr_not_equals(self):
-        res = resolve("bar: {{ 1 != 2}}\n")
-        self.assertEqual(res, {"bar": 'True'})
-
-    def test_expr_variables_equals(self):
-        res = resolve("""
-          a: 1
-          b: 1
-          c: {{ a == b}}
-          """)
-        self.assertEqual(res['c'], 'True')
-
     def test_nested_for(self):
         # FIXME: WE WANT TO DO MATHS HERE
         res = resolve("""
@@ -160,3 +144,31 @@ class TestResolver(unittest.TestCase):
                 - {{x + y}}
         """)
         self.assertEquals(res['bar'], ['11', '12', '21', '22'])
+
+    def test_template_variable_between_scalars(self):
+      self.assertEqual(
+          resolve("name: doug\nbar: hello {{ name }} !\n")['bar'],
+          "hello doug !"
+          )
+
+    def test_template_multiple_variables(self):
+      self.assertEqual(
+          resolve("name: doug\nname2: steve\nbar: {{ name }} and {{ name2 }}!\n")['bar'],
+          "doug and steve!"
+          )
+
+    def test_template_expr_equals(self):
+        res = resolve("bar: {{ 1 == 2}}\n")
+        self.assertEqual(res, {"bar": 'False'})
+
+    def test_template_expr_not_equals(self):
+        res = resolve("bar: {{ 1 != 2}}\n")
+        self.assertEqual(res, {"bar": 'True'})
+
+    def test_template_expr_variables_equals(self):
+        res = resolve("""
+          a: 1
+          b: 1
+          c: {{ a == b}}
+          """)
+        self.assertEqual(res['c'], 'True')

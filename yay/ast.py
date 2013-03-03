@@ -437,12 +437,19 @@ class YayMerged(AST):
 
     def __init__(self, *v):
         self.value = list(v)
+        for v in self.value:
+            v.parent = self
 
     def append(self, v):
         self.value.append(v)
+        v.parent = self
 
     def prepend(self, value):
         self.value.insert(0, value)
+        value.parent = self
+
+    def resolve(self):
+        return "".join(str(v.resolve()) for v in self.value)
 
 class Stanzas(AST):
     def __init__(self, *stanzas):
