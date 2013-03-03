@@ -172,3 +172,12 @@ class TestResolver(unittest.TestCase):
           c: {{ a == b}}
           """)
         self.assertEqual(res['c'], 'True')
+
+    def test_template_attributeref(self):
+        res = resolve("""
+            a:
+              b: hello
+            bar: {{ a.b }}
+            """)
+        self.assertEqual(res['bar'], 'hello')
+

@@ -334,6 +334,12 @@ class AttributeRef(AST):
         primary.parent = self
         self.identifier = identifier
 
+    def expand(self):
+        return self.primary.expand().get(self.identifier).expand()
+
+    def resolve(self):
+        return self.expand().resolve()
+
 class Subscription(AST):
     def __init__(self, primary, expression_list):
         self.primary = primary
