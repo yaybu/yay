@@ -8,6 +8,14 @@ def resolve(value):
 
 class TestResolver(unittest.TestCase):
 
+    def test_very_lazy(self):
+        res = resolve("""
+            a: b
+            b: {{ a }}
+            a: c
+            """)
+        self.assertEqual(res['b'], "c")
+
     def test_nested_dict(self):
         res = resolve("""
         a:
