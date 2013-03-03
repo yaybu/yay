@@ -266,7 +266,7 @@ def p_attributeref(p):
     '''
     attributeref : primary "." IDENTIFIER
     '''
-    p[0] = ast.AttributeRef(p[1], ast.Identifier(p[3]))
+    p[0] = ast.AttributeRef(p[1], p[3])
     p[0].lineno = p[1].lineno
     
 def p_subscription(p):

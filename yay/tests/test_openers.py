@@ -47,10 +47,10 @@ class TestFileOpener(unittest.TestCase):
 
 
 class TestHttpOpener(unittest.TestCase):
-
-    def test_notfound(self):
-        uo = UrlOpener()
-        self.failUnlessRaises(NotFound, uo.open, "http://yay-test-url-that-doesnt-exist.isotoma.com/hello_world")
+    pass
+    #def test_notfound(self):
+    #    uo = UrlOpener()
+    #    self.failUnlessRaises(NotFound, uo.open, "http://yay-test-url-that-doesnt-exist.isotoma.com/hello_world")
 
 
 
