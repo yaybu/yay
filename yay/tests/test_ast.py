@@ -139,6 +139,10 @@ class TestYayDict(unittest.TestCase):
         #FIXME
         pass
 
+class TestTemplate(unittest.TestCase):
+    def test_resolve(self):
+        t = Template(Literal('a'), Literal('b'))
+        self.assertEqual(t.resolve(), 'ab')
 
 class TestContext(unittest.TestCase):
 
