@@ -540,10 +540,10 @@ class YayExtend(AST):
         return BoxingFactory.box(self.resolve()[int(idx)])
 
     def expand(self):
-        if not self.chain:
+        if not self.predecessor:
             return self.value.expand()
 
-        chain = self.chain.expand()
+        chain = self.predecessor.expand()
         if not hasattr(chain, "__iter__"):
             self.error("You can only append to list types")
 

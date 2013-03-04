@@ -214,3 +214,25 @@ class TestResolver(unittest.TestCase):
             """)
         self.assertEqual(res['bar'], 'hello')
 
+    def test_template_subscription_variable(self):
+        res = resolve("""
+            a:
+              b: hello
+            c: b
+            bar: {{ a[c] }}
+            """)
+        self.assertEqual(res['bar'], 'hello')
+
+    def test_extend(self):
+        res = resolve("""
+            resources:
+                - Foo:
+                     bar: baz
+            extend resources:
+                 - Qux:
+                      bar: baz
+            """)
+        self.assertEquals(res['resources'], [
+            {"Foo": {"bar": "baz"}},
+            {"Qux": {"bar": "baz"}}
+            ])

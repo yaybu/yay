@@ -139,6 +139,12 @@ class TestYayDict(unittest.TestCase):
         #FIXME
         pass
 
+class TestYayExtend(unittest.TestCase):
+    def test_resolve(self):
+        y = YayExtend(YayList(Literal(1)))
+        y.predecessor = YayList(Literal(2))
+        self.assertEqual(y.resolve(), [2, 1])
+
 class TestFor(unittest.TestCase):
     def test_resolve(self):
         f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), Identifier("x"))
