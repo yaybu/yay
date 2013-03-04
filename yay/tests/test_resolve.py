@@ -189,3 +189,28 @@ class TestResolver(unittest.TestCase):
             """)
         self.assertEqual(res['bar'], 'hello')
 
+    def test_template_subscription_index(self):
+        res = resolve("""
+            a:
+              - foo
+            bar: {{ a[0] }}
+            """)
+        self.assertEqual(res['bar'], 'foo')
+
+    def test_template_subscription_string(self):
+        res = resolve("""
+            a:
+              b: hello
+            bar: {{ a['b'] }}
+            """)
+        self.assertEqual(res['bar'], 'hello')
+
+    def test_template_subscription_variable(self):
+        res = resolve("""
+            a:
+              b: hello
+            c: b
+            bar: {{ a[c] }}
+            """)
+        self.assertEqual(res['bar'], 'hello')
+

@@ -349,9 +349,20 @@ class AttributeRef(AST):
         return self.expand().resolve()
 
 class Subscription(AST):
-    def __init__(self, primary, expression_list):
+    def __init__(self, primary, *expression_list):
         self.primary = primary
-        self.expression_list = expression_list
+        primary.parent = self
+        self.expression_list = list(expression_list)
+        if len(self.expression_list) > 1:
+            self.error("Keys must be scalars, not tuples")
+        for e in self.expression_list:
+            e.parent = self
+
+    def expand(self):
+        return self.primary.expand().get(self.expression_list[0].resolve()).expand()
+           
+    def resolve(self):
+        return self.expand().resolve()
 
 class SimpleSlicing(AST):
     def __init__(self, primary, short_slice):
@@ -447,6 +458,19 @@ class YayList(AST):
         for i in self.value:
             l.append(i.resolve())
         return l
+
+    def get(self, idx):
+        try:
+            idx = int(idx)
+        except ValueError:
+            self.error("Expected integer but got '%s'" % idx)
+
+        if idx < 0:
+            self.error("Index must be greater than 0")
+        elif idx >= len(self.value):
+            self.error("Index out of range")
+
+        return self.value[idx]
 
     def __iter__(self):
         return iter(self.value)
