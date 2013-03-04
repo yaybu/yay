@@ -139,3 +139,16 @@ class TestYayDict(unittest.TestCase):
         #FIXME
         pass
 
+
+class TestContext(unittest.TestCase):
+
+    def test_get_context_hit(self):
+        c = Context(Mock(), {"x": Mock()})
+        x = c.get_context("x")
+        self.assertEqual(x, c.context["x"])
+
+    def test_get_context_miss(self):
+        c = Context(Mock(), {"z": Mock()})
+        c.parent = Mock()
+        x = c.get_context("x")
+        c.parent.get_context.assert_called_with("x")
