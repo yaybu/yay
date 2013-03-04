@@ -139,6 +139,17 @@ class TestYayDict(unittest.TestCase):
         #FIXME
         pass
 
+class TestFor(unittest.TestCase):
+    def test_resolve(self):
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), Identifier("x"))
+        f.parent = Mock()
+        self.assertEqual(f.resolve(), ['a', 'b'])
+
+    def test_resolve_filtered(self):
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), Identifier("x"), Expr(Identifier("x"), Literal("a"), "=="))
+        f.parent = Mock()
+        self.assertEqual(f.resolve(), ['a'])
+
 class TestTemplate(unittest.TestCase):
     def test_resolve(self):
         t = Template(Literal('a'), Literal('b'))
