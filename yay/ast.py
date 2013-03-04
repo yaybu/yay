@@ -151,6 +151,9 @@ class Power(AST):
         self.power = power
         power.parent = self
 
+    def resolve(self):
+        return pow(self.primary.resolve(), self.power.resolve())
+
 class UnaryMinus(AST):
     """ The unary - (minus) operator yields the negation of its numeric
     argument. """
@@ -304,6 +307,11 @@ class ConditionalExpression(AST):
         self.or_test = or_test
         self.if_clause = if_clause
         self.else_clause = else_clause
+    def resolve(self):
+        if self.or_test.resolve():
+            return self.if_clause.resolve()
+        else:
+            return self.else_clause.resolve()
 
 class ListDisplay(AST):
     def __init__(self, expression_list=None):
@@ -433,9 +441,6 @@ class YayList(AST):
     def append(self, item):
         self.value.append(item)
         item.parent = self
-
-    def get_context(self, key):
-        return super(YayList, self).get_context(key)
 
     def resolve(self):
         l = []
