@@ -918,9 +918,9 @@ def p_stanzas_merge(p):
 
 def p_extend(p):
     '''
-    extend : EXTEND KEY stanza
+    extend : EXTEND yaydict
     '''
-    p[0] = ast.YayExtend(p[2], p[3])
+    p[0] = ast.YayExtend(p[2])
     p[0].lineno = p.lineno(1)
     
 def p_scalar_emptydict(p):

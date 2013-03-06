@@ -533,8 +533,8 @@ class YayDict(AST):
         return d
 
 class YayExtend(AST):
-    def __init__(self, key, value):
-        self.value = {key: value}
+    def __init__(self, d):
+        self.value = d
 
     def get(self, idx, default=None):
         return BoxingFactory.box(self.resolve()[int(idx)])

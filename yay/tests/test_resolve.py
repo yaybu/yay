@@ -154,13 +154,13 @@ class TestResolver(unittest.TestCase):
         self.assertEquals(res['bar'], ['11', '12', '21', '22'])
 
     def test_template_variable_between_scalars(self):
-      self.assertEqual(
+        self.assertEqual(
           resolve("name: doug\nbar: hello {{ name }} !\n")['bar'],
           "hello doug !"
           )
 
     def test_template_multiple_variables(self):
-      self.assertEqual(
+        self.assertEqual(
           resolve("name: doug\nname2: steve\nbar: {{ name }} and {{ name2 }}!\n")['bar'],
           "doug and steve!"
           )
