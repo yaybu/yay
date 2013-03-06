@@ -719,7 +719,7 @@ def flatten(lst):
     for itm in lst:
         if isinstance(itm, list):
             for x in flatten(itm):
-               yield x
+                yield x
         else:
             yield itm
 

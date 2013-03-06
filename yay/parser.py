@@ -8,11 +8,11 @@ from . import ast
 start = 'root'
 
 class ParseError(Exception):
-    
+
     def __init__(self, token, lineno):
         self.token = token
         self.lineno = lineno
-        
+
     def __str__(self):
         return "Syntax error at line %d: '%s'" % (self.lineno, self.token)
 
@@ -21,8 +21,8 @@ def p_error(p):
         raise ParseError("End of file reached unexpectedly", 0)
     else:
         raise ParseError(p.value, p.lineno)
-    
-    
+
+
 ########## EXPRESSIONS
 ## http://docs.python.org/2/reference/expressions.html
 
@@ -36,7 +36,7 @@ def p_atom_identifier(p):
     atom : identifier
     '''
     p[0] = p[1]
-    
+
 def p_atom_literal(p):
     '''
     atom : STRING
@@ -51,10 +51,10 @@ def p_atom_enclosure(p):
     atom : enclosure
     '''
     p[0] = p[1]
-    
+
 def p_enclosure(p):
     '''
-    enclosure : parenth_form 
+    enclosure : parenth_form
               | list_display
               | generator_expression
               | dict_display
@@ -70,16 +70,16 @@ def p_parent_form(p):
     '''
     # A parenthesized form is an optional expression list enclosed in
     # parentheses
-    # 
+    #
     # A parenthesized expression list yields whatever that expression list
     # yields: if the list contains at least one comma, it yields a tuple;
     # otherwise, it yields the single expression that makes up the expression
     # list.
-    # 
+    #
     # An empty pair of parentheses yields an empty tuple object. Since tuples
     # are immutable, the rules for literals apply (i.e., two occurrences of
     # the empty tuple may or may not yield the same object).
-    # 
+    #
     # Note that tuples are not formed by the parentheses, but rather by use
     # of the comma operator. The exception is the empty tuple, for which
     # parentheses are required - allowing unparenthesized "nothing" in
@@ -91,7 +91,7 @@ def p_parent_form(p):
     else:
         p[0] = ast.ParentForm(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_list_display(p):
     '''
     list_display : "[" "]"
@@ -100,7 +100,7 @@ def p_list_display(p):
     '''
     # A list display is a possibly empty series of expressions enclosed in
     # square brackets.
-    # 
+    #
     # A list display yields a new list object. Its contents are specified by
     # providing either a list of expressions or a list comprehension. When a
     # comma-separated list of expressions is supplied, its elements are
@@ -116,20 +116,20 @@ def p_list_display(p):
     else:
         p[0] = ast.ListDisplay(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_list_comprehension(p):
     '''
     list_comprehension : expression list_for
     '''
     raise NotImplementedError
-    
+
 def p_list_for(p):
     '''
     list_for : FOR target_list IN old_expression_list
              | FOR target_list IN old_expression_list list_iter
     '''
     raise NotImplementedError
-    
+
 def p_old_expression_list(p):
     '''
     old_expression_list : old_expression
@@ -144,65 +144,65 @@ def p_old_expression_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_old_expression(p):
     '''
-    old_expression : or_test 
+    old_expression : or_test
                    | old_lambda_form
     '''
     p[0] = p[1]
-    
+
 def p_list_iter(p):
     '''
     list_iter : list_for
               | list_if
     '''
     raise NotImplementedError
-    
+
 def p_list_if(p):
     '''
     list_if : IF old_expression
             | IF old_expression list_iter
     '''
     raise NotImplementedError
-    
+
 def p_comprehension(p):
     '''
     comprehension : expression comp_for
     '''
     raise NotImplementedError
-    
+
 def p_comp_for(p):
     '''
     comp_for : FOR target_list IN or_test
              | FOR target_list IN or_test comp_iter
     '''
     raise NotImplementedError
-    
+
 def p_comp_iter(p):
     '''
     comp_iter : comp_for
               | comp_if
     '''
     raise NotImplementedError
-    
+
 def p_comp_if(p):
     '''
     comp_if : IF expression
             | IF expression comp_iter
     '''
-    
+
     # expression is actually "expression_nocond" in the grammar
     # i do not know what this means
     # http://docs.python.org/2/reference/expressions.html#displays-for-sets-and-dictionaries
     raise NotImplementedError
-    
+
 def p_generator_expression(p):
     '''
     generator_expression : "(" expression comp_for ")"
     '''
     raise NotImplementedError
-    
+
 def p_dict_display(p):
     '''
     dict_display : "{" "}"
@@ -214,7 +214,7 @@ def p_dict_display(p):
     else:
         p[0] = ast.DictDisplay(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_key_datum_list(p):
     '''
     key_datum_list : key_datum
@@ -225,7 +225,7 @@ def p_key_datum_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_key_datum(p):
     '''
     key_datum : expression ":" expression
@@ -245,13 +245,13 @@ def p_set_display(p):
                 | "{" comprehension "}"
     '''
     raise NotImplementedError
-    
+
 def p_string_conversion(p):
     '''
     string_conversion : "`" expression_list "`"
     '''
     raise NotImplementedError
-    
+
 def p_primary(p):
     '''
     primary : atom
@@ -261,47 +261,47 @@ def p_primary(p):
             | call
     '''
     p[0] = p[1]
-    
+
 def p_attributeref(p):
     '''
     attributeref : primary "." IDENTIFIER
     '''
     p[0] = ast.AttributeRef(p[1], p[3])
     p[0].lineno = p[1].lineno
-    
+
 def p_subscription(p):
     '''
     subscription : primary "[" expression_list "]"
     '''
     p[0] = ast.Subscription(p[1], p[3])
     p[0].lineno = p[1].lineno
-    
+
 def p_slicing(p):
     '''
     slicing : simple_slicing
             | extended_slicing
     '''
     p[0] = p[1]
-    
+
 def p_simple_slicing(p):
     '''
     simple_slicing : primary "[" short_slice "]"
     '''
     p[0] = ast.SimpleSlicing(p[1], p[3])
     p[0].lineno = p.lineno(2)
-    
+
 def p_extended_slicing(p):
     '''
     extended_slicing : primary "[" slice_list "]"
     '''
     p[0] = ast.ExtendedSlicing(p[1], p[3])
     p[0].lineno = p.lineno(2)
-    
+
 def p_slice_list(p):
     '''
     slice_list : slice_item
                | slice_list "," slice_item
-               | slice_list "," 
+               | slice_list ","
     '''
     if len(p) == 2:
         p[0] = ast.SliceList(p[1])
@@ -311,7 +311,7 @@ def p_slice_list(p):
         p[0] = p[1]
         p[0].append(p[3])
     p[0].lineno = p[1].lineno
-    
+
 def p_slice_item(p):
     '''
     slice_item : proper_slice
@@ -320,14 +320,14 @@ def p_slice_item(p):
     # removed expression as a production due to reduce/reduce conflict
     # subscription wins over slicing in the docs, so i think this is correct
     p[0] = p[1]
-    
+
 def p_proper_slice(p):
     '''
     proper_slice : short_slice
                  | long_slice
     '''
     p[0] = p[1]
-    
+
 def p_short_slice(p):
     '''
     short_slice : lower_bound ":"
@@ -349,7 +349,7 @@ def p_short_slice(p):
         lineno = p.lineno(2)
     p[0] = ast.Slice(lower_bound, upper_bound)
     p[0].lineno = lineno
-    
+
 def p_long_slice(p):
     '''
     long_slice : short_slice ":"
@@ -358,19 +358,19 @@ def p_long_slice(p):
     p[0] = p[1]
     if len(p) == 4:
         p[0].stride = p[3]
-    
+
 def p_lower_bound(p):
     '''
     lower_bound : expression
     '''
     p[0] = p[1]
-    
+
 def p_upper_bound(p):
     '''
     upper_bound : expression
     '''
     p[0] = p[1]
-    
+
 def p_stride(p):
     '''
     stride : expression
@@ -388,7 +388,7 @@ def p_call(p):
     else:
         p[0] = ast.Call(p[1], p[3].args, p[3].kwargs)
     p[0].lineno = p[1].lineno
-    
+
 def p_argument_list(p):
     '''
     argument_list : positional_arguments
@@ -396,7 +396,7 @@ def p_argument_list(p):
                   | argument_list ","
     '''
     # ignore all the * and ** stuff, don't think relevant
-    # can't see the value in nodes for the lists either, 
+    # can't see the value in nodes for the lists either,
     # can provide the semantics
     if len(p) == 2:
         p[0] = ast.ArgumentList(p[1].args)
@@ -405,7 +405,7 @@ def p_argument_list(p):
     else:
         p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
     p[0].lineno = p[1].lineno
-    
+
 def p_positional_arguments(p):
     '''
     positional_arguments : expression
@@ -417,7 +417,7 @@ def p_positional_arguments(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_keyword_arguments(p):
     '''
     keyword_arguments : kwarg
@@ -429,14 +429,14 @@ def p_keyword_arguments(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_kwarg(p):
     '''
     kwarg : identifier "=" expression
     '''
     p[0] = ast.Kwarg(p[1], p[3])
     p[0].lineno = p.lineno(1)
-    
+
 def p_power(p):
     '''
     power : primary
@@ -457,13 +457,13 @@ def p_u_expr(p):
     '''
     # The unary - (minus) operator yields the negation of its numeric
     # argument.
-    # 
+    #
     # The unary + (plus) operator yields its numeric argument unchanged.
-    # 
+    #
     # The unary ~ (invert) operator yields the bitwise inversion of its plain
     # or long integer argument. The bitwise inversion of x is defined as
     # -(x+1). It only applies to integral numbers.
-    # 
+    #
     # In all three cases, if the argument does not have the proper type, a
     # TypeError exception is raised.
     if len(p) == 2:
@@ -477,7 +477,7 @@ def p_u_expr(p):
         elif p[1] == '~':
             p[0] = ast.Invert(p[2])
             p[0].lineno = p.lineno(1)
-    
+
 def p_m_expr(p):
     '''
     m_expr : u_expr
@@ -491,8 +491,8 @@ def p_m_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
-    
+
+
 def p_a_expr(p):
     '''
     a_expr : m_expr
@@ -504,7 +504,7 @@ def p_a_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_shift_expr(p):
     '''
     shift_expr : a_expr
@@ -516,7 +516,7 @@ def p_shift_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_and_expr(p):
     '''
     and_expr : shift_expr
@@ -527,7 +527,7 @@ def p_and_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_xor_expr(p):
     '''
     xor_expr : and_expr
@@ -538,7 +538,7 @@ def p_xor_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_or_expr(p):
     '''
     or_expr : xor_expr
@@ -549,10 +549,10 @@ def p_or_expr(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_comparison(p):
     '''
-    comparison : or_expr 
+    comparison : or_expr
                | or_expr comp_operator or_expr
     '''
     if len(p) == 2:
@@ -560,7 +560,7 @@ def p_comparison(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_comp_operator(p):
     '''
     comp_operator : "<"
@@ -576,7 +576,7 @@ def p_comp_operator(p):
                   | NOT IN
     '''
     p[0] = " ".join(p[1:])
-    
+
 def p_or_test(p):
     '''
     or_test : and_test
@@ -587,7 +587,7 @@ def p_or_test(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_and_test(p):
     '''
     and_test : not_test
@@ -598,7 +598,7 @@ def p_and_test(p):
     else:
         p[0] = ast.Expr(p[1], p[3], p[2])
         p[0].lineno = p[1].lineno
-    
+
 def p_not_test(p):
     '''
     not_test : comparison
@@ -610,7 +610,7 @@ def p_not_test(p):
     else:
         p[0] = ast.Not(p[2])
         p[0].lineno = p.lineno(1)
-    
+
 def p_conditional_expression(p):
     '''
     conditional_expression : or_test
@@ -621,21 +621,21 @@ def p_conditional_expression(p):
     else:
         p[0] = ast.ConditionalExpression(p[1], p[3], p[5])
         p[0].lineno = p[1].lineno
-        
+
 def p_expression(p):
     '''
     expression : conditional_expression
                | lambda_form
     '''
     p[0] = p[1]
-    
+
 def p_lambda_form(p):
     '''
     lambda_form : LAMBDA ":" expression
                 | LAMBDA parameter_list ":" expression
     '''
     raise NotImplementedError
-    
+
 def p_old_lambda_form(p):
     '''
     old_lambda_form : LAMBDA ":" expression
@@ -682,14 +682,14 @@ def p_target_list(p):
         else:
             p[0] = ast.TargetList(p[1], p[3])
             p[0].lineno = p[1].lineno
-    
+
 def p_identifier(p):
     '''
     identifier : IDENTIFIER
     '''
     p[0] = ast.Identifier(p[1])
     p[0].lineno = p.lineno(1)
-    
+
 def p_target(p):
     '''
     target : identifier
@@ -716,7 +716,7 @@ def p_parameter_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_defparameter(p):
     '''
     defparameter : parameter
@@ -728,7 +728,7 @@ def p_defparameter(p):
     else:
         p[0] = ast.DefParameter(p[1], p[3])
         p[0].lineno = p[1].lineno
-    
+
 def p_parameter(p):
     '''
     parameter : identifier
@@ -738,7 +738,7 @@ def p_parameter(p):
         p[0] = p[1]
     else:
         p[0] = p[2]
-    
+
 def p_sublist(p):
     '''
     sublist : parameter
@@ -773,28 +773,28 @@ def p_directives(p):
     '''
     p[0] = ast.Directives(p[1], p[2])
     p[0].lineno = p[1].lineno
-    
+
 def p_directives_merge(p):
     '''
     directives : directives directive
     '''
     p[0] = p[1]
     p[0].append(p[2])
-    
+
 def p_include_directive(p):
     '''
     include_directive : INCLUDE expression_list NEWLINE
     '''
     p[0] = ast.Include(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_search_directive(p):
     '''
     search_directive : SEARCH expression_list NEWLINE
     '''
     p[0] = ast.Search(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_for_directive(p):
     '''
     for_directive : FOR target_list IN expression_list NEWLINE INDENT stanza DEDENT
@@ -805,14 +805,14 @@ def p_for_directive(p):
     else:
         p[0] = ast.For(p[2], p[6], p[9], p[4])
     p[0].lineno = p.lineno(1)
-    
+
 def p_set_directive(p):
     '''
     set_directive : SET target_list "=" expression_list NEWLINE
     '''
     p[0] = ast.Set(p[2], p[4])
     p[0].lineno = p.lineno(1)
-    
+
 def p_if_directive(p):
     '''
     if_directive : IF expression_list stanza NEWLINE
@@ -829,7 +829,7 @@ def p_if_directive(p):
     else:
         p[0] = ast.If(p[2], p[3], p[4], p[6])
     p[0].lineno = p.lineno(1)
-    
+
 def p_elif_list(p):
     '''
     elif_list : elif
@@ -841,21 +841,21 @@ def p_elif_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[3])
-    
+
 def p_elif(p):
     '''
     elif : ELIF expression_list stanza
     '''
     p[0] = ast.Elif(p[2], p[3])
     p[0].lineno = p.lineno(1)
-    
+
 def p_select_directive(p):
     '''
     select_directive : SELECT expression_list case_list NEWLINE
     '''
     p[0] = ast.Select(p[2], p[3])
     p[0].lineno = p.lineno(1)
-    
+
 def p_case_list(p):
     '''
     case_list : case_block
@@ -867,7 +867,7 @@ def p_case_list(p):
     else:
         p[0] = p[1]
         p[0].append(p[2])
-    
+
 def p_case_block(p):
     '''
     case_block : KEY ":" stanza
@@ -884,11 +884,11 @@ def p_stanza_VALUE(p):
 
 def p_root(p):
     '''
-    root : stanza 
+    root : stanza
          | stanzas
     '''
     p[0] = p[1]
-    
+
 def p_stanza(p):
     '''
     stanza : yaydict
@@ -901,14 +901,14 @@ def p_stanza(p):
         p[0] = p[1]
     else:
         p[0] = p[2]
-    
+
 def p_stanzas(p):
     '''
     stanzas : stanza stanza
     '''
     p[0] = ast.Stanzas(p[1], p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_stanzas_merge(p):
     '''
     stanzas : stanzas stanza
@@ -920,27 +920,27 @@ def p_extend(p):
     '''
     extend : EXTEND yaydict
     '''
-    
+
     # an extend should only have one member
-    assert len(p[2].values) == 1 
+    assert len(p[2].values) == 1
     key, value = p[2].values.items()[0]
     p[0] = ast.YayDict([(key, ast.YayExtend(value))])
     p[0].lineno = p.lineno(1)
-    
+
 def p_scalar_emptydict(p):
     '''
     scalar : EMPTYDICT
     '''
     p[0] = ast.YayDict()
     p[0].lineno = p.lineno(1)
-    
+
 def p_scalar_emptylist(p):
     '''
     scalar : EMPTYLIST
     '''
     p[0] = ast.YayList()
     p[0].lineno = p.lineno(1)
-    
+
 def p_scalar_value(p):
     '''
     scalar : VALUE
@@ -953,7 +953,7 @@ def p_template(p):
     '''
     p[0] = ast.Template(p[2])
     p[0].lineno = p.lineno(1)
-    
+
 def p_scalar_merge(p):
     '''
     scalar : scalar scalar
@@ -967,28 +967,28 @@ def p_scalar_merge(p):
     else:
         p[0] = ast.YayMerged(p[1], p[2])
         p[0].lineno = p[1].lineno
-        
+
 def p_yaydict_keyscalar(p):
     '''
     yaydict : KEY scalar NEWLINE
     '''
     p[0] = ast.YayDict([(p[1], p[2])])
     p[0].lineno = p.lineno(1)
-    
+
 def p_yaydict_keystanza(p):
     '''
     yaydict : KEY NEWLINE INDENT stanza DEDENT
     '''
     p[0] = ast.YayDict([(p[1], p[4])])
     p[0].lineno = p.lineno(1)
-    
+
 def p_yaydict_merge(p):
     '''
     yaydict : yaydict yaydict
     '''
     p[0] = p[1]
     p[0].update(p[2])
-        
+
 def p_listitem(p):
     '''
     listitem : HYPHEN scalar NEWLINE
@@ -1022,8 +1022,8 @@ def p_yaylist(p):
     elif len(p) == 3:
         p[0] = p[1]
         p[0].append(p[2])
-        
+
 parser = yacc.yacc()
 
 def parse(value, **kwargs):
-    return parser.parse(value, lexer=Lexer(), **kwargs)
+    return parser.parse(value, lexer=Lexer(), tracking=True, **kwargs)
