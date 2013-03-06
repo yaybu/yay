@@ -143,6 +143,7 @@ class TestYayExtend(unittest.TestCase):
     def test_resolve(self):
         y = YayExtend(YayList(Literal(1)))
         y.predecessor = YayList(Literal(2))
+        y.parent = Mock()
         self.assertEqual(y.resolve(), [2, 1])
 
 class TestFor(unittest.TestCase):

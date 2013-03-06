@@ -97,7 +97,7 @@ class AST(object):
         return self.__vars() == other.__vars()
 
 class Root(AST):
-    """ The root of the document 
+    """ The root of the document
     FIXME: This needs thinking about some more
     """
     def __init__(self, node):
@@ -296,7 +296,7 @@ class And(AST):
 
 class Not(AST):
     def __init__(self, value):
-        self.value = value 
+        self.value = value
         value.parent = self
 
     def resolve(self):
@@ -360,7 +360,7 @@ class Subscription(AST):
 
     def expand(self):
         return self.primary.expand().get(self.expression_list[0].resolve()).expand()
-           
+
     def resolve(self):
         return self.expand().resolve()
 
@@ -552,7 +552,7 @@ class YayExtend(AST):
             self.error("You must append a list to this field")
 
         # we initialize this sequence weirdly as we dont want to reparent the nodes we are appending
-        s = YayList([])
+        s = YayList()
         s.value = list(iter(chain)) + list(iter(value))
         s.parent = self.parent
         return s
