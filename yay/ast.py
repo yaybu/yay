@@ -86,7 +86,7 @@ class AST(object):
     def __vars(self):
         """ Return the members without the lineno """
         d = self.__dict__.copy()
-        for var in ('lineno', 'parent'):
+        for var in ('lineno', 'parent', 'predecessor'):
             if var in d:
                 del d[var]
         return d
@@ -533,8 +533,8 @@ class YayDict(AST):
         return d
 
 class YayExtend(AST):
-    def __init__(self, d):
-        self.value = d
+    def __init__(self, value):
+        self.value = value
 
     def get(self, idx, default=None):
         return BoxingFactory.box(self.resolve()[int(idx)])

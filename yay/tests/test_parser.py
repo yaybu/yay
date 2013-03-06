@@ -498,20 +498,20 @@ class TestParser(unittest.TestCase):
             - b
             - c
         """)
-        self.assertEqual(res, YayExtend(YayDict([
-            ('x', YayList(YayScalar('a'), YayScalar('b'), YayScalar('c')))
-            ])))
+        self.assertEqual(res, YayDict([
+            ('x', YayExtend(YayList(YayScalar('a'), YayScalar('b'), YayScalar('c')))),
+            ]))
         
     def test_extend_2(self):
         res = parse("""
         extend x:
             a: b
         """)
-        self.assertEqual(res, YayExtend(YayDict([
-            ('x', YayDict([
+        self.assertEqual(res, YayDict([
+            ('x', YayExtend(YayDict([
                 ('a', YayScalar('b')),
-                ]))
-            ])))
+                ])))
+            ]))
         
     def test_extend_3(self):
         res = parse("""
@@ -519,17 +519,17 @@ class TestParser(unittest.TestCase):
             % for a in b
                 - a
         """)
-        self.assertEqual(res, YayExtend(YayDict([
-            ('x', For(Identifier('a'), Identifier('b'), YayList(YayScalar('a')))),
-            ])))
+        self.assertEqual(res, YayDict([
+            ('x', YayExtend(For(Identifier('a'), Identifier('b'), YayList(YayScalar('a'))))),
+            ]))
         
     def test_extend_4(self):
         res = parse("""
         extend x: {{a}}
         """)
-        self.assertEqual(res, YayExtend(YayDict([
-            ('x', Template(Identifier('a'))),
-            ])))
+        self.assertEqual(res, YayDict([
+            ('x', YayExtend(Template(Identifier('a')))),
+            ]))
         
         
         

@@ -920,7 +920,11 @@ def p_extend(p):
     '''
     extend : EXTEND yaydict
     '''
-    p[0] = ast.YayExtend(p[2])
+    
+    # an extend should only have one member
+    assert len(p[2].values) == 1 
+    key, value = p[2].values.items()[0]
+    p[0] = ast.YayDict([(key, ast.YayExtend(value))])
     p[0].lineno = p.lineno(1)
     
 def p_scalar_emptydict(p):
