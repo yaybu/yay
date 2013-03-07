@@ -2,9 +2,26 @@ import unittest
 from yay import parser
 from yay.ast import *
 
-def resolve(value):
+class MockRoot(Root):
+
+    def __init__(self, node):
+        super(MockRoot, self).__init__(node)
+        self.data = {}
+
+    def add(self, key, value):
+        self.data[key] = value
+
+    def parse(self, path):
+        return parser.parse(self.data[path], debug=0)
+
+
+def resolve(value, **kwargs):
+    root = MockRoot(parser.parse(value, debug=0))
+    for k, v in kwargs.items():
+        root.add(k, v)
+    return root.resolve()
     #print repr(parser.parse(value, debug=0))
-    return Root(parser.parse(value, debug=0)).resolve()
+
 
 class TestResolver(unittest.TestCase):
 
@@ -236,3 +253,26 @@ class TestResolver(unittest.TestCase):
             {"Foo": {"bar": "baz"}},
             {"Qux": {"bar": "baz"}}
             ])
+
+    def test_simple_include(self):
+        res = resolve("""
+            % include 'foo'
+            """,
+            foo="""
+            hello: world
+            """)
+        self.assertEqual(res, {"hello": "world"})
+
+    def test_include_with_extends(self):
+        res = resolve("""
+            % include 'foo'
+            extend resources:
+             - 3
+            """,
+            foo="""
+            resources:
+              - 1
+              - 2
+            """)
+        self.assertEqual(res, {"resources": ['1','2','3']})
+

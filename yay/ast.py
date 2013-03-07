@@ -114,6 +114,9 @@ class Root(AST):
     def resolve(self):
         return self.node.resolve()
 
+    def parse(self, path):
+        pass
+
 class Identifier(AST):
     def __init__(self, identifier):
         self.identifier = identifier
@@ -605,6 +608,7 @@ class Stanzas(AST):
 
     def append(self, stanza):
         stanza.predecessor = self.value
+        stanza.parent = self
         self.value = stanza
 
     def resolve(self):
@@ -627,6 +631,18 @@ class Include(AST):
 
     def __init__(self, expr):
         self.expr = expr
+
+    def get(self, key):
+        return self.expand().get(key)
+
+    def expand(self):
+        expanded = self.get_root().parse(self.expr.resolve())
+        expanded.predecessor = self.predecessor
+        expanded.parent = self.parent
+        return expanded
+
+    def resolve(self):
+        return self.expand().resolve()
 
 class Search(AST):
 
