@@ -588,16 +588,16 @@ class YayMerged(AST):
 
 class Stanzas(AST):
     def __init__(self, *stanzas):
-        self.value = list(stanzas)
+        self.value = self.predecessor
+        for s in stanzas:
+            self.append(s)
 
     def append(self, stanza):
-        self.value.append(stanza)
+        stanza.predecessor = self.value
+        self.value = stanza
 
     def resolve(self):
-        l = []
-        for i in self.value:
-            l.append(i.resolve())
-        return l
+        return self.value.resolve()
 
 class Directives(AST):
     def __init__(self, *directives):
