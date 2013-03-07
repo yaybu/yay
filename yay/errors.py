@@ -37,6 +37,9 @@ class Error(Exception):
         return self.args[0]
 
 
+class NoPredecessor(Error):
+    pass
+
 class NotFound(Error):
     """ An asset or referenced file could not be found """
     pass

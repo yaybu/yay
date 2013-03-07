@@ -1,4 +1,5 @@
 import operator
+from .errors import *
 
 
 class AST(object):
@@ -348,6 +349,26 @@ class AttributeRef(AST):
     def resolve(self):
         return self.expand().resolve()
 
+class LazyPredecessor(AST):
+    def __init__(self, node, identifier):
+        # This is a sideways reference! No parenting...
+        self.node = node
+        self.identifier = identifier
+
+    def get(self, key):
+        predecessor = self.expand()
+        if not predecessor:
+            raise KeyError("No such key '%s'" % key)
+        return predecessor.get(key)
+
+    def expand(self):
+        if not self.node.predecessor:
+            raise NoPredecessor
+        return self.node.predecessor.get(self.identifier)
+
+    def resolve(self):
+        return self.expand().resolve()
+
 class Subscription(AST):
     def __init__(self, primary, *expression_list):
         self.primary = primary
@@ -482,44 +503,34 @@ class YayDict(AST):
 
     def __init__(self, value=None):
         self.values = {}
-
         if value:
-            for k, v in value:
-                v.predecessor = self.values.get(k, None)
-                v.parent = self
-                self.values[k] = v
-
-        #if value is None:
-        #    self.value = []
-        #else:
-        #    self.value = value
-        #    for k, v in self.value:
-        #        v.parent = self
+            self.update(value)
 
     def update(self, value):
         for k, v in value:
-            v.predecessor = self.values.get(k, None)
+            v.predecessor = self.values.get(k, LazyPredecessor(self, k))
             v.parent = self
             self.values[k] = v
-
-        #self.value.extend(l)
-        #for k, v in l:
-        #    v.parent = self
 
     def get(self, key):
         if key in self.values:
             return self.values[key]
-        if self.predecessor:
+        try:
             return self.predecessor.expand().get(key)
-        raise KeyError("Key '%s' not found" % key)
+        except NoPredecessor:
+            raise KeyError("Key '%s' not found" % key)
 
     def __iter__(self):
         return iter(self.values.items())
 
     def resolve(self):
         d = {}
-        if self.predecessor:
-            d = self.predecessor.resolve()
+        try:
+            if self.predecessor:
+                d = self.predecessor.resolve()
+        except NoPredecessor:
+            d = {}
+
         for k, v in self.values.items():
             d[k] = v.resolve()
 
