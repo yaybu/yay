@@ -1,3 +1,0 @@
-
-result: ${missing else "hello"}
-

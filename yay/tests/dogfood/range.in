@@ -1,5 +1,0 @@
-upper: 3
-
-foo: ${range(upper)}
-bar: ${range(1, sum(upper, 1))}
-

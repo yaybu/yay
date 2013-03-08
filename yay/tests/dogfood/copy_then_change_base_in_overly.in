@@ -1,7 +1,0 @@
-yay:
-  extends:
-    - copy_then_change_base_in_overly.base
-foo:
-  bar:
-    - x
-

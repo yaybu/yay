@@ -12,71 +12,212 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Dogfood tests are tests from real-world scenarios and test previous failure modes or specific fixes and feature scenarios
+
 import unittest
-import doctest
-import os
-import glob
+from yay import parser
+from yay.ast import Root
 
-#import yaml
+# FIXME: This is duplicated in test_resolve
 
-from yay.config import Config
-from yay.openers import MemOpener
+class MockRoot(Root):
 
-dogfood_path = os.path.join(os.path.dirname(__file__), "dogfood")
+    def __init__(self, node):
+        super(MockRoot, self).__init__(node)
+        self.data = {}
 
-"""
-class TestConfig(Config):
+    def add(self, key, value):
+        self.data[key] = value
 
-    def load_uri(self, uri):
-        return super(TestConfig, self).load_uri("file:///" + os.path.join(dogfood_path, uri))
+    def parse(self, path):
+        return parser.parse(self.data[path], debug=0)
 
 
-class TestDogfood(unittest.TestCase):
+def resolve(value, **kwargs):
+    root = MockRoot(parser.parse(value, debug=0))
+    for k, v in kwargs.items():
+        root.add(k, v)
+    return root.resolve()
+    #print repr(parser.parse(value, debug=0))
 
-    class __metaclass__(type):
-        def __new__(cls, name, bases, attrs):
-            # Generate a testcase for each .in file in the dogfood directory
-            for snack in list(os.path.splitext(os.path.basename(x))[0] for x in glob.glob(os.path.join(dogfood_path, "*.in"))):
-                name, func = cls.get_test_method(snack)
-                attrs[name] = func
-            return type.__new__(cls, name, bases, attrs)
 
-        @classmethod
-        def get_test_method(cls, snack):
-            name = "test_%s" % snack
-            load_from = os.path.join(dogfood_path, snack+".in")
-            compare_to = os.path.join(dogfood_path, snack+".out")
-            def _(self):
-               self.failUnlessEqual(self.load(load_from), yaml.load(open(compare_to)))
-            _.__name__ = name
-            return name, _
+class TestDogfoodScenarios(unittest.TestCase):
 
-    def load(self, path):
-        oldpath = os.getcwd()
-        os.chdir(dogfood_path)
-        try:
-            c = TestConfig(searchpath=[dogfood_path])
-            self.failUnlessEqual(c.get(), {})
-            c.load_uri(path)
-            return c.get()
-        finally:
-            os.chdir(oldpath)
+    def test_range(self):
+        res = resolve("""
+            upper: 3
+            foo: {{ range(upper) }}
+            bar: {{ range(1, upper+1) }
+            """)
+        self.assertEqual(res['foo'], [0, 1, 2])
+        self.assertEqual(res['bar'], [1, 2, 3])
 
-    def failUnlessEqual(self, value1, value2):
-        if not isinstance(value1, dict) or not isinstance(value2, dict):
-            super(TestDogfood, self).failUnlessEqual(value1, value2)
-            return
+    def test_replace(self):
+        res = resolve("""
+            teststring: foo bar baz
+            replacedstring: {{ replace(teststring, " ", "-") }}
+            """)
+        self.assertEqual(res['replacestring'], 'foo-bar-baz')
 
-        k1 = frozenset(value1.keys())
-        k2 = frozenset(value2.keys())
+    def test_extend_lookup(self):
+        res = resolve("""
+            foo:
+                a: 1
+                b: 1
+                c: 1
 
-        if k1.difference(k2):
-            raise KeyError("Dictionary 1 contains keys dictionary 2 does not (%s)" % ", ".join(k1.difference(k2)))
+            bar: {{ foo }}
+            bar:
+                d: 1
+            """)
+        self.assertEqual(res['bar']['a'], 1)
+        self.assertEqual(res['bar']['d'], 1)
 
-        if k2.difference(k1):
-            raise KeyError("Dictionary 2 contains keys dictionary 1 does not (%s)" % ", ".join(k2.difference(k1)))
+    def test_extend_list_with_variable(self):
+        res = resolve("""
+            someval: julian
+            somelist: []
+            extend somelist:
+              - {{ someval }}
+            """)
+        self.assertEqual(res['somelist'], ['julian'])
 
-        for key in k1:
-            self.failUnlessEqual(value1[key], value2[key])
-"""
+    def test_nested_foreach(self):
+        res = resolve("""
+            project:
+              - name: monkeys
+                flavour: bob
+                environments:
+                  - name: staging
+                    host: ririn
+                  - name: production
+                    host: cloud
+              - name: badgers
+                flavour: george
+                environments:
+                 - name: staging
+                   host: ririn
+                 - name: production
+                   host: cloud
 
+            test:
+              % for project in project
+                % for env in project.environments
+                    name: {{ project.name }}
+                    env: {{ env.name }}
+            """)
+
+        self.assertEqual(res['test'], [
+            {'name': 'monkeys', 'env': 'staging'},
+            {'name': 'monkeys', 'env': 'production'},
+            {'name': 'badgers', 'env': 'staging'},
+            {'name': 'badgers', 'env': 'production'},
+            ])
+
+    def test_magic_1(self):
+        res = resolve("""
+            % include foo, "magic_1_1"
+            """,
+            magic_1_1="""
+            foo: magic_1_2
+            """,
+            magic_1_2="""
+            bar: its a kind of magic
+            """)
+        self.assertEqual(res['bar'], 'its a kind of magic')
+
+    def test_magic_2(self):
+        res = resolve("""
+            % include test
+            test: magic_2_1
+            """,
+            magic_2_1="""
+            lol: it works
+            """)
+        self.assertEqual(res['lol'], 'it works')
+
+    def test_else(self):
+        res = resolve("""
+            foo:
+                bar: 42
+                wibble: 22
+            bar: {{ foo.baz or foo.bar }}
+            baz: {{ foo.baz or foo.qux or foo.bar }}
+            qux: {{ foo.wibble or foo.baz }}
+            """)
+        self.assertEqual(res['bar'], '42')
+        self.assertEqual(res['baz'], '42')
+        self.assertEqual(res['qux'], '22')
+
+    def test_else_empty_list(self):
+        res = resolve("""
+            foo: {{ a or [] }}
+            """)
+        self.assertEqual(res['foo'], [])
+
+    def test_else_empty_dict(self):
+        res = resolve("""
+            foo: {{ a or {} }}
+            """)
+        self.assertEqual(res['foo'], [])
+
+    def test_else_string(self):
+        res = resolve("""
+            foo: {{ a or "foo" }}
+            """)
+        self.assertEqual(res['foo'], "foo")
+
+    def test_else_include(self):
+        res = resolve("""
+            % include (a or "foo") + "_inc"
+            """,
+            foo_inc="hello:world")
+        self.assertEqual(res['foo'], 'hello')
+
+    def test_for_emit_dict(self):
+        res = resolve("""
+            foolist:
+              - name: john
+                age: 28
+              - name: simon
+                age: 41
+              - name: sandra
+                age: 47
+
+            bar:
+                maxage: 40
+
+            baz:
+                % for p in foolist if p.age < foolist
+                    nameage: {{p.name}}{{p.age}}
+                    agename: {{p.age}}{{p.name}}
+            """)
+        self.assertEqual(res['baz'], [{'nameage': 'john28', 'agename': '28john'}])
+
+    def test_for_if_1(self):
+        res = resolve("""
+            nodes:
+              - name: foo
+              - name: baz
+              - name: 5
+
+            test:
+                % for node in nodes if node.name = 5
+                    {{node}}
+            """)
+        self.assertEqual(res['test'], [{'name': '5'}])
+
+    def test_for_if_2(self):
+        res = resolve("""
+            nodes:
+              - name: foo
+              - name: baz
+              - name: 5
+
+            foo: foo
+
+            test:
+                % for node in nodes if node.name = foo
+                    {{node}}
+            """)
+        self.assertEqual(res['test'], [{'name': 'foo'}])
