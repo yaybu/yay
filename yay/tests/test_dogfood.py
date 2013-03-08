@@ -47,7 +47,7 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
             upper: 3
             foo: {{ range(upper) }}
-            bar: {{ range(1, upper+1) }
+            bar: {{ range(1, upper+1) }}
             """)
         self.assertEqual(res['foo'], [0, 1, 2])
         self.assertEqual(res['bar'], [1, 2, 3])
@@ -189,8 +189,8 @@ class TestDogfoodScenarios(unittest.TestCase):
 
             baz:
                 % for p in foolist if p.age < foolist
-                    nameage: {{p.name}}{{p.age}}
-                    agename: {{p.age}}{{p.name}}
+                    - nameage: {{p.name}}{{p.age}}
+                      agename: {{p.age}}{{p.name}}
             """)
         self.assertEqual(res['baz'], [{'nameage': 'john28', 'agename': '28john'}])
 
@@ -202,8 +202,8 @@ class TestDogfoodScenarios(unittest.TestCase):
               - name: 5
 
             test:
-                % for node in nodes if node.name = 5
-                    {{node}}
+                % for node in nodes if node.name == 5
+                    - {{node}}
             """)
         self.assertEqual(res['test'], [{'name': '5'}])
 
@@ -217,7 +217,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             foo: foo
 
             test:
-                % for node in nodes if node.name = foo
-                    {{node}}
+                % for node in nodes if node.name == foo
+                    - {{node}}
             """)
         self.assertEqual(res['test'], [{'name': 'foo'}])

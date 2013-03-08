@@ -553,6 +553,7 @@ class YayDict(AST):
 class YayExtend(AST):
     def __init__(self, value):
         self.value = value
+        value.parent = self
 
     def get(self, idx, default=None):
         return BoxingFactory.box(self.resolve()[int(idx)])
@@ -615,6 +616,9 @@ class Stanzas(AST):
         stanza.parent = self
         self.value = stanza
 
+    def get(self, key):
+        return self.value.get(key)
+
     def resolve(self):
         return self.value.resolve()
 
@@ -635,6 +639,7 @@ class Include(AST):
 
     def __init__(self, expr):
         self.expr = expr
+        expr.parent = self
 
     def get(self, key):
         return self.expand().get(key)
