@@ -276,3 +276,31 @@ class TestResolver(unittest.TestCase):
             """)
         self.assertEqual(res, {"resources": ['1','2','3']})
 
+    def test_include_include(self):
+        res = resolve("""
+            % include 'foo'
+            """,
+            foo="""
+            %include 'bar'
+            """,
+            bar="""
+            hello: world
+            """)
+        self.assertEqual(res, {"hello": "world"})
+
+    def test_include_include_2(self):
+        res = resolve("""
+            % include 'foo'
+            hello: world
+            """,
+            foo="""
+            %include 'bar'
+            hello: quark
+            wibble: wobble
+            """,
+            bar="""
+            hello: qux
+            foo: bar
+            """)
+        self.assertEqual(res, {"wibble": "wobble", "hello": "world", "foo": "bar"})
+
