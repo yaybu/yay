@@ -1,5 +1,6 @@
 import operator
 from .errors import *
+from .openers import Openers
 
 
 class AST(object):
@@ -102,6 +103,7 @@ class Root(AST):
     FIXME: This needs thinking about some more
     """
     def __init__(self, node):
+        self.openers = Openers(searchpath=[])
         self.node = node
         node.parent = self
 
@@ -115,7 +117,9 @@ class Root(AST):
         return self.node.resolve()
 
     def parse(self, path):
-        pass
+        stream = self.openers.open(path)
+        from yay import parser
+        return parser.parse(stream.read())
 
 class Identifier(AST):
     def __init__(self, identifier):
