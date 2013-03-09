@@ -23,6 +23,13 @@ def p_error(p):
         raise ParseError(p.value, p.lineno)
 
 
+precedence = (
+    ('right', 'IN'),
+    ('left', 'IF'),
+    ('left', 'NEWLINE'),
+)
+
+
 ########## EXPRESSIONS
 ## http://docs.python.org/2/reference/expressions.html
 
@@ -798,12 +805,12 @@ def p_search_directive(p):
 def p_for_directive(p):
     '''
     for_directive : FOR target_list IN expression_list NEWLINE INDENT stanza DEDENT
-                  | FOR target_list IF expression IN expression_list NEWLINE INDENT stanza DEDENT
+                  | FOR target_list IN or_test IF expression NEWLINE INDENT stanza DEDENT
     '''
     if len(p) == 9:
         p[0] = ast.For(p[2], p[4], p[7])
     else:
-        p[0] = ast.For(p[2], p[6], p[9], p[4])
+        p[0] = ast.For(p[2], p[4], p[9], p[6])
     p[0].lineno = p.lineno(1)
 
 def p_set_directive(p):
