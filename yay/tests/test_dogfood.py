@@ -145,9 +145,9 @@ class TestDogfoodScenarios(unittest.TestCase):
             baz: {{ foo.baz or foo.qux or foo.bar }}
             qux: {{ foo.wibble or foo.baz }}
             """)
-        self.assertEqual(res['bar'], '42')
-        self.assertEqual(res['baz'], '42')
-        self.assertEqual(res['qux'], '22')
+        self.assertEqual(res['bar'], 42)
+        self.assertEqual(res['baz'], 42)
+        self.assertEqual(res['qux'], 22)
 
     def test_else_empty_list(self):
         res = resolve("""
@@ -159,7 +159,7 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
             foo: {{ a or {} }}
             """)
-        self.assertEqual(res['foo'], [])
+        self.assertEqual(res['foo'], {})
 
     def test_else_string(self):
         res = resolve("""

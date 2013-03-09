@@ -240,12 +240,24 @@ class Expr(AST):
         # (And and Or can be more agressively simplified than the others)
         if self.operator == "and":
             return And(self.lhs.simplify(), self.rhs.simplify()).simplify()
-        if not self.dynamic():
+        elif self.operator == "or":
+            return Or(self.lhs.simplify(), self.rhs.simplify()).simplify()
+        elif not self.dynamic():
             return Literal(self.op(self.lhs.resolve(), self.rhs.resolve()))
         else:
             return Expr(self.lhs.simplify(), self.rhs.simplify(), self.operator)
 
     def resolve(self):
+        # FIXME: This is horrible and requires more thought
+        if self.operator == "or":
+            try:
+                res = self.lhs.resolve()
+                if res:
+                    return res
+            except NoMatching:
+                pass
+            return self.rhs.resolve()
+
         return self.op(self.lhs.resolve(), self.rhs.resolve())
 
 
@@ -325,10 +337,18 @@ class ListDisplay(AST):
     def __init__(self, expression_list=None):
         self.expression_list = expression_list
 
+    def resolve(self):
+        if not self.expression_list:
+            return []
+
 class DictDisplay(AST):
 
     def __init__(self, key_datum_list=None):
         self.key_datum_list = key_datum_list
+
+    def resolve(self):
+        if not self.key_datum_list:
+            return {}
 
 class KeyDatumList(AST):
 
