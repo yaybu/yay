@@ -365,7 +365,7 @@ class LazyPredecessor(AST):
     def get(self, key):
         predecessor = self.expand()
         if not predecessor:
-            raise KeyError("No such key '%s'" % key)
+            raise NoMatching("No such key '%s'" % key)
         return predecessor.get(key)
 
     def expand(self):
@@ -524,11 +524,11 @@ class YayDict(AST):
             return self.values[key]
         if not self.predecessor:
             #FIXME: I would dearly love to get rid of this check and have every node have a LazyPredecessor
-            raise KeyError("No such key '%s'" % key)
+            raise NoMatching("No such key '%s'" % key)
         try:
             return self.predecessor.expand().get(key)
         except NoPredecessor:
-            raise KeyError("Key '%s' not found" % key)
+            raise NoMatching("Key '%s' not found" % key)
 
     def __iter__(self):
         return iter(self.values.items())
