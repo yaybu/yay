@@ -151,13 +151,12 @@ class TestResolver(unittest.TestCase):
         """)
 
         self.assertEqual(res, {
-            "range": ['1', '2'],
-            "bar": ['1', '2'],
+            "range": [1, 2],
+            "bar": [1, 2],
             "quux": ['a', 'b'],
             })
 
     def test_nested_for(self):
-        # FIXME: WE WANT TO DO MATHS HERE
         res = resolve("""
         range:
           - 1
@@ -168,7 +167,7 @@ class TestResolver(unittest.TestCase):
               % for y in range
                 - {{x + y}}
         """)
-        self.assertEquals(res['bar'], ['11', '12', '21', '22'])
+        self.assertEquals(res['bar'], [2, 3, 3, 4])
 
     def test_template_variable_between_scalars(self):
         self.assertEqual(
@@ -274,7 +273,7 @@ class TestResolver(unittest.TestCase):
               - 1
               - 2
             """)
-        self.assertEqual(res, {"resources": ['1','2','3']})
+        self.assertEqual(res, {"resources": [1,2,3]})
 
     def test_include_include(self):
         res = resolve("""

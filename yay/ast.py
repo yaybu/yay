@@ -581,7 +581,13 @@ class YayExtend(AST):
 
 class YayScalar(AST):
     def __init__(self, value):
-        self.value = value
+        try:
+            self.value = int(value)
+        except ValueError:
+            try:
+                self.value = float(value)
+            except ValueError:
+                self.value = value
 
     def resolve(self):
         return self.value

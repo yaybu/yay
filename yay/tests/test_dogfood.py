@@ -188,7 +188,7 @@ class TestDogfoodScenarios(unittest.TestCase):
                 maxage: 40
 
             baz:
-                % for p in foolist if p.age < foolist
+                % for p in foolist if p.age < bar.maxage
                     - nameage: {{p.name}}{{p.age}}
                       agename: {{p.age}}{{p.name}}
             """)
@@ -205,7 +205,7 @@ class TestDogfoodScenarios(unittest.TestCase):
                 % for node in nodes if node.name == 5
                     - {{node}}
             """)
-        self.assertEqual(res['test'], [{'name': '5'}])
+        self.assertEqual(res['test'], [{'name': 5}])
 
     def test_for_if_2(self):
         res = resolve("""
