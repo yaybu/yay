@@ -802,6 +802,8 @@ class Template(AST):
             v.parent = self
 
     def resolve(self):
+        if len(self.value) == 1:
+            return self.value[0].resolve()
         return ''.join(str(v.resolve()) for v in self.value)
 
 class Context(AST):

@@ -184,11 +184,11 @@ class TestResolver(unittest.TestCase):
 
     def test_template_expr_equals(self):
         res = resolve("bar: {{ 1 == 2}}\n")
-        self.assertEqual(res, {"bar": 'False'})
+        self.assertEqual(res, {"bar": False})
 
     def test_template_expr_not_equals(self):
         res = resolve("bar: {{ 1 != 2}}\n")
-        self.assertEqual(res, {"bar": 'True'})
+        self.assertEqual(res, {"bar": True})
 
     def test_template_expr_variables_equals(self):
         res = resolve("""
@@ -196,7 +196,7 @@ class TestResolver(unittest.TestCase):
           b: 1
           c: {{ a == b}}
           """)
-        self.assertEqual(res['c'], 'True')
+        self.assertEqual(res['c'], True)
 
     def test_template_attributeref(self):
         res = resolve("""
