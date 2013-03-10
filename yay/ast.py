@@ -142,6 +142,10 @@ class ParentForm(AST):
         self.expression_list = expression_list
         if expression_list:
             expression_list.parent = self
+    def resolve(self):
+        if not self.expression_list:
+            return []
+        return self.expression_list.resolve()
 
 class ExpressionList(AST):
     def __init__(self, *expressions):
@@ -151,6 +155,9 @@ class ExpressionList(AST):
 
     def append(self, expression):
         self.expression_list.append(expression)
+
+    def resolve(self):
+        return [expr.resolve() for expr in self.expression_list]
 
 class Power(AST):
     def __init__(self, primary, power=None):
@@ -391,7 +398,7 @@ class LazyPredecessor(AST):
     def expand(self):
         if not self.node.predecessor:
             raise NoPredecessor
-        return self.node.predecessor.get(self.identifier)
+        return self.node.predecessor.expand().get(self.identifier)
 
     def resolve(self):
         return self.expand().resolve()
@@ -696,9 +703,16 @@ class Include(AST):
     def __init__(self, expr):
         self.expr = expr
         expr.parent = self
+        self.detector = []
 
     def get(self, key):
-        return self.expand().get(key)
+        #if key in self.detector:
+        #    raise NoMatching("'%s' not found" % key)
+        try:
+            self.detector.append(key)
+            return self.expand().get(key)
+        finally:
+            self.detector.remove(key)
 
     def expand(self):
         expanded = self.get_root().parse(self.expr.resolve())

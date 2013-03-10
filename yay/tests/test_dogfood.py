@@ -148,7 +148,8 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_magic_1(self):
         res = resolve("""
-            % include foo, "magic_1_1"
+            % include foo
+            % include "magic_1_1"
             """,
             magic_1_1="""
             foo: magic_1_2
@@ -203,8 +204,8 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
             % include (a or "foo") + "_inc"
             """,
-            foo_inc="hello:world")
-        self.assertEqual(res['foo'], 'hello')
+            foo_inc="hello:world\n")
+        self.assertEqual(res['hello'], 'world')
 
     def test_for_emit_dict(self):
         res = resolve("""
