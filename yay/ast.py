@@ -884,3 +884,60 @@ class Context(AST):
 
     def resolve(self):
         return self.value.resolve()
+
+class ListComprehension(AST):
+    def __init__(self, expression, list_for):
+        self.expression = expression
+        self.list_for = list_for
+
+class ListFor(AST):
+    def __init__(self, targets, expressions, iterator=None):
+        self.targets = targets
+        self.expressions = expressions
+        self.iterator = iterator
+
+
+class ListIf(AST):
+    def __init__(self, expression, iterator=None):
+        self.expression = expression
+        self.iterator = iterator
+
+class Comprehension(AST):
+    def __init__(self, expression, comp_for):
+        self.expression = expression
+        self.comp_for = comp_for
+
+class CompFor(AST):
+    def __init__(self, targets, test, iterator=None):
+        self.targets = targets
+        self.test = test
+        self.iterator = iterator
+
+class CompIf(AST):
+    def __init__(self, expression, iterator=None):
+        self.expression = expression
+        self.iterator = iterator
+
+class GeneratorExpression(AST):
+    def __init__(self, expression, comp_for):
+        self.expression = expression
+        self.comp_for = comp_for
+
+class DictComprehension(AST):
+    def __init__(self, key, value, comp_for):
+        self.key = key
+        self.value = value
+        self.comp_for = comp_for
+
+class SetDisplay(AST):
+    def __init__(self, v):
+        self.v = v
+
+class StringConversion(AST):
+    def __init__(self, v):
+        self.v = v
+
+class LambdaForm(AST):
+    def __init__(self, expression, params=None):
+        self.expression = expression
+        self.params = params

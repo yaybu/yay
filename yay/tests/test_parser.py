@@ -533,4 +533,112 @@ class TestParser(unittest.TestCase):
             ('x', YayExtend(Template(Identifier('a')))),
             ]))
 
+    def test_list_comprehension_no_conditional(self):
+        res = parse("""
+        % set a = [ x for x in y]
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            ListDisplay(
+                ListComprehension(Identifier('x'),
+                                  ListFor(Identifier('x'),
+                                          Identifier('y'))))))
+
+    def test_list_comprehension_with_conditional(self):
+        res = parse("""
+        % set a = [ x for x in y if z]
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            ListDisplay(
+                ListComprehension(Identifier('x'),
+                                  ListFor(Identifier('x'),
+                                          Identifier('y'),
+                                          ListIf(Identifier('z')))))))
+
+    def test_set_comprehension_no_conditional(self):
+        res = parse("""
+        % set a = { x for x in y }
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            SetDisplay(
+                Comprehension(Identifier('x'),
+                              CompFor(Identifier('x'),
+                                      Identifier('y'))))))
+
+    def test_set_comprehension_with_conditional(self):
+        res = parse("""
+        % set a = { x for x in y if z }
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            SetDisplay(
+                Comprehension(Identifier('x'),
+                                  CompFor(Identifier('x'),
+                                          Identifier('y'),
+                                          CompIf(Identifier('z')))))))
+
+    def test_dict_comprehension_no_conditional(self):
+        res = parse("""
+        % set a = { x : x for x in y }
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            DictDisplay(
+                DictComprehension(Identifier('x'),
+                                  Identifier('x'),
+                                  CompFor(Identifier('x'),
+                                          Identifier('y'))))))
+
+    def test_dict_comprehension_with_conditional(self):
+        res = parse("""
+        % set a = { x : x for x in y if z }
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            DictDisplay(
+                DictComprehension(Identifier('x'),
+                                  Identifier('x'),
+                                  CompFor(Identifier('x'),
+                                          Identifier('y'),
+                                          CompIf(Identifier('z')))))))
+
+    def test_generator_expression_no_conditional(self):
+        res = parse("""
+        % set a = (x for x in y)
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            GeneratorExpression(Identifier('x'),
+                                  CompFor(Identifier('x'),
+                                          Identifier('y')))))
+
+    def test_generator_expression_with_conditional(self):
+        res = parse("""
+        % set a = (x for x in y if z)
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            GeneratorExpression(Identifier('x'),
+                                CompFor(Identifier('x'),
+                                          Identifier('y'),
+                                          CompIf(Identifier('z'))))))
+
+    def test_lambda_no_params(self):
+        res = parse("""
+        % set a = lambda : x
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            LambdaForm(Identifier('x'))))
+
+    def test_lambda_with_params(self):
+        res = parse("""
+        % set a = lambda b : x
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            LambdaForm(params=ParameterList(DefParameter(Identifier('b'))),
+                       expression=Identifier('x'))))
 

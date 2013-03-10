@@ -129,14 +129,17 @@ class Parser(object):
         '''
         list_comprehension : expression list_for
         '''
-        raise NotImplementedError
+        p[0] = ast.ListComprehension(p[1], p[2])
 
     def p_list_for(self, p):
         '''
         list_for : FOR target_list IN old_expression_list
                  | FOR target_list IN old_expression_list list_iter
         '''
-        raise NotImplementedError
+        if len(p) == 5:
+            p[0] = ast.ListFor(p[2], p[4])
+        else:
+            p[0] = ast.ListFor(p[2], p[4], p[5])
 
     def p_old_expression_list(self, p):
         '''
@@ -144,14 +147,8 @@ class Parser(object):
                             | old_expression_list "," old_expression
                             | old_expression_list ","
         '''
-        if len(p) == 2:
-            p[0] = ast.ExpressionList(p[1])
-            p[0].lineno = p.lineno(1)
-        elif len(p) == 3:
-            p[0] = p[1]
-        else:
-            p[0] = p[1]
-            p[0].append(p[3])
+        # exactly the same semantics
+        self.p_expression_list(p)
 
     def p_old_expression(self, p):
         '''
@@ -165,34 +162,40 @@ class Parser(object):
         list_iter : list_for
                   | list_if
         '''
-        raise NotImplementedError
+        p[0] = p[1]
 
     def p_list_if(self, p):
         '''
         list_if : IF old_expression
                 | IF old_expression list_iter
         '''
-        raise NotImplementedError
+        if len(p) == 3:
+            p[0] = ast.ListIf(p[2])
+        else:
+            p[0] = ast.ListIf(p[2], p[3])
 
     def p_comprehension(self, p):
         '''
         comprehension : expression comp_for
         '''
-        raise NotImplementedError
+        p[0] = ast.Comprehension(p[1], p[2])
 
     def p_comp_for(self, p):
         '''
         comp_for : FOR target_list IN or_test
                  | FOR target_list IN or_test comp_iter
         '''
-        raise NotImplementedError
+        if len(p) == 5:
+            p[0] = ast.CompFor(p[2], p[4])
+        else:
+            p[0] = ast.CompFor(p[2], p[4], p[5])
 
     def p_comp_iter(self, p):
         '''
         comp_iter : comp_for
                   | comp_if
         '''
-        raise NotImplementedError
+        p[0] = p[1]
 
     def p_comp_if(self, p):
         '''
@@ -203,13 +206,16 @@ class Parser(object):
         # expression is actually "expression_nocond" in the grammar
         # i do not know what this means
         # http://docs.python.org/2/reference/expressions.html#displays-for-sets-and-dictionaries
-        raise NotImplementedError
+        if len(p) == 3:
+            p[0] = ast.CompIf(p[2])
+        else:
+            p[0] = ast.CompIf(p[2], p[3])
 
     def p_generator_expression(self, p):
         '''
         generator_expression : "(" expression comp_for ")"
         '''
-        raise NotImplementedError
+        p[0] = ast.GeneratorExpression(p[2], p[3])
 
     def p_dict_display(self, p):
         '''
@@ -245,20 +251,20 @@ class Parser(object):
         '''
         dict_comprehension : expression ":" expression comp_for
         '''
-        raise NotImplementedError
+        p[0] = ast.DictComprehension(p[1], p[3], p[4])
 
     def p_set_display(self, p):
         '''
         set_display : "{" expression_list "}"
                     | "{" comprehension "}"
         '''
-        raise NotImplementedError
+        p[0] = ast.SetDisplay(p[2])
 
     def p_string_conversion(self, p):
         '''
         string_conversion : "`" expression_list "`"
         '''
-        raise NotImplementedError
+        p[0] = ast.StringConversion(p[2])
 
     def p_primary(self, p):
         '''
@@ -642,14 +648,17 @@ class Parser(object):
         lambda_form : LAMBDA ":" expression
                     | LAMBDA parameter_list ":" expression
         '''
-        raise NotImplementedError
+        if len(p) == 4:
+            p[0] = ast.LambdaForm(expression=p[3])
+        else:
+            p[0] = ast.LambdaForm(params=p[2], expression=p[4])
 
     def p_old_lambda_form(self, p):
         '''
         old_lambda_form : LAMBDA ":" expression
                         | LAMBDA parameter_list ":" old_expression
         '''
-        raise NotImplementedError
+        self.p_lambda_form(p)
 
     def p_expression_list(self, p):
         '''
