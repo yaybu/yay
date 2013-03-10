@@ -298,6 +298,6 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_escaping(self):
         res = resolve("""
-            foo: \{\{ foo \}\}
+            foo: {{ "{{ foo }}" }}
             """)
         self.assertEqual(res['foo'], "{{ foo }}")
