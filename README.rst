@@ -1,61 +1,21 @@
 yay ain't YAML
 ==============
 
-yay is a configuration file format built on top of YAML based on our experience with the ConfigParser extensions buildout uses. It adds overlays (one config file including and extending another) and variables.
+Yay is a non-strict lazily evaluated configuration language. It combines
+YAML-like data declarations with lazy python expressions.
 
-Consider a config file that looks something like this::
+An example yay file for configuring a load balancer might be::
 
-    foo:
-        bar:
-            baz:
-                - 1
-                - 2
-                - 3
-        qux: wibble.wobble
-        quux: wobble
+    lb1:
+      backends:
+        % for name in ['apple', 'pear']
+          - name: {{ name }}
+            role: web
 
-    goo:
-        bar:
-            baz:
-                - 1
-                - 2
-                - 3
-                - 4
-        qux: wibble.cobble
-        quux: cobble
+      # If we are on in prod, turn on SSL on the LB
+      % if environ == 'prod':
+          protocol: https
 
-    hoo:
-        bar:
-            baz:
-                - 1
-                - 3
-        qux: wibble.yobble
-        quux: yobble
-
-With yay, this might look like this::
-
-    foo:
-        bar:
-            baz:
-                - 1
-                - 2
-                - 3
-        qux: wibble.{:quux}
-        quux: wobble
-
-    goo.copy: foo
-    goo:
-        bar:
-            baz.append:
-                - 4
-        quux: cobble
-
-    hoo.copy: foo
-    hoo:
-        bar:
-            baz.remove:
-                - 2
-        quux: yobble
 
 Using yay
 ---------
