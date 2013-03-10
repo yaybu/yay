@@ -435,11 +435,29 @@ class Slice(AST):
         self.upper_bound = upper_bound
         self.stride = stride
 
+import re
+
 class Call(AST):
+    allowed = {
+        "range": range,
+        "replace": lambda i, r, w: i.replace(r, w),
+        "sub": re.sub,
+        }
+
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
         self.args = args
+        if self.args:
+            for arg in self.args:
+                arg.parent = self
         self.kwargs = kwargs
+
+    def resolve(self):
+        if self.args:
+            args = [x.resolve() for x in self.args]
+        else:
+            args = []
+        return self.allowed[self.primary.identifier](*args)
 
 class ArgumentList(AST):
     def __init__(self, args, kwargs=None):

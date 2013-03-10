@@ -61,7 +61,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             teststring: foo bar baz
             replacedstring: {{ replace(teststring, " ", "-") }}
             """)
-        self.assertEqual(res['replacestring'], 'foo-bar-baz')
+        self.assertEqual(res['replacedstring'], 'foo-bar-baz')
 
     def test_extend_lookup(self):
         """
