@@ -899,6 +899,12 @@ class Parser(object):
         p[0] = p[1]
         p[0].lineno = p.lineno(1)
 
+    def p_stanza_COMMENT(self, p):
+        '''
+        stanza : COMMENT NEWLINE
+        '''
+        p[0] = ast.Comment(p[1])
+
     def p_root(self, p):
         '''
         root : stanza
@@ -1039,7 +1045,6 @@ class Parser(object):
         elif len(p) == 3:
             p[0] = p[1]
             p[0].append(p[2])
-
 
     def p_error(self, p):
         if p is None:

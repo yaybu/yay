@@ -17,6 +17,18 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Include(Literal('foo.yay')))
 
+    def test_comment(self):
+        res = parse("""
+        # i am a little teapot
+        % include 'foo.yay'
+        # short and stout
+        """)
+        self.assertEqual(res, Stanzas(
+            Comment("# i am a little teapot"),
+            Include(Literal('foo.yay')),
+            Comment("# short and stout"),
+            ))
+
     def test_set_integer_literal(self):
         res = parse("""
         % set a = 2

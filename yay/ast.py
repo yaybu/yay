@@ -962,3 +962,7 @@ class LambdaForm(AST):
     def __init__(self, expression, params=None):
         self.expression = expression
         self.params = params
+
+class Comment(AST):
+    def __init__(self, v):
+        self.v = v
