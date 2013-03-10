@@ -1,5 +1,5 @@
 
-
+import os
 from ply import yacc
 
 from lexer import Lexer
@@ -23,7 +23,9 @@ class Parser(object):
         self.tokens = lexer.tokens
         self.tracking = tracking
         self.debug = debug
-        self.parser = yacc.yacc(module=self)
+        self.parser = yacc.yacc(module=self,
+            tabmodule='yay.parsetab',
+            outputdir=os.path.dirname(__file__))
 
     def parse(self, value):
         return self.parser.parse(value,
