@@ -207,6 +207,47 @@ class TestDogfoodScenarios(unittest.TestCase):
             foo_inc="hello:world\n")
         self.assertEqual(res['hello'], 'world')
 
+    def test_for_on_dict(self):
+        res = resolve("""
+            test:
+              foo:
+                sitename: www.foo.com
+              bar:
+                sitename: www.bar.com
+              baz:
+                sitename: www.baz.com
+
+            out:
+              % for x in test
+                 - {{ x }}
+
+            out2:
+              % for x in test
+                 - {{ test[x].sitename }}
+
+            """)
+
+        self.assertEqual(res['out'], ['bar', 'baz', 'foo'])
+        self.assertEqual(res['out'], ['www.bar.com', 'www.baz.com', 'www.foo.com'])
+
+    def test_for_on_for(self):
+        res = resolve("""
+            foo:
+              - 1
+              - 2
+              - 3
+
+            bar:
+                % for f in foo
+                    - {{ f }}
+
+            baz:
+                % for b in bar
+                    - {{ b }}
+            """)
+        self.assertEqual(res['bar'], [1,2,3])
+        self.assertEqual(res['baz'], [1,2,3])
+
     def test_for_emit_dict(self):
         res = resolve("""
             foolist:
@@ -255,3 +296,8 @@ class TestDogfoodScenarios(unittest.TestCase):
             """)
         self.assertEqual(res['test'], [{'name': 'foo'}])
 
+    def test_escaping(self):
+        res = resolve("""
+            foo: \{\{ foo \}\}
+            """)
+        self.assertEqual(res['foo'], "{{ foo }}")

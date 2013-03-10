@@ -1,1 +1,0 @@
-foo.foreach i in range(5): foo${i}bar
