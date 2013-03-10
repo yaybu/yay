@@ -2,10 +2,12 @@
 
 from ply import yacc
 
-from lexer import Lexer, tokens
+from lexer import Lexer
 from . import ast
 
 start = 'root'
+
+tokens = Lexer.tokens
 
 class ParseError(Exception):
 
