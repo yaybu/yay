@@ -4,8 +4,10 @@ from yay.ast import *
 
 import os
 
+p = parser.Parser()
+
 def parse(value):
-    return parser.parse(value, debug=0)
+    return p.parse(value)
 
 class TestParser(unittest.TestCase):
 
@@ -501,7 +503,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, YayDict([
             ('x', YayExtend(YayList(YayScalar('a'), YayScalar('b'), YayScalar('c')))),
             ]))
-        
+
     def test_extend_2(self):
         res = parse("""
         extend x:
@@ -512,7 +514,7 @@ class TestParser(unittest.TestCase):
                 ('a', YayScalar('b')),
                 ])))
             ]))
-        
+
     def test_extend_3(self):
         res = parse("""
         extend x:
@@ -522,7 +524,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, YayDict([
             ('x', YayExtend(For(Identifier('a'), Identifier('b'), YayList(YayScalar('a'))))),
             ]))
-        
+
     def test_extend_4(self):
         res = parse("""
         extend x: {{a}}
@@ -530,6 +532,5 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, YayDict([
             ('x', YayExtend(Template(Identifier('a')))),
             ]))
-        
-        
-        
+
+
