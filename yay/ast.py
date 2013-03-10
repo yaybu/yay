@@ -687,16 +687,23 @@ class Stanzas(AST):
 
 class Directives(AST):
     def __init__(self, *directives):
-        self.value = list(directives)
-        for d in self.value:
-            d.parent = self
+        self.value = None
+        for d in directives:
+            self.append(d)
 
     def append(self, directive):
-        self.value.append(directive)
+        directive.parent = self
+        directive.predecessor = self.value
+        self.value = directive
+
+    def get(self, key):
+        return self.value.get(key)
+
+    def expand(self):
+        return self.value.expand()
 
     def resolve(self):
-        # FIXME: This needs careful planning
-        return self.value[-1].resolve()
+        return self.value.resolve()
 
 class Include(AST):
 
@@ -706,8 +713,8 @@ class Include(AST):
         self.detector = []
 
     def get(self, key):
-        #if key in self.detector:
-        #    raise NoMatching("'%s' not found" % key)
+        if key in self.detector:
+            raise NoMatching("'%s' not found" % key)
         try:
             self.detector.append(key)
             return self.expand().get(key)
