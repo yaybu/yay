@@ -400,6 +400,9 @@ class TestDogfoodScenarios(unittest.TestCase):
             % include "onlyin2.yay"
             """)
 
+        # FIXME: Need to figure out how search interacts with the MockRoot searchpath..
+        self.assertEqual(True, False)
+
     def test_openers_config(self):
         res = resolve("""
             % config
@@ -411,3 +414,6 @@ class TestDogfoodScenarios(unittest.TestCase):
                             hello: world
 
             % include 'mem://example'
+            """)
+
+        self.assertEqual(res['hello'], 'world')
