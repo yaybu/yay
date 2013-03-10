@@ -1,4 +1,4 @@
-include *.rst
-include CHANGES
-include stdeb.cfg
-recursive-include yay/tests/dogfood *
+recursive-include yay *
+recursive-include doc *
+include *
+global-exclude *.pyc
