@@ -535,7 +535,7 @@ class TestParser(unittest.TestCase):
 
     def test_list_comprehension_no_conditional(self):
         res = parse("""
-        % set a = [ x for x in y]
+        % set a = [ x for x in y ]
         """)
         self.assertEqual(res, Set(
             Identifier('a'),
@@ -546,7 +546,7 @@ class TestParser(unittest.TestCase):
 
     def test_list_comprehension_with_conditional(self):
         res = parse("""
-        % set a = [ x for x in y if z]
+        % set a = [ x for x in y if z ]
         """)
         self.assertEqual(res, Set(
             Identifier('a'),
@@ -606,7 +606,7 @@ class TestParser(unittest.TestCase):
 
     def test_generator_expression_no_conditional(self):
         res = parse("""
-        % set a = (x for x in y)
+        % set a = ( x for x in y )
         """)
         self.assertEqual(res, Set(
             Identifier('a'),
@@ -616,7 +616,7 @@ class TestParser(unittest.TestCase):
 
     def test_generator_expression_with_conditional(self):
         res = parse("""
-        % set a = (x for x in y if z)
+        % set a = ( x for x in y if z )
         """)
         self.assertEqual(res, Set(
             Identifier('a'),
