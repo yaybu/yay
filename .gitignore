@@ -6,3 +6,7 @@ parts
 .installed.cfg
 *.pyc
 *.egg-info
+parsetab.py
+parser.out
+yay.wpu
+

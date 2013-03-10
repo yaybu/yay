@@ -364,3 +364,50 @@ class TestDogfoodScenarios(unittest.TestCase):
 
             extend resources: {{ SomeMacro(name='foobar')}}
             """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_mapping_conditional(self):
+        res = resolve("""
+            selector: hey
+
+            % if selector == "hey"
+                foo:
+                    hey:
+                        baz: 2
+
+            foo:
+              quux: 3
+            """)
+        self.assertEqual(res['foo']['hey']['baz'], 2)
+        self.assertEqual(res['foo']['quux'], 3)
+
+    def test_openers_package_compat(self):
+        res = resolve("""
+            % include "package://yay.tests/fixtures/hello_world.yay"
+            """)
+        self.assertEqual(res['hello'], 'world')
+
+    def test_openers_search(self):
+        res = resolve("""
+            % search "package://yay/tests/fixtures"
+            % include "somefile.yay"
+            % include "onlyin2.yay"
+            """)
+
+    def test_openers_config(self):
+        res = resolve("""
+            % config
+                openers:
+                    packages:
+                        index: http://b.pypi.python.org/simple
+                    memory:
+                        example:
+                            hello: world
+
+            % include 'mem://example'
