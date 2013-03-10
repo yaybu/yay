@@ -126,7 +126,7 @@ class Identifier(AST):
         self.identifier = identifier
 
     def expand(self):
-        return self.get_context(self.identifier)
+        return self.get_context(self.identifier).expand()
 
     def resolve(self):
         return self.expand().resolve()
@@ -887,6 +887,9 @@ class For(AST):
         sq = YayList(*lst)
         sq.parent = self.parent
         return sq
+
+    def expand(self):
+        return self.iterate_expanded()
 
     def resolve(self):
         return list(flatten([x.resolve() for x in self.iterate_expanded()]))
