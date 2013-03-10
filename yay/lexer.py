@@ -35,9 +35,8 @@ class Lexer(object):
         self.token_stream = None
 
     def input(self, s, add_endmarker=True):
-        self.lexer.paren_stack = []
         self.lexer.input(s)
-        self.token_stream = self.token_filter(self.lexer, add_endmarker)
+        self.token_stream = self.token_filter(add_endmarker)
 
     def token(self):
         try:
@@ -250,7 +249,7 @@ class Lexer(object):
 
     def t_ANY_WS(self, t):
         r' [ ]+ '
-        if t.lexer.at_line_start and not t.lexer.paren_stack:
+        if self.at_line_start:
             return t
 
     def t_ANY_newline(self, t):
@@ -281,9 +280,9 @@ class Lexer(object):
     MAY_INDENT = 1
     MUST_INDENT = 2
 
-    def track_tokens_filter(self, lexer, tokens):
+    def track_tokens_filter(self, tokens):
         # need to do some magic indent stuff
-        lexer.at_line_start = at_line_start = True
+        self.at_line_start = at_line_start = True
         indent = self.NO_INDENT
         for token in tokens:
 
@@ -316,7 +315,7 @@ class Lexer(object):
                 indent = self.NO_INDENT
 
             yield token
-            lexer.at_line_start = at_line_start
+            self.at_line_start = at_line_start
 
     def _new_token(self, type, lineno):
         tok = lex.LexToken()
@@ -393,10 +392,10 @@ class Lexer(object):
             for _ in range(1, len(levels)):
                 yield self.DEDENT(token.lineno)
 
-    def token_filter(self, lexer, add_endmarker = True):
+    def token_filter(self, add_endmarker = True):
         token = None
-        tokens = iter(lexer.token, None)
-        tokens = self.track_tokens_filter(lexer, tokens)
+        tokens = iter(self.lexer.token, None)
+        tokens = self.track_tokens_filter(tokens)
         for token in self.indentation_filter(tokens):
             yield token
 
