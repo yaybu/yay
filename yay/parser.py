@@ -1004,7 +1004,7 @@ class Parser(object):
         yaydict : yaydict yaydict
         '''
         p[0] = p[1]
-        p[0].update(p[2])
+        p[0].merge(p[2])
 
     def p_listitem(self, p):
         '''
@@ -1025,7 +1025,7 @@ class Parser(object):
         else:
             # multi item dict
             p[0] = ast.YayDict([(p[2], p[3])])
-            p[0].update(p[6])
+            p[0].merge(p[6])
         p[0].lineno = p.lineno(1)
 
     def p_yaylist(self, p):

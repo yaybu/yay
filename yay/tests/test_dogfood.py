@@ -228,7 +228,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             """)
 
         self.assertEqual(res['out'], ['bar', 'baz', 'foo'])
-        self.assertEqual(res['out'], ['www.bar.com', 'www.baz.com', 'www.foo.com'])
+        self.assertEqual(res['out2'], ['www.bar.com', 'www.baz.com', 'www.foo.com'])
 
     def test_for_on_for(self):
         res = resolve("""
