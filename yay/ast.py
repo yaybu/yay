@@ -535,9 +535,18 @@ class YayDict(AST):
 
     def update(self, value):
         for k, v in value:
-            v.predecessor = self.values.get(k, LazyPredecessor(self, k))
+            try:
+                predecessor = self.get(k)
+            except NoMatching:
+                predecessor = LazyPredecessor(self, k)
+
             v.parent = self
             self.values[k] = v
+
+            while v.predecessor and not isinstance(v.predecessor, LazyPredecessor):
+                v = v.predecessor
+                v.parent = self
+            v.predecessor = predecessor
 
     def get(self, key):
         if key in self.values:

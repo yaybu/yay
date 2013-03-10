@@ -17,6 +17,7 @@
 import unittest
 from yay import parser
 from yay.ast import Root
+from yay import ast
 
 # FIXME: This is duplicated in test_resolve
 
@@ -32,13 +33,14 @@ class MockRoot(Root):
     def parse(self, path):
         return parser.parse(self.data[path], debug=0)
 
-
-def resolve(value, **kwargs):
+def parse(value, **kwargs):
     root = MockRoot(parser.parse(value, debug=0))
     for k, v in kwargs.items():
         root.add(k, v)
-    return root.resolve()
-    #print repr(parser.parse(value, debug=0))
+    return root
+
+def resolve(value, **kwargs):
+    return parse(value, **kwargs).resolve()
 
 
 class TestDogfoodScenarios(unittest.TestCase):
@@ -60,6 +62,12 @@ class TestDogfoodScenarios(unittest.TestCase):
         self.assertEqual(res['replacestring'], 'foo-bar-baz')
 
     def test_extend_lookup(self):
+        """
+        This test has 3 sections - a, b, c
+        The parse will create 3 YayDicts and then merge c into b, then b into a
+        If the merge is naive then it will cause predecessors to be lost.
+        You can't just do v.predecessor, instead you need to find the tip of the predecessor ancestry
+        """
         res = resolve("""
             foo:
                 a: 1
@@ -67,11 +75,33 @@ class TestDogfoodScenarios(unittest.TestCase):
                 c: 1
 
             bar: {{ foo }}
+
+            bar:
+                d: 1
+
+            """)
+        self.assertEqual(res['bar']['a'], 1)
+        self.assertEqual(res['bar']['d'], 1)
+
+    def test_extend_lookup_lazier(self):
+        """
+        This test exists as a counterpoint to ``test_extend_lookup`` as we
+        notcied that it was key-order-sensitive
+        """
+        res = resolve("""
+            bar: {{ foo }}
+
+            foo:
+                a: 1
+                b: 1
+                c: 1
+
             bar:
                 d: 1
             """)
         self.assertEqual(res['bar']['a'], 1)
         self.assertEqual(res['bar']['d'], 1)
+
 
     def test_extend_list_with_variable(self):
         res = resolve("""
@@ -221,3 +251,4 @@ class TestDogfoodScenarios(unittest.TestCase):
                     - {{node}}
             """)
         self.assertEqual(res['test'], [{'name': 'foo'}])
+
