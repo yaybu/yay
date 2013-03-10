@@ -301,3 +301,66 @@ class TestDogfoodScenarios(unittest.TestCase):
             foo: {{ "{{ foo }}" }}
             """)
         self.assertEqual(res['foo'], "{{ foo }}")
+
+    def test_macro(self):
+        res = resolve("""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+
+            extend resources:
+                % call SomeMacro
+                      name: foo
+
+            extend resources
+                % call SomeMacro
+                      name: foobar
+            """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_macro_call_in_expression(self):
+        res = resolve("""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+
+            extend resources: {{ SomeMacro(name='foo') }}
+            extend resources: {{ SomeMacro(name='foobar')}}
+            """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_macro_call_in_different_files(self):
+        res = resolve("""
+            % include 'file1'
+            % include 'file2'
+            """,
+            file1="""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+            """,
+            file2="""
+            extend resources:
+                % call SomeMacro
+                      name: foo
+
+            extend resources: {{ SomeMacro(name='foobar')}}
+            """)

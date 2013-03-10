@@ -1,6 +1,0 @@
-.define SomeMacro:
-   - a
-   - b
-   - ${somevar}
-   - d
-
