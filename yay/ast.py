@@ -836,6 +836,11 @@ def flatten(lst):
         else:
             yield itm
 
+class Create(AST):
+    def __init__(self, target, node):
+        self.target = target
+        self.node = node
+
 class For(AST):
 
     def __init__(self, target, in_clause, node, if_clause=None):

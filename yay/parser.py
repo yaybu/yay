@@ -781,6 +781,7 @@ class Parser(object):
                   | PERCENT set_directive
                   | PERCENT if_directive
                   | PERCENT select_directive
+                  | PERCENT create_directive
         '''
         p[0] = p[2]
 
@@ -811,6 +812,12 @@ class Parser(object):
         '''
         p[0] = ast.Search(p[2])
         p[0].lineno = p.lineno(1)
+
+    def p_create_directive(self, p):
+        '''
+        create_directive : CREATE target_list NEWLINE INDENT stanza DEDENT
+        '''
+        p[0] = ast.Create(p[2], p[5])
 
     def p_for_directive(self, p):
         '''

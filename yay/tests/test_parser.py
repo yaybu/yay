@@ -4,7 +4,7 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser()
+p = parser.Parser(debug=1)
 
 def parse(value):
     return p.parse(value)
@@ -654,3 +654,13 @@ class TestParser(unittest.TestCase):
             LambdaForm(params=ParameterList(DefParameter(Identifier('b'))),
                        expression=Identifier('x'))))
 
+
+    def test_create(self):
+        res = parse("""
+        % create foo
+            x : y
+        """)
+        self.assertEqual(res, Create(
+            Identifier('foo'),
+            YayDict([('x', 'y')]),
+            ))
