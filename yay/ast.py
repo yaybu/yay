@@ -834,9 +834,14 @@ class If(AST):
 
     def __init__(self, condition, result, elifs=None, else_=None):
         self.condition = condition
+        condition.parent = self
         self.result = result
+        result.parent = self
         self.elifs = elifs
         self.else_ = else_
+        if else_:
+            else_.parent = self
+        self.passthrough_mode = False
 
     def dynamic(self):
         if self.condition.dynamic():
@@ -856,6 +861,22 @@ class If(AST):
             return self.result.simplify()
         else:
             return self.else_.simplify()
+
+    def get(self, key):
+        if self.passthrough_mode:
+            return self.predecessor.get(key)
+
+        self.passthrough_mode = True
+        cond = self.condition.resolve()
+        self.passthrough_mode = False
+
+        try:
+            if cond:
+                return self.result.get(key)
+            else:
+                return self.else_.get(key)
+        except NoMatching:
+            return self.predecessor.get(key)
 
     def resolve(self):
         if self.condition.resolve():
