@@ -1,8 +1,0 @@
-name: foo
-
-resources:
-    - SomeItem:
-        name: foo
-    - SomeOtherItem:
-        name: foo
-

@@ -126,7 +126,7 @@ class Identifier(AST):
         self.identifier = identifier
 
     def expand(self):
-        return self.get_context(self.identifier)
+        return self.get_context(self.identifier).expand()
 
     def resolve(self):
         return self.expand().resolve()
@@ -556,22 +556,40 @@ class YayDict(AST):
     def __init__(self, value=None):
         self.values = {}
         if value:
-            self.update(value)
+            for (k, v) in value:
+                self.update(k, v)
 
-    def update(self, value):
-        for k, v in value:
-            try:
-                predecessor = self.get(k)
-            except NoMatching:
-                predecessor = LazyPredecessor(self, k)
+    def update(self, k, v):
+        try:
+            predecessor = self.get(k)
+        except NoMatching:
+            predecessor = LazyPredecessor(self, k)
 
+        v.parent = self
+        self.values[k] = v
+
+        # Respect any existing predecessors rather than blindly settings v.predecessor
+        while v.predecessor and not isinstance(v.predecessor, LazyPredecessor):
+            v = v.predecessor
             v.parent = self
-            self.values[k] = v
+        v.predecessor = predecessor
 
-            while v.predecessor and not isinstance(v.predecessor, LazyPredecessor):
-                v = v.predecessor
-                v.parent = self
-            v.predecessor = predecessor
+    def merge(self, other_dict):
+        # This function should ONLY be called by parser and ONLY to merge 2 YayDict nodes...
+        assert isinstance(other_dict, YayDict)
+        for k, v in other_dict.values.items():
+            self.update(k, v)
+
+    def keys(self):
+        keys = set(self.values.keys())
+        try:
+            expanded = self.predecessor.expand()
+            if not hasattr(expanded, "keys"):
+                self.error("Mapping cannot mask or replace field with same name and different type")
+            keys.update(expanded.keys())
+        except NoPredecessor:
+            pass
+        return sorted(list(keys))
 
     def get(self, key):
         if key in self.values:
@@ -585,7 +603,8 @@ class YayDict(AST):
             raise NoMatching("Key '%s' not found" % key)
 
     def __iter__(self):
-        return iter(self.values.items())
+        for k in self.keys():
+            yield YayScalar(k)
 
     def resolve(self):
         d = {}
@@ -873,6 +892,9 @@ class For(AST):
         sq = YayList(*lst)
         sq.parent = self.parent
         return sq
+
+    def expand(self):
+        return self.iterate_expanded()
 
     def resolve(self):
         return list(flatten([x.resolve() for x in self.iterate_expanded()]))

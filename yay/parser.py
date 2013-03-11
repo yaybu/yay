@@ -1,5 +1,5 @@
 
-
+import os
 from ply import yacc
 
 from lexer import Lexer
@@ -23,7 +23,9 @@ class Parser(object):
         self.tokens = lexer.tokens
         self.tracking = tracking
         self.debug = debug
-        self.parser = yacc.yacc(module=self)
+        self.parser = yacc.yacc(module=self,
+            tabmodule='yay.parsetab',
+            outputdir=os.path.dirname(__file__))
 
     def parse(self, value):
         return self.parser.parse(value,
@@ -1017,7 +1019,7 @@ class Parser(object):
         yaydict : yaydict yaydict
         '''
         p[0] = p[1]
-        p[0].update(p[2])
+        p[0].merge(p[2])
 
     def p_listitem(self, p):
         '''
@@ -1038,7 +1040,7 @@ class Parser(object):
         else:
             # multi item dict
             p[0] = ast.YayDict([(p[2], p[3])])
-            p[0].update(p[6])
+            p[0].merge(p[6])
         p[0].lineno = p.lineno(1)
 
     def p_yaylist(self, p):

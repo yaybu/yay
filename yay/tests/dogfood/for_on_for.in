@@ -1,9 +1,0 @@
-foo:
-   - 1
-   - 2
-   - 3
-
-bar.foreach f in foo: ${f}
-
-baz.foreach b in bar: ${b}
-

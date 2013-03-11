@@ -207,6 +207,47 @@ class TestDogfoodScenarios(unittest.TestCase):
             foo_inc="hello:world\n")
         self.assertEqual(res['hello'], 'world')
 
+    def test_for_on_dict(self):
+        res = resolve("""
+            test:
+              foo:
+                sitename: www.foo.com
+              bar:
+                sitename: www.bar.com
+              baz:
+                sitename: www.baz.com
+
+            out:
+              % for x in test
+                 - {{ x }}
+
+            out2:
+              % for x in test
+                 - {{ test[x].sitename }}
+
+            """)
+
+        self.assertEqual(res['out'], ['bar', 'baz', 'foo'])
+        self.assertEqual(res['out2'], ['www.bar.com', 'www.baz.com', 'www.foo.com'])
+
+    def test_for_on_for(self):
+        res = resolve("""
+            foo:
+              - 1
+              - 2
+              - 3
+
+            bar:
+                % for f in foo
+                    - {{ f }}
+
+            baz:
+                % for b in bar
+                    - {{ b }}
+            """)
+        self.assertEqual(res['bar'], [1,2,3])
+        self.assertEqual(res['baz'], [1,2,3])
+
     def test_for_emit_dict(self):
         res = resolve("""
             foolist:
@@ -255,3 +296,124 @@ class TestDogfoodScenarios(unittest.TestCase):
             """)
         self.assertEqual(res['test'], [{'name': 'foo'}])
 
+    def test_escaping(self):
+        res = resolve("""
+            foo: {{ "{{ foo }}" }}
+            """)
+        self.assertEqual(res['foo'], "{{ foo }}")
+
+    def test_macro(self):
+        res = resolve("""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+
+            extend resources:
+                % call SomeMacro
+                      name: foo
+
+            extend resources
+                % call SomeMacro
+                      name: foobar
+            """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_macro_call_in_expression(self):
+        res = resolve("""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+
+            extend resources: {{ SomeMacro(name='foo') }}
+            extend resources: {{ SomeMacro(name='foobar')}}
+            """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_macro_call_in_different_files(self):
+        res = resolve("""
+            % include 'file1'
+            % include 'file2'
+            """,
+            file1="""
+            % macro SomeMacro
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+            """,
+            file2="""
+            extend resources:
+                % call SomeMacro
+                      name: foo
+
+            extend resources: {{ SomeMacro(name='foobar')}}
+            """)
+
+        self.assertEqual(res['resources'], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "foobar"}},
+            {"SomeOtherItem": {"name": "foobar"}},
+            ])
+
+    def test_mapping_conditional(self):
+        res = resolve("""
+            selector: hey
+
+            % if selector == "hey"
+                foo:
+                    hey:
+                        baz: 2
+
+            foo:
+              quux: 3
+            """)
+        self.assertEqual(res['foo']['hey']['baz'], 2)
+        self.assertEqual(res['foo']['quux'], 3)
+
+    def test_openers_package_compat(self):
+        res = resolve("""
+            % include "package://yay.tests/fixtures/hello_world.yay"
+            """)
+        self.assertEqual(res['hello'], 'world')
+
+    def test_openers_search(self):
+        res = resolve("""
+            % search "package://yay/tests/fixtures"
+            % include "somefile.yay"
+            % include "onlyin2.yay"
+            """)
+
+        # FIXME: Need to figure out how search interacts with the MockRoot searchpath..
+        self.assertEqual(True, False)
+
+    def test_openers_config(self):
+        res = resolve("""
+            % config
+                openers:
+                    packages:
+                        index: http://b.pypi.python.org/simple
+                    memory:
+                        example:
+                            hello: world
+
+            % include 'mem://example'
+            """)
+
+        self.assertEqual(res['hello'], 'world')

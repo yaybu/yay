@@ -25,13 +25,15 @@
 # This software is in the public domain.  For details see:
 #   http://creativecommons.org/licenses/publicdomain/
 
+import os
 from ply import lex
 
 class Lexer(object):
 
     def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0):
         self.lexer = lex.lex(module=self, debug=debug, optimize=optimize,
-                             lextab=lextab, reflags=reflags)
+                             lextab=lextab, reflags=reflags,
+                             outputdir=os.path.dirname(__file__))
         self.token_stream = None
 
     def input(self, s, add_endmarker=True):
