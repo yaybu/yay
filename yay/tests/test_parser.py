@@ -297,6 +297,12 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
+    def test_simple_dict_space(self):
+        res = parse("""
+            a : b
+        """)
+        self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
+
     def test_two_item_dict(self):
         res = parse("""
         a: b

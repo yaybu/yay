@@ -208,8 +208,8 @@ class Lexer(object):
     t_INITIAL_CONFIGURE = "configure"
 
     def t_INITIAL_listvalue_KEY(self, t):
-        """[^:\n ]+:[ \t]*"""
-        t.value = t.value.split(":", 1)[0]
+        """[^:\n ]+[ ]*:[ \t]*"""
+        t.value = t.value.split(":", 1)[0].strip()
         t.lexer.begin('value')
         return t
 
