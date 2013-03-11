@@ -405,13 +405,12 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_openers_config(self):
         res = resolve("""
-            % config
-                openers:
-                    packages:
-                        index: http://b.pypi.python.org/simple
-                    memory:
-                        example:
-                            hello: world
+            configure openers:
+                packages:
+                    index: http://b.pypi.python.org/simple
+                memory:
+                    example:
+                        hello: world
 
             % include 'mem://example'
             """)

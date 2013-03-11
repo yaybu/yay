@@ -323,6 +323,18 @@ class TestLexer(unittest.TestCase):
             newline,
             ])
 
+    def test_if(self):
+        result = self._lex("""
+            % if selector == "hey"
+                foo: 2
+        """)
+        self.compare(result, [
+            percent, t('IF', 'if'), identifier('selector'), t('EQ', '=='), t('STRING', 'hey'),
+            newline,
+            indent, key('foo'), value('2'), newline, dedent,
+            ])
+
+
     def test_macro(self):
         result = self._lex("""
             % macro foo

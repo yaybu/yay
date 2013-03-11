@@ -668,7 +668,7 @@ class TestParser(unittest.TestCase):
     def test_create(self):
         res = parse("""
         % create foo
-            x : y
+            x: y
         """)
         self.assertEqual(res, Create(
             Identifier('foo'),
