@@ -405,22 +405,29 @@ class Parser(object):
             p[0] = ast.Call(p[1], p[3].args, p[3].kwargs)
         p[0].lineno = p[1].lineno
 
-    def p_argument_list(self, p):
+    def p_argument_list_with_positional(self, p):
         '''
         argument_list : positional_arguments
                       | positional_arguments "," keyword_arguments
-                      | argument_list ","
         '''
-        # ignore all the * and ** stuff, don't think relevant
-        # can't see the value in nodes for the lists either,
-        # can provide the semantics
         if len(p) == 2:
             p[0] = ast.ArgumentList(p[1].args)
-        elif len(p) == 3:
-            p[0] = p[1]
         else:
             p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
         p[0].lineno = p[1].lineno
+        
+    def p_argument_list_no_positional(self, p):
+        '''
+        argument_list : keyword_arguments
+        '''
+        p[0] = ast.ArgumentList(None, p[1])
+        p[0].lineno = p[1].lineno
+        
+    def p_argument_list_trailing_comma(self, p):
+        '''
+        argument_list : argument_list ","
+        '''
+        p[0] = p[1]
 
     def p_positional_arguments(self, p):
         '''
@@ -853,21 +860,32 @@ class Parser(object):
         p[0] = ast.Set(p[2], p[4])
         p[0].lineno = p.lineno(1)
 
-    def p_if_directive(self, p):
+    def p_if_directive_plain(self, p):
         '''
-        if_directive : IF expression_list stanza NEWLINE
-                     | IF expression_list stanza ELSE stanza NEWLINE
-                     | IF expression_list stanza elif_list NEWLINE
-                     | IF expression_list stanza elif_list ELSE stanza NEWLINE
+        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT
         '''
-        if len(p) == 4:
-            p[0] = ast.If(p[2], p[3])
-        elif len(p) == 6:
-            p[0] = ast.If(p[2], p[3], else_=p[5])
-        elif len(p) == 5:
-            p[0] = ast.If(p[2], p[3], p[4])
-        else:
-            p[0] = ast.If(p[2], p[3], p[4], p[6])
+        p[0] = ast.If(p[2], p[5])
+        p[0].lineno = p.lineno(1)
+        
+    def p_if_directive_else(self, p):
+        '''
+        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT ELSE INDENT stanza DEDENT
+        '''
+        p[0] = ast.If(p[2], p[5], else_=p[9])
+        p[0].lineno = p.lineno(1)
+        
+    def p_if_directive_elif(self, p):
+        '''
+        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list
+        '''
+        p[0] = ast.If(p[2], p[5], p[7])
+        p[0].lineno = p.lineno(1)
+        
+    def p_if_directive_else_elif(self, p):
+        '''
+        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list ELSE stanza
+        '''
+        p[0] = ast.If(p[2], p[5], p[7], p[9])
         p[0].lineno = p.lineno(1)
 
     def p_elif_list(self, p):

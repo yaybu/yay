@@ -4,7 +4,7 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser(debug=1)
+p = parser.Parser(debug=0)
 
 def parse(value):
     return p.parse(value)
@@ -159,6 +159,13 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), [Literal(1)])))
 
+    def test_set_call_kwargs(self):
+        res = parse("""
+        % set a = func(arg1=True, arg2=identifier)
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+            Call(Identifier('func'), kwargs=KeywordArguments(Kwarg(Identifier('arg1'), Identifier('True')), Kwarg(Identifier('arg2'), Identifier('identifier'))))
+            ))
 
     def test_set_parentheses(self):
         res = parse("""
@@ -512,7 +519,7 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Configure(
             'x', YayDict([
-                ('y', 'z'),
+                ('y', YayScalar('z')),
                 ])))
 
     def test_extend_1(self):
@@ -672,5 +679,13 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Create(
             Identifier('foo'),
-            YayDict([('x', 'y')]),
+            YayDict([('x', YayScalar('y'))]),
             ))
+
+    def test_if(self):
+        res = parse("""
+        % if True
+            x: y
+        """)
+        self.assertEqual(res, If(Identifier('True'), YayDict([('x', YayScalar('y'))])))
+

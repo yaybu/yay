@@ -110,6 +110,17 @@ class Root(AST):
     def get_root(self):
         return self
 
+    def get_callable(self, key):
+        p = self.node
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
     def get_context(self, key):
         return self.node.get(key)
 
@@ -403,6 +414,25 @@ class LazyPredecessor(AST):
     def resolve(self):
         return self.expand().resolve()
 
+class UseMyPredecessorStandin(AST):
+    def __init__(self, node):
+        # This is a sideways reference! No parenting...
+        self.node = node
+
+    def get(self, key):
+        predecessor = self.expand()
+        if not predecessor:
+            raise NoMatching("No such key '%s'" % key)
+        return predecessor.get(key)
+
+    def expand(self):
+        if not self.node.predecessor:
+            raise NoPredecessor
+        return self.node.predecessor.expand()
+
+    def resolve(self):
+        return self.expand().resolve()
+
 class Subscription(AST):
     def __init__(self, primary, *expression_list):
         self.primary = primary
@@ -459,12 +489,29 @@ class Call(AST):
                 arg.parent = self
         self.kwargs = kwargs
 
+    def expand(self):
+        kwargs = {}
+        for kwarg in self.kwargs.kwargs:
+            k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
+
+        call = CallDirective(self.primary, None)
+        context = Context(call, kwargs)
+        context.parent = self
+        return context.expand()
+
     def resolve(self):
         if self.args:
             args = [x.resolve() for x in self.args]
         else:
             args = []
-        return self.allowed[self.primary.identifier](*args)
+        try:
+            return self.allowed[self.primary.identifier](*args)
+        except KeyError:
+            pass
+
+    def __iter__(self):
+        return self.expand().__iter__()
+
 
 class ArgumentList(AST):
     def __init__(self, args, kwargs=None):
@@ -638,7 +685,11 @@ class YayExtend(AST):
         if not self.predecessor:
             return self.value.expand()
 
-        chain = self.predecessor.expand()
+        try:
+            chain = self.predecessor.expand()
+        except NoPredecessor:
+            return self.value.expand()
+
         if not hasattr(chain, "__iter__"):
             self.error("You can only append to list types")
 
@@ -651,6 +702,9 @@ class YayExtend(AST):
         s.value = list(iter(chain)) + list(iter(value))
         s.parent = self.parent
         return s
+
+    def __iter__(self):
+        return self.expand().__iter__()
 
     def resolve(self):
         return self.expand().resolve()
@@ -689,7 +743,7 @@ class YayMerged(AST):
 
 class Stanzas(AST):
     def __init__(self, *stanzas):
-        self.value = self.predecessor
+        self.value = UseMyPredecessorStandin(self)
         for s in stanzas:
             self.append(s)
 
@@ -697,6 +751,17 @@ class Stanzas(AST):
         stanza.predecessor = self.value
         stanza.parent = self
         self.value = stanza
+
+    def get_callable(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         return self.value.get(key)
@@ -715,6 +780,17 @@ class Directives(AST):
         directive.predecessor = self.value
         self.value = directive
 
+    def get_callable(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
     def get(self, key):
         return self.value.get(key)
 
@@ -730,6 +806,12 @@ class Include(AST):
         self.expr = expr
         expr.parent = self
         self.detector = []
+
+    def get_callable(self, key):
+        expanded = self.expand()
+        if hasattr(expanded, "get_callable"):
+            return expanded.get_callable(key)
+        raise NoMatching("Could not find a macro called 'SomeMacro'")
 
     def get(self, key):
         if key in self.detector:
@@ -786,9 +868,14 @@ class If(AST):
 
     def __init__(self, condition, result, elifs=None, else_=None):
         self.condition = condition
+        condition.parent = self
         self.result = result
+        result.parent = self
         self.elifs = elifs
         self.else_ = else_
+        if else_:
+            else_.parent = self
+        self.passthrough_mode = False
 
     def dynamic(self):
         if self.condition.dynamic():
@@ -808,6 +895,22 @@ class If(AST):
             return self.result.simplify()
         else:
             return self.else_.simplify()
+
+    def get(self, key):
+        if self.passthrough_mode:
+            return self.predecessor.get(key)
+
+        self.passthrough_mode = True
+        cond = self.condition.resolve()
+        self.passthrough_mode = False
+
+        try:
+            if cond:
+                return self.result.get(key)
+            else:
+                return self.else_.get(key)
+        except NoMatching:
+            return self.predecessor.get(key)
 
     def resolve(self):
         if self.condition.resolve():
@@ -865,10 +968,43 @@ class Macro(AST):
         self.target = target
         self.node = node
 
+    def get_callable(self, key):
+        if key == self.target.identifier:
+            return self
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
+    def get(self, key):
+        if not self.predecessor:
+            raise NoPredecessor()
+        return self.predecessor.get(key)
+
+    def expand(self):
+        if not self.predecessor:
+            raise NoPredecessor()
+        return self.predecessor.expand()
+
+    def resolve(self):
+        if not self.predecessor:
+            raise NoPredecessor()
+        return self.predecessor.resolve()
+
 class CallDirective(AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node
+
+    def expand(self):
+        macro = self.get_root().get_callable(self.target.identifier)
+        clone = macro.node.clone()
+        if not self.node:
+            clone.parent = self
+            return clone.expand()
+        context = Context(clone, self.node.expand().values)
+        context.parent = self
+        return context.expand()
+
+    def resolve(self):
+        return self.expand().resolve()
 
 class For(AST):
 
@@ -914,6 +1050,11 @@ class Template(AST):
         self.value = list(value)
         for v in self.value:
             v.parent = self
+
+    def expand(self):
+        if len(self.value) == 1:
+            return self.value[0]
+        return self
 
     def resolve(self):
         if len(self.value) == 1:
