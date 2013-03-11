@@ -907,16 +907,21 @@ class If(AST):
         try:
             if cond:
                 return self.result.get(key)
-            else:
+            elif self.else_ is not None:
                 return self.else_.get(key)
+            else:
+                return self.predecessor.get(key)
         except NoMatching:
             return self.predecessor.get(key)
 
     def resolve(self):
         if self.condition.resolve():
             return self.result.resolve()
-        else:
+        elif self.else_ is not None:
             return self.else_.resolve()
+        else:
+            return self.predecessor.resolve()
+
 
 
 class ElifList(AST):

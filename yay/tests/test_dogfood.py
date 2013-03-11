@@ -282,6 +282,39 @@ class TestDogfoodScenarios(unittest.TestCase):
         """)
         self.assertEqual(res['a'], 'd')
 
+    def test_if_elif_true(self):
+        res = resolve("""
+        x: 0
+        a: c
+        % if x == 0
+            a: b
+        % elif x == 1
+            a: d
+        """)
+        self.assertEqual(res['a'], 'b')
+
+    def test_if_elif_false(self):
+        res = resolve("""
+        x: 2
+        a: c
+        % if x == 0
+            a: b
+        % elif x == 1
+            a: d
+        """)
+        self.assertEqual(res['a'], 'c')
+
+    def test_if_elif_other_true(self):
+        res = resolve("""
+        x: 1
+        a: c
+        % if x == 0
+            a: b
+        % elif x == 1
+            a: d
+        """)
+        self.assertEqual(res['a'], 'd')
+
 
     def test_for_emit_dict(self):
         res = resolve("""
