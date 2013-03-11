@@ -717,3 +717,20 @@ class TestParser(unittest.TestCase):
                                      Elif(Identifier('True'), YayDict([('x', YayScalar('a'))])),
                                  )))
 
+
+    def test_if_elif_else(self):
+        res = parse("""
+        % if True
+            x: y
+        % elif True
+            x: z
+        % else
+            x: a
+        """)
+        self.assertEqual(res, If(Identifier('True'),
+                                 YayDict([('x', YayScalar('y'))]),
+                                 ElifList(
+                                     Elif(Identifier('True'), YayDict([('x', YayScalar('z'))]))
+                                     ),
+                                 YayDict([('x', YayScalar('a'))])
+                                 ))

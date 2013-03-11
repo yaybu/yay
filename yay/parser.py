@@ -881,9 +881,9 @@ class Parser(object):
 
     def p_if_directive_else_elif(self, p):
         '''
-        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list ELSE stanza
+        if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list PERCENT ELSE NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[5], p[7], p[9])
+        p[0] = ast.If(p[2], p[5], p[7], p[12])
         p[0].lineno = p.lineno(1)
 
     def p_elif_list(self, p):
