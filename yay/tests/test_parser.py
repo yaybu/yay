@@ -159,6 +159,13 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), [Literal(1)])))
 
+    def test_set_call_kwargs(self):
+        res = parse("""
+        % set a = func(arg1=True, arg2=identifier)
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+            Call(Idenitifer('func'),
+            )))
 
     def test_set_parentheses(self):
         res = parse("""
