@@ -164,9 +164,9 @@ class TestParser(unittest.TestCase):
         % set a = func(arg1=True, arg2=identifier)
         """)
         self.assertEqual(res, Set(Identifier('a'),
-            Call(Idenitifer('func'),
-            )))
-
+            Call(Identifier('func'), kwargs=KeywordArguments(Kwarg(Identifier('arg1'), Identifier('True')), Kwarg(Identifier('arg2'), Identifier('identifier'))))
+            ))
+        
     def test_set_parentheses(self):
         res = parse("""
         % set a = (1,2,3)
@@ -675,9 +675,17 @@ class TestParser(unittest.TestCase):
     def test_create(self):
         res = parse("""
         % create foo
-            x : y
+            x: y
         """)
         self.assertEqual(res, Create(
             Identifier('foo'),
             YayDict([('x', 'y')]),
             ))
+        
+    def test_if(self):
+        res = parse("""
+        % if True
+            x: y
+        """)
+        self.assertEqual(res, If(Identifier('True'), YayDict([('x', YayScalar('y'))])))
+        

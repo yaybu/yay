@@ -314,7 +314,7 @@ class TestDogfoodScenarios(unittest.TestCase):
                 % call SomeMacro
                       name: foo
 
-            extend resources
+            extend resources:
                 % call SomeMacro
                       name: foobar
             """)
@@ -362,7 +362,7 @@ class TestDogfoodScenarios(unittest.TestCase):
                 % call SomeMacro
                       name: foo
 
-            extend resources: {{ SomeMacro(name='foobar')}}
+            extend resources: {{ SomeMacro(name='foobar') }}
             """)
 
         self.assertEqual(res['resources'], [
