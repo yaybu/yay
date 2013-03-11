@@ -42,7 +42,9 @@ def parse(value, **kwargs):
     return root
 
 def resolve(value, **kwargs):
-    return parse(value, **kwargs).resolve()
+    root = parse(value, **kwargs)
+    print root
+    return root.resolve()
 
 
 class TestDogfoodScenarios(unittest.TestCase):

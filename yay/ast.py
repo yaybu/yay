@@ -110,6 +110,17 @@ class Root(AST):
     def get_root(self):
         return self
 
+    def get_callable(self, key):
+        p = self.node
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
     def get_context(self, key):
         return self.node.get(key)
 
@@ -403,6 +414,25 @@ class LazyPredecessor(AST):
     def resolve(self):
         return self.expand().resolve()
 
+class UseMyPredecessorStandin(AST):
+    def __init__(self, node):
+        # This is a sideways reference! No parenting...
+        self.node = node
+
+    def get(self, key):
+        predecessor = self.expand()
+        if not predecessor:
+            raise NoMatching("No such key '%s'" % key)
+        return predecessor.get(key)
+
+    def expand(self):
+        if not self.node.predecessor:
+            raise NoPredecessor
+        return self.node.predecessor.expand()
+
+    def resolve(self):
+        return self.expand().resolve()
+
 class Subscription(AST):
     def __init__(self, primary, *expression_list):
         self.primary = primary
@@ -638,7 +668,11 @@ class YayExtend(AST):
         if not self.predecessor:
             return self.value.expand()
 
-        chain = self.predecessor.expand()
+        try:
+            chain = self.predecessor.expand()
+        except NoPredecessor:
+            return self.value.expand()
+
         if not hasattr(chain, "__iter__"):
             self.error("You can only append to list types")
 
@@ -651,6 +685,9 @@ class YayExtend(AST):
         s.value = list(iter(chain)) + list(iter(value))
         s.parent = self.parent
         return s
+
+    def __iter__(self):
+        return self.expand().__iter__()
 
     def resolve(self):
         return self.expand().resolve()
@@ -689,7 +726,7 @@ class YayMerged(AST):
 
 class Stanzas(AST):
     def __init__(self, *stanzas):
-        self.value = self.predecessor
+        self.value = UseMyPredecessorStandin(self)
         for s in stanzas:
             self.append(s)
 
@@ -697,6 +734,17 @@ class Stanzas(AST):
         stanza.predecessor = self.value
         stanza.parent = self
         self.value = stanza
+
+    def get_callable(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         return self.value.get(key)
@@ -865,10 +913,34 @@ class Macro(AST):
         self.target = target
         self.node = node
 
+    def get_callable(self, key):
+        if key == self.target.identifier:
+            return self
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
+    def get(self, key):
+        return self.predecessor.get(key)
+
+    def expand(self):
+        return self.predecessor.expand()
+
+    def resolve(self):
+        return self.predecessor.resolve()
+
 class CallDirective(AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node
+
+    def expand(self):
+        macro = self.get_root().get_callable(self.target.identifier)
+        clone = macro.node.clone()
+        context = Context(clone, self.node.expand().values)
+        context.parent = self
+        return context.expand()
+
+    def resolve(self):
+        return self.expand().resolve()
 
 class For(AST):
 
