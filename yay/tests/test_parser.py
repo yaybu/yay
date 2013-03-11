@@ -166,7 +166,7 @@ class TestParser(unittest.TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), kwargs=KeywordArguments(Kwarg(Identifier('arg1'), Identifier('True')), Kwarg(Identifier('arg2'), Identifier('identifier'))))
             ))
-        
+
     def test_set_parentheses(self):
         res = parse("""
         % set a = (1,2,3)
@@ -519,7 +519,7 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Configure(
             'x', YayDict([
-                ('y', 'z'),
+                ('y', YayScalar('z')),
                 ])))
 
     def test_extend_1(self):
@@ -679,13 +679,13 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Create(
             Identifier('foo'),
-            YayDict([('x', 'y')]),
+            YayDict([('x', YayScalar('y'))]),
             ))
-        
+
     def test_if(self):
         res = parse("""
         % if True
             x: y
         """)
         self.assertEqual(res, If(Identifier('True'), YayDict([('x', YayScalar('y'))])))
-        
+
