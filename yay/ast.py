@@ -489,12 +489,29 @@ class Call(AST):
                 arg.parent = self
         self.kwargs = kwargs
 
+    def expand(self):
+        kwargs = {}
+        for kwarg in self.kwargs.kwargs:
+            k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
+
+        call = CallDirective(self.primary, None)
+        context = Context(call, kwargs)
+        context.parent = self
+        return context.expand()
+
     def resolve(self):
         if self.args:
             args = [x.resolve() for x in self.args]
         else:
             args = []
-        return self.allowed[self.primary.identifier](*args)
+        try:
+            return self.allowed[self.primary.identifier](*args)
+        except KeyError:
+            pass
+
+    def __iter__(self):
+        return self.expand().__iter__()
+
 
 class ArgumentList(AST):
     def __init__(self, args, kwargs=None):
@@ -763,6 +780,17 @@ class Directives(AST):
         directive.predecessor = self.value
         self.value = directive
 
+    def get_callable(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except NoMatching:
+                    pass
+            p = p.predecessor
+        raise NoMatching("Could not find a macro called '%s'" % key)
+
     def get(self, key):
         return self.value.get(key)
 
@@ -778,6 +806,12 @@ class Include(AST):
         self.expr = expr
         expr.parent = self
         self.detector = []
+
+    def get_callable(self, key):
+        expanded = self.expand()
+        if hasattr(expanded, "get_callable"):
+            return expanded.get_callable(key)
+        raise NoMatching("Could not find a macro called 'SomeMacro'")
 
     def get(self, key):
         if key in self.detector:
@@ -940,12 +974,18 @@ class Macro(AST):
         raise NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
+        if not self.predecessor:
+            raise NoPredecessor()
         return self.predecessor.get(key)
 
     def expand(self):
+        if not self.predecessor:
+            raise NoPredecessor()
         return self.predecessor.expand()
 
     def resolve(self):
+        if not self.predecessor:
+            raise NoPredecessor()
         return self.predecessor.resolve()
 
 class CallDirective(AST):
@@ -956,6 +996,9 @@ class CallDirective(AST):
     def expand(self):
         macro = self.get_root().get_callable(self.target.identifier)
         clone = macro.node.clone()
+        if not self.node:
+            clone.parent = self
+            return clone.expand()
         context = Context(clone, self.node.expand().values)
         context.parent = self
         return context.expand()
@@ -1007,6 +1050,11 @@ class Template(AST):
         self.value = list(value)
         for v in self.value:
             v.parent = self
+
+    def expand(self):
+        if len(self.value) == 1:
+            return self.value[0]
+        return self
 
     def resolve(self):
         if len(self.value) == 1:
