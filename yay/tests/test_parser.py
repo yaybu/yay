@@ -4,7 +4,7 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser(debug=0)
+p = parser.Parser(debug=1)
 
 def parse(value):
     return p.parse(value)
