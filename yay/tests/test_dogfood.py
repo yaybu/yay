@@ -250,6 +250,39 @@ class TestDogfoodScenarios(unittest.TestCase):
         self.assertEqual(res['bar'], [1,2,3])
         self.assertEqual(res['baz'], [1,2,3])
 
+    def test_if(self):
+        res = resolve("""
+        x: 0
+        a: c
+
+        % if x == 0
+            a: b
+        """)
+        self.assertEqual(res['a'], 'b')
+
+    def test_if_else_true(self):
+        res = resolve("""
+        x: 0
+        a: c
+        % if x == 0
+            a: b
+        % else
+            a: d
+        """)
+        self.assertEqual(res['a'], 'b')
+
+    def test_if_else_false(self):
+        res = resolve("""
+        x: 0
+        a: c
+        % if x == 1
+            a: b
+        % else
+            a: d
+        """)
+        self.assertEqual(res['a'], 'd')
+
+
     def test_for_emit_dict(self):
         res = resolve("""
             foolist:
