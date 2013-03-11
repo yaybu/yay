@@ -919,14 +919,14 @@ class If(AST):
             return self.else_.resolve()
 
 
-class ElifList(object):
+class ElifList(AST):
     def __init__(self, *elifs):
         self.elifs = list(elifs)
 
     def append(self, elif_):
         self.elifs.append(elif_)
 
-class Elif(object):
+class Elif(AST):
     def __init__(self, condition, node):
         self.condition = condition
         self.node = node

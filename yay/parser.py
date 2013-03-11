@@ -898,13 +898,13 @@ class Parser(object):
             p[0].lineno = p[1].lineno
         else:
             p[0] = p[1]
-            p[0].append(p[3])
+            p[0].append(p[2])
 
     def p_elif(self, p):
         '''
-        elif : ELIF expression_list stanza
+        elif : PERCENT ELIF expression_list NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Elif(p[2], p[3])
+        p[0] = ast.Elif(p[3], p[6])
         p[0].lineno = p.lineno(1)
 
     def p_select_directive(self, p):

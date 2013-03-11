@@ -189,6 +189,7 @@ class Lexer(object):
         'create': 'CREATE',
         'else': 'ELSE',
         'if': 'IF',
+        'elif': 'ELIF',
         'is': 'IS',
         'for': 'FOR',
         'in': 'IN',
