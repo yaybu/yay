@@ -18,20 +18,18 @@ class Parser(object):
 
     start = 'root'
 
-    def __init__(self, tracking=True, lexer=Lexer(), debug=False):
+    def __init__(self, lexer=Lexer()):
         self.lexer = lexer
         self.tokens = lexer.tokens
-        self.tracking = tracking
-        self.debug = debug
         self.parser = yacc.yacc(module=self,
             tabmodule='yay.parsetab',
             outputdir=os.path.dirname(__file__))
 
-    def parse(self, value):
+    def parse(self, value, tracking=True, debug=False):
         return self.parser.parse(value,
                                  lexer=self.lexer,
-                                 tracking=self.tracking,
-                                 debug=self.debug)
+                                 tracking=tracking,
+                                 debug=debug)
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html

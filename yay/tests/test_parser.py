@@ -4,10 +4,10 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser(debug=0)
+p = parser.Parser()
 
 def parse(value):
-    return p.parse(value)
+    return p.parse(value, debug=0)
 
 class TestParser(unittest.TestCase):
 
