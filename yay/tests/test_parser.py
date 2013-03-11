@@ -689,3 +689,14 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, If(Identifier('True'), YayDict([('x', YayScalar('y'))])))
 
+    def test_if_else(self):
+        res = parse("""
+        % if True
+            x: y
+        % else
+            x: z
+        """)
+        self.assertEqual(res, If(Identifier('True'),
+                                 YayDict([('x', YayScalar('y'))]),
+                                 else_=YayDict([('x', YayScalar('z'))]),
+                                 ))
