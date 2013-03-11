@@ -77,7 +77,6 @@ class Lexer(object):
         'EXTEND',
         'KEY',
         'LDBRACE',
-        'LISTITEM',
         'RDBRACE',
         'VALUE',
         'IDENTIFIER',
@@ -205,6 +204,7 @@ class Lexer(object):
     }
 
     t_INITIAL_EXTEND = "extend"
+    t_INITIAL_CONFIGURE = "configure"
 
     def t_INITIAL_listvalue_KEY(self, t):
         """[^:\n ]+:[ \t]*"""

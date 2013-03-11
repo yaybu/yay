@@ -784,6 +784,8 @@ class Parser(object):
                   | PERCENT if_directive
                   | PERCENT select_directive
                   | PERCENT create_directive
+                  | PERCENT macro_directive
+                  | PERCENT call_directive
         '''
         p[0] = p[2]
 
@@ -820,6 +822,18 @@ class Parser(object):
         create_directive : CREATE target_list NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.Create(p[2], p[5])
+
+    def p_macro_directive(self, p):
+        '''
+        macro_directive : MACRO target_list NEWLINE INDENT stanza DEDENT
+        '''
+        p[0] = ast.Macro(p[2], p[5])
+
+    def p_call_directive(self, p):
+        '''
+        call_directive : CALL target_list NEWLINE INDENT stanza DEDENT
+        '''
+        p[0] = ast.CallDirective(p[2], p[5])
 
     def p_for_directive(self, p):
         '''
@@ -926,6 +940,7 @@ class Parser(object):
         stanza : yaydict
                | yaylist
                | extend
+               | configure
                | directives
                | directive
         '''
@@ -958,6 +973,15 @@ class Parser(object):
         key, value = p[2].values.items()[0]
         p[0] = ast.YayDict([(key, ast.YayExtend(value))])
         p[0].lineno = p.lineno(1)
+
+    def p_configure(self, p):
+        '''
+        configure : CONFIGURE yaydict
+        '''
+
+        assert len(p[2].values) == 1
+        key, value = p[2].values.items()[0]
+        p[0] = ast.Configure(key, value)
 
     def p_scalar_emptydict(self, p):
         '''

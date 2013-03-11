@@ -4,7 +4,7 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser(debug=1)
+p = parser.Parser(debug=0)
 
 def parse(value):
     return p.parse(value)
@@ -504,6 +504,16 @@ class TestParser(unittest.TestCase):
                 ('quux', YayList(YayScalar('a'), YayScalar('b')))
                 ]),
         ))
+
+    def test_configure(self):
+        res = parse("""
+        configure x:
+            y: z
+        """)
+        self.assertEqual(res, Configure(
+            'x', YayDict([
+                ('y', 'z'),
+                ])))
 
     def test_extend_1(self):
         res = parse("""
