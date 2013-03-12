@@ -872,6 +872,7 @@ class Parser(object):
         call_directive : CALL target_list NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.CallDirective(p[2], p[5])
+        anchor(p, 1)
 
     def p_for_directive(self, p):
         '''
@@ -1020,8 +1021,10 @@ class Parser(object):
         # an extend should only have one member
         assert len(p[2].values) == 1
         key, value = p[2].values.items()[0]
-        p[0] = ast.YayDict([(key, ast.YayExtend(value))])
+        extend = ast.YayExtend(value)
+        p[0] = ast.YayDict([(key, extend)])
         anchor(p, 1)
+        extend.anchor = p[0].anchor
 
     def p_configure(self, p):
         '''

@@ -185,10 +185,23 @@ class Streamish(object):
     A mixin for a class that behaves like a stream - i.e. is iterable
     """
 
-    # I cannot be treated as a scalar, only as a stream
+    def __init__(self):
+        self._buffer = []
+        self._iterator = None
 
-    def as_iterable(self, anchor=None):
-        raise NotImplementedError("Need to decide what exactly I do - want to return something like fn.py's stream - but a stream of unresolved nodes")
+    def _fill_to(self, index):
+        if not self._iterator:
+            self._iterator = self.as_iterable()
+
+        while len(self._buffer) < index:
+            self._buffer.append(self._iterator.next())
+
+    def get_index(self, index):
+        self._fill_to(index)
+        return self._buffer(index)
+
+    def resolve(self):
+        return list(flatten(x.resolve() for x in self.as_iterable()))
 
 class Proxy(object):
     """
@@ -210,6 +223,8 @@ class Proxy(object):
     def as_string(self, anchor=None):
         return self.expand().as_string(anchor or self.anchor)
 
+    def as_iterable(self, anchor=None):
+        return self.expand().as_iterable(anchor or self.anchor)
 
 class Root(AST):
     """ The root of the document
@@ -515,11 +530,15 @@ class AttributeRef(Proxy, AST):
     def resolve(self):
         return self.expand().resolve()
 
-class LazyPredecessor(AST):
+class LazyPredecessor(Proxy, AST):
     def __init__(self, node, identifier):
         # This is a sideways reference! No parenting...
         self.node = node
         self.identifier = identifier
+
+    @property
+    def anchor(self):
+        return self.expand().anchor
 
     def get(self, key):
         predecessor = self.expand()
@@ -564,6 +583,10 @@ class Subscription(AST):
         for e in self.expression_list:
             e.parent = self
 
+    #def as_iterable(self):
+    #    for i in range(self.lower_bound, self.upper_bound, self.stride):
+    #        yield self.get_index(i)
+
     def expand(self):
         return self.primary.expand().get(self.expression_list[0].resolve()).expand()
 
@@ -593,9 +616,11 @@ class Slice(AST):
         self.upper_bound = upper_bound
         self.stride = stride
 
+
 import re
 
-class Call(AST):
+class Call(Proxy, AST):
+
     allowed = {
         "range": range,
         "replace": lambda i, r, w: i.replace(r, w),
@@ -616,6 +641,7 @@ class Call(AST):
             k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
 
         call = CallDirective(self.primary, None)
+        call.anchor = self.anchor
         context = Context(call, kwargs)
         context.parent = self
         return context.expand()
@@ -629,9 +655,6 @@ class Call(AST):
             return self.allowed[self.primary.identifier](*args)
         except KeyError:
             pass
-
-    def __iter__(self):
-        return self.expand().__iter__()
 
 
 class ArgumentList(AST):
@@ -713,7 +736,7 @@ class YayList(AST):
 
         return self.value[idx]
 
-    def __iter__(self):
+    def as_iterable(self, anchor=None):
         return iter(self.value)
 
 class YayDict(AST):
@@ -770,7 +793,7 @@ class YayDict(AST):
         except errors.NoPredecessor:
             raise errors.NoMatching("Key '%s' not found" % key)
 
-    def __iter__(self):
+    def as_iterable(self, anchor=None):
         for k in self.keys():
             yield YayScalar(k)
 
@@ -785,16 +808,9 @@ class YayDict(AST):
         for k, v in self.values.items():
             d[k] = v.resolve()
 
-        #d = {}
-        #for a, b in self.value:
-        #    d[a] = b
-        #e = {}
-        #for k, v in d.items():
-        #    e[k] = v.resolve()
-
         return d
 
-class YayExtend(AST):
+class YayExtend(Streamish, AST):
     def __init__(self, value):
         self.value = value
         value.parent = self
@@ -802,33 +818,17 @@ class YayExtend(AST):
     def get(self, idx, default=None):
         return BoxingFactory.box(self.resolve()[int(idx)])
 
-    def expand(self):
-        if not self.predecessor:
-            return self.value.expand()
+    def as_iterable(self, anchor=None):
+        if self.predecessor:
+            try:
+                for node in self.predecessor.as_iterable(anchor or self.anchor):
+                    yield node
+            except errors.NoPredecessor:
+                pass
 
-        try:
-            chain = self.predecessor.expand()
-        except errors.NoPredecessor:
-            return self.value.expand()
+        for node in self.value.as_iterable(anchor or self.anchor):
+            yield node
 
-        if not hasattr(chain, "__iter__"):
-            self.error("You can only append to list types")
-
-        value = self.value.expand()
-        if not hasattr(value, "__iter__"):
-            self.error("You must append a list to this field")
-
-        # we initialize this sequence weirdly as we dont want to reparent the nodes we are appending
-        s = YayList()
-        s.value = list(iter(chain)) + list(iter(value))
-        s.parent = self.parent
-        return s
-
-    def __iter__(self):
-        return self.expand().__iter__()
-
-    def resolve(self):
-        return self.expand().resolve()
 
 class YayScalar(Scalarish, AST):
     def __init__(self, value):
@@ -1135,7 +1135,7 @@ class Macro(AST):
             raise errors.NoPredecessor()
         return self.predecessor.resolve()
 
-class CallDirective(AST):
+class CallDirective(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node
@@ -1153,9 +1153,11 @@ class CallDirective(AST):
     def resolve(self):
         return self.expand().resolve()
 
-class For(AST):
+class For(Streamish, AST):
 
     def __init__(self, target, in_clause, node, if_clause=None):
+        super(For, self).__init__()
+
         self.target = target
         target.parent = self
         self.if_clause = if_clause
@@ -1166,10 +1168,8 @@ class For(AST):
         self.node = node
         node.parent = self
 
-    def iterate_expanded(self):
-        lst = []
-
-        for item in self.in_clause.expand():
+    def as_iterable(self, anchor=None):
+        for item in self.in_clause.as_iterable(anchor):
             # self.target.identifier: This probably shouldn't be an identifier
             c = Context(self.node.clone(), {self.target.identifier: item.clone()})
             c.parent = self.parent
@@ -1180,17 +1180,8 @@ class For(AST):
                 if not f.resolve():
                     continue
 
-            lst.append(c)
+            yield c
 
-        sq = YayList(*lst)
-        sq.parent = self.parent
-        return sq
-
-    def expand(self):
-        return self.iterate_expanded()
-
-    def resolve(self):
-        return list(flatten([x.resolve() for x in self.iterate_expanded()]))
 
 class Template(Scalarish, AST):
     def __init__(self, *value):
@@ -1198,17 +1189,19 @@ class Template(Scalarish, AST):
         for v in self.value:
             v.parent = self
 
-    def expand(self):
+    def as_iterable(self, anchor=None):
+        # If template only contains one item it may be iterable - let it try
+        # Otherwise defer to Scalarish behaviour
         if len(self.value) == 1:
-            return self.value[0]
-        return self
+            return self.value[0].as_iterable()
+        super(Template, self).as_iterator(anchor)
 
     def resolve(self):
         if len(self.value) == 1:
             return self.value[0].resolve()
         return ''.join(str(v.resolve()) for v in self.value)
 
-class Context(AST):
+class Context(Proxy, AST):
 
     def __init__(self, value, context):
         self.value = value
