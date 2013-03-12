@@ -190,19 +190,19 @@ class Proxy(object):
     """
 
     def as_int(self, anchor=None):
-        return self.expand().as_int(anchor)
+        return self.expand().as_int(anchor or self.anchor)
 
     def as_float(self, anchor=None):
-        return self.expand().as_float(anchor)
+        return self.expand().as_float(anchor or self.anchor)
 
     def as_number(self, anchor=None):
-        return self.expand().as_number(anchor)
+        return self.expand().as_number(anchor or self.anchor)
 
     def as_safe_string(self, anchor=None):
-        return self.expand().as_safe_string(anchor)
+        return self.expand().as_safe_string(anchor or self.anchor)
 
     def as_string(self, anchor=None):
-        return self.expand().as_string(anchor)
+        return self.expand().as_string(anchor or self.anchor)
 
 
 class Root(AST):
