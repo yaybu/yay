@@ -32,4 +32,9 @@ setup(
             "mock",
             ],
         ),
+    entry_points = {
+        'console_scripts': [
+            'yay2yaml = yay.toyaml:main',
+            ],
+        },
 )
