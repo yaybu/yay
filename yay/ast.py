@@ -987,6 +987,8 @@ class If(AST):
         self.result = result
         result.parent = self
         self.elifs = elifs
+        if elifs:
+            elifs.parent = self
         self.else_ = else_
         if else_:
             else_.parent = self
@@ -1022,34 +1024,53 @@ class If(AST):
         try:
             if cond:
                 return self.result.get(key)
-            elif self.else_ is not None:
+
+            if self.elifs:
+                for elif_ in self.elifs.elifs:
+                    self.passthrough_mode = True
+                    cond = elif_.condition.resolve()
+                    self.passthrough_mode = False
+                    if cond:
+                        return elif_.node.get(key)
+
+            if self.else_ is not None:
                 return self.else_.get(key)
-            else:
-                return self.predecessor.get(key)
+
+            return self.predecessor.get(key)
+
         except errors.NoMatching:
             return self.predecessor.get(key)
 
     def resolve(self):
         if self.condition.resolve():
             return self.result.resolve()
-        elif self.else_ is not None:
-            return self.else_.resolve()
-        else:
-            return self.predecessor.resolve()
 
+        if self.elifs:
+            for elif_ in self.elifs.elifs:
+                if elif_.condition.resolve():
+                    return elif_.node.resolve()
+
+        if self.else_ is not None:
+            return self.else_.resolve()
+
+        return self.predecessor.resolve()
 
 
 class ElifList(AST):
     def __init__(self, *elifs):
-        self.elifs = list(elifs)
+        self.elifs = []
+        [self.append(e) for e in elifs]
 
     def append(self, elif_):
+        elif_.parent = self
         self.elifs.append(elif_)
 
 class Elif(AST):
     def __init__(self, condition, node):
         self.condition = condition
+        condition.parent = self
         self.node = node
+        node.parent = self
 
 class Select(AST):
 
