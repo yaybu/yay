@@ -5,11 +5,25 @@ from ply import yacc
 from lexer import Lexer
 from . import ast
 
+import warnings
+
+class Anchor(object):
+    def __init__(self, p, i):
+        self.lineno = p.lineno(i)
+        self.linespan = p.linespan(i)
+        self.lexpos = p.lexpos(i)
+        self.lexspan = p.lexspan(i)
+
+def anchor(p, i):
+    """ Set the position of p[0] from symbol i """
+    p[0].anchor = Anchor(p, i)
+
 class ParseError(Exception):
 
-    def __init__(self, token, lineno):
+    def __init__(self, token, lineno, error=None):
         self.token = token
         self.lineno = lineno
+        self.error = error
 
     def __str__(self):
         return "Syntax error at line %d: '%s'" % (self.lineno, self.token)
@@ -26,10 +40,14 @@ class Parser(object):
             outputdir=os.path.dirname(__file__))
 
     def parse(self, value, tracking=True, debug=False):
-        return self.parser.parse(value,
+        self.errors = 0
+        rv = self.parser.parse(value,
                                  lexer=self.lexer,
                                  tracking=tracking,
                                  debug=debug)
+        if self.errors > 0:
+            raise SyntaxError
+        return rv
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html
@@ -52,7 +70,7 @@ class Parser(object):
              | FLOAT
         '''
         p[0] = ast.Literal(p[1])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_atom_enclosure(self, p):
         '''
@@ -98,7 +116,7 @@ class Parser(object):
             p[0] = ast.ParentForm()
         else:
             p[0] = ast.ParentForm(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_list_display(self, p):
         '''
@@ -123,13 +141,14 @@ class Parser(object):
             p[0] = ast.ListDisplay()
         else:
             p[0] = ast.ListDisplay(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_list_comprehension(self, p):
         '''
         list_comprehension : expression list_for
         '''
         p[0] = ast.ListComprehension(p[1], p[2])
+        anchor(p, 1)
 
     def p_list_for(self, p):
         '''
@@ -210,12 +229,14 @@ class Parser(object):
             p[0] = ast.CompIf(p[2])
         else:
             p[0] = ast.CompIf(p[2], p[3])
+        anchor(p, 1)
 
     def p_generator_expression(self, p):
         '''
         generator_expression : "(" expression comp_for ")"
         '''
         p[0] = ast.GeneratorExpression(p[2], p[3])
+        anchor(p, 1)
 
     def p_dict_display(self, p):
         '''
@@ -227,7 +248,7 @@ class Parser(object):
             p[0] = ast.DictDisplay()
         else:
             p[0] = ast.DictDisplay(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_key_datum_list(self, p):
         '''
@@ -245,13 +266,14 @@ class Parser(object):
         key_datum : expression ":" expression
         '''
         p[0] = ast.KeyDatum(p[1], p[3])
-        p[0].lineno = p.lineno(2)
+        anchor(p, 2)
 
     def p_dict_comprehension(self, p):
         '''
         dict_comprehension : expression ":" expression comp_for
         '''
         p[0] = ast.DictComprehension(p[1], p[3], p[4])
+        anchor(p, 1)
 
     def p_set_display(self, p):
         '''
@@ -259,12 +281,14 @@ class Parser(object):
                     | "{" comprehension "}"
         '''
         p[0] = ast.SetDisplay(p[2])
+        anchor(p, 1)
 
     def p_string_conversion(self, p):
         '''
         string_conversion : "`" expression_list "`"
         '''
         p[0] = ast.StringConversion(p[2])
+        anchor(p, 1)
 
     def p_primary(self, p):
         '''
@@ -281,14 +305,14 @@ class Parser(object):
         attributeref : primary "." IDENTIFIER
         '''
         p[0] = ast.AttributeRef(p[1], p[3])
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_subscription(self, p):
         '''
         subscription : primary "[" expression_list "]"
         '''
         p[0] = ast.Subscription(p[1], p[3])
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_slicing(self, p):
         '''
@@ -302,14 +326,14 @@ class Parser(object):
         simple_slicing : primary "[" short_slice "]"
         '''
         p[0] = ast.SimpleSlicing(p[1], p[3])
-        p[0].lineno = p.lineno(2)
+        anchor(p, 2)
 
     def p_extended_slicing(self, p):
         '''
         extended_slicing : primary "[" slice_list "]"
         '''
         p[0] = ast.ExtendedSlicing(p[1], p[3])
-        p[0].lineno = p.lineno(2)
+        anchor(p, 2)
 
     def p_slice_list(self, p):
         '''
@@ -324,7 +348,7 @@ class Parser(object):
         else:
             p[0] = p[1]
             p[0].append(p[3])
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_slice_item(self, p):
         '''
@@ -342,27 +366,26 @@ class Parser(object):
         '''
         p[0] = p[1]
 
-    def p_short_slice(self, p):
+    def p_short_slice_lower_only(self, p):
         '''
         short_slice : lower_bound ":"
-                    | ":" upper_bound
-                    | lower_bound ":" upper_bound
         '''
-        if len(p) == 2:
-            if p[2] == ':':
-                lower_bound = p[1]
-                upper_bound = None
-                lineno = p.lineno(2)
-            else:
-                lower_bound = None
-                upper_bound = p[2]
-                lineno = p.lineno(1)
-        else:
-            lower_bound = p[1]
-            upper_bound = p[3]
-            lineno = p.lineno(2)
-        p[0] = ast.Slice(lower_bound, upper_bound)
-        p[0].lineno = lineno
+        p[0] = ast.Slice(p[1], None)
+        p[0].anchor = p[1].anchor
+
+    def p_short_slice_upper_only(self, p):
+        '''
+        short_slice : ":" upper_bound
+        '''
+        p[0] = ast.Slice(None, p[2])
+        anchor(p, 1)
+
+    def p_short_slice_both(self, p):
+        '''
+        short_slice : lower_bound ":" upper_bound
+        '''
+        p[0] = ast.Slice(p[1], p[3])
+        p[0].anchor = p[1].anchor
 
     def p_long_slice(self, p):
         '''
@@ -401,7 +424,7 @@ class Parser(object):
             p[0] = ast.Call(p[1])
         else:
             p[0] = ast.Call(p[1], p[3].args, p[3].kwargs)
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_argument_list_with_positional(self, p):
         '''
@@ -412,14 +435,14 @@ class Parser(object):
             p[0] = ast.ArgumentList(p[1].args)
         else:
             p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_argument_list_no_positional(self, p):
         '''
         argument_list : keyword_arguments
         '''
         p[0] = ast.ArgumentList(None, p[1])
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_argument_list_trailing_comma(self, p):
         '''
@@ -434,7 +457,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.PositionalArguments(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = p[1]
             p[0].append(p[3])
@@ -446,7 +469,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.KeywordArguments(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = p[1]
             p[0].append(p[3])
@@ -456,7 +479,7 @@ class Parser(object):
         kwarg : identifier "=" expression
         '''
         p[0] = ast.Kwarg(p[1], p[3])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_power(self, p):
         '''
@@ -467,7 +490,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Power(p[1], p[3])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_u_expr(self, p):
         '''
@@ -492,12 +515,12 @@ class Parser(object):
         else:
             if p[1] == '-':
                 p[0] = ast.UnaryMinus(p[2])
-                p[0].lineno = p.lineno(1)
+                anchor(p, 1)
             elif p[1] == '+':
                 p[0] == p[2]
             elif p[1] == '~':
                 p[0] = ast.Invert(p[2])
-                p[0].lineno = p.lineno(1)
+                anchor(p, 1)
 
     def p_m_expr(self, p):
         '''
@@ -511,7 +534,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
 
     def p_a_expr(self, p):
@@ -524,7 +547,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_shift_expr(self, p):
         '''
@@ -536,7 +559,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_and_expr(self, p):
         '''
@@ -547,7 +570,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_xor_expr(self, p):
         '''
@@ -558,7 +581,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_or_expr(self, p):
         '''
@@ -569,7 +592,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_comparison(self, p):
         '''
@@ -580,7 +603,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_comp_operator(self, p):
         '''
@@ -607,7 +630,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_and_test(self, p):
         '''
@@ -618,7 +641,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.Expr(p[1], p[3], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_not_test(self, p):
         '''
@@ -627,10 +650,10 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = p[1]
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = ast.Not(p[2])
-            p[0].lineno = p.lineno(1)
+            anchor(p, 1)
 
     def p_conditional_expression(self, p):
         '''
@@ -641,7 +664,7 @@ class Parser(object):
             p[0] = p[1]
         else:
             p[0] = ast.ConditionalExpression(p[1], p[3], p[5])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_expression(self, p):
         '''
@@ -684,7 +707,7 @@ class Parser(object):
                 p[0].append(p[3])
             else:
                 p[0] = ast.ExpressionList(p[1], p[3])
-                p[0].lineno = p[1].lineno
+                p[0].anchor = p[1].anchor
 
     #### SIMPLE STATEMENTS
     # http://docs.python.org/2/reference/simple_stmts.html
@@ -705,14 +728,14 @@ class Parser(object):
                 p[0].append(p[3])
             else:
                 p[0] = ast.TargetList(p[1], p[3])
-                p[0].lineno = p[1].lineno
+                p[0].anchor = p[1].anchor
 
     def p_identifier(self, p):
         '''
         identifier : IDENTIFIER
         '''
         p[0] = ast.Identifier(p[1])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_target(self, p):
         '''
@@ -734,7 +757,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.ParameterList(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         elif len(p) == 3:
             p[0] = p[1]
         else:
@@ -748,10 +771,10 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.DefParameter(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = ast.DefParameter(p[1], p[3])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_parameter(self, p):
         '''
@@ -771,7 +794,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.Sublist(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         elif len(p) == 3:
             p[0] = p[1]
         else:
@@ -791,15 +814,24 @@ class Parser(object):
                   | PERCENT create_directive
                   | PERCENT macro_directive
                   | PERCENT call_directive
+                  | PERCENT err_else
         '''
         p[0] = p[2]
+
+    def p_err_else(self, p):
+        '''
+        err_else : ELSE NEWLINE INDENT stanza DEDENT
+        '''
+        self.errors += 1
+        warnings.warn("Unmatched else at line %d" % p.lineno(1), SyntaxWarning)
+        raise SyntaxError()
 
     def p_directives(self, p):
         '''
         directives : directive directive
         '''
         p[0] = ast.Directives(p[1], p[2])
-        p[0].lineno = p[1].lineno
+        p[0].anchor = p[1].anchor
 
     def p_directives_merge(self, p):
         '''
@@ -813,14 +845,14 @@ class Parser(object):
         include_directive : INCLUDE expression_list NEWLINE
         '''
         p[0] = ast.Include(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_search_directive(self, p):
         '''
         search_directive : SEARCH expression_list NEWLINE
         '''
         p[0] = ast.Search(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_create_directive(self, p):
         '''
@@ -849,42 +881,42 @@ class Parser(object):
             p[0] = ast.For(p[2], p[4], p[7])
         else:
             p[0] = ast.For(p[2], p[4], p[9], p[6])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_set_directive(self, p):
         '''
         set_directive : SET target_list "=" expression_list NEWLINE
         '''
         p[0] = ast.Set(p[2], p[4])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_if_directive_plain(self, p):
         '''
         if_directive : IF expression_list NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[5])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_if_directive_else(self, p):
         '''
         if_directive : IF expression_list NEWLINE INDENT stanza DEDENT PERCENT ELSE NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[5], else_=p[11])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_if_directive_elif(self, p):
         '''
         if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list
         '''
         p[0] = ast.If(p[2], p[5], p[7])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_if_directive_else_elif(self, p):
         '''
         if_directive : IF expression_list NEWLINE INDENT stanza DEDENT elif_list PERCENT ELSE NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[5], p[7], p[12])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_elif_list(self, p):
         '''
@@ -893,7 +925,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.ElifList(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = p[1]
             p[0].append(p[2])
@@ -903,14 +935,14 @@ class Parser(object):
         elif : PERCENT ELIF expression_list NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.Elif(p[3], p[6])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_select_directive(self, p):
         '''
         select_directive : SELECT expression_list case_list NEWLINE
         '''
         p[0] = ast.Select(p[2], p[3])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_case_list(self, p):
         '''
@@ -919,7 +951,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.CaseList(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         else:
             p[0] = p[1]
             p[0].append(p[2])
@@ -929,14 +961,14 @@ class Parser(object):
         case_block : KEY ":" stanza
         '''
         p[0] = ast.Case(p[1], p[3])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_stanza_VALUE(self, p):
         '''
         stanza : VALUE NEWLINE
         '''
         p[0] = p[1]
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_stanza_COMMENT(self, p):
         '''
@@ -970,7 +1002,7 @@ class Parser(object):
         stanzas : stanza stanza
         '''
         p[0] = ast.Stanzas(p[1], p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_stanzas_merge(self, p):
         '''
@@ -988,7 +1020,7 @@ class Parser(object):
         assert len(p[2].values) == 1
         key, value = p[2].values.items()[0]
         p[0] = ast.YayDict([(key, ast.YayExtend(value))])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_configure(self, p):
         '''
@@ -1004,27 +1036,28 @@ class Parser(object):
         scalar : EMPTYDICT
         '''
         p[0] = ast.YayDict()
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_scalar_emptylist(self, p):
         '''
         scalar : EMPTYLIST
         '''
         p[0] = ast.YayList()
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_scalar_value(self, p):
         '''
         scalar : VALUE
         '''
         p[0] = ast.YayScalar(p[1])
+        anchor(p, 1)
 
     def p_template(self, p):
         '''
         scalar : LDBRACE expression_list RDBRACE
         '''
         p[0] = ast.Template(p[2])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_scalar_merge(self, p):
         '''
@@ -1038,21 +1071,21 @@ class Parser(object):
             p[0].prepend(p[1])
         else:
             p[0] = ast.YayMerged(p[1], p[2])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
 
     def p_yaydict_keyscalar(self, p):
         '''
         yaydict : KEY scalar NEWLINE
         '''
         p[0] = ast.YayDict([(p[1], p[2])])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_yaydict_keystanza(self, p):
         '''
         yaydict : KEY NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.YayDict([(p[1], p[4])])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_yaydict_merge(self, p):
         '''
@@ -1081,7 +1114,7 @@ class Parser(object):
             # multi item dict
             p[0] = ast.YayDict([(p[2], p[3])])
             p[0].merge(p[6])
-        p[0].lineno = p.lineno(1)
+        anchor(p, 1)
 
     def p_yaylist(self, p):
         '''
@@ -1090,7 +1123,7 @@ class Parser(object):
         '''
         if len(p) == 2:
             p[0] = ast.YayList(p[1])
-            p[0].lineno = p[1].lineno
+            p[0].anchor = p[1].anchor
         elif len(p) == 3:
             p[0] = p[1]
             p[0].append(p[2])

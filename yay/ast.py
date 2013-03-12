@@ -88,7 +88,7 @@ class AST(object):
     def __vars(self):
         """ Return the members without the lineno """
         d = self.__dict__.copy()
-        for var in ('lineno', 'parent', 'predecessor'):
+        for var in ('anchor', 'parent', 'predecessor'):
             if var in d:
                 del d[var]
         return d

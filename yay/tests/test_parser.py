@@ -740,3 +740,9 @@ class TestParser(unittest.TestCase):
                                      ),
                                  YayDict([('x', YayScalar('a'))])
                                  ))
+
+    def test_error_else(self):
+        self.assertRaises(SyntaxError, parse, """
+        % else
+            x: y
+        """)
