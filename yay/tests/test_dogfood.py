@@ -21,8 +21,6 @@ from yay import ast
 
 # FIXME: This is duplicated in test_resolve
 
-p = parser.Parser()
-
 class MockRoot(Root):
 
     def __init__(self, node):
@@ -33,9 +31,11 @@ class MockRoot(Root):
         self.data[key] = value
 
     def parse(self, path):
+        p = parser.Parser()
         return p.parse(self.data[path], debug=0)
 
 def parse(value, **kwargs):
+    p = parser.Parser()
     root = MockRoot(p.parse(value))
     for k, v in kwargs.items():
         root.add(k, v)

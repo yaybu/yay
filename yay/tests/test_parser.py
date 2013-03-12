@@ -4,9 +4,8 @@ from yay.ast import *
 
 import os
 
-p = parser.Parser()
-
 def parse(value):
+    p = parser.Parser()
     return p.parse(value, debug=0)
 
 class TestParser(unittest.TestCase):

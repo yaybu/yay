@@ -32,9 +32,9 @@ class Parser(object):
 
     start = 'root'
 
-    def __init__(self, lexer=Lexer()):
-        self.lexer = lexer
-        self.tokens = lexer.tokens
+    def __init__(self, lexer=None):
+        self.lexer = lexer or Lexer()
+        self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self,
             tabmodule='yay.parsetab',
             outputdir=os.path.dirname(__file__))

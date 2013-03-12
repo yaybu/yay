@@ -2,7 +2,6 @@ import unittest
 from yay import parser
 from yay.ast import *
 
-p = parser.Parser()
 
 class MockRoot(Root):
 
@@ -14,10 +13,12 @@ class MockRoot(Root):
         self.data[key] = value
 
     def parse(self, path):
+        p = parser.Parser()
         return p.parse(self.data[path])
 
 
 def resolve(value, **kwargs):
+    p = parser.Parser()
     root = MockRoot(p.parse(value))
     for k, v in kwargs.items():
         root.add(k, v)
