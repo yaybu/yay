@@ -55,22 +55,17 @@ class ProgrammingError(Error):
 
 class LanguageError(Error):
 
-    def __init__(self, description, file="<Unknown>", line=0, column=0, snippet=None):
+    def __init__(self, description, anchor=None):
         self.description = description
-        self.file = file
-        self.line = line
-        self.column = column
-        self.snippet = snippet
-
-    def get_string(self):
-        error = self.description
-        error += "\nFile %s, line %d, column %d" % (self.file, self.line, self.column)
-        if self.snippet:
-            error += "\n%s" % self.snippet
-        return error
+        self.anchor = anchor
 
     def __str__(self):
-        return self.get_string()
+        error = self.description
+        if self.anchor:
+            error += "\nFile %s, line %s, column %s" % ("<unknown>", self.anchor.lineno, self.anchor.lexpos)
+        #if self.snippet:
+        #    error += "\n%s" % self.snippet
+        return error
 
 
 class LexerError(LanguageError):
@@ -82,6 +77,8 @@ class ParseError(LanguageError):
 class EvaluationError(LanguageError):
     pass
 
+class TypeError(LanguageError):
+    pass
 
 class NoMatching(EvaluationError):
     pass

@@ -62,6 +62,7 @@ class Parser(object):
         atom : identifier
         '''
         p[0] = p[1]
+        anchor(p, 1)
 
     def p_atom_literal(self, p):
         '''

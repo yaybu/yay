@@ -1,5 +1,5 @@
 import operator
-from .errors import *
+from . import errors
 from .openers import Openers
 
 
@@ -7,6 +7,24 @@ class AST(object):
 
     lineno = 0
     predecessor = None
+
+    def as_int(self, anchor=None):
+        raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
+
+    def as_float(self, anchor=None):
+        raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
+
+    def as_number(self, anchor=None):
+        raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
+
+    def as_safe_string(self, anchor=None):
+        raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+
+    def as_string(self, anchor=None):
+        raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+
+    def as_iterable(self, anchor=None):
+        raise errors.TypeError("Expected iterable", anchor=self.anchor)
 
     def dynamic(self):
         """
@@ -98,6 +116,95 @@ class AST(object):
             return False
         return self.__vars() == other.__vars()
 
+
+class Scalarish(object):
+
+    """
+    A mixin for an object that is a number, string or boolean
+
+    By default if a casting error occurs an errors.ValueError will be raised
+    that blames the current node. By passing in the optional ``anchor`` node
+    you can blame the node that is consuming this node. For example::
+
+        a: foo
+        b: 5
+        c: {{ a - b }}
+
+    The most useful error here is to blame the identifier ``a`` inside the
+    ``{{ brackets }}`` rather than to actually blame the scalar itself.
+
+    A scalar cannot be treated as a stream.
+    """
+
+    def as_int(self, anchor=None):
+        try:
+            return int(self.resolve())
+        except ValueError:
+            raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
+
+    def as_float(self, anchor=None):
+        try:
+            return float(self.resolve())
+        except ValueError:
+            raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
+
+    def as_number(self, anchor=None):
+        """
+        This will return an integer, and if it can't return an integer it
+        will return a float. Otherwise it will fail with a TypeError.
+        """
+        resolved = self.resolve()
+        try:
+            return int(resolved)
+        except ValueError:
+            try:
+                return float(resolved)
+            except ValueError:
+                raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
+
+    def as_safe_string(self, anchor=None):
+        """ Returns a string that might includes obfuscation where secrets are used """
+        return self.as_string(anchor)
+
+    def as_string(self, anchor=None):
+        resolved = self.resolve()
+        if isinstance(resolved, (int, float, bool)):
+            resolved = str(resolved)
+        if not isinstance(resolved, basestring):
+            raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+        return resolved
+
+class Streamish(object):
+    """
+    A mixin for a class that behaves like a stream - i.e. is iterable
+    """
+
+    # I cannot be treated as a scalar, only as a stream
+
+    def as_iterable(self, anchor=None):
+        raise NotImplementedError("Need to decide what exactly I do - want to return something like fn.py's stream - but a stream of unresolved nodes")
+
+class Proxy(object):
+    """
+    A mixin that forwards requested on to an expanded form
+    """
+
+    def as_int(self, anchor=None):
+        return self.expand().as_int(anchor)
+
+    def as_float(self, anchor=None):
+        return self.expand().as_float(anchor)
+
+    def as_number(self, anchor=None):
+        return self.expand().as_number(anchor)
+
+    def as_safe_string(self, anchor=None):
+        return self.expand().as_safe_string(anchor)
+
+    def as_string(self, anchor=None):
+        return self.expand().as_string(anchor)
+
+
 class Root(AST):
     """ The root of the document
     FIXME: This needs thinking about some more
@@ -116,10 +223,10 @@ class Root(AST):
             if hasattr(p, "get_callable"):
                 try:
                     return p.get_callable(key)
-                except NoMatching:
+                except errors.NoMatching:
                     pass
             p = p.predecessor
-        raise NoMatching("Could not find a macro called '%s'" % key)
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get_context(self, key):
         return self.node.get(key)
@@ -132,7 +239,7 @@ class Root(AST):
         from yay import parser
         return parser.parse(stream.read())
 
-class Identifier(AST):
+class Identifier(Proxy, AST):
     def __init__(self, identifier):
         self.identifier = identifier
 
@@ -142,13 +249,14 @@ class Identifier(AST):
     def resolve(self):
         return self.expand().resolve()
 
-class Literal(AST):
+class Literal(Scalarish, AST):
     def __init__(self, literal):
         self.literal = literal
     def resolve(self):
         return self.literal
 
-class ParentForm(AST):
+class ParentForm(Scalarish, AST):
+    # FIXME: Understand this better...
     def __init__(self, expression_list=None):
         self.expression_list = expression_list
         if expression_list:
@@ -178,7 +286,7 @@ class Power(AST):
         power.parent = self
 
     def resolve(self):
-        return pow(self.primary.resolve(), self.power.resolve())
+        return pow(self.primary.as_number(), self.power.as_number())
 
 class UnaryMinus(AST):
     """ The unary - (minus) operator yields the negation of its numeric
@@ -189,7 +297,7 @@ class UnaryMinus(AST):
         u_expr.parent = self
 
     def resolve(self):
-        return -self.u_expr.resolve()
+        return -self.u_expr.as_number()
 
 class Invert(AST):
     """ The unary ~ (invert) operator yields the bitwise inversion of its
@@ -200,9 +308,9 @@ class Invert(AST):
         u_expr.parent = self
 
     def resolve(self):
-        return ~self.u_expr.resolve()
+        return ~self.u_expr.as_number()
 
-class Expr(AST):
+class Expr(Scalarish, AST):
 
     """
     The ``Expr`` node tests for equality between a left and a right child. The
@@ -272,11 +380,18 @@ class Expr(AST):
                 res = self.lhs.resolve()
                 if res:
                     return res
-            except NoMatching:
+            except errors.NoMatching:
                 pass
             return self.rhs.resolve()
-
-        return self.op(self.lhs.resolve(), self.rhs.resolve())
+        elif self.operator in ("==", "!="):
+            return self.op(self.lhs.resolve(), self.rhs.resolve())
+        elif self.operator == "+":
+            try:
+                return self.op(self.lhs.as_number(), self.rhs.as_number())
+            except errors.TypeError:
+                return self.op(self.lhs.as_string(), self.rhs.as_string())
+        else:
+            return self.op(self.lhs.as_number(), self.rhs.as_number())
 
 
 class And(AST):
@@ -382,7 +497,7 @@ class KeyDatum(AST):
         self.key = key
         self.value = value
 
-class AttributeRef(AST):
+class AttributeRef(Proxy, AST):
     def __init__(self, primary, identifier):
         self.primary = primary
         primary.parent = self
@@ -403,12 +518,12 @@ class LazyPredecessor(AST):
     def get(self, key):
         predecessor = self.expand()
         if not predecessor:
-            raise NoMatching("No such key '%s'" % key)
+            raise errors.NoMatching("No such key '%s'" % key)
         return predecessor.get(key)
 
     def expand(self):
         if not self.node.predecessor:
-            raise NoPredecessor
+            raise errors.NoPredecessor
         return self.node.predecessor.expand().get(self.identifier)
 
     def resolve(self):
@@ -422,12 +537,12 @@ class UseMyPredecessorStandin(AST):
     def get(self, key):
         predecessor = self.expand()
         if not predecessor:
-            raise NoMatching("No such key '%s'" % key)
+            raise errors.NoMatching("No such key '%s'" % key)
         return predecessor.get(key)
 
     def expand(self):
         if not self.node.predecessor:
-            raise NoPredecessor
+            raise errors.NoPredecessor
         return self.node.predecessor.expand()
 
     def resolve(self):
@@ -609,7 +724,7 @@ class YayDict(AST):
     def update(self, k, v):
         try:
             predecessor = self.get(k)
-        except NoMatching:
+        except errors.NoMatching:
             predecessor = LazyPredecessor(self, k)
 
         v.parent = self
@@ -634,7 +749,7 @@ class YayDict(AST):
             if not hasattr(expanded, "keys"):
                 self.error("Mapping cannot mask or replace field with same name and different type")
             keys.update(expanded.keys())
-        except NoPredecessor:
+        except errors.NoPredecessor:
             pass
         return sorted(list(keys))
 
@@ -643,11 +758,11 @@ class YayDict(AST):
             return self.values[key]
         if not self.predecessor:
             #FIXME: I would dearly love to get rid of this check and have every node have a LazyPredecessor
-            raise NoMatching("No such key '%s'" % key)
+            raise errors.NoMatching("No such key '%s'" % key)
         try:
             return self.predecessor.expand().get(key)
-        except NoPredecessor:
-            raise NoMatching("Key '%s' not found" % key)
+        except errors.NoPredecessor:
+            raise errors.NoMatching("Key '%s' not found" % key)
 
     def __iter__(self):
         for k in self.keys():
@@ -658,7 +773,7 @@ class YayDict(AST):
         try:
             if self.predecessor:
                 d = self.predecessor.resolve()
-        except NoPredecessor:
+        except errors.NoPredecessor:
             d = {}
 
         for k, v in self.values.items():
@@ -687,7 +802,7 @@ class YayExtend(AST):
 
         try:
             chain = self.predecessor.expand()
-        except NoPredecessor:
+        except errors.NoPredecessor:
             return self.value.expand()
 
         if not hasattr(chain, "__iter__"):
@@ -709,7 +824,7 @@ class YayExtend(AST):
     def resolve(self):
         return self.expand().resolve()
 
-class YayScalar(AST):
+class YayScalar(Scalarish, AST):
     def __init__(self, value):
         try:
             self.value = int(value)
@@ -758,10 +873,10 @@ class Stanzas(AST):
             if hasattr(p, "get_callable"):
                 try:
                     return p.get_callable(key)
-                except NoMatching:
+                except errors.NoMatching:
                     pass
             p = p.predecessor
-        raise NoMatching("Could not find a macro called '%s'" % key)
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         return self.value.get(key)
@@ -786,10 +901,10 @@ class Directives(AST):
             if hasattr(p, "get_callable"):
                 try:
                     return p.get_callable(key)
-                except NoMatching:
+                except errors.NoMatching:
                     pass
             p = p.predecessor
-        raise NoMatching("Could not find a macro called '%s'" % key)
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         return self.value.get(key)
@@ -811,11 +926,11 @@ class Include(AST):
         expanded = self.expand()
         if hasattr(expanded, "get_callable"):
             return expanded.get_callable(key)
-        raise NoMatching("Could not find a macro called 'SomeMacro'")
+        raise errors.NoMatching("Could not find a macro called 'SomeMacro'")
 
     def get(self, key):
         if key in self.detector:
-            raise NoMatching("'%s' not found" % key)
+            raise errors.NoMatching("'%s' not found" % key)
         try:
             self.detector.append(key)
             return self.expand().get(key)
@@ -911,7 +1026,7 @@ class If(AST):
                 return self.else_.get(key)
             else:
                 return self.predecessor.get(key)
-        except NoMatching:
+        except errors.NoMatching:
             return self.predecessor.get(key)
 
     def resolve(self):
@@ -976,21 +1091,21 @@ class Macro(AST):
     def get_callable(self, key):
         if key == self.target.identifier:
             return self
-        raise NoMatching("Could not find a macro called '%s'" % key)
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         if not self.predecessor:
-            raise NoPredecessor()
+            raise errors.NoPredecessor()
         return self.predecessor.get(key)
 
     def expand(self):
         if not self.predecessor:
-            raise NoPredecessor()
+            raise errors.NoPredecessor()
         return self.predecessor.expand()
 
     def resolve(self):
         if not self.predecessor:
-            raise NoPredecessor()
+            raise errors.NoPredecessor()
         return self.predecessor.resolve()
 
 class CallDirective(AST):
@@ -1050,7 +1165,7 @@ class For(AST):
     def resolve(self):
         return list(flatten([x.resolve() for x in self.iterate_expanded()]))
 
-class Template(AST):
+class Template(Scalarish, AST):
     def __init__(self, *value):
         self.value = list(value)
         for v in self.value:
