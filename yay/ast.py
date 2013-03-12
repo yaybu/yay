@@ -95,16 +95,22 @@ class AST(object):
                 return v
 
         instance = self.__class__.__new__(self.__class__)
-        for k, v in self.__vars().items():
+        for k, v in self.__clone_vars().items():
             instance.__dict__[k] = _clone(v)
 
         return instance
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.__vars())
+        return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
 
-    def __vars(self):
-        """ Return the members without the lineno """
+    def __clone_vars(self):
+        d = self.__dict__.copy()
+        for var in ('parent', 'predecessor'):
+            if var in d:
+                del d[var]
+        return d
+
+    def __repr_vars(self):
         d = self.__dict__.copy()
         for var in ('anchor', 'parent', 'predecessor'):
             if var in d:
@@ -114,7 +120,7 @@ class AST(object):
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        return self.__vars() == other.__vars()
+        return self.__repr_vars() == other.__repr_vars()
 
 
 class Scalarish(object):
