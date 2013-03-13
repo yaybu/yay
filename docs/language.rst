@@ -1,7 +1,27 @@
 Language Tour
 =============
 
-Yay is a non-strict language that supports lazy evaluation.
+Yay is a non-strict language that supports lazy evaluation. It is a sort of
+mutant child of YAML and Python, with some of the features of both.
+
+There are some significant differences from YAML and this absolutely does not
+attempt to implement the more esoteric parts of YAML.
+
+A particularly significant restriction is that keys may not contain
+whitespace. keys in a configuration language are expected to be simple bare
+terms. This also helpfully keeps the magic smoke firmly inside our parser.
+
+It is important to understand that for any line of input it is imperative "pythonish" or declarative "yamlish". It actually works well and we find it very easy to read, for example::
+
+    a: b
+    if a == 'b':
+        c: d
+
+It is pretty clear that some of those lines are declarative and some are
+imperative. When in pythonish mode it works just as you would expect from
+python, when in yamlish mode it works as a declarative language for defining
+terms.
+
 
 Mappings
 ~~~~~~~~
@@ -92,9 +112,9 @@ You can import a recipe using the yay extends feature. If you had a template
 
 You can reuse this recipe in ``bar.yay`` like so::
 
-    % include "foo.yay"
+    include "foo.yay"
 
-    % include foo.bar.includes
+    include foo.bar.includes
 
     projectcode: MyCustomer-145
 
@@ -104,9 +124,9 @@ Search paths
 
 You can add a directory to the search path::
 
-    % search "/var/yay/includes"
+    search "/var/yay/includes"
 
-    % search foo.bar.searchpath
+    search foo.bar.searchpath
 
 Configuration
 ~~~~~~~~~~~~~
@@ -123,10 +143,10 @@ Ephemeral keys
 
 These will not appear in the output::
 
-    % for a in b
-        % set c = d.foo.bar.baz
-        % set d = dsds.sdsd.sewewe
-        % set e = as.ew.qw
+    for a in b
+        set c = d.foo.bar.baz
+        set d = dsds.sdsd.sewewe
+        set e = as.ew.qw
         foo: c
 
 Extending Lists
@@ -156,18 +176,18 @@ Conditions
 ~~~~~~~~~~
 
     foo:
-        % if averylongvariablename == anotherverylongvariablename and \
-            yetanothervariable == d and e == f
+        if averylongvariablename == anotherverylongvariablename and \
+            yetanothervariable == d and e == f:
 
           bar:
             quux:
                 foo:
                     bar: baz
 
-        % elif blah = something
+        elif blah == something:
             moo: mah
 
-        % else
+        else:
           - baz
 
 For Loops
@@ -182,11 +202,11 @@ resources for each item in that list. You would do something like this::
 
     extend resources:
 
-        % for p in projectcodes
+        for p in projectcodes:
             - Directory:
                   name: /var/local/sites/{{p}}
 
-            % for q in p.qcodes
+            for q in p.qcodes:
                 - Checkout:
                     name: /var/local/sites/{{p}}/src
                     repository: svn://mysvnserver/{{q}}
@@ -199,8 +219,8 @@ You can also have conditions::
         - name: lime
           price: 10
 
-    cheap: 
-        % for f in fruit if f.price < 10
+    cheap:
+        for f in fruit if f.price < 10:
             - {{f}}
 
 
@@ -218,8 +238,8 @@ You might need to loop over a list within a list::
           - iphone
 
     stuff:
-        % for s in staff
-            % for d in s.devices
+        for s in staff:
+            for d in s.devices:
                 {{d}}
 
 This will produce a single list that is equivalent to::
@@ -240,8 +260,8 @@ keys. A for over a mapping with a condition might look like this::
       strawberry: 1
 
     cheap:
-        % for f in fruit
-           % if fruit[f] < 10 
+        for f in fruit:
+           if fruit[f] < 10:
              {{f}}
 
 That would return a list with apple and strawberry in it. The list will
@@ -257,7 +277,7 @@ Lets say ``host.distro`` contains your Ubuntu version and you want to install
 difference packages based on the distro. You could do something like::
 
     packages:
-        % select distro
+        select distro:
             karmic:
                 - python-setuptools
             lucid:
@@ -269,8 +289,9 @@ Function calls
 
 Any sandboxed python function can be called where an expression would exist in a yay statement::
 
-    % set foo = sum(a)
-    % for x in range(foo)
+    set foo = sum(a)
+    for x in range(foo):
+        - x
 
 Class bindings
 ~~~~~~~~~~~~~~
@@ -279,9 +300,7 @@ Classes can be constructed on-the-fly::
 
     parts:
         web:
-            % create "Compute"
-            % Compute
-            % create myClass
+            create "Compute":
                 foo: bar
                 % for x in range(4)
                     baz: x
@@ -291,45 +310,45 @@ Classes may have special side-effects, or provide additional data, at runtime.
 Each name for a class will be looked up in a registry for a concrete implementation that must provide
 the following methods::
 
-class Example:
+    class Example:
 
-    def __init__(self, contents):
-        self.contents = contents
+        def __init__(self, contents):
+            self.contents = contents
 
-    def resolve(self):
-        """ Returns a python dictionary, if possible, that is a completely resolved structure of scalars, lists and dictionaries """
-        # this method is responsible for ensuring the contents are completely resolved
-        
-    def traversible(self): 
-    
-        Return a traversible object based on self (which could be self or could be a mapping or could be something else that inherits from Node)
-        
-        To be traversible it must be able to execute the get method successfully for all direct children
-        
-        For example a for loop has to unroll itself so it is able to return its indexed members
-        
-        
-    def get(self, key/index): 
-    
-        """ Returns a node object that, when resolved, will contain the value of
-        the specified key. Any side-effects required to obtain the value should
-        occur on resolution of the returned node, not on the call to get(). """
-        
-    
+        def resolve(self):
+            """ Returns a python dictionary, if possible, that is a completely resolved structure of scalars, lists and dictionaries """
+            # this method is responsible for ensuring the contents are completely resolved
+
+        def traversible(self):
+
+            Return a traversible object based on self (which could be self or could be a mapping or could be something else that inherits from Node)
+
+            To be traversible it must be able to execute the get method successfully for all direct children
+
+            For example a for loop has to unroll itself so it is able to return its indexed members
+
+
+        def get(self, key/index):
+
+            """ Returns a node object that, when resolved, will contain the value of
+            the specified key. Any side-effects required to obtain the value should
+            occur on resolution of the returned node, not on the call to get(). """
+
+
 
 Macros
 ~~~~~~
 
 you can define a macro with::
 
-    % macro mymacro
+    macro mymacro:
         foo: bar
         baz: {{thing}}
 
 You can then call it later::
 
     foo:
-        % for q in x
-            % call mymacro
+        for q in x:
+            call mymacro:
                 thing: {{q}}
 
