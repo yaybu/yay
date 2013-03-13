@@ -331,6 +331,14 @@ class TestLexer(unittest.TestCase):
             indent, key('foo'), colon, value('2'), newline, dedent,
             ])
 
+    def test_else(self):
+        result = self._lex("""
+        else:
+        """)
+        self.compare(result, [
+            t('ELSE', 'else'), t(':', ':'), newline,
+            ])
+
 
     def test_macro(self):
         result = self._lex("""
@@ -438,5 +446,12 @@ class TestLexer(unittest.TestCase):
                hyphen, ldbrace, t('IDENTIFIER', 'bar'), rdbrace, newline,
                hyphen, value('c'), newline,
             dedent,
+        ])
+
+    def test_simple_dict_space(self):
+        self.compare(self._lex("""
+        a : b
+        """), [
+               value('a'), colon, value('b'), newline
         ])
 

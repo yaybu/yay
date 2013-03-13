@@ -227,7 +227,7 @@ class Lexer(object):
         return t
 
     def t_value_listvalue_COLON(self, t):
-        """:[ ]*"""
+        """[ ]*:[ ]*"""
         t.value = ':'
         return t
 

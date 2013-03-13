@@ -145,7 +145,7 @@ class TestResolver(unittest.TestCase):
           - 2
 
         bar:
-            % for x in range
+            for x in range:
                 - {{x}}
 
         quux:
@@ -166,8 +166,8 @@ class TestResolver(unittest.TestCase):
           - 2
 
         bar:
-            % for x in range
-              % for y in range
+            for x in range:
+              for y in range:
                 - {{x + y}}
         """)
         self.assertEquals(res['bar'], [2, 3, 3, 4])
@@ -258,7 +258,7 @@ class TestResolver(unittest.TestCase):
 
     def test_simple_include(self):
         res = resolve("""
-            % include 'foo'
+            include 'foo'
             """,
             foo="""
             hello: world
@@ -267,7 +267,7 @@ class TestResolver(unittest.TestCase):
 
     def test_include_with_extends(self):
         res = resolve("""
-            % include 'foo'
+            include 'foo'
             extend resources:
              - 3
             """,
@@ -280,10 +280,10 @@ class TestResolver(unittest.TestCase):
 
     def test_include_include(self):
         res = resolve("""
-            % include 'foo'
+            include 'foo'
             """,
             foo="""
-            %include 'bar'
+            include 'bar'
             """,
             bar="""
             hello: world
@@ -292,11 +292,11 @@ class TestResolver(unittest.TestCase):
 
     def test_include_include_2(self):
         res = resolve("""
-            % include 'foo'
+            include 'foo'
             hello: world
             """,
             foo="""
-            %include 'bar'
+            include 'bar'
             hello: quark
             wibble: wobble
             """,

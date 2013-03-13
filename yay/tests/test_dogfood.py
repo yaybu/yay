@@ -135,8 +135,8 @@ class TestDogfoodScenarios(unittest.TestCase):
                    host: cloud
 
             test:
-              % for project in project
-                % for env in project.environments
+              for project in project:
+                for env in project.environments:
                     name: {{ project.name }}
                     env: {{ env.name }}
             """)
@@ -150,8 +150,8 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_magic_1(self):
         res = resolve("""
-            % include foo
-            % include "magic_1_1"
+            include foo
+            include "magic_1_1"
             """,
             magic_1_1="""
             foo: magic_1_2
@@ -163,7 +163,7 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_magic_2(self):
         res = resolve("""
-            % include test
+            include test
             test: magic_2_1
             """,
             magic_2_1="""
@@ -204,7 +204,7 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_else_include(self):
         res = resolve("""
-            % include (a or "foo") + "_inc"
+            include (a or "foo") + "_inc"
             """,
             foo_inc="hello:world\n")
         self.assertEqual(res['hello'], 'world')
@@ -220,11 +220,11 @@ class TestDogfoodScenarios(unittest.TestCase):
                 sitename: www.baz.com
 
             out:
-              % for x in test
+              for x in test:
                  - {{ x }}
 
             out2:
-              % for x in test
+              for x in test:
                  - {{ test[x].sitename }}
 
             """)
@@ -240,11 +240,11 @@ class TestDogfoodScenarios(unittest.TestCase):
               - 3
 
             bar:
-                % for f in foo
+                for f in foo:
                     - {{ f }}
 
             baz:
-                % for b in bar
+                for b in bar:
                     - {{ b }}
             """)
         self.assertEqual(res['bar'], [1,2,3])
@@ -255,7 +255,7 @@ class TestDogfoodScenarios(unittest.TestCase):
         x: 0
         a: c
 
-        % if x == 0
+        if x == 0:
             a: b
         """)
         self.assertEqual(res['a'], 'b')
@@ -264,9 +264,9 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
         x: 0
         a: c
-        % if x == 0
+        if x == 0:
             a: b
-        % else
+        else:
             a: d
         """)
         self.assertEqual(res['a'], 'b')
@@ -275,9 +275,9 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
         x: 0
         a: c
-        % if x == 1
+        if x == 1:
             a: b
-        % else
+        else:
             a: d
         """)
         self.assertEqual(res['a'], 'd')
@@ -286,9 +286,9 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
         x: 0
         a: c
-        % if x == 0
+        if x == 0:
             a: b
-        % elif x == 1
+        elif x == 1:
             a: d
         """)
         self.assertEqual(res['a'], 'b')
@@ -297,9 +297,9 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
         x: 2
         a: c
-        % if x == 0
+        if x == 0:
             a: b
-        % elif x == 1
+        elif x == 1:
             a: d
         """)
         self.assertEqual(res['a'], 'c')
@@ -308,9 +308,9 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
         x: 1
         a: c
-        % if x == 0
+        if x == 0:
             a: b
-        % elif x == 1
+        elif x == 1:
             a: d
         """)
         self.assertEqual(res['a'], 'd')
@@ -330,7 +330,7 @@ class TestDogfoodScenarios(unittest.TestCase):
                 maxage: 40
 
             baz:
-                % for p in foolist if p.age < bar.maxage
+                for p in foolist if p.age < bar.maxage:
                     - nameage: {{p.name}}{{p.age}}
                       agename: {{p.age}}{{p.name}}
             """)
@@ -344,7 +344,7 @@ class TestDogfoodScenarios(unittest.TestCase):
               - name: 5
 
             test:
-                % for node in nodes if node.name == 5
+                for node in nodes if node.name == 5:
                     - {{node}}
             """)
         self.assertEqual(res['test'], [{'name': 5}])
@@ -359,7 +359,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             foo: foo
 
             test:
-                % for node in nodes if node.name == foo
+                for node in nodes if node.name == foo:
                     - {{node}}
             """)
         self.assertEqual(res['test'], [{'name': 'foo'}])
@@ -372,18 +372,18 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_macro(self):
         res = resolve("""
-            % macro SomeMacro
+            macro SomeMacro
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
                     name: {{ name }}
 
             extend resources:
-                % call SomeMacro
+                call SomeMacro
                       name: foo
 
             extend resources:
-                % call SomeMacro
+                call SomeMacro
                       name: foobar
             """)
 
@@ -396,7 +396,7 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_macro_call_in_expression(self):
         res = resolve("""
-            % macro SomeMacro
+            macro SomeMacro
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
@@ -415,11 +415,11 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_macro_call_in_different_files(self):
         res = resolve("""
-            % include 'file1'
-            % include 'file2'
+            include 'file1'
+            include 'file2'
             """,
             file1="""
-            % macro SomeMacro
+            macro SomeMacro
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
@@ -427,7 +427,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             """,
             file2="""
             extend resources:
-                % call SomeMacro
+                call SomeMacro
                       name: foo
 
             extend resources: {{ SomeMacro(name='foobar') }}
@@ -444,7 +444,7 @@ class TestDogfoodScenarios(unittest.TestCase):
         res = resolve("""
             selector: hey
 
-            % if selector == "hey"
+            if selector == "hey":
                 foo:
                     hey:
                         baz: 2
