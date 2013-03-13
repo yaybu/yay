@@ -862,15 +862,15 @@ class Parser(object):
 
     def p_macro_directive(self, p):
         '''
-        macro_directive : MACRO target_list NEWLINE INDENT stanza DEDENT
+        macro_directive : MACRO target_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Macro(p[2], p[5])
+        p[0] = ast.Macro(p[2], p[6])
 
     def p_call_directive(self, p):
         '''
-        call_directive : CALL target_list NEWLINE INDENT stanza DEDENT
+        call_directive : CALL target_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.CallDirective(p[2], p[5])
+        p[0] = ast.CallDirective(p[2], p[6])
         anchor(p, 1)
 
     def p_for_directive(self, p):

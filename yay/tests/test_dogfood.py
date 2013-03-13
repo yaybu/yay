@@ -372,18 +372,18 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_macro(self):
         res = resolve("""
-            macro SomeMacro
+            macro SomeMacro:
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
                     name: {{ name }}
 
             extend resources:
-                call SomeMacro
+                call SomeMacro:
                       name: foo
 
             extend resources:
-                call SomeMacro
+                call SomeMacro:
                       name: foobar
             """)
 
@@ -396,7 +396,7 @@ class TestDogfoodScenarios(unittest.TestCase):
 
     def test_macro_call_in_expression(self):
         res = resolve("""
-            macro SomeMacro
+            macro SomeMacro:
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
@@ -419,7 +419,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             include 'file2'
             """,
             file1="""
-            macro SomeMacro
+            macro SomeMacro:
                 - SomeItem:
                     name: {{ name }}
                 - SomeOtherItem:
@@ -427,7 +427,7 @@ class TestDogfoodScenarios(unittest.TestCase):
             """,
             file2="""
             extend resources:
-                call SomeMacro
+                call SomeMacro:
                       name: foo
 
             extend resources: {{ SomeMacro(name='foobar') }}
