@@ -66,8 +66,8 @@ class Lexer(object):
     ]
 
     tokens = (
-        'VALUE',
-        'HYPHEN',
+        'VALUE',      # represents either a key or value in yamlish
+        'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
         'CONFIGURE',
@@ -77,7 +77,7 @@ class Lexer(object):
         'EXTEND',
         'LDBRACE',
         'RDBRACE',
-        'IDENTIFIER',
+        'IDENTIFIER', # only in pythonish
         'STRING',
         'INTEGER',
         'FLOAT',
@@ -110,7 +110,7 @@ class Lexer(object):
         'FLOOR_DIVIDE',
         'WS',
         'NEWLINE',
-        'COLON',
+        'COLON',      # not to be confused with ":" this is yamlish only
     )
 
     t_COMMAND_TEMPLATE_LSHIFT = '<<'
