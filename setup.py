@@ -34,7 +34,7 @@ setup(
         ),
     entry_points = {
         'console_scripts': [
-            'yay2yaml = yay.toyaml:main',
+            'yay-dump = yay.transform:main',
             ],
         },
 )
