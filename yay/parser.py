@@ -33,7 +33,7 @@ class Parser(object):
     start = 'root'
 
     def __init__(self, lexer=None):
-        self.lexer = lexer or Lexer()
+        self.lexer = lexer or Lexer
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self,
             tabmodule='yay.parsetab',
@@ -42,7 +42,7 @@ class Parser(object):
     def parse(self, value, tracking=True, debug=False):
         self.errors = 0
         rv = self.parser.parse(value,
-                                 lexer=self.lexer,
+                                 lexer=self.lexer(),
                                  tracking=tracking,
                                  debug=debug)
         if self.errors > 0:
