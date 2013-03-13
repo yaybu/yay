@@ -18,6 +18,7 @@ Contents:
    examples
    patterns
    hacking
+   debugging
 
 
 Internals
