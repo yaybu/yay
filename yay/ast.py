@@ -1150,7 +1150,7 @@ class For(Streamish, AST):
                 if not f.resolve():
                     continue
 
-            # Think about doing this instead of the flatten rubbish
+            #Think about doing this instead of the flatten rubbish
             #for node in c.as_iterable(anchor or self.anchor):
             #    yield node
 
