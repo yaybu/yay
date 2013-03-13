@@ -22,8 +22,8 @@ def resolve(value, **kwargs):
     root = MockRoot(p.parse(value))
     for k, v in kwargs.items():
         root.add(k, v)
+    print root
     return root.resolve()
-    #print repr(parser.parse(value, debug=0))
 
 
 class TestResolver(unittest.TestCase):
@@ -306,3 +306,42 @@ class TestResolver(unittest.TestCase):
             """)
         self.assertEqual(res, {"wibble": "wobble", "hello": "world", "foo": "bar"})
 
+    def test_slice_simple(self):
+        res = resolve("""
+            lista:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+
+            listb: {{ lista[0:2] }}
+
+            listc:
+              for x in listb:
+                - {{ x }}
+
+            listd:
+              for x in listb:
+                - {{ x }}
+
+            """)
+
+        self.assertEqual(res['listb'], [1,2])
+        self.assertEqual(res['listc'], [1,2])
+        self.assertEqual(res['listd'], [1,2])
+
+    def test_slice_stride(self):
+        res = resolve("""
+            lista:
+                - 1
+                - 2
+                - 3
+                - 4
+                - 5
+
+            listb: {{ lista[0:5:2] }}
+
+            """)
+
+        self.assertEqual(res['listb'], [1,3,5])

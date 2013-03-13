@@ -193,12 +193,12 @@ class Streamish(object):
         if not self._iterator:
             self._iterator = self.as_iterable()
 
-        while len(self._buffer) < index:
+        while len(self._buffer) < index+1:
             self._buffer.append(self._iterator.next())
 
     def get_index(self, index):
         self._fill_to(index)
-        return self._buffer(index)
+        return self._buffer[index]
 
     def resolve(self):
         return list(flatten(x.resolve() for x in self.as_iterable()))
@@ -573,7 +573,7 @@ class UseMyPredecessorStandin(AST):
     def resolve(self):
         return self.expand().resolve()
 
-class Subscription(AST):
+class Subscription(Proxy, AST):
     def __init__(self, primary, *expression_list):
         self.primary = primary
         primary.parent = self
@@ -583,25 +583,44 @@ class Subscription(AST):
         for e in self.expression_list:
             e.parent = self
 
-    #def as_iterable(self):
-    #    for i in range(self.lower_bound, self.upper_bound, self.stride):
-    #        yield self.get_index(i)
-
     def expand(self):
         return self.primary.expand().get(self.expression_list[0].resolve()).expand()
 
     def resolve(self):
         return self.expand().resolve()
 
-class SimpleSlicing(AST):
+class SimpleSlicing(Streamish, AST):
     def __init__(self, primary, short_slice):
+        super(SimpleSlicing, self).__init__()
         self.primary = primary
+        primary.parent = self
         self.short_slice = short_slice
+        short_slice.parent = self
 
-class ExtendedSlicing(AST):
+    def as_iterable(self):
+        lower_bound = self.short_slice.lower_bound.resolve()
+        upper_bound = self.short_slice.upper_bound.resolve()
+        stride = self.short_slice.stride.resolve()
+
+        for i in range(lower_bound, upper_bound, stride):
+            yield self.primary.expand().get_index(i)
+
+class ExtendedSlicing(Streamish, AST):
     def __init__(self, primary, slice_list):
         self.primary = primary
+        primary.parent = self
         self.slice_list = slice_list
+        slice_list.parent = self
+
+    def as_iterable(self):
+        short_slice = self.slice_list.slice_list[0]
+
+        lower_bound = short_slice.lower_bound.resolve()
+        upper_bound = short_slice.upper_bound.resolve()
+        stride = short_slice.stride.resolve()
+
+        for i in range(lower_bound, upper_bound, stride):
+            yield self.primary.expand().get_index(i)
 
 class SliceList(AST):
     def __init__(self, slice_item):
@@ -611,10 +630,10 @@ class SliceList(AST):
         self.slice_list.append(slice_item)
 
 class Slice(AST):
-    def __init__(self, lower_bound=None, upper_bound=None, stride=1):
+    def __init__(self, lower_bound=None, upper_bound=None, stride=None):
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
-        self.stride = stride
+        self.stride = stride or YayScalar(1)
 
 
 import re
@@ -724,6 +743,9 @@ class YayList(AST):
         return l
 
     def get(self, idx):
+        return self.get_index(idx)
+
+    def get_index(self, idx):
         try:
             idx = int(idx)
         except ValueError:
@@ -814,9 +836,6 @@ class YayExtend(Streamish, AST):
     def __init__(self, value):
         self.value = value
         value.parent = self
-
-    def get(self, idx, default=None):
-        return BoxingFactory.box(self.resolve()[int(idx)])
 
     def as_iterable(self, anchor=None):
         if self.predecessor:
