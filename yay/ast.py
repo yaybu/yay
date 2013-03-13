@@ -226,6 +226,10 @@ class Proxy(object):
     def as_iterable(self, anchor=None):
         return self.expand().as_iterable(anchor or self.anchor)
 
+    def resolve(self):
+        return self.expand().resolve()
+
+
 class Root(AST):
     """ The root of the document
     FIXME: This needs thinking about some more
@@ -266,9 +270,6 @@ class Identifier(Proxy, AST):
 
     def expand(self):
         return self.get_context(self.identifier).expand()
-
-    def resolve(self):
-        return self.expand().resolve()
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
@@ -527,9 +528,6 @@ class AttributeRef(Proxy, AST):
     def expand(self):
         return self.primary.expand().get(self.identifier).expand()
 
-    def resolve(self):
-        return self.expand().resolve()
-
 class LazyPredecessor(Proxy, AST):
     def __init__(self, node, identifier):
         # This is a sideways reference! No parenting...
@@ -551,10 +549,7 @@ class LazyPredecessor(Proxy, AST):
             raise errors.NoPredecessor
         return self.node.predecessor.expand().get(self.identifier)
 
-    def resolve(self):
-        return self.expand().resolve()
-
-class UseMyPredecessorStandin(AST):
+class UseMyPredecessorStandin(Proxy, AST):
     def __init__(self, node):
         # This is a sideways reference! No parenting...
         self.node = node
@@ -570,9 +565,6 @@ class UseMyPredecessorStandin(AST):
             raise errors.NoPredecessor
         return self.node.predecessor.expand()
 
-    def resolve(self):
-        return self.expand().resolve()
-
 class Subscription(Proxy, AST):
     def __init__(self, primary, *expression_list):
         self.primary = primary
@@ -585,9 +577,6 @@ class Subscription(Proxy, AST):
 
     def expand(self):
         return self.primary.expand().get(self.expression_list[0].resolve()).expand()
-
-    def resolve(self):
-        return self.expand().resolve()
 
 class SimpleSlicing(Streamish, AST):
     def __init__(self, primary, short_slice):
@@ -726,7 +715,7 @@ class Sublist(AST):
     def append(self, parameter):
         self.sublist.append(parameter)
 
-class YayList(AST):
+class YayList(Streamish, AST):
     def __init__(self, *items):
         self.value = list(items)
         for x in self.value:
@@ -735,12 +724,6 @@ class YayList(AST):
     def append(self, item):
         self.value.append(item)
         item.parent = self
-
-    def resolve(self):
-        l = []
-        for i in self.value:
-            l.append(i.resolve())
-        return l
 
     def get(self, idx):
         return self.get_index(idx)
@@ -881,7 +864,7 @@ class YayMerged(AST):
     def resolve(self):
         return "".join(str(v.resolve()) for v in self.value)
 
-class Stanzas(AST):
+class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
         self.value = UseMyPredecessorStandin(self)
         for s in stanzas:
@@ -906,10 +889,10 @@ class Stanzas(AST):
     def get(self, key):
         return self.value.get(key)
 
-    def resolve(self):
-        return self.value.resolve()
+    def expand(self):
+        return self.value.expand()
 
-class Directives(AST):
+class Directives(Proxy, AST):
     def __init__(self, *directives):
         self.value = None
         for d in directives:
@@ -937,10 +920,7 @@ class Directives(AST):
     def expand(self):
         return self.value.expand()
 
-    def resolve(self):
-        return self.value.resolve()
-
-class Include(AST):
+class Include(Proxy, AST):
 
     def __init__(self, expr):
         self.expr = expr
@@ -968,9 +948,6 @@ class Include(AST):
         expanded.parent = self.parent
         return expanded
 
-    def resolve(self):
-        return self.expand().resolve()
-
 class Search(AST):
 
     def __init__(self, expr):
@@ -992,7 +969,7 @@ class Set(AST):
         return "<Set %r = %r>" % (self.var, self.expr)
 
 
-class If(AST):
+class If(Proxy, AST):
     # FIXME: This implementation ignores the elifs...
 
     """
@@ -1039,46 +1016,31 @@ class If(AST):
             return self.else_.simplify()
 
     def get(self, key):
+        return self.expand().get(key)
+
+    def expand(self):
         if self.passthrough_mode:
-            return self.predecessor.get(key)
+            return self.predecessor.expand()
 
         self.passthrough_mode = True
         cond = self.condition.resolve()
         self.passthrough_mode = False
 
-        try:
-            if cond:
-                return self.result.get(key)
-
-            if self.elifs:
-                for elif_ in self.elifs.elifs:
-                    self.passthrough_mode = True
-                    cond = elif_.condition.resolve()
-                    self.passthrough_mode = False
-                    if cond:
-                        return elif_.node.get(key)
-
-            if self.else_ is not None:
-                return self.else_.get(key)
-
-            return self.predecessor.get(key)
-
-        except errors.NoMatching:
-            return self.predecessor.get(key)
-
-    def resolve(self):
-        if self.condition.resolve():
-            return self.result.resolve()
+        if cond:
+            return self.result.expand()
 
         if self.elifs:
             for elif_ in self.elifs.elifs:
-                if elif_.condition.resolve():
-                    return elif_.node.resolve()
+                self.passthrough_mode = True
+                cond = elif_.condition.resolve()
+                self.passthrough_mode = False
+                if cond:
+                    return elif_.node.expand()
 
         if self.else_ is not None:
-            return self.else_.resolve()
+            return self.else_.expand()
 
-        return self.predecessor.resolve()
+        return self.predecessor.expand()
 
 
 class ElifList(AST):
@@ -1129,7 +1091,7 @@ class Create(AST):
         self.target = target
         self.node = node
 
-class Macro(AST):
+class Macro(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node
@@ -1140,19 +1102,12 @@ class Macro(AST):
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
-        if not self.predecessor:
-            raise errors.NoPredecessor()
-        return self.predecessor.get(key)
+        return self.expand().get(key)
 
     def expand(self):
         if not self.predecessor:
             raise errors.NoPredecessor()
         return self.predecessor.expand()
-
-    def resolve(self):
-        if not self.predecessor:
-            raise errors.NoPredecessor()
-        return self.predecessor.resolve()
 
 class CallDirective(Proxy, AST):
     def __init__(self, target, node):
@@ -1168,9 +1123,6 @@ class CallDirective(Proxy, AST):
         context = Context(clone, self.node.expand().values)
         context.parent = self
         return context.expand()
-
-    def resolve(self):
-        return self.expand().resolve()
 
 class For(Streamish, AST):
 
@@ -1239,9 +1191,6 @@ class Context(Proxy, AST):
 
     def expand(self):
         return self.value.expand()
-
-    def resolve(self):
-        return self.value.resolve()
 
 class ListComprehension(AST):
     def __init__(self, expression, list_for):
