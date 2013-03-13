@@ -51,10 +51,10 @@ class Lexer(object):
             yield self.token_stream.next()
 
     states = (
-        ('value', 'exclusive'),
-        ('listvalue', 'exclusive'),
-        ('template', 'exclusive'),
-        ('command', 'exclusive'),
+        ('VALUE', 'exclusive'),
+        ('LISTVALUE', 'exclusive'),
+        ('TEMPLATE', 'exclusive'),
+        ('COMMAND', 'exclusive'),
     )
 
     # literals are checked last, after all of the other rules
@@ -113,25 +113,25 @@ class Lexer(object):
         'COLON',
     )
 
-    t_command_template_LSHIFT = '<<'
-    t_command_template_RSHIFT = '>>'
-    t_command_template_LE = '<='
-    t_command_template_GE = '>='
-    t_command_template_EQ = '=='
-    t_command_template_NE = '!='
-    t_command_template_GTLT = '<>'
-    t_command_template_ELLIPSIS = r'\.\.\.'
-    t_command_template_POW = '\*\*'
-    t_command_template_FLOOR_DIVIDE = '//'
+    t_COMMAND_TEMPLATE_LSHIFT = '<<'
+    t_COMMAND_TEMPLATE_RSHIFT = '>>'
+    t_COMMAND_TEMPLATE_LE = '<='
+    t_COMMAND_TEMPLATE_GE = '>='
+    t_COMMAND_TEMPLATE_EQ = '=='
+    t_COMMAND_TEMPLATE_NE = '!='
+    t_COMMAND_TEMPLATE_GTLT = '<>'
+    t_COMMAND_TEMPLATE_ELLIPSIS = r'\.\.\.'
+    t_COMMAND_TEMPLATE_POW = '\*\*'
+    t_COMMAND_TEMPLATE_FLOOR_DIVIDE = '//'
 
     def t_ANY_COMMENT(self, t):
         r"""\#[^\n]*"""
         return t
 
 
-    def t_template_RDBRACE(self, t):
+    def t_TEMPLATE_RDBRACE(self, t):
         """}}"""
-        t.lexer.begin('value')
+        t.lexer.begin('VALUE')
         return t
 
     # Literals
@@ -162,11 +162,11 @@ class Lexer(object):
                                        )''')
 
     @lex.TOKEN(string_expr)
-    def t_command_template_STRING(self, t):
+    def t_COMMAND_TEMPLATE_STRING(self, t):
         t.value = eval(t.value)
         return t
 
-    def t_command_template_INTEGER(self, t):
+    def t_COMMAND_TEMPLATE_INTEGER(self, t):
         r"""
         (?<![\w.])               #Start of string or non-alpha non-decimal point
             0[X][0-9A-F]+L?|     #Hexadecimal
@@ -178,7 +178,7 @@ class Lexer(object):
         t.value = eval(t.value)
         return t
 
-    def t_command_template_FLOAT(self, t):
+    def t_COMMAND_TEMPLATE_FLOAT(self, t):
         r'(\d+(?:\.\d+)?(?:[eE][+-]\d+)?)'
         t.value = eval(t.value)
         return t
@@ -212,7 +212,7 @@ class Lexer(object):
     def t_INITIAL_HYPHEN(self, t):
         """-[ \t]*"""
         t.value = '-'
-        t.lexer.begin('listvalue')
+        t.lexer.begin('LISTVALUE')
         return t
 
     def t_INITIAL_VALUE(self, t):
@@ -221,12 +221,12 @@ class Lexer(object):
         if t.value in ('configure', 'extend'):
             t.lexer.begin("INITIAL")
         elif t.type == 'VALUE':
-            t.lexer.begin('value')
+            t.lexer.begin('VALUE')
         else:
-            t.lexer.begin('command')
+            t.lexer.begin('COMMAND')
         return t
 
-    def t_value_listvalue_COLON(self, t):
+    def t_VALUE_LISTVALUE_COLON(self, t):
         """[ ]*:[ ]*"""
         t.value = ':'
         return t
@@ -234,32 +234,32 @@ class Lexer(object):
     def t_INITIAL_PERCENT(self, t):
         """%[ \t]*"""
         t.value = '%'
-        t.lexer.begin("command")
+        t.lexer.begin("COMMAND")
         return t
 
-    def t_value_listvalue_EMPTYDICT(self, t):
+    def t_VALUE_LISTVALUE_EMPTYDICT(self, t):
         """[ ]*{}"""
         t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
-    def t_value_listvalue_EMPTYLIST(self, t):
+    def t_VALUE_LISTVALUE_EMPTYLIST(self, t):
         """[ ]*\[\]"""
         t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
-    def t_value_listvalue_LDBRACE(self, t):
+    def t_VALUE_LISTVALUE_LDBRACE(self, t):
         """{{"""
-        t.lexer.begin("template")
+        t.lexer.begin("TEMPLATE")
         return t
 
-    def t_value_listvalue_VALUE(self, t):
+    def t_VALUE_LISTVALUE_VALUE(self, t):
         """[^:\{\n]+"""
         t.value = t.value
         return t
 
-    def t_command_template_IDENTIFIER(self, t):
+    def t_COMMAND_TEMPLATE_IDENTIFIER(self, t):
         """[A-Za-z_][A-Za-z0-9_]*"""
         # check for reserved words
         t.type = self.reserved.get(t.value, 'IDENTIFIER')
