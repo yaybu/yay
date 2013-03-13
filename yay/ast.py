@@ -226,6 +226,9 @@ class Proxy(object):
     def as_iterable(self, anchor=None):
         return self.expand().as_iterable(anchor or self.anchor)
 
+    def get(self, key):
+        return self.expand().get(key)
+
     def resolve(self):
         return self.expand().resolve()
 
@@ -886,9 +889,6 @@ class Stanzas(Proxy, AST):
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
-    def get(self, key):
-        return self.value.get(key)
-
     def expand(self):
         return self.value.expand()
 
@@ -913,9 +913,6 @@ class Directives(Proxy, AST):
                     pass
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
-    def get(self, key):
-        return self.value.get(key)
 
     def expand(self):
         return self.value.expand()
@@ -959,14 +956,16 @@ class Configure(AST):
         self.key = key
         self.node = node
 
-class Set(AST):
+class Set(Proxy, AST):
 
     def __init__(self, var, expr):
         self.var = var
         self.expr = expr
 
-    def __repr__(self):
-        return "<Set %r = %r>" % (self.var, self.expr)
+    def expand(self):
+        if not self.predecessor:
+            raise errors.NoPredecessor
+        return self.predecessor
 
 
 class If(Proxy, AST):
@@ -1140,7 +1139,7 @@ class For(Streamish, AST):
         node.parent = self
 
     def as_iterable(self, anchor=None):
-        for item in self.in_clause.as_iterable(anchor):
+        for item in self.in_clause.as_iterable(anchor or self.anchor):
             # self.target.identifier: This probably shouldn't be an identifier
             c = Context(self.node.clone(), {self.target.identifier: item.clone()})
             c.parent = self.parent
@@ -1150,6 +1149,10 @@ class For(Streamish, AST):
                 f.parent = c
                 if not f.resolve():
                     continue
+
+            # Think about doing this instead of the flatten rubbish
+            #for node in c.as_iterable(anchor or self.anchor):
+            #    yield node
 
             yield c
 

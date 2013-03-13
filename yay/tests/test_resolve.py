@@ -345,3 +345,11 @@ class TestResolver(unittest.TestCase):
             """)
 
         self.assertEqual(res['listb'], [1,3,5])
+
+    def test_set(self):
+        res = resolve("""
+            set foo = "Simple expression"
+            set bar = foo
+            quux: {{ bar }}
+            """)
+        self.assertEqual(res, {"quux": "bar"})
