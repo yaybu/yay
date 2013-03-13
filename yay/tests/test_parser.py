@@ -766,4 +766,12 @@ class TestParser(unittest.TestCase):
                                      Case("baz", YayList(YayScalar("b"))),
                                      )))
 
-
+    def test_create(self):
+        res = parse("""
+        create "Compute":
+            foo: bar
+        """)
+        self.assertEqual(res, Create(Literal("Compute"),
+                                     YayDict([
+                                         ('foo', YayScalar('bar')),
+                                         ])))

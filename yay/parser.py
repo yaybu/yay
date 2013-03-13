@@ -869,9 +869,9 @@ class Parser(object):
 
     def p_create_directive(self, p):
         '''
-        create_directive : CREATE target_list NEWLINE INDENT stanza DEDENT
+        create_directive : CREATE expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Create(p[2], p[5])
+        p[0] = ast.Create(p[2], p[6])
 
     def p_macro_directive(self, p):
         '''
