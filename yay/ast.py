@@ -26,6 +26,46 @@ class AST(object):
     def as_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
 
+    def as_digraph(self, visited=None):
+        visited = visited or []
+        if id(self) in visited:
+            return
+        visited.append(id(self))
+
+        yield '%s [label="%s"];' % (id(self), self.__class__.__name__)
+        #if self.parent:
+        #    yield '%s -> %s [label="parent",style=dotted]' % (id(self), id(self.parent))
+        #    for node in self.parent.as_digraph():
+        #        yield node
+
+        def _yield_graph(k, v):
+            if isinstance(v, AST):
+                yield '%s -> %s [label="%s"];' % (id(self), id(v), k)
+                for line in v.as_digraph(visited):
+                    yield line
+            elif isinstance(v, list):
+                for i, v in enumerate(v):
+                    for line in _yield_graph("%s[%d]" % (k,i), v):
+                        yield line
+            elif isinstance(v, dict):
+                for k2, v in v.items():
+                    for line in _yield_graph("%s['%s']" % (k,k2), v):
+                        yield line
+            elif isinstance(v, (int, float, bool, basestring)):
+                yield '%s -> %s [label="%s"];' % (id(self), id(v), k)
+                yield '%s [label="%s"];' % (id(v), v)
+
+        for k, v in self.__clone_vars().items():
+            if k in ("anchor", ):
+                continue
+            for line in _yield_graph(k, v):
+                yield line
+
+        if self.predecessor:
+            yield '%s -> %s [label="predecessor",style=dotted];' % (id(self), id(self.predecessor))
+            for node in self.predecessor.as_digraph(visited):
+                yield node
+
     def dynamic(self):
         """
         Does this graph member change over time?
@@ -241,6 +281,13 @@ class Root(AST):
         self.openers = Openers(searchpath=[])
         self.node = node
         node.parent = self
+
+    def as_digraph(self, visited=None):
+        visited = visited or []
+        yield "digraph ast {"
+        for line in self.node.as_digraph(visited):
+            yield line
+        yield "}"
 
     def get_root(self):
         return self
