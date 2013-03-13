@@ -1064,14 +1064,14 @@ class Select(AST):
         self.expr = expr
         self.cases = cases
 
-class CaseList(object):
+class CaseList(AST):
     def __init__(self, *cases):
         self.cases = list(cases)
 
     def append(self, case):
         self.cases.append(case)
 
-class Case(object):
+class Case(AST):
     def __init__(self, key, node):
         self.key = key
         self.node = node

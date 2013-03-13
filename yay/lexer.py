@@ -204,6 +204,7 @@ class Lexer(object):
         'set': 'SET',
         'extend': 'EXTEND',
         'configure': 'CONFIGURE',
+        'select': 'SELECT',
     }
 
     t_INITIAL_EXTEND = "extend"

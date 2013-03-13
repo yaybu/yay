@@ -953,9 +953,9 @@ class Parser(object):
 
     def p_select_directive(self, p):
         '''
-        select_directive : SELECT expression_list ":" case_list NEWLINE
+        select_directive : SELECT expression_list ":" NEWLINE INDENT case_list DEDENT
         '''
-        p[0] = ast.Select(p[2], p[4])
+        p[0] = ast.Select(p[2], p[6])
         anchor(p, 1)
 
     def p_case_list(self, p):
@@ -972,9 +972,9 @@ class Parser(object):
 
     def p_case_block(self, p):
         '''
-        case_block : key ":" stanza
+        case_block : key NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Case(p[1], p[3])
+        p[0] = ast.Case(p[1], p[4])
         anchor(p, 1)
 
     def p_stanza_VALUE(self, p):

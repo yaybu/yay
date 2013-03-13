@@ -752,4 +752,18 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, Search(Literal("foo")))
 
+    def test_select(self):
+        res = parse("""
+        select foo:
+            bar:
+                - a
+            baz:
+                - b
+        """)
+        self.assertEqual(res, Select(Identifier("foo"),
+                                     CaseList(
+                                     Case("bar", YayList(YayScalar("a"))),
+                                     Case("baz", YayList(YayScalar("b"))),
+                                     )))
+
 
