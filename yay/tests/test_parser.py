@@ -745,3 +745,11 @@ class TestParser(unittest.TestCase):
         else:
             x: y
         """)
+
+    def test_search(self):
+        res = parse("""
+        search "foo"
+        """)
+        self.assertEqual(res, Search(Literal("foo")))
+
+
