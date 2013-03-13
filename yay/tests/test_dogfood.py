@@ -43,7 +43,6 @@ def parse(value, **kwargs):
 
 def resolve(value, **kwargs):
     root = parse(value, **kwargs)
-    print root
     return root.resolve()
 
 
