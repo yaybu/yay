@@ -54,11 +54,11 @@ emptylist = t('EMPTYLIST', '[]')
 ldbrace = t('LDBRACE', '{{')
 rdbrace = t('RDBRACE', '}}')
 hyphen = t('HYPHEN', '-')
-percent = t('PERCENT', '%')
 plus = t('+', '+')
+colon = t('COLON', ':')
 
 def key(x):
-    return t('KEY', x)
+    return t('VALUE', x)
 
 def value(x):
     return t('VALUE', x)
@@ -95,10 +95,8 @@ class TestLexer(unittest.TestCase):
     ##### Base YAY tests
 
     def test_simplest(self):
-        self.compare(self._lex("""
-            a: b
-        """), [
-        key('a'), value('b'), newline,
+        self.compare(self._lex("""a: b"""), [
+        key('a'), colon, value('b')
         ])
 
     def test_list(self):
@@ -109,7 +107,7 @@ class TestLexer(unittest.TestCase):
           - d
         """)
         self.compare(result, [
-            key('a'), newline,
+            key('a'), colon, newline,
             indent,
             hyphen, value('b'), newline,
             hyphen, value('c'), newline,
@@ -123,9 +121,9 @@ class TestLexer(unittest.TestCase):
           b: c
         """)
         self.compare(result, [
-            key('a'), newline,
+            key('a'), colon, newline,
             indent,
-                key('b'), value('c'), newline,
+                key('b'), colon, value('c'), newline,
             dedent,
         ])
 
@@ -139,12 +137,12 @@ class TestLexer(unittest.TestCase):
               - g
               """)
         self.compare(result, [
-        key('a'), newline,
+        key('a'), colon, newline,
         indent,
             hyphen, value('b'), newline,
-            hyphen, key('c'), value('d'), newline,
+            hyphen, key('c'), colon, value('d'), newline,
             indent,
-                key('e'), value('f'), newline,
+                key('e'), colon, value('f'), newline,
             dedent,
             hyphen, value('g'), newline,
         dedent,
@@ -157,10 +155,10 @@ class TestLexer(unittest.TestCase):
               - c: d
               - e
         """), [
-            key('a'), newline,
+            key('a'), colon, newline,
             indent,
                 hyphen, value('b'), newline,
-                hyphen, key('c'), value('d'), newline,
+                hyphen, key('c'), colon, value('d'), newline,
                 hyphen, value('e'), newline,
             dedent,
             ])
@@ -171,10 +169,10 @@ class TestLexer(unittest.TestCase):
                c:
                  d: e
             """), [
-                key('a'), value('b'), newline,
-                key('c'), newline,
+                key('a'), colon, value('b'), newline,
+                key('c'), colon, newline,
                 indent,
-                    key('d'), value('e'), newline,
+                    key('d'), colon, value('e'), newline,
                 dedent,
             ])
 
@@ -182,14 +180,14 @@ class TestLexer(unittest.TestCase):
         self.compare(self._lex("""
             a: {}
         """), [
-            key('a'), emptydict, newline,
+            key('a'), colon, emptydict, newline,
         ])
 
     def test_emptylist(self):
         self.compare(self._lex("""
             a: []
         """), [
-            key('a'), emptylist, newline,
+            key('a'), colon, emptylist, newline,
         ])
 
     def test_comments(self):
@@ -202,8 +200,8 @@ class TestLexer(unittest.TestCase):
               - e
             """), [
                    t('COMMENT', '# example'),  newline,
-                   key('a'), value('b'), newline,
-                   key('c'), newline,
+                   key('a'), colon, value('b'), newline,
+                   key('c'), colon, newline,
                    indent,
                    hyphen, value('d'), newline,
                    t('COMMENT', '# foo'), newline,
@@ -221,17 +219,17 @@ class TestLexer(unittest.TestCase):
             h:
                 i: j
         """), [
-               key('a'), newline,
+               key('a'), colon, newline,
                indent,
-                key('b'), value('c'), newline,
-                key('e'), newline,
+                key('b'), colon, value('c'), newline,
+                key('e'), colon, newline,
                 indent,
                     hyphen, value('f'), newline,
                     hyphen, value('g'), newline,
                 dedent,
-                key('h'), newline,
+                key('h'), colon, newline,
                 indent,
-                    key('i'), value('j'), newline,
+                    key('i'), colon, value('j'), newline,
                 dedent,
                dedent
            ])
@@ -251,19 +249,19 @@ class TestLexer(unittest.TestCase):
                 key5:
                     key6: key7
         """), [
-               key('key1'), value('value1'), t('NEWLINE', '\n\n'),
-               key('key2'), value('value2'), t('NEWLINE', '\n\n'),
-               key('key3'), newline,
+               key('key1'), colon, value('value1'), t('NEWLINE', '\n\n'),
+               key('key2'), colon, value('value2'), t('NEWLINE', '\n\n'),
+               key('key3'), colon, newline,
                indent,
                    hyphen, value('item1'), newline,
                    hyphen, value('item2'), newline,
                    hyphen, value('item3'), t('NEWLINE', '\n\n'),
                dedent,
-               key('key4'), newline,
+               key('key4'), colon, newline,
                indent,
-                   key('key5'), newline,
+                   key('key5'), colon, newline,
                    indent,
-                       key('key6'), value('key7'), newline,
+                       key('key6'), colon, value('key7'), newline,
                    dedent,
                dedent,
         ])
@@ -302,7 +300,7 @@ class TestLexer(unittest.TestCase):
             - baz
             - quux
         """), [
-               t('EXTEND', 'extend'), key('foo'), newline,
+               t('EXTEND', 'extend'), key('foo'), colon, newline,
                indent,
                hyphen, value('baz'), newline,
                hyphen, value('quux'), newline,
@@ -314,10 +312,9 @@ class TestLexer(unittest.TestCase):
 
     def test_command(self):
         result = self._lex("""
-            % include 'foo.yay'
+            include 'foo.yay'
         """)
         self.compare(result, [
-            percent,
             t('INCLUDE', 'include'),
             t('STRING', 'foo.yay'),
             newline,
@@ -325,33 +322,31 @@ class TestLexer(unittest.TestCase):
 
     def test_if(self):
         result = self._lex("""
-            % if selector == "hey"
+            if selector == "hey":
                 foo: 2
         """)
         self.compare(result, [
-            percent, t('IF', 'if'), identifier('selector'), t('EQ', '=='), t('STRING', 'hey'),
+            t('IF', 'if'), identifier('selector'), t('EQ', '=='), t('STRING', 'hey'), t(':', ':'),
             newline,
-            indent, key('foo'), value('2'), newline, dedent,
+            indent, key('foo'), colon, value('2'), newline, dedent,
             ])
 
 
     def test_macro(self):
         result = self._lex("""
-            % macro foo
+            macro foo:
                 x: y
         """)
         self.compare(result, [
-            percent,
-            t('MACRO', 'macro'), t('IDENTIFIER', 'foo'), newline,
-            indent, key('x'), value('y'), newline, dedent,
+            t('MACRO', 'macro'), t('IDENTIFIER', 'foo'), t(':', ':'), newline,
+            indent, key('x'), colon, value('y'), newline, dedent,
             ])
 
     def test_integer(self):
         result = self._lex("""
-        % set a = 2
+        set a = 2
         """)
         self.compare(result, [
-            percent,
             t('SET', 'set'),
             identifier('a'),
             t('=', '='),
@@ -361,10 +356,9 @@ class TestLexer(unittest.TestCase):
 
     def test_addition(self):
         result = self._lex("""
-        % set a = 2+2
+        set a = 2+2
         """)
         self.compare(result, [
-            percent,
             t('SET', 'set'),
             identifier('a'),
             t('=', '='),
@@ -377,13 +371,13 @@ class TestLexer(unittest.TestCase):
 
     def test_leading_command(self):
         self.compare(self._lex("""
-            % include 'foo.yay'
+            include 'foo.yay'
 
             a: b
             """), [
-                percent, t('INCLUDE', 'include'), t('STRING', 'foo.yay'),
+                t('INCLUDE', 'include'), t('STRING', 'foo.yay'),
                 t('NEWLINE', '\n\n'),
-                key('a'), value('b'), newline,
+                key('a'), colon, value('b'), newline,
                 ])
 
     ##### template tests
@@ -392,7 +386,7 @@ class TestLexer(unittest.TestCase):
         self.compare(self._lex("""
             foo: hello {world}
         """), [
-               key('foo'),
+               key('foo'), colon,
                value('hello '),
                t('{', '{'),
                value('world}'),
@@ -401,7 +395,7 @@ class TestLexer(unittest.TestCase):
 
     def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
-                key('foo'),
+                key('foo'), colon,
                 t('LDBRACE', '{{'),
                 t('IDENTIFIER', 'bar'),
                 t('RDBRACE', '}}'),
@@ -411,7 +405,7 @@ class TestLexer(unittest.TestCase):
         self.compare(self._lex("""
         a: this {{a+b+c}} is {{foo("bar")}} hard
         """), [
-               key('a'),
+               key('a'), colon,
                value('this '),
                ldbrace,
                identifier('a'),
@@ -438,7 +432,7 @@ class TestLexer(unittest.TestCase):
           - {{bar}}
           - c
         """), [
-           key('foo'), newline,
+           key('foo'), colon, newline,
            indent,
                hyphen, value('a'), newline,
                hyphen, ldbrace, t('IDENTIFIER', 'bar'), rdbrace, newline,

@@ -66,7 +66,7 @@ class Lexer(object):
     ]
 
     tokens = (
-        'PERCENT',
+        'VALUE',
         'HYPHEN',
         'COMMENT',
         'INDENT',
@@ -75,10 +75,8 @@ class Lexer(object):
         'EMPTYDICT',
         'EMPTYLIST',
         'EXTEND',
-        'KEY',
         'LDBRACE',
         'RDBRACE',
-        'VALUE',
         'IDENTIFIER',
         'STRING',
         'INTEGER',
@@ -112,6 +110,7 @@ class Lexer(object):
         'FLOOR_DIVIDE',
         'WS',
         'NEWLINE',
+        'COLON',
     )
 
     t_command_template_LSHIFT = '<<'
@@ -124,6 +123,11 @@ class Lexer(object):
     t_command_template_ELLIPSIS = r'\.\.\.'
     t_command_template_POW = '\*\*'
     t_command_template_FLOOR_DIVIDE = '//'
+
+    def t_ANY_COMMENT(self, t):
+        r"""\#[^\n]*"""
+        return t
+
 
     def t_template_RDBRACE(self, t):
         """}}"""
@@ -179,8 +183,6 @@ class Lexer(object):
         t.value = eval(t.value)
         return t
 
-    t_ANY_COMMENT = r"""\#[^\n]*"""
-
     # Keywords
 
     reserved = {
@@ -207,16 +209,26 @@ class Lexer(object):
     t_INITIAL_EXTEND = "extend"
     t_INITIAL_CONFIGURE = "configure"
 
-    def t_INITIAL_listvalue_KEY(self, t):
-        """[^:\n ]+[ ]*:[ \t]*"""
-        t.value = t.value.split(":", 1)[0].strip()
-        t.lexer.begin('value')
-        return t
-
     def t_INITIAL_HYPHEN(self, t):
         """-[ \t]*"""
         t.value = '-'
         t.lexer.begin('listvalue')
+        return t
+
+    def t_INITIAL_VALUE(self, t):
+        """[^:\n ]+"""
+        t.type = self.reserved.get(t.value, 'VALUE')
+        if t.value in ('configure', 'extend'):
+            t.lexer.begin("INITIAL")
+        elif t.type == 'VALUE':
+            t.lexer.begin('value')
+        else:
+            t.lexer.begin('command')
+        return t
+
+    def t_value_listvalue_COLON(self, t):
+        """:[ ]*"""
+        t.value = ':'
         return t
 
     def t_INITIAL_PERCENT(self, t):
@@ -226,12 +238,14 @@ class Lexer(object):
         return t
 
     def t_value_listvalue_EMPTYDICT(self, t):
-        """{}"""
+        """[ ]*{}"""
+        t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
     def t_value_listvalue_EMPTYLIST(self, t):
-        """\[\]"""
+        """[ ]*\[\]"""
+        t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
@@ -241,7 +255,8 @@ class Lexer(object):
         return t
 
     def t_value_listvalue_VALUE(self, t):
-        """[^\{\n]+"""
+        """[^:\{\n]+"""
+        t.value = t.value
         return t
 
     def t_command_template_IDENTIFIER(self, t):
@@ -368,7 +383,7 @@ class Lexer(object):
                 if not (depth > levels[-1]):
                     raise IndentationError("expected and indented block")
                 levels.append(depth)
-                yield INDENT(token.lineno)
+                yield self.INDENT(token.lineno)
             elif token.at_line_start:
                 if depth == levels[-1]:
                     # at the same level
