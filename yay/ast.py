@@ -249,6 +249,18 @@ class Streamish(object):
 class Proxy(object):
     """
     A mixin that forwards requested on to an expanded form
+
+    A lot of objects in the tree don't actually contain data but are actually
+    some sort of deferred lookup. For example::
+
+        a: 55
+        b: {{ a }}
+
+    Here, the ``{{ a }}`` expression contains a reference to the real ``a``
+    key. So any node that access ``b`` needs to proxy to the real ``a``.
+
+    This mixin proxies all the standard interface methods to the node
+    returned by ``self.expand()``.
     """
 
     def as_int(self, anchor=None):
