@@ -58,6 +58,18 @@ For
 .. autoclass:: For()
    :members:
 
+SimpleSlicing
+-------------
+
+.. autoclass:: SimpleSlicing()
+   :members:
+
+ExtendedSlicing
+---------------
+
+.. autoclass:: ExtendedSlicing()
+   :members:
+
 
 Other nodes
 ===========
@@ -175,30 +187,6 @@ Subscription
 ------------
 
 .. autoclass:: Subscription()
-   :members:
-
-SimpleSlicing
--------------
-
-.. autoclass:: SimpleSlicing()
-   :members:
-
-ExtendedSlicing
----------------
-
-.. autoclass:: ExtendedSlicing()
-   :members:
-
-SliceList
----------
-
-.. autoclass:: SliceList()
-   :members:
-
-Slice
------
-
-.. autoclass:: Slice()
    :members:
 
 Call

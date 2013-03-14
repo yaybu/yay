@@ -226,6 +226,9 @@ class Scalarish(object):
 class Streamish(object):
     """
     A mixin for a class that behaves like a stream - i.e. is iterable
+
+    This includes a default get implementation that gently unwinds
+    generators and iterators
     """
 
     def __init__(self):
@@ -636,7 +639,7 @@ class Subscription(Proxy, AST):
         primary.parent = self
         self.expression_list = list(expression_list)
         if len(self.expression_list) > 1:
-            self.error("Keys must be scalars, not tuples")
+            raise errors.SyntaxError("Keys must be scalars, not tuples", anchor=self.anchor)
         for e in self.expression_list:
             e.parent = self
 
@@ -644,6 +647,16 @@ class Subscription(Proxy, AST):
         return self.primary.expand().get(self.expression_list[0].resolve()).expand()
 
 class SimpleSlicing(Streamish, AST):
+
+    """
+    Implements simple slices of any ``AST`` type that implements the
+    ``Streamish`` interface.
+
+    Because of the default methods provided by the ``Streamish`` mixin this
+    class only needs to implement ``as_iterable``. This yields objects that
+    match the specified stride.
+    """
+
     def __init__(self, primary, short_slice):
         super(SimpleSlicing, self).__init__()
         self.primary = primary
@@ -660,11 +673,24 @@ class SimpleSlicing(Streamish, AST):
             yield self.primary.expand().get_index(i)
 
 class ExtendedSlicing(Streamish, AST):
+
+    """
+    Implements extended slices of any ``AST`` type that implements the
+    ``Streamish`` interface.
+
+    Because of the default methods provided by the ``Streamish`` mixin this
+    class only needs to implement ``as_iterable``. This yields objects that
+    match the specified strides.
+    """
+
     def __init__(self, primary, slice_list):
         self.primary = primary
         primary.parent = self
         self.slice_list = slice_list
         slice_list.parent = self
+
+        if len (self.slice_list.slice_list) > 1:
+            raise errors.SyntaxError("Only a single slice at a time is supported", anchor=self.anchor)
 
     def as_iterable(self):
         short_slice = self.slice_list.slice_list[0]

@@ -131,12 +131,13 @@ You can add a directory to the search path::
 Configuration
 ~~~~~~~~~~~~~
 
-configure openers:
-    foo: bar
-    baz: quux
+::
+    configure openers:
+      foo: bar
+        baz: quux
 
-configure basicauth:
-    zip: zop
+    configure basicauth:
+        zip: zop
 
 Ephemeral keys
 ~~~~~~~~~~~~~~
@@ -174,6 +175,8 @@ to allow appending to predefined lists: append::
 
 Conditions
 ~~~~~~~~~~
+
+::
 
     foo:
         if averylongvariablename == anotherverylongvariablename and \
