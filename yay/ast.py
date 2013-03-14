@@ -2,6 +2,9 @@ import operator
 from . import errors
 from .openers import Openers
 
+"""
+The ``yay.ast`` module contains the classes that make up the graph.
+"""
 
 class AST(object):
 
