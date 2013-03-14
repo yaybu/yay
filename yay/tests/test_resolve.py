@@ -355,3 +355,12 @@ class TestResolver(unittest.TestCase):
     #        quux: {{ bar }}
     #        """)
     #    self.assertEqual(res, {"quux": "bar"})
+
+    def test_iter_on_range(self):
+        res = resolve("""
+            a: 5
+            b:
+                for i in range(a):
+                    - {{ -i }}
+            """)
+        self.assertEqual(res['b'], [0,-1,-2,-3,-4])

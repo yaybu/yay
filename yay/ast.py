@@ -679,12 +679,6 @@ import re
 
 class Call(Proxy, AST):
 
-    allowed = {
-        "range": range,
-        "replace": lambda i, r, w: i.replace(r, w),
-        "sub": re.sub,
-        }
-
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
         self.args = args
@@ -694,25 +688,63 @@ class Call(Proxy, AST):
         self.kwargs = kwargs
 
     def expand(self):
-        kwargs = {}
-        for kwarg in self.kwargs.kwargs:
-            k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
+        args = []
+        if self.args:
+            for arg in self.args:
+                args.append(arg.clone())
 
-        call = CallDirective(self.primary, None)
+        kwargs = {}
+        if self.kwargs:
+            for kwarg in self.kwargs.kwargs:
+                k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
+
+        try:
+            macro = self.get_root().get_callable(self.primary.identifier)
+            call = CallDirective(self.primary, None)
+            node = Context(call, kwargs)
+        except errors.NoMatching:
+            call = node = CallCallable(self.primary, args, kwargs)
+
         call.anchor = self.anchor
-        context = Context(call, kwargs)
-        context.parent = self
-        return context.expand()
+        node.parent = self
+
+        return node
+
+
+class CallCallable(Scalarish, AST):
+
+    allowed = {
+        "range": range,
+        "replace": lambda i, r, w: i.replace(r, w),
+        "sub": re.sub,
+        }
+
+    def __init__(self, primary, args=None, kwargs=None):
+        self.primary = primary
+        if not self.primary.identifier in self.allowed:
+            raise errors.NoMatching()
+
+        self.args = args
+        for a in args:
+            a.parent = self
+
+        self.kwargs = kwargs
+        for k in kwargs:
+            k.parent = self
+
+    def as_iterable(self, anchor=None):
+        result = self.resolve()
+        if hasattr(result, "__iter__"):
+            for res in iter(result):
+                # FIXME: THis might be a dict or anything...
+                yield YayScalar(res)
+            return
+        raise errors.TypeError("Expected iterable", anchor=anchor or self.anchor)
 
     def resolve(self):
-        if self.args:
-            args = [x.resolve() for x in self.args]
-        else:
-            args = []
-        try:
-            return self.allowed[self.primary.identifier](*args)
-        except KeyError:
-            pass
+        args = [x.resolve() for x in self.args]
+        kwargs = dict((k, v.resolve()) for (k, v) in self.kwargs.items())
+        return self.allowed[self.primary.identifier](*args, **kwargs)
 
 
 class ArgumentList(AST):
