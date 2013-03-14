@@ -30,7 +30,7 @@ Internals
    language-internals
    parser
    resolver
-   nodes
+   ast
 
 
 Contributing
