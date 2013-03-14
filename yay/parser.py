@@ -173,6 +173,7 @@ class Parser(object):
             p[0] = ast.ListFor(p[2], p[4])
         else:
             p[0] = ast.ListFor(p[2], p[4], p[5])
+        anchor(p, 1)
 
     def p_old_expression_list(self, p):
         '''

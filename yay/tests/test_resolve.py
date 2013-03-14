@@ -385,3 +385,9 @@ class TestResolver(unittest.TestCase):
             """)
         self.assertEqual(res['foo'], 'goodbye')
         self.assertEqual(res['bar'], 'hello')
+
+    def test_list_comprehension(self):
+        res = resolve("""
+            foo: {{ [a+1 for a in range(5)] }}
+            """)
+        self.assertEqual(res['foo'], [1, 2, 3, 4, 5])

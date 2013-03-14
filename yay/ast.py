@@ -557,13 +557,19 @@ class ConditionalExpression(Proxy, AST):
         else:
             return self.else_clause.expand()
 
-class ListDisplay(AST):
+class ListDisplay(Proxy, AST):
     def __init__(self, expression_list=None):
         self.expression_list = expression_list
+        if expression_list:
+            expression_list.parent = self
 
-    def resolve(self):
+    def expand(self):
         if not self.expression_list:
-            return []
+            lst = YayList()
+            lst.parent = self
+            lst.anchor = self.anchor
+            return lst
+        return self.expression_list.expand()
 
 class DictDisplay(AST):
 
@@ -1327,17 +1333,29 @@ class Context(Proxy, AST):
     def expand(self):
         return self.value.expand()
 
-class ListComprehension(AST):
+class ListComprehension(Streamish, AST):
     def __init__(self, expression, list_for):
         self.expression = expression
+        expression.parent = self
         self.list_for = list_for
+        list_for.parent = self
 
-class ListFor(AST):
+    def as_iterable(self):
+        for node in self.list_for.expressions.as_iterable():
+            ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
+            ctx.anchor = self.anchor
+            ctx.parent = self
+            yield ctx.expand()
+
+class ListFor(Streamish, AST):
     def __init__(self, targets, expressions, iterator=None):
         self.targets = targets
+        targets.parent = self
         self.expressions = expressions
+        expressions.parent = self
         self.iterator = iterator
-
+        if iterator:
+            iterator.parent = self
 
 class ListIf(AST):
     def __init__(self, expression, iterator=None):
