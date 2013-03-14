@@ -368,7 +368,7 @@ class ExpressionList(AST):
     def resolve(self):
         return [expr.resolve() for expr in self.expression_list]
 
-class Power(AST):
+class Power(Scalarish, AST):
     def __init__(self, primary, power=None):
         self.primary = primary
         primary.parent = self
@@ -378,7 +378,7 @@ class Power(AST):
     def resolve(self):
         return pow(self.primary.as_number(), self.power.as_number())
 
-class UnaryMinus(AST):
+class UnaryMinus(Scalarish, AST):
     """ The unary - (minus) operator yields the negation of its numeric
     argument. """
 
@@ -389,7 +389,7 @@ class UnaryMinus(AST):
     def resolve(self):
         return -self.u_expr.as_number()
 
-class Invert(AST):
+class Invert(Scalarish, AST):
     """ The unary ~ (invert) operator yields the bitwise inversion of its
     plain or long integer argument. The bitwise inversion of x is defined as
     -(x+1). It only applies to integral numbers. """
@@ -484,7 +484,7 @@ class Expr(Scalarish, AST):
             return self.op(self.lhs.as_number(), self.rhs.as_number())
 
 
-class And(AST):
+class And(Scalarish, AST):
 
     """
     An ``And`` expression behaves much like the ``and`` keyword in python.
@@ -537,7 +537,7 @@ class And(AST):
         return self.left.resolve() and self.right.resolve()
 
 
-class Not(AST):
+class Not(Scalarish, AST):
     def __init__(self, value):
         self.value = value
         value.parent = self
