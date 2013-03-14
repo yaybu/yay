@@ -672,12 +672,12 @@ class Parser(object):
     def p_conditional_expression(self, p):
         '''
         conditional_expression : or_test
-                               | or_test IF or_test ELSE expression
+                               | expression IF or_test ELSE expression
         '''
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ast.ConditionalExpression(p[1], p[3], p[5])
+            p[0] = ast.ConditionalExpression(p[3], p[1], p[5])
             p[0].anchor = p[1].anchor
 
     def p_expression(self, p):

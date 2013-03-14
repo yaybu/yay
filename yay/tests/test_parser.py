@@ -201,7 +201,7 @@ class TestParser(unittest.TestCase):
         res = parse("""
         set a = b if c else d
         """)
-        self.assertEqual(res, Set(Identifier('a'), ConditionalExpression(Identifier('b'), Identifier('c'), Identifier('d'))))
+        self.assertEqual(res, Set(Identifier('a'), ConditionalExpression(Identifier('c'), Identifier('b'), Identifier('d'))))
 
     def test_set_multiple(self):
         res = parse("""

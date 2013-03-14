@@ -545,16 +545,17 @@ class Not(Scalarish, AST):
     def resolve(self):
         return not self.value.resolve()
 
-class ConditionalExpression(AST):
+class ConditionalExpression(Proxy, AST):
     def __init__(self, or_test, if_clause, else_clause):
         self.or_test = or_test
         self.if_clause = if_clause
         self.else_clause = else_clause
-    def resolve(self):
+
+    def expand(self):
         if self.or_test.resolve():
-            return self.if_clause.resolve()
+            return self.if_clause.expand()
         else:
-            return self.else_clause.resolve()
+            return self.else_clause.expand()
 
 class ListDisplay(AST):
     def __init__(self, expression_list=None):

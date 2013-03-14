@@ -377,3 +377,11 @@ class TestResolver(unittest.TestCase):
             """)
 
         self.assertEqual(res['qux'], ['b'])
+
+    def test_conditional_expression(self):
+        res = resolve("""
+            foo: {{ "hello" if 0 else "goodbye" }}
+            bar: {{ "hello" if 1 else "goodbye" }}
+            """)
+        self.assertEqual(res['foo'], 'goodbye')
+        self.assertEqual(res['bar'], 'hello')
