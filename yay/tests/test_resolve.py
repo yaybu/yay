@@ -364,3 +364,16 @@ class TestResolver(unittest.TestCase):
                     - {{ -i }}
             """)
         self.assertEqual(res['b'], [0,-1,-2,-3,-4])
+
+    def test_select(self):
+        res = resolve("""
+            foo: baz
+            qux:
+                select foo:
+                  bar:
+                    - a
+                  baz:
+                    - b
+            """)
+
+        self.assertEqual(res['qux'], ['b'])

@@ -1178,24 +1178,35 @@ class Elif(AST):
         self.node = node
         node.parent = self
 
-class Select(AST):
+class Select(Proxy, AST):
 
     def __init__(self, expr, cases):
         self.expr = expr
+        expr.parent = self
         self.cases = cases
+        cases.parent = self
+
+    def expand(self):
+        value = self.expr.resolve()
+        for case in self.cases.cases:
+            if case.key == value:
+                return case.node.expand()
+        raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
 
 class CaseList(AST):
     def __init__(self, *cases):
-        self.cases = list(cases)
+        self.cases = []
+        [self.append(c) for c in cases]
 
     def append(self, case):
+        case.parent = self
         self.cases.append(case)
 
 class Case(AST):
     def __init__(self, key, node):
         self.key = key
         self.node = node
-
+        node.parent = self
 
 def flatten(lst):
     for itm in lst:
