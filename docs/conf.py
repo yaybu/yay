@@ -225,7 +225,7 @@ class Parse(Directive):
 
     def run(self):
         p = parser.Parser()
-        graph = Root(p.parse('\n'.join(self.content)))
+        graph = Root(p.parse('\n'.join(self.content) + '\n'))
 
         node = graphviz()
         node['code'] = '\n'.join(graph.as_digraph())

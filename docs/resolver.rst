@@ -32,15 +32,6 @@ involve previous versions of themselves. For example::
 
 This would parse to:
 
-.. parse:: resolver_predecessor
-
-    foo:
-      - 1
-      - 2
-
-    extend foo:
-      - 3
-
 .. digraph:: resolver_predecessor
 
     Mapping;
