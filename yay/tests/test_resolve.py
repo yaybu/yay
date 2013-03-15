@@ -302,7 +302,7 @@ class TestPower(unittest.TestCase):
 
     def test_power_literals(self):
         t = parse("""
-            foo: {{ 2 ^ 2 }}
+            foo: {{ 2 ** 2 }}
             """)
 
         self.assertEqual(t.get("foo").as_int(), 4)
@@ -310,7 +310,7 @@ class TestPower(unittest.TestCase):
     def test_power_ident1(self):
         t = parse("""
             foo: 2
-            qux: {{ 2 ^ foo }}
+            qux: {{ 2 ** foo }}
             """)
 
         self.assertEqual(t.get("qux").as_int(), 4)
@@ -318,14 +318,14 @@ class TestPower(unittest.TestCase):
     def test_power_ident2(self):
         t = parse("""
             foo: 2
-            bar: {{ foo ^ 2 }}
+            bar: {{ foo ** 2 }}
             """)
 
         self.assertEqual(t.get("bar").as_int(), 4)
 
     def test_type_error(self):
         t = parse("""
-            foo: {{ 2 ^ [] }}
+            foo: {{ 2 ** [] }}
             """)
 
         self.assertRaises(errors.TypeError, t.get("foo").as_int)
@@ -405,6 +405,11 @@ class TestExpression(unittest.TestCase):
             """)
         self.assertEqual(t.get("foo").as_int(), 4)
 
+    def test_xor(self):
+        t = parse("""
+            foo: {{ 6 ^ 2}}
+            """)
+        self.assertEqual(t.get("foo").as_int(), 6 ^ 2)
     def test_and_true_true(self):
         t = parse("""
             foo: {{ 1 and 1 }}

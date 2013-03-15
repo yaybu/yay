@@ -376,7 +376,7 @@ class Power(Scalarish, AST):
         power.parent = self
 
     def resolve(self):
-        return pow(self.primary.as_number(), self.power.as_number())
+        return self.primary.as_number() ** self.power.as_number()
 
 class UnaryMinus(Scalarish, AST):
     """ The unary - (minus) operator yields the negation of its numeric
@@ -427,7 +427,7 @@ class Expr(Scalarish, AST):
         "-": operator.sub,
         "*": operator.mul,
         "/": operator.div,
-        "^": operator.pow,
+        "^": operator.xor,
         "or": operator.or_,
         "and": operator.and_,
         "not in": lambda x, y: not x in y,
