@@ -291,7 +291,7 @@ class Proxy(object):
         return self.expand().resolve()
 
 
-class Root(AST):
+class Root(Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
     """
@@ -324,8 +324,8 @@ class Root(AST):
     def get_context(self, key):
         return self.node.get(key)
 
-    def resolve(self):
-        return self.node.resolve()
+    def expand(self):
+        return self.node.expand()
 
     def parse(self, path):
         stream = self.openers.open(path)
@@ -427,6 +427,7 @@ class Expr(Scalarish, AST):
         "-": operator.sub,
         "*": operator.mul,
         "/": operator.div,
+        "^": operator.pow,
         "or": operator.or_,
         "and": operator.and_,
         "not in": lambda x, y: not x in y,

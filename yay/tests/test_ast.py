@@ -75,9 +75,12 @@ class TestRoot(unittest.TestCase):
         pass
 
     def test_resolve(self):
-        root = Root(Mock())
+        inner = Mock()
+        inner.expand.side_effect = lambda: inner
+
+        root = Root(inner)
         root.resolve()
-        root.node.resolve.assert_called_with()
+        inner.resolve.assert_called_with()
 
 class TestIdentifier(unittest.TestCase):
 
