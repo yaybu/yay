@@ -247,7 +247,7 @@ class Streamish(object):
         return self._buffer[index]
 
     def resolve(self):
-        return list(flatten(x.resolve() for x in self.as_iterable()))
+        return [x.resolve() for x in self.as_iterable()]
 
 class Proxy(object):
     """
@@ -908,13 +908,14 @@ class YayDict(AST):
 
     def keys(self):
         keys = set(self.values.keys())
-        try:
-            expanded = self.predecessor.expand()
-            if not hasattr(expanded, "keys"):
-                self.error("Mapping cannot mask or replace field with same name and different type")
-            keys.update(expanded.keys())
-        except errors.NoPredecessor:
-            pass
+        if self.predecessor:
+            try:
+                expanded = self.predecessor.expand()
+                if not hasattr(expanded, "keys"):
+                    self.error("Mapping cannot mask or replace field with same name and different type")
+                keys.update(expanded.keys())
+            except errors.NoPredecessor:
+                pass
         return sorted(list(keys))
 
     def get(self, key):
@@ -1215,14 +1216,6 @@ class Case(AST):
         self.node = node
         node.parent = self
 
-def flatten(lst):
-    for itm in lst:
-        if isinstance(itm, list):
-            for x in flatten(itm):
-                yield x
-        else:
-            yield itm
-
 class Create(AST):
     def __init__(self, target, node):
         self.target = target
@@ -1279,7 +1272,7 @@ class For(Streamish, AST):
     def as_iterable(self, anchor=None):
         for item in self.in_clause.as_iterable(anchor or self.anchor):
             # self.target.identifier: This probably shouldn't be an identifier
-            c = Context(self.node.clone(), {self.target.identifier: item.clone()})
+            c = Context(self.node.clone(), {self.target.identifier: item})
             c.parent = self.parent
 
             if self.if_clause:
@@ -1288,11 +1281,8 @@ class For(Streamish, AST):
                 if not f.resolve():
                     continue
 
-            #Think about doing this instead of the flatten rubbish
-            #for node in c.as_iterable(anchor or self.anchor):
-            #    yield node
-
-            yield c
+            for node in c.as_iterable(anchor or self.anchor):
+                yield node
 
 
 class Template(Scalarish, AST):
@@ -1318,6 +1308,9 @@ class Context(Proxy, AST):
     def __init__(self, value, context):
         self.value = value
         self.value.parent = self
+
+        # Context should not be reparented as we want things to be
+        # evaluated in the original context.
         self.context = context
 
     def get_context(self, key):

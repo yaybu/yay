@@ -149,13 +149,13 @@ class TestYayExtend(unittest.TestCase):
 
 class TestFor(unittest.TestCase):
     def test_resolve(self):
-        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), Identifier("x"))
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")))
         f.parent = Mock()
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a', 'b'])
 
     def test_resolve_filtered(self):
-        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), Identifier("x"), Expr(Identifier("x"), Literal("a"), "=="))
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")), Expr(Identifier("x"), Literal("a"), "=="))
         f.parent = Mock()
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a'])

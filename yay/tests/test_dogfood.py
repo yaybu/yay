@@ -136,8 +136,8 @@ class TestDogfoodScenarios(unittest.TestCase):
             test:
               for project in project:
                 for env in project.environments:
-                    name: {{ project.name }}
-                    env: {{ env.name }}
+                   - name: {{ project.name }}
+                     env: {{ env.name }}
             """)
 
         self.assertEqual(res['test'], [
