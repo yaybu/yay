@@ -1,6 +1,7 @@
 import unittest
 from .base import parse, resolve
 from yay import errors
+from yay.parser import ParseError
 
 
 class TestYayDict(unittest.TestCase):
@@ -242,7 +243,7 @@ class TestTemplate(unittest.TestCase):
 class TestIdentifier(unittest.TestCase):
 
     def test_syntax_error(self):
-        self.assertRaises(errors.SyntaxError, """
+        self.assertRaises(ParseError, parse, """
             foo: 5
             bar: {{ @foo }}
             """)
@@ -279,7 +280,9 @@ class TestIdentifier(unittest.TestCase):
 class TestLiteral(unittest.TestCase):
 
     def test_syntax_error(self):
-        self.assertRaises(errors.SyntaxError, """
+        # FIXME: I would be happier if this was a errors.ParseError
+        # SyntaxError comes from within lexer.
+        self.assertRaises(SyntaxError, parse, """
             foo: {{ 0'.3 }}
             """)
 

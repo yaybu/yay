@@ -67,7 +67,6 @@ class LanguageError(Error):
         #    error += "\n%s" % self.snippet
         return error
 
-
 class LexerError(LanguageError):
     pass
 
