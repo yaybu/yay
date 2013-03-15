@@ -1,31 +1,5 @@
 import unittest
-from yay import parser
-from yay.ast import *
-
-
-class MockRoot(Root):
-
-    def __init__(self, node):
-        super(MockRoot, self).__init__(node)
-        self.data = {}
-
-    def add(self, key, value):
-        self.data[key] = value
-
-    def parse(self, path):
-        p = parser.Parser()
-        return p.parse(self.data[path])
-
-
-def parse(value, **kwargs):
-    p = parser.Parser()
-    root = MockRoot(p.parse(value))
-    for k, v in kwargs.items():
-        root.add(k, v)
-    return root
-
-def resolve(value, **kwargs):
-    return parse(value, **kwargs).resolve()
+from .base import parse, resolve
 
 
 class TestResolver(unittest.TestCase):

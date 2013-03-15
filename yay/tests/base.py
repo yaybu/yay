@@ -13,7 +13,35 @@
 # limitations under the License.
 
 import unittest
-from yay.parser import parse
+from yay import parser
+from yay import ast
+
+class MockRoot(ast.Root):
+
+    def __init__(self, node):
+        super(MockRoot, self).__init__(node)
+        self.data = {}
+
+    def add(self, key, value):
+        self.data[key] = value
+
+    def parse(self, path):
+        p = parser.Parser()
+        return p.parse(self.data[path], debug=0)
+
+def parse(value, **kwargs):
+    import yay.parsetab
+    reload(yay.parsetab)
+    p = parser.Parser()
+    root = MockRoot(p.parse(value))
+    for k, v in kwargs.items():
+        root.add(k, v)
+    return root
+
+def resolve(value, **kwargs):
+    root = parse(value, **kwargs)
+    return root.resolve()
+
 
 class TestCase(unittest.TestCase):
 

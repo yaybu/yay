@@ -15,35 +15,7 @@
 # Dogfood tests are tests from real-world scenarios and test previous failure modes or specific fixes and feature scenarios
 
 import unittest
-from yay import parser
-from yay.ast import Root
-from yay import ast
-
-# FIXME: This is duplicated in test_resolve
-
-class MockRoot(Root):
-
-    def __init__(self, node):
-        super(MockRoot, self).__init__(node)
-        self.data = {}
-
-    def add(self, key, value):
-        self.data[key] = value
-
-    def parse(self, path):
-        p = parser.Parser()
-        return p.parse(self.data[path], debug=0)
-
-def parse(value, **kwargs):
-    p = parser.Parser()
-    root = MockRoot(p.parse(value))
-    for k, v in kwargs.items():
-        root.add(k, v)
-    return root
-
-def resolve(value, **kwargs):
-    root = parse(value, **kwargs)
-    return root.resolve()
+from .base import resolve
 
 
 class TestDogfoodScenarios(unittest.TestCase):
