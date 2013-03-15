@@ -201,3 +201,44 @@ latex_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
+
+
+from docutils.parsers.rst import directives
+from sphinx.util.compat import Directive
+from sphinx.ext.graphviz import graphviz
+from yay import parser
+from yay.ast import Root
+
+class Parse(Directive):
+    """
+    Directive to insert arbitrary dot markup.
+    """
+    has_content = True
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {
+        'alt': directives.unchanged,
+        'inline': directives.flag,
+        'caption': directives.unchanged,
+    }
+
+    def run(self):
+        p = parser.Parser()
+        graph = Root(p.parse(self.content))
+
+        node = graphviz()
+        node['code'] = '\n'.join(graph.as_digraph())
+        node['options'] = []
+        if 'alt' in self.options:
+            node['alt'] = self.options['alt']
+        if 'caption' in self.options:
+            node['caption'] = self.options['caption']
+        node['inline'] = 'inline' in self.options
+        return [node]
+
+
+def setup(app):
+    app.add_directive('parse', Parse)
+    # app.add_directive('simplify', Simplify)
+
