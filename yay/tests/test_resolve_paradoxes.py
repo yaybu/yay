@@ -70,3 +70,22 @@ class TestResolveParadoxes(unittest.TestCase):
 
         self.assertEqual(t.get("out").get("foo").resolve(), "ok")
 
+    def test_if_preventing_itself(self):
+        """
+        foo is 'bar', so select returns a dict with foo key
+        but now foo is 'qux' so foo shouldn't have changed
+        """
+        t = parse("""
+            bar: 1
+            foo: {{ bar }}
+
+            if foo:
+                bar: 0
+            """)
+
+        self.assertEqual(t.get("bar").as_int(), 0)
+        self.assertEqual(t.get("foo").as_int(), 0)
+
+        self.assertRaises(errors.ParadoxError, t.resolve)
+
+

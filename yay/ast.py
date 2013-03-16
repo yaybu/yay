@@ -624,9 +624,14 @@ class LazyPredecessor(Proxy, AST):
         return predecessor.get(key)
 
     def expand(self):
-        if not self.node.predecessor:
-            raise errors.NoPredecessor
-        return self.node.predecessor.expand().get(self.identifier)
+        if self.node.predecessor:
+            parent_pred = self.node.predecessor.expand()
+            try:
+                pred = parent_pred.get(self.identifier)
+            except errors.NoMatching:
+                raise errors.NoPredecessor
+            return pred.expand()
+        raise errors.NoPredecessor
 
 class UseMyPredecessorStandin(Proxy, AST):
     def __init__(self, node):
@@ -914,10 +919,7 @@ class YayDict(AST):
         keys = set(self.values.keys())
         if self.predecessor:
             try:
-                expanded = self.predecessor.expand()
-                if not hasattr(expanded, "keys"):
-                    self.error("Mapping cannot mask or replace field with same name and different type")
-                keys.update(expanded.keys())
+                keys.update(k.resolve() for k in self.predecessor.as_iterable(anchor=self.anchor))
             except errors.NoPredecessor:
                 pass
         return sorted(list(keys))
@@ -925,13 +927,12 @@ class YayDict(AST):
     def get(self, key):
         if key in self.values:
             return self.values[key]
-        if not self.predecessor:
-            #FIXME: I would dearly love to get rid of this check and have every node have a LazyPredecessor
-            raise errors.NoMatching("No such key '%s'" % key)
-        try:
-            return self.predecessor.expand().get(key)
-        except errors.NoPredecessor:
-            raise errors.NoMatching("Key '%s' not found" % key)
+        if self.predecessor:
+            try:
+                return self.predecessor.expand().get(key)
+            except errors.NoPredecessor:
+                pass
+        raise errors.NoMatching("Key '%s' not found" % key)
 
     def as_iterable(self, anchor=None):
         for k in self.keys():
@@ -939,15 +940,8 @@ class YayDict(AST):
 
     def resolve(self):
         d = {}
-        try:
-            if self.predecessor:
-                d = self.predecessor.resolve()
-        except errors.NoPredecessor:
-            d = {}
-
-        for k, v in self.values.items():
-            d[k] = v.resolve()
-
+        for key in self.keys():
+            d[key] = self.get(key).resolve()
         return d
 
 class YayExtend(Streamish, AST):
@@ -1117,7 +1111,6 @@ class Set(Proxy, AST):
 
 
 class If(Proxy, AST):
-    # FIXME: This implementation ignores the elifs...
 
     """
     An If block has a guard condition. If that condition is True the
@@ -1135,12 +1128,15 @@ class If(Proxy, AST):
         condition.parent = self
         self.result = result
         result.parent = self
+        result.predecessor = UseMyPredecessorStandin(self)
         self.elifs = elifs
         if elifs:
             elifs.parent = self
+            elifs.predecessor = UseMyPredecessorStandin(self)
         self.else_ = else_
         if else_:
             else_.parent = self
+            else_.predecessor = UseMyPredecessorStandin(self)
         self.passthrough_mode = False
 
     def dynamic(self):
@@ -1161,9 +1157,6 @@ class If(Proxy, AST):
             return self.result.simplify()
         else:
             return self.else_.simplify()
-
-    def get(self, key):
-        return self.expand().get(key)
 
     def expand(self):
         if self.passthrough_mode:
@@ -1197,6 +1190,7 @@ class ElifList(AST):
 
     def append(self, elif_):
         elif_.parent = self
+        elif_.predecessor = UseMyPredecessorStandin(self)
         self.elifs.append(elif_)
 
 class Elif(AST):
@@ -1321,7 +1315,12 @@ class Template(Scalarish, AST):
         # Otherwise defer to Scalarish behaviour
         if len(self.value) == 1:
             return self.value[0].as_iterable()
-        super(Template, self).as_iterator(anchor)
+        return super(Template, self).as_iterator(anchor)
+
+    def get(self, key):
+        if len(self.value) == 1:
+            return self.value[0].get(key)
+        return super(Template, self).get(key)
 
     def resolve(self):
         if len(self.value) == 1:
