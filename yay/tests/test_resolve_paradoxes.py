@@ -5,6 +5,16 @@ from yay import errors
 
 class TestResolveParadoxes(unittest.TestCase):
 
+    """
+    Because of the lazily evaluated nature of yay there are various scenarios
+    where a situation similar to the grandfather paradox occurs.
+
+    Conditionals might alter variables that the conditional depend on.
+
+    This would lead to inconsistent state, and thus is considered a critical
+    error.
+    """
+
     def test_include_preventing_itself(self):
         """
         foo is 1, 'example' is included
@@ -72,8 +82,7 @@ class TestResolveParadoxes(unittest.TestCase):
 
     def test_if_preventing_itself(self):
         """
-        foo is 'bar', so select returns a dict with foo key
-        but now foo is 'qux' so foo shouldn't have changed
+        bar is set to 0 when foo is 1, but as foo is only 1 when bar is 1..
         """
         t = parse("""
             bar: 1
@@ -83,9 +92,19 @@ class TestResolveParadoxes(unittest.TestCase):
                 bar: 0
             """)
 
-        self.assertEqual(t.get("bar").as_int(), 0)
-        self.assertEqual(t.get("foo").as_int(), 0)
-
         self.assertRaises(errors.ParadoxError, t.resolve)
 
+    def test_if_preventing_itself_overriden(self):
+        """ This shouldn't be considered inconsistent either """
+        t = parse("""
+            bar: 1
+            foo: {{ bar }}
+
+            if foo:
+                bar: 0
+
+            bar: 1
+            """)
+
+        self.assertEqual(t.get("bar").resolve(), 1)
 
