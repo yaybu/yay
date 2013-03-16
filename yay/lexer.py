@@ -62,7 +62,7 @@ class Lexer(object):
     literals = [
         '+', '-', '*', '/', '%', '&', '|', '^', '~', '<', '>',
         '(', ')', '[', ']', '{', '}', '@', ',', ':', '.', '`',
-        '=', ';'
+        '=', ';',
     ]
 
     tokens = (
@@ -123,6 +123,10 @@ class Lexer(object):
     t_COMMAND_TEMPLATE_ELLIPSIS = r'\.\.\.'
     t_COMMAND_TEMPLATE_POW = '\*\*'
     t_COMMAND_TEMPLATE_FLOOR_DIVIDE = '//'
+
+    def t_COMMAND_CONTINUATION(self, t):
+        r"""\\\n"""
+        pass
 
     def t_ANY_COMMENT(self, t):
         r"""\#[^\n]*"""

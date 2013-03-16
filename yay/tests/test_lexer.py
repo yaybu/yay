@@ -505,7 +505,7 @@ class TestLexer(unittest.TestCase):
            ])
 
     def test_python_line_continuation(self):
-        self.compare(self._lex("""
+        self.compare(self._lex(r"""
         if x == y and \
            c == d:
              - x
@@ -524,7 +524,7 @@ class TestLexer(unittest.TestCase):
                ])
 
     def test_yaml_line_continuation(self):
-        self.compare(self._lex("""
+        self.compare(self._lex(r"""
         a: b \
         x: y
         """), [
