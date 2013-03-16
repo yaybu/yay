@@ -16,7 +16,7 @@ import unittest
 from yay.ast import If, Literal
 from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
 
-
+"""
 class TestIfDymnamic(unittest.TestCase):
 
     def test_if_dynamic_guard_true(self):
@@ -64,7 +64,7 @@ class TestIfSimplification(unittest.TestCase):
         self.assertEqual(res.result.literal, "dog")
         self.assertTrue(not isinstance(res.else_.literal, ComplexLiteral))
         self.assertEqual(res.else_.literal, "cat")
-
+"""
 
 class TestIfResolve(unittest.TestCase):
 

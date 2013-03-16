@@ -1136,64 +1136,34 @@ class If(Tripwire, Proxy, AST):
     """
 
     def __init__(self, condition, result, elifs=None, else_=None):
-        self.condition = condition
-        condition.parent = self
-        self.result = result
-        result.parent = self
-        result.predecessor = UseMyPredecessorStandin(self)
-        self.elifs = elifs
+        self.elifs = ElifList(Elif(condition, result))
+        self.elifs.parent = self
+        self.elifs.predecessor = UseMyPredecessorStandin(self)
+
         if elifs:
-            elifs.parent = self
-            elifs.predecessor = UseMyPredecessorStandin(self)
+            for elif_ in elifs.elifs:
+                self.elifs.append(elif_)
+
         self.else_ = else_
         if else_:
             else_.parent = self
             else_.predecessor = UseMyPredecessorStandin(self)
+
         self.passthrough_mode = False
-
-    def dynamic(self):
-        if self.condition.dynamic():
-            return True
-        if self.condition.resolve():
-            if self.result.dynamic():
-                return True
-        else:
-            if self.else_.dynamic():
-                return True
-        return False
-
-    def simplify(self):
-        if self.condition.dynamic():
-            return If(self.condition.simplify(), self.result.simplify(), else_=self.else_.simplify())
-        if self.condition.resolve():
-            return self.result.simplify()
-        else:
-            return self.else_.simplify()
 
     def expand(self):
         if self.passthrough_mode:
             return self.predecessor.expand()
 
-        self.passthrough_mode = True
-        try:
-            cond = self.condition.resolve()
-        finally:
-            self.passthrough_mode = False
-
-        # Ensure that the value of self.cond doesn't change
-        self.tripwire(cond)
-
-        if cond:
-            return self.result.expand()
-
-        if self.elifs:
-            for elif_ in self.elifs.elifs:
-                self.passthrough_mode = True
+        for elif_ in self.elifs.elifs:
+            self.passthrough_mode = True
+            try:
                 cond = elif_.condition.resolve()
+            finally:
                 self.passthrough_mode = False
-                elif_.tripwire(cond)
-                if cond:
-                    return elif_.node.expand()
+            elif_.tripwire(cond)
+            if cond:
+                return elif_.node.expand()
 
         if self.else_ is not None:
             return self.else_.expand()
