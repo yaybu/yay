@@ -291,6 +291,16 @@ class Proxy(object):
         return self.expand().resolve()
 
 
+_PARADOX_MARKER = object()
+class Tripwire(object):
+    _tripwire = _PARADOX_MARKER
+
+    def tripwire(self, tripwire):
+        if self._tripwire != _PARADOX_MARKER and self._tripwire != tripwire:
+            raise errors.ParadoxError("Inconsistent configuration detected", anchor=self.anchor)
+        self._tripwire = tripwire
+
+
 class Root(Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
@@ -1043,7 +1053,7 @@ class Directives(Proxy, AST):
     def expand(self):
         return self.value.expand()
 
-class Include(Proxy, AST):
+class Include(Tripwire, Proxy, AST):
 
     def __init__(self, expr):
         self.expr = expr
@@ -1082,6 +1092,8 @@ class Include(Proxy, AST):
         expr = self.expr.resolve()
         self.expanding = False
 
+        self.tripwire(expr)
+
         expanded = self.get_root().parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
@@ -1110,7 +1122,7 @@ class Set(Proxy, AST):
         return self.predecessor
 
 
-class If(Proxy, AST):
+class If(Tripwire, Proxy, AST):
 
     """
     An If block has a guard condition. If that condition is True the
@@ -1163,8 +1175,13 @@ class If(Proxy, AST):
             return self.predecessor.expand()
 
         self.passthrough_mode = True
-        cond = self.condition.resolve()
-        self.passthrough_mode = False
+        try:
+            cond = self.condition.resolve()
+        finally:
+            self.passthrough_mode = False
+
+        # Ensure that the value of self.cond doesn't change
+        self.tripwire(cond)
 
         if cond:
             return self.result.expand()
@@ -1174,6 +1191,7 @@ class If(Proxy, AST):
                 self.passthrough_mode = True
                 cond = elif_.condition.resolve()
                 self.passthrough_mode = False
+                elif_.tripwire(cond)
                 if cond:
                     return elif_.node.expand()
 
@@ -1193,14 +1211,14 @@ class ElifList(AST):
         elif_.predecessor = UseMyPredecessorStandin(self)
         self.elifs.append(elif_)
 
-class Elif(AST):
+class Elif(Tripwire, AST):
     def __init__(self, condition, node):
         self.condition = condition
         condition.parent = self
         self.node = node
         node.parent = self
 
-class Select(Proxy, AST):
+class Select(Tripwire, Proxy, AST):
 
     def __init__(self, expr, cases):
         self.expr = expr
@@ -1215,6 +1233,7 @@ class Select(Proxy, AST):
         self.expanding = True
         value = self.expr.resolve()
         self.expanding = False
+        self.tripwire(value)
         for case in self.cases.cases:
             if case.key == value:
                 return case.node.expand()
