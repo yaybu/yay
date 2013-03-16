@@ -480,6 +480,16 @@ class TestLexer(unittest.TestCase):
            value('a'), colon, value('foo bar baz\n\nquux quuux\n'), newline,
            ])
 
+    def test_block_indents(self):
+        self.compare(self._lex("""
+        a:
+            b: |
+                l1
+                l2
+            c: x
+        d: e
+        """), [])
+
     def test_block_strip(self):
         self.compare(self._lex("""
         a: |-

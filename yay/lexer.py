@@ -55,6 +55,7 @@ class Lexer(object):
         ('LISTVALUE', 'exclusive'),
         ('TEMPLATE', 'exclusive'),
         ('COMMAND', 'exclusive'),
+        ('BLOCK', 'exclusive'),
     )
 
     # literals are checked last, after all of the other rules
@@ -67,6 +68,8 @@ class Lexer(object):
 
     tokens = (
         'VALUE',      # represents either a key or value in yamlish
+        'MULTILINE',  # the start of a multiline block
+        'LINE',       # part of a value in yamlish when reading blocks
         'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
@@ -128,7 +131,7 @@ class Lexer(object):
         r"""\\\n"""
         pass
 
-    def t_ANY_COMMENT(self, t):
+    def t_INITIAL_VALUE_LISTVALUE_TEMPLATE_COMMAND_COMMENT(self, t):
         r"""\#[^\n]*"""
         return t
 
@@ -224,11 +227,11 @@ class Lexer(object):
         """[^:\n ]+"""
         t.type = self.reserved.get(t.value, 'VALUE')
         if t.value in ('configure', 'extend'):
-            t.lexer.begin("INITIAL")
+            self.lexer.begin("INITIAL")
         elif t.type == 'VALUE':
-            t.lexer.begin('VALUE')
+            self.lexer.begin('VALUE')
         else:
-            t.lexer.begin('COMMAND')
+            self.lexer.begin('COMMAND')
         return t
 
     def t_VALUE_LISTVALUE_COLON(self, t):
@@ -259,9 +262,15 @@ class Lexer(object):
         t.lexer.begin("TEMPLATE")
         return t
 
+    def t_VALUE_LISTVALUE_MULTILINE(self, t):
+        """(>|\|[+-]?)[ ]*[\n]+"""
+        self.lexer.begin('BLOCK')
+        self.lexer.lineno += len(t.value)
+        self.lexer.block_substate = t.value.strip()
+        return t
+
     def t_VALUE_LISTVALUE_VALUE(self, t):
         """[^:\{\n]+"""
-        t.value = t.value
         return t
 
     def t_COMMAND_TEMPLATE_IDENTIFIER(self, t):
@@ -271,11 +280,16 @@ class Lexer(object):
         return t
 
     def t_ANY_WS(self, t):
-        r' [ ]+ '
+        r'[ ]+'
         if self.at_line_start:
             return t
 
-    def t_ANY_newline(self, t):
+    def t_BLOCK_LINE(self, t):
+        r""".*\n"""
+        t.lexer.lineno += len(t.value)
+        return t
+
+    def t_LISTVALUE_VALUE_INITIAL_COMMAND_TEMPLATE_newline(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
         t.type = "NEWLINE"
@@ -289,9 +303,7 @@ class Lexer(object):
     # The original lex token stream contains WS and NEWLINE characters.
     # WS will only occur before any other tokens on a line.
 
-    # I have three filters.  One tags tokens by adding two attributes.
-    # "must_indent" is True if the token must be indented from the
-    # previous code.  The other is "at_line_start" which is True for WS
+    # "at_line_start" which is True for WS
     # and the first non-WS/non-NEWLINE on a line.  It flags the check so
     # see if the new line has changed indication level.
 
@@ -311,28 +323,14 @@ class Lexer(object):
 
             token.at_line_start = at_line_start
 
-            if token.type == ':':
-                at_line_start = False
-                indent = self.MAY_INDENT
-                token.must_indent = False
-
-            elif token.type == "NEWLINE":
+            if token.type in ("NEWLINE", "MULTILINE", "LINE"):
                 at_line_start = True
-                if indent == self.MAY_INDENT:
-                    indent = self.MUST_INDENT
-                token.must_indent = False
 
             elif token.type == "WS":
                 assert token.at_line_start == True
                 at_line_start = True
-                token.must_indent = False
 
             else:
-                # a real token. only indent after COLON NEWLINE
-                if indent == self.MUST_INDENT:
-                    token.must_indent = True
-                else:
-                    token.must_indent = False
                 at_line_start = False
 
                 indent = self.NO_INDENT
@@ -372,11 +370,11 @@ class Lexer(object):
                     depth = 0
 
             if token.type == 'WS':
-                assert depth == levels[0]
+#                assert depth == levels[0]
                 depth = len(token.value)
                 prev_was_ws = True
                 continue
-            elif token.type == 'NEWLINE':
+            elif token.type in ('NEWLINE', 'MULTILINE'):
                 if depth is not None:
                     depth = levels[0]
                 if prev_was_ws or token.at_line_start:
@@ -384,12 +382,7 @@ class Lexer(object):
                 yield token
                 continue
             prev_was_ws = False
-            if token.must_indent:
-                if not (depth > levels[-1]):
-                    raise IndentationError("expected and indented block")
-                levels.append(depth)
-                yield self.INDENT(token.lineno)
-            elif token.at_line_start:
+            if token.at_line_start:
                 if depth == levels[-1]:
                     # at the same level
                     pass
