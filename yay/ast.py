@@ -549,8 +549,11 @@ class Not(Scalarish, AST):
 class ConditionalExpression(Proxy, AST):
     def __init__(self, or_test, if_clause, else_clause):
         self.or_test = or_test
+        or_test.parent = self
         self.if_clause = if_clause
+        if_clause.parent = self
         self.else_clause = else_clause
+        else_clause.parent = self
 
     def expand(self):
         if self.or_test.resolve():
@@ -1052,6 +1055,7 @@ class Include(Proxy, AST):
         self.expr = expr
         expr.parent = self
         self.detector = []
+        self.expanding = False
 
     def get_callable(self, key):
         expanded = self.expand()
@@ -1060,6 +1064,9 @@ class Include(Proxy, AST):
         raise errors.NoMatching("Could not find a macro called 'SomeMacro'")
 
     def get(self, key):
+        if self.expanding:
+            return self.predecessor.get(key)
+
         if key in self.detector:
             raise errors.NoMatching("'%s' not found" % key)
         try:
@@ -1069,7 +1076,14 @@ class Include(Proxy, AST):
             self.detector.remove(key)
 
     def expand(self):
-        expanded = self.get_root().parse(self.expr.resolve())
+        if self.expanding:
+            return self.predecessor
+
+        self.expanding = True
+        expr = self.expr.resolve()
+        self.expanding = False
+
+        expanded = self.get_root().parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
         return expanded
