@@ -8,10 +8,7 @@ from ply import lex
 # ply works great but the implementation is a bit fugly
 
 def lt__repr__(self):
-    if self.value == '\n':
-        return "<NEWLINE>"
-    else:
-        return "<%s(%s)>" % (self.type, self.value)
+    return "<%s(%r)>" % (self.type, self.value)
 
 def lt__nonzero__(self):
     # work around some evil code in PLY
@@ -451,4 +448,88 @@ class TestLexer(unittest.TestCase):
         """), [
                value('a'), colon, value('b'), newline
         ])
+
+    def test_fold(self):
+        self.compare(self._lex("""
+        a: >
+          foo bar baz
+          quux quuux
+        """), [
+           value('a'), colon, value('foo bar baz quux quuux\n'), newline,
+           ])
+
+    def test_fold_breaks(self):
+        self.compare(self._lex("""
+        a: >
+          foo bar baz
+
+          quux quuux
+        """), [
+               value('a'), colon, value('foo bar baz\nquux quuux\n'), newline,
+               ])
+
+    def test_block_clip(self):
+        self.compare(self._lex("""
+        a: |
+          foo bar baz
+
+          quux quuux
+
+
+        """), [
+           value('a'), colon, value('foo bar baz\n\nquux quuux\n'), newline,
+           ])
+
+    def test_block_strip(self):
+        self.compare(self._lex("""
+        a: |-
+          foo bar baz
+
+          quux quuux
+
+
+        """), [
+           value('a'), colon, value('foo bar baz\n\nquux quuux'), newline,
+           ])
+
+    def test_block_keep(self):
+        self.compare(self._lex("""
+        a: |+
+          foo bar baz
+
+          quux quuux
+
+
+        """), [
+           value('a'), colon, value('foo bar baz\n\nquux quuux\n\n\n'), newline,
+           ])
+
+    def test_python_line_continuation(self):
+        self.compare(self._lex("""
+        if x == y and \
+           c == d:
+             - x
+        """), [
+               t('IF', 'if'),
+               identifier('x'),
+               t('EQ', '=='),
+               identifier('y'),
+               t('AND', 'and'),
+               identifier('c'),
+               t('EQ', '=='),
+               identifier('d'),
+               t(':', ':'),
+               newline,
+               indent, hyphen, value('x'), newline, dedent,
+               ])
+
+    def test_yaml_line_continuation(self):
+        self.compare(self._lex("""
+        a: b \
+        x: y
+        """), [
+               value('a'), colon, value('b \\'), newline,
+               value('x'), colon, value('y'), newline,
+           ])
+
 
