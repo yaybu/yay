@@ -977,6 +977,9 @@ class YayScalar(Scalarish, AST):
     def resolve(self):
         return self.value
 
+    def append(self, v):
+        self.value = self.value + v
+
 class YayMerged(AST):
     """ Combined scalars and templates """
 

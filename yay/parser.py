@@ -1110,6 +1110,19 @@ class Parser(object):
         p[0] = ast.YayDict([(p[1], p[4])])
         anchor(p, 1)
 
+    def p_multiline(self, p):
+        '''
+        scalar : MULTILINE LINE
+        '''
+        p[0] = ast.YayScalar(p[2])
+
+    def p_multiline_merge(self, p):
+        '''
+        scalar : scalar LINE
+        '''
+        p[0] = p[1]
+        p[0].append(p[2])
+
     def p_yaydict_merge(self, p):
         '''
         yaydict : yaydict yaydict

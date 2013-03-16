@@ -775,3 +775,96 @@ class TestParser(unittest.TestCase):
                                      YayDict([
                                          ('foo', YayScalar('bar')),
                                          ])))
+    def test_fold(self):
+        res = parse("""
+        a: >
+          foo bar baz
+          quux quuux
+        """)
+        self.assertEqual(res, None)
+
+    def test_fold_breaks(self):
+        res = parse("""
+        a: >
+          foo bar baz
+
+          quux quuux
+        """)
+        self.assertEqual(res, None)
+
+    def test_block_clip(self):
+        res = parse("""
+        a: |
+          foo bar baz
+
+          quux quuux
+
+
+        """)
+        self.assertEqual(res, None)
+
+    def test_block_indents(self):
+        res = parse("""
+        a:
+            b: |
+                l1
+                l2
+            c: x
+        d: e
+        """)
+        self.assertEqual(res, None)
+
+
+    def test_block_strip(self):
+        res = parse("""
+        a: |-
+          foo bar baz
+
+          quux quuux
+
+
+        """)
+        self.assertEqual(res, None)
+
+    def test_block_keep(self):
+        res = parse("""
+        a: |+
+          foo bar baz
+
+          quux quuux
+
+
+        """)
+        self.assertEqual(res, None)
+
+    def test_python_line_continuation(self):
+        res = parse(r"""
+        if x == y and \
+           c == d:
+             - x
+        """)
+        self.assertEqual(res, If(
+            Expr(
+                Expr(Identifier('x'),
+                     Identifier('y'),
+                     '=='),
+                Expr(Identifier('c'),
+                     Identifier('d'),
+                     '=='),
+                "and"),
+            YayList(YayScalar('x'))
+            )
+        )
+
+    def test_yaml_line_continuation(self):
+        res = parse(r"""
+        a: b \
+        x: y
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar('b \\')),
+            ('x', YayScalar('y')),
+            ]))
+
+
+

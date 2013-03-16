@@ -352,6 +352,9 @@ class Lexer(object):
     def DEDENT(self, lineno):
         return self._new_token("DEDENT", lineno)
 
+    def NEWLINE(self, lineno):
+        return self._new_token("NEWLINE", lineno)
+
     def indentation_filter(self, tokens):
         """ Track the indentation level and emit the right INDENT / DEDENT events. """
         levels = [0] # first level is determined by first token
@@ -373,6 +376,13 @@ class Lexer(object):
 #                assert depth == levels[0]
                 depth = len(token.value)
                 prev_was_ws = True
+                if self.lexer.lexstate == 'BLOCK':
+                    if depth < levels[-1]:
+                        self.lexer.begin("INITIAL")
+                        i = levels.index(depth)
+                        for _ in range(i+1, len(levels)):
+                            yield self.NEWLINE(token.lineno)
+                        levels.pop()
                 continue
             elif token.type in ('NEWLINE', 'MULTILINE'):
                 if depth is not None:
@@ -389,7 +399,8 @@ class Lexer(object):
                 elif depth > levels[-1]:
                     #raise IndentationError("indentation increase but not in new block")
                     levels.append(depth)
-                    yield self.INDENT(token.lineno)
+                    if self.lexer.lexstate != 'BLOCK':
+                        yield self.INDENT(token.lineno)
                 else:
                     # back up, but only if it matches a previous level
                     try:
@@ -397,7 +408,10 @@ class Lexer(object):
                     except ValueError:
                         raise IndentationError("inconsistent indentation")
                     for _ in range(i+1, len(levels)):
-                        yield self.DEDENT(token.lineno)
+                        if self.lexer.lexstate == 'BLOCK':
+                            yield self.NEWLINE(token.lineno)
+                        else:
+                            yield self.DEDENT(token.lineno)
                         levels.pop()
             yield token
 
@@ -406,7 +420,10 @@ class Lexer(object):
         if len(levels) > 1:
             assert token is not None
             for _ in range(1, len(levels)):
-                yield self.DEDENT(token.lineno)
+                if self.lexer.lexstate == 'BLOCK':
+                    yield self.NEWLINE(token.lineno)
+                else:
+                    yield self.DEDENT(token.lineno)
 
     def token_filter(self, add_endmarker = True):
         token = None
