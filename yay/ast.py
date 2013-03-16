@@ -774,7 +774,7 @@ class CallCallable(Scalarish, AST):
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
         if not self.primary.identifier in self.allowed:
-            raise errors.NoMatching()
+            raise errors.NoMatching("Could not find '%s'" % self.primary.identifier)
 
         self.args = args
         for a in args:
@@ -1065,7 +1065,12 @@ class Include(Proxy, AST):
 
     def get(self, key):
         if self.expanding:
-            return self.predecessor.get(key)
+            if not self.predecessor:
+                raise errors.NoMatching("No such key '%s'" % key)
+            try:
+                return self.predecessor.get(key)
+            except errors.NoPredecessor:
+                raise errors.NoMatching("No such key '%s'" % key)
 
         if key in self.detector:
             raise errors.NoMatching("'%s' not found" % key)
@@ -1208,9 +1213,14 @@ class Select(Proxy, AST):
         expr.parent = self
         self.cases = cases
         cases.parent = self
+        self.expanding = False
 
     def expand(self):
+        if self.expanding:
+            return self.predecessor
+        self.expanding = True
         value = self.expr.resolve()
+        self.expanding = False
         for case in self.cases.cases:
             if case.key == value:
                 return case.node.expand()
