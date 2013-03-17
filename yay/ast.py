@@ -6,6 +6,30 @@ from .openers import Openers
 The ``yay.ast`` module contains the classes that make up the graph.
 """
 
+import collections
+import functools
+
+class cached(object):
+
+    def __init__(self, func):
+        self.func = func
+        self.cache = None
+
+    def __call__(descriptor, self):
+        if not hasattr(self, "cache") or not self.cache:
+            can_cache, result = descriptor.func(self)
+            if not can_cache:
+                return result
+            self.cache = result
+        return self.cache
+
+    def __repr__(self):
+        return self.func.__doc__
+
+    def __get__(self, obj, objtype):
+        return functools.partial(self.__call__, obj)
+
+
 class AST(object):
 
     lineno = 0
@@ -291,14 +315,35 @@ class Proxy(object):
         return self.expand().resolve()
 
 
-_PARADOX_MARKER = object()
-class Tripwire(object):
-    _tripwire = _PARADOX_MARKER
+class Tripwire(Proxy, AST):
 
-    def tripwire(self, tripwire):
-        if self._tripwire != _PARADOX_MARKER and self._tripwire != tripwire:
-            raise errors.ParadoxError("Inconsistent configuration detected", anchor=self.anchor)
-        self._tripwire = tripwire
+    def __init__(self):
+        self.node = None
+        self.expressions = []
+        self.expanding = False
+
+    def add_tripwire(self, expression, expected):
+        self.expressions.append((expression, expected))
+
+    def get_callable(self, key):
+        p = self.node
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except errors.NoMatching:
+                    pass
+            p = p.predecessor
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+    def expand(self):
+        if not self.expanding:
+            self.expanding = True
+            for expr, expected in self.expressions:
+                if expr.resolve() != expected:
+                    raise errors.ParadoxError("Inconsistent configuration detected", anchor=self.anchor)
+            self.expanding = False
+        return self.node
 
 
 class Root(Proxy, AST):
@@ -647,6 +692,10 @@ class UseMyPredecessorStandin(Proxy, AST):
     def __init__(self, node):
         # This is a sideways reference! No parenting...
         self.node = node
+
+    @property
+    def predecessor(self):
+        return self.node.predecessor
 
     def get(self, key):
         predecessor = self.expand()
@@ -1053,7 +1102,7 @@ class Directives(Proxy, AST):
     def expand(self):
         return self.value.expand()
 
-class Include(Tripwire, Proxy, AST):
+class Include(Proxy, AST):
 
     def __init__(self, expr):
         self.expr = expr
@@ -1062,10 +1111,21 @@ class Include(Tripwire, Proxy, AST):
         self.expanding = False
 
     def get_callable(self, key):
-        expanded = self.expand()
-        if hasattr(expanded, "get_callable"):
-            return expanded.get_callable(key)
-        raise errors.NoMatching("Could not find a macro called 'SomeMacro'")
+        try:
+            expanded = self.expand()
+        except errors.NoPredecessor:
+            raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+        p = expanded
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except errors.NoMatching:
+                    pass
+            p = p.predecessor
+
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
         if self.expanding:
@@ -1084,20 +1144,26 @@ class Include(Tripwire, Proxy, AST):
         finally:
             self.detector.remove(key)
 
+    @cached
     def expand(self):
         if self.expanding:
-            return self.predecessor
+            return False, self.predecessor
 
         self.expanding = True
         expr = self.expr.resolve()
         self.expanding = False
 
-        self.tripwire(expr)
-
         expanded = self.get_root().parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
-        return expanded
+
+        t = Tripwire()
+        t.anchor = self.anchor
+        t.add_tripwire(self.expr, expr)
+        t.node = expanded
+
+        return True, t
+
 
 class Search(AST):
 
@@ -1122,7 +1188,7 @@ class Set(Proxy, AST):
         return self.predecessor
 
 
-class If(Tripwire, Proxy, AST):
+class If(Proxy, AST):
 
     """
     An If block has a guard condition. If that condition is True the
@@ -1151,9 +1217,13 @@ class If(Tripwire, Proxy, AST):
 
         self.passthrough_mode = False
 
+    @cached
     def expand(self):
         if self.passthrough_mode:
-            return self.predecessor.expand()
+            return False, self.predecessor.expand()
+
+        t = Tripwire()
+        t.anchor = self.anchor
 
         for elif_ in self.elifs.elifs:
             self.passthrough_mode = True
@@ -1161,14 +1231,19 @@ class If(Tripwire, Proxy, AST):
                 cond = elif_.condition.resolve()
             finally:
                 self.passthrough_mode = False
-            elif_.tripwire(cond)
+
+            t.add_tripwire(elif_.condition, cond)
+
             if cond:
-                return elif_.node.expand()
+                t.node = elif_.node.expand()
+                return True, t
 
         if self.else_ is not None:
-            return self.else_.expand()
+            t.node = self.else_.expand()
+            return True, t
 
-        return self.predecessor.expand()
+        t.node = self.predecessor.expand()
+        return True, t
 
 
 class ElifList(AST):
@@ -1185,10 +1260,12 @@ class Elif(Tripwire, AST):
     def __init__(self, condition, node):
         self.condition = condition
         condition.parent = self
+        condition.predecessor = UseMyPredecessorStandin(self)
         self.node = node
         node.parent = self
+        node.predecessor = UseMyPredecessorStandin(self)
 
-class Select(Tripwire, Proxy, AST):
+class Select(Proxy, AST):
 
     def __init__(self, expr, cases):
         self.expr = expr
@@ -1197,17 +1274,26 @@ class Select(Tripwire, Proxy, AST):
         cases.parent = self
         self.expanding = False
 
+    @cached
     def expand(self):
         if self.expanding:
-            return self.predecessor
+            return False, self.predecessor
+
         self.expanding = True
         value = self.expr.resolve()
         self.expanding = False
-        self.tripwire(value)
+
+        t = Tripwire()
+        t.add_tripwire(self.expr, value)
+        t.anchor = self.anchor
+
         for case in self.cases.cases:
             if case.key == value:
-                return case.node.expand()
+                t.node = case.node.expand()
+                return True, t
+
         raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
+
 
 class CaseList(AST):
     def __init__(self, *cases):

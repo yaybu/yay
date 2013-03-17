@@ -15,6 +15,7 @@
 import unittest
 from yay.ast import If, Literal
 from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
+import mock
 
 """
 class TestIfDymnamic(unittest.TestCase):
@@ -70,10 +71,12 @@ class TestIfResolve(unittest.TestCase):
 
     def test_if_resolve_true(self):
         n = If(Literal(True), Literal("dog"), else_=Literal("cat"))
+        n.anchor = mock.Mock()
         self.assertEqual(n.resolve(), "dog")
 
     def test_if_resolve_false(self):
         n = If(Literal(False), Literal("dog"), else_=Literal("cat"))
+        n.anchor = mock.Mock()
         self.assertEqual(n.resolve(), "cat")
 
 
