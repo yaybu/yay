@@ -775,7 +775,8 @@ class TestParser(unittest.TestCase):
                                      YayDict([
                                          ('foo', YayScalar('bar')),
                                          ])))
-    def test_fold(self):
+
+    def test_multiline_fold_simple(self):
         res = parse("""
         a: >
           foo bar baz
@@ -785,7 +786,7 @@ class TestParser(unittest.TestCase):
             ('a', YayScalar("foo bar baz\nquux quuux\n")),
             ]))
 
-    def test_fold_breaks(self):
+    def test_multiline_fold(self):
         res = parse("""
         a: >
           foo bar baz
@@ -796,7 +797,7 @@ class TestParser(unittest.TestCase):
             ('a', YayScalar("foo bar baz\nquux quuux\n")),
             ]))
 
-    def test_block_clip(self):
+    def test_multiline_literal(self):
         res = parse("""
         a: |
           foo bar baz
@@ -806,10 +807,10 @@ class TestParser(unittest.TestCase):
 
         """)
         self.assertEqual(res, YayDict([
-        ('a', YayScalar("foo bar baz\n\nquux quuux\n")),
+        ('a', YayScalar("foo bar baz\nquux quuux\n")),
         ]))
 
-    def test_block_indents(self):
+    def test_multiline_literal_complex(self):
         res = parse("""
         a:
             b: |
@@ -826,7 +827,7 @@ class TestParser(unittest.TestCase):
              ('d', YayScalar('e')),
              ]))
 
-    def test_block_strip(self):
+    def test_multiline_strip(self):
         res = parse("""
         a: |-
           foo bar baz
@@ -839,7 +840,7 @@ class TestParser(unittest.TestCase):
             ('a', YayScalar("foo bar baz\n\nquux quuux")),
             ]))
 
-    def test_block_keep(self):
+    def test_multiline_keep(self):
         res = parse("""
         a: |+
           foo bar baz

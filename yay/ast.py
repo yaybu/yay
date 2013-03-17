@@ -1,6 +1,7 @@
 import operator
 from . import errors
 from .openers import Openers
+import re
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
@@ -997,22 +998,72 @@ class YayMultilineScalar(Scalarish, AST):
 
     @staticmethod
     def chomp_fold(value):
-        # >
-        return value
+        """
+        For multiline strings introduced with only '>'.
+
+        Folding allows long lines to be broken anywhere a single space
+        character separates two non-space characters.
+        """
+        # This is what pyYAML does
+        #
+        # Unfortunately, folding rules are ambiguous.
+        #
+        # This is the folding according to the specification:
+        #
+        #if folded and line_break == u'\n'   \
+        #        and leading_non_space and self.peek() not in u' \t':
+        #    if not breaks:
+        #        chunks.append(u' ')
+        #else:
+        #    chunks.append(line_break)
+
+        v = []
+        lines = value.split('\n')
+        for i, l in enumerate(lines):
+            if l:
+                v.append(l)
+                try:
+                    peek = not lines[i+1] or lines[i+1][0] in ' \t'
+                except IndexError:
+                    peek = False
+                if not re.match('^\s', l)  and not peek:
+                    v.append(' ')
+                else:
+                    v.append('\n')
+        rv = "".join(v)
+        return rv
 
     @staticmethod
     def chomp_literal(value):
-        # |
-        return value
+        """
+        For multiline strings introduced with only '|'.
+
+        In this case, the final line break character is preserved in the
+        scalar's content. However, any trailing empty lines are excluded
+        from the scalar's content.
+        """
+        return re.sub("[\n]+", "\n", value)
 
     @staticmethod
     def chomp_keep(value):
-        # |+
+        """
+        For multiline strings introduced with '|+'.
+
+        In this case, the final line break and any trailing empty lines are
+        considered to be part of the scalar's content. These additional
+        lines are not subject to folding.
+        """
         return value
 
     @staticmethod
     def chomp_strip(value):
-        # |-
+        """
+        For multiline strings introduced with '|-'.
+
+        In this case, the final line break and any trailing empty lines are
+        excluded from the scalar's content.
+        """
+
         return value
 
     def append(self, value):
