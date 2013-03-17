@@ -60,6 +60,9 @@ def value(x):
 def identifier(x):
     return t('IDENTIFIER', x)
 
+def line(x):
+    return t('LINE', x)
+
 class TestLexer(unittest.TestCase):
 
     def _lex(self, value):
@@ -442,6 +445,13 @@ class TestLexer(unittest.TestCase):
             dedent,
         ])
 
+    def test_braces(self):
+        self.compare(self._lex("""
+        foo: a{b}
+        """), [
+               value('foo'), colon, value('a{b}'), newline
+               ])
+
     def test_simple_dict_space(self):
         self.compare(self._lex("""
         a : b
@@ -501,6 +511,23 @@ class TestLexer(unittest.TestCase):
         """), [
            value('a'), colon, value('foo bar baz\n\nquux quuux'), newline,
            ])
+
+    def test_block_strip_with_template(self):
+        self.compare(self._lex("""
+        a: |-
+          foo bar baz
+
+          quux {{ quux }}
+
+
+        """), [
+           value('a'), colon, t('MULTILINE', '|-'),
+           line('foo bar baz\n'),
+           line('\n'),
+           line('quux '),
+           ldbrace, identifier('quuux'), rdbrace, newline,
+           ])
+
 
     def test_block_keep(self):
         self.compare(self._lex("""

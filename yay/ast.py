@@ -977,8 +977,46 @@ class YayScalar(Scalarish, AST):
     def resolve(self):
         return self.value
 
-    def append(self, v):
-        self.value = self.value + v
+class YayMultilineScalar(Scalarish, AST):
+
+    chompers = {
+        '>': "chomp_fold",
+        '|': "chomp_literal",
+        '|+': "chomp_keep",
+        '|-': "chomp_strip",
+    }
+
+    def __init__(self, value, mtype):
+        self.__value = value
+        self.mtype = mtype
+        self.chomper = getattr(self, self.chompers[self.mtype])
+
+    @property
+    def value(self):
+        return self.chomper(self.__value)
+
+    @staticmethod
+    def chomp_fold(value):
+        # >
+        return value
+
+    @staticmethod
+    def chomp_literal(value):
+        # |
+        return value
+
+    @staticmethod
+    def chomp_keep(value):
+        # |+
+        return value
+
+    @staticmethod
+    def chomp_strip(value):
+        # |-
+        return value
+
+    def append(self, value):
+        self.__value = self.__value + value
 
 class YayMerged(AST):
     """ Combined scalars and templates """

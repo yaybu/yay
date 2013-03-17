@@ -781,7 +781,9 @@ class TestParser(unittest.TestCase):
           foo bar baz
           quux quuux
         """)
-        self.assertEqual(res, None)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar("foo bar baz\nquux quuux\n")),
+            ]))
 
     def test_fold_breaks(self):
         res = parse("""
@@ -790,7 +792,9 @@ class TestParser(unittest.TestCase):
 
           quux quuux
         """)
-        self.assertEqual(res, None)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar("foo bar baz\nquux quuux\n")),
+            ]))
 
     def test_block_clip(self):
         res = parse("""
@@ -801,7 +805,9 @@ class TestParser(unittest.TestCase):
 
 
         """)
-        self.assertEqual(res, None)
+        self.assertEqual(res, YayDict([
+        ('a', YayScalar("foo bar baz\n\nquux quuux\n")),
+        ]))
 
     def test_block_indents(self):
         res = parse("""
@@ -812,8 +818,13 @@ class TestParser(unittest.TestCase):
             c: x
         d: e
         """)
-        self.assertEqual(res, None)
-
+        self.assertEqual(res, YayDict([
+            ('a', YayDict([
+                ('b', YayScalar("l1\nl2\n")),
+                ('c', YayScalar('x')),
+                ])),
+             ('d', YayScalar('e')),
+             ]))
 
     def test_block_strip(self):
         res = parse("""
@@ -824,7 +835,9 @@ class TestParser(unittest.TestCase):
 
 
         """)
-        self.assertEqual(res, None)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar("foo bar baz\n\nquux quuux")),
+            ]))
 
     def test_block_keep(self):
         res = parse("""
@@ -835,7 +848,9 @@ class TestParser(unittest.TestCase):
 
 
         """)
-        self.assertEqual(res, None)
+        self.assertEqual(res, YayDict([
+            ('a', YayScalar("foo bar baz\n\nquux quuux\n\n\n")),
+            ]))
 
     def test_python_line_continuation(self):
         res = parse(r"""

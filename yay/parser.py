@@ -1082,6 +1082,12 @@ class Parser(object):
         p[0] = ast.Template(p[2])
         anchor(p, 1)
 
+    def p_scalar_multiline(self, p):
+        '''
+        scalar : multiline
+        '''
+        p[0] = ast.YayScalar(p[1].value)
+
     def p_scalar_merge(self, p):
         '''
         scalar : scalar scalar
@@ -1112,16 +1118,19 @@ class Parser(object):
 
     def p_multiline(self, p):
         '''
-        scalar : MULTILINE LINE
+        multiline : MULTILINE VALUE NEWLINE
         '''
-        p[0] = ast.YayScalar(p[2])
+        p[0] = ast.YayMultilineScalar(p[2], p[1].strip())
+        p[0].append(p[3])
+        anchor(p, 1)
 
     def p_multiline_merge(self, p):
         '''
-        scalar : scalar LINE
+        multiline : multiline VALUE NEWLINE
         '''
         p[0] = p[1]
         p[0].append(p[2])
+        p[0].append(p[3])
 
     def p_yaydict_merge(self, p):
         '''

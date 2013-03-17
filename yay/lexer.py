@@ -69,7 +69,6 @@ class Lexer(object):
     tokens = (
         'VALUE',      # represents either a key or value in yamlish
         'MULTILINE',  # the start of a multiline block
-        'LINE',       # part of a value in yamlish when reading blocks
         'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
@@ -257,7 +256,7 @@ class Lexer(object):
         t.lexer.begin("INITIAL")
         return t
 
-    def t_VALUE_LISTVALUE_LDBRACE(self, t):
+    def t_VALUE_LISTVALUE_BLOCK_LDBRACE(self, t):
         """{{"""
         t.lexer.begin("TEMPLATE")
         return t
@@ -269,7 +268,12 @@ class Lexer(object):
         self.lexer.block_substate = t.value.strip()
         return t
 
-    def t_VALUE_LISTVALUE_VALUE(self, t):
+    def t_ANY_WS(self, t):
+        r'[ ]+'
+        if self.at_line_start:
+            return t
+
+    def t_VALUE_LISTVALUE_BLOCK_VALUE(self, t):
         """[^:\{\n]+"""
         return t
 
@@ -279,21 +283,11 @@ class Lexer(object):
         t.type = self.reserved.get(t.value, 'IDENTIFIER')
         return t
 
-    def t_ANY_WS(self, t):
-        r'[ ]+'
-        if self.at_line_start:
-            return t
-
-    def t_BLOCK_LINE(self, t):
-        r""".*\n"""
-        t.lexer.lineno += len(t.value)
-        return t
-
-    def t_LISTVALUE_VALUE_INITIAL_COMMAND_TEMPLATE_newline(self, t):
+    def t_ANY_NEWLINE(self, t):
         r'\n+'
-        t.lexer.lineno += len(t.value)
-        t.type = "NEWLINE"
-        t.lexer.begin("INITIAL")
+        self.lexer.lineno += len(t.value)
+        if self.lexer.lexstate != 'BLOCK':
+            self.lexer.begin("INITIAL")
         return t
 
     def t_ANY_error(self, t):
@@ -323,7 +317,7 @@ class Lexer(object):
 
             token.at_line_start = at_line_start
 
-            if token.type in ("NEWLINE", "MULTILINE", "LINE"):
+            if token.type in ("NEWLINE", "MULTILINE"):
                 at_line_start = True
 
             elif token.type == "WS":
