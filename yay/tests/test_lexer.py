@@ -459,26 +459,36 @@ class TestLexer(unittest.TestCase):
                value('a'), colon, value('b'), newline
         ])
 
-    def test_fold(self):
+    def test_multiline_fold_simple(self):
         self.compare(self._lex("""
         a: >
           foo bar baz
           quux quuux
         """), [
-           value('a'), colon, value('foo bar baz quux quuux\n'), newline,
+           value('a'), colon,
+           t('MULTILINE', '>'),
+           value('foo bar baz'),
+           newline,
+           value('quux quuux'),
+           newline,
            ])
 
-    def test_fold_breaks(self):
+    def test_multiline_fold(self):
         self.compare(self._lex("""
         a: >
           foo bar baz
 
           quux quuux
         """), [
-               value('a'), colon, value('foo bar baz\nquux quuux\n'), newline,
+               value('a'), colon,
+               t('MULTILINE', '>'),
+               value('foo bar baz'),
+               t('NEWLINE', '\n\n'),
+               value('quux quuux'),
+               newline,
                ])
 
-    def test_block_clip(self):
+    def test_multiline_literal(self):
         self.compare(self._lex("""
         a: |
           foo bar baz
@@ -487,10 +497,15 @@ class TestLexer(unittest.TestCase):
 
 
         """), [
-           value('a'), colon, value('foo bar baz\n\nquux quuux\n'), newline,
+           value('a'), colon,
+           t('MULTILINE', '|'),
+           value('foo bar baz'),
+           t('NEWLINE', '\n\n'),
+           value('quux quuux'),
+           t('NEWLINE', '\n\n\n'),
            ])
 
-    def test_block_indents(self):
+    def test_multiline_literal_complex(self):
         self.compare(self._lex("""
         a:
             b: |
@@ -498,9 +513,30 @@ class TestLexer(unittest.TestCase):
                 l2
             c: x
         d: e
-        """), [])
+        """), [
+               value('a'),
+               colon,
+               newline,
+               indent,
+                   value('b'),
+                   colon,
+                   t('MULTILINE', '|'),
+                   value('l1'),
+                   newline,
+                   value('l2'),
+                   newline,
+                   value('c'),
+                   colon,
+                   value('x'),
+                   newline,
+               dedent,
+               value('d'),
+               colon,
+               value('e'),
+               newline,
+               ])
 
-    def test_block_strip(self):
+    def test_multiline_strip(self):
         self.compare(self._lex("""
         a: |-
           foo bar baz
@@ -509,10 +545,16 @@ class TestLexer(unittest.TestCase):
 
 
         """), [
-           value('a'), colon, value('foo bar baz\n\nquux quuux'), newline,
+           value('a'),
+           colon,
+           t('MULTILINE', '|-'),
+           value('foo bar baz'),
+           t('NEWLINE', '\n\n'),
+           value('quux quuux'),
+           t('NEWLINE', '\n\n\n'),
            ])
 
-    def test_block_strip_with_template(self):
+    def test_multiline_strip_with_template(self):
         self.compare(self._lex("""
         a: |-
           foo bar baz
@@ -522,14 +564,15 @@ class TestLexer(unittest.TestCase):
 
         """), [
            value('a'), colon, t('MULTILINE', '|-'),
-           line('foo bar baz\n'),
-           line('\n'),
-           line('quux '),
-           ldbrace, identifier('quuux'), rdbrace, newline,
+           value('foo bar baz'),
+           t('NEWLINE', '\n\n'),
+           value('quux '),
+           ldbrace, identifier('quux'), rdbrace,
+           t('NEWLINE', '\n\n\n'),
            ])
 
 
-    def test_block_keep(self):
+    def test_multiline_keep(self):
         self.compare(self._lex("""
         a: |+
           foo bar baz
@@ -538,7 +581,12 @@ class TestLexer(unittest.TestCase):
 
 
         """), [
-           value('a'), colon, value('foo bar baz\n\nquux quuux\n\n\n'), newline,
+           value('a'), colon,
+           t('MULTILINE', '|+'),
+           value('foo bar baz'),
+           t('NEWLINE', '\n\n'),
+           value('quux quuux'),
+           t('NEWLINE', '\n\n\n'),
            ])
 
     def test_python_line_continuation(self):

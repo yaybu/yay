@@ -1064,7 +1064,7 @@ class YayMultilineScalar(Scalarish, AST):
         excluded from the scalar's content.
         """
 
-        return value
+        return value.rstrip()
 
     def append(self, value):
         self.__value = self.__value + value

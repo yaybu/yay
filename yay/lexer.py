@@ -265,7 +265,11 @@ class Lexer(object):
         """(>|\|[+-]?)[ ]*[\n]+"""
         self.lexer.begin('BLOCK')
         self.lexer.lineno += len(t.value)
-        self.lexer.block_substate = t.value.strip()
+        self.lexer.block_substate = t.value = t.value.strip()
+        return t
+
+    def t_VALUE_LISTVALUE_VALUE(self, t):
+        """[^:\{\n]+"""
         return t
 
     def t_ANY_WS(self, t):
@@ -273,7 +277,7 @@ class Lexer(object):
         if self.at_line_start:
             return t
 
-    def t_VALUE_LISTVALUE_BLOCK_VALUE(self, t):
+    def t_BLOCK_VALUE(self, t):
         """[^:\{\n]+"""
         return t
 
