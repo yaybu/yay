@@ -40,7 +40,11 @@ class Config(ast.Root):
         self.node = node
 
     def add(self, data):
-        raise NotImplementedError()
+        if not isinstance(data, dict):
+            raise ProgrammingError("You must pass a dictionary to Config.add")
+        bound = ast.bind(data)
+        bound.predecessor = self.node
+        self.node = bound
 
     def clear(self):
         self.node = None
