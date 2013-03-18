@@ -14,62 +14,64 @@
 
 from yay.openers import Openers
 from yay.errors import ProgrammingError
+from yay import parser
+from yay import ast
 
 
-class Config(object):
+class Config(ast.Root):
 
     def __init__(self, special_term='yay', searchpath=None, config=None):
-        if not config:
-            config = {}
         self.special_term = special_term
-        self.openers = Openers(searchpath=searchpath, config=config.get("openers", {}))
-        self.clear()
-        self.mapping = None
+        self.openers = Openers(searchpath=searchpath)
+        self.node = None
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri
-
-        stream = self.openers.open(uri)
-        self.load(stream, uri, hasattr(stream, "secret") and stream.secret)
+        return self.load(self.openers.open(uri))
 
     def load(self, stream, name="<Unknown>", secret=False):
         __context__ = "Loading stream %s. secret=%s." % (name, secret)
-
-        l = Loader(stream, name=name, parent=self, secret=secret)
-        data = l.compose(self.mapping)
-        self.mapping = data
+        p = parser.Parser()
+        node = p.parse(stream.read())
+        mda = node
+        while mda.predecessor:
+            mda = mda.predecessor
+        mda = self.node
+        self.node = node
 
     def add(self, data):
         raise NotImplementedError()
 
     def clear(self):
-        self.mapping = None
-        self.definitions = {}
+        self.node = None
 
-    def get(self):
+    def resolve(self):
         __context__ = "Performing full resolve"
-        if not self.mapping:
+        if not self.node:
             return {}
-        return self.mapping.resolve()
+        return self.node.resolve()
+
+    get = resolve
 
     def lookup(self, key):
         """
         Returns an object which can be resolved to a key on the current
         document
         """
-        l = Access(None, BoxingFactory.box(key))
-        l.set_parent(self.mapping)
+        l = ast.Identifier(key)
+        l.parent = self
+        l.anchor = None
         return l
 
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
     c.load_uri(uri)
-    return c.get()
+    return c.resolve()
 
 def load(stream, special_term='yay', secret=False):
     c = Config(special_term)
     c.load(stream, secret)
-    return c.get()
+    return c.resolve()
 
 
