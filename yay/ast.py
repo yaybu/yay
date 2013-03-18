@@ -1582,30 +1582,50 @@ class Comment(AST):
         self.v = v
 
 
-class LazyIterable(Streamish, AST):
+class PythonIterable(Streamish, AST):
 
     def __init__(self, iterable):
         self.iterable = iterable
 
     def as_iterable(self, anchor=None):
         for node in self.iterable:
-            yield bind(node)
+            obj = bind(node)
+            obj.parent = self
+            yield obj
 
 
 class PythonDict(AST):
 
     def __init__(self, dict):
         self.dict = dict
-        self.predecessor = ast.Use
 
     def get(self, key):
         try:
-            return bind(self.dict[key])
+            obj = bind(self.dict[key])
+            obj.parent = self
+            obj.predecessor = LazyPredecessor(self, key)
+            return obj
         except KeyError:
-            raise errors.NoMatching("No key '%s'" % key)
+            pass
+
+        if self.predecessor:
+            try:
+                return self.predecessor.get(key)
+            except errors.NoPredecessor:
+                pass
+        raise errors.NoMatching("No key '%s'" % key)
 
     def as_iterable(self, anchor=None):
-        for key in self.dict.keys():
+        seen = set()
+        try:
+            for key in self.predecessor.as_iterable(anchor):
+                seen.add(key.resolve())
+                yield key
+        except errors.NoPredecessor:
+            pass
+        for key in sorted(self.dict.keys()):
+            if key in seen:
+                continue
             yield YayScalar(key)
 
     def resolve(self):
@@ -1613,8 +1633,8 @@ class PythonDict(AST):
 
 
 bindings = [
-    (inspect.isgenerator,                                        LazyIterable),
-    (lambda v: isinstance(v, list),                              LazyIterable),
+    (inspect.isgenerator,                                        PythonIterable),
+    (lambda v: isinstance(v, list),                              PythonIterable),
     (lambda v: isinstance(v, dict),                              PythonDict),
     (lambda v: isinstance(v, (int, float, basestring, bool)),    YayScalar),
 ]
