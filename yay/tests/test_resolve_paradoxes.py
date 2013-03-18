@@ -108,3 +108,16 @@ class TestResolveParadoxes(unittest.TestCase):
 
         self.assertEqual(t.get("bar").resolve(), 1)
 
+    def test_include_var_changes_in_include(self):
+        t = parse("""
+            lol: foo
+            include lol
+            """,
+            foo="""
+            lol: bar
+            """,
+            bar="""
+            never: ever
+            """)
+
+        self.assertRaises(errors.ParadoxError, t.get, "never")
