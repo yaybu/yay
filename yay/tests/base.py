@@ -29,11 +29,14 @@ class MockRoot(ast.Root):
         p = parser.Parser()
         return p.parse(self.data[path], debug=0)
 
-def parse(value, **kwargs):
+def bare_parse(value):
     import yay.parsetab
     reload(yay.parsetab)
     p = parser.Parser()
-    root = MockRoot(p.parse(value))
+    return p.parse(value)
+
+def parse(value, **kwargs):
+    root = MockRoot(bare_parse(value))
     for k, v in kwargs.items():
         root.add(k, v)
     return root

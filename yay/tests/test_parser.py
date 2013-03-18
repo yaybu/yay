@@ -2,11 +2,9 @@ import unittest
 from yay import parser
 from yay.ast import *
 
-import os
+from .base import bare_parse as parse
 
-def parse(value):
-    p = parser.Parser()
-    return p.parse(value, debug=0)
+import os
 
 class TestParser(unittest.TestCase):
 
