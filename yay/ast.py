@@ -2,13 +2,12 @@ import operator
 from . import errors
 from .openers import Openers
 import re
+import functools
+import inspect
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
 """
-
-import collections
-import functools
 
 class cached(object):
 
@@ -828,7 +827,7 @@ class Call(Proxy, AST):
         return node
 
 
-class CallCallable(Scalarish, AST):
+class CallCallable(Proxy, AST):
 
     allowed = {
         "range": range,
@@ -849,19 +848,11 @@ class CallCallable(Scalarish, AST):
         for k in kwargs:
             k.parent = self
 
-    def as_iterable(self, anchor=None):
-        result = self.resolve()
-        if hasattr(result, "__iter__"):
-            for res in iter(result):
-                # FIXME: THis might be a dict or anything...
-                yield YayScalar(res)
-            return
-        raise errors.TypeError("Expected iterable", anchor=anchor or self.anchor)
-
-    def resolve(self):
+    def expand(self):
         args = [x.resolve() for x in self.args]
         kwargs = dict((k, v.resolve()) for (k, v) in self.kwargs.items())
-        return self.allowed[self.primary.identifier](*args, **kwargs)
+        result = self.allowed[self.primary.identifier](*args, **kwargs)
+        return bind(result)
 
 
 class ArgumentList(AST):
@@ -1589,3 +1580,48 @@ class LambdaForm(AST):
 class Comment(AST):
     def __init__(self, v):
         self.v = v
+
+
+class LazyIterable(Streamish, AST):
+
+    def __init__(self, iterable):
+        self.iterable = iterable
+
+    def as_iterable(self, anchor=None):
+        for node in self.iterable:
+            yield bind(node)
+
+
+class PythonDict(AST):
+
+    def __init__(self, dict):
+        self.dict = dict
+        self.predecessor = ast.Use
+
+    def get(self, key):
+        try:
+            return bind(self.dict[key])
+        except KeyError:
+            raise errors.NoMatching("No key '%s'" % key)
+
+    def as_iterable(self, anchor=None):
+        for key in self.dict.keys():
+            yield YayScalar(key)
+
+    def resolve(self):
+        return dict((k, v.get(key).resolve()) for k in self.dict.keys())
+
+
+bindings = [
+    (inspect.isgenerator,                                        LazyIterable),
+    (lambda v: isinstance(v, list),                              LazyIterable),
+    (lambda v: isinstance(v, dict),                              PythonDict),
+    (lambda v: isinstance(v, (int, float, basestring, bool)),    YayScalar),
+]
+
+def bind(v):
+    for detector, wrapper in bindings:
+        if detector(v):
+            return wrapper(v)
+    raise error.TypeError("Encountered unbindable object")
+
