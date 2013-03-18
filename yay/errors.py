@@ -79,6 +79,11 @@ class EvaluationError(LanguageError):
 class TypeError(LanguageError):
     pass
 
+class ParadoxError(EvaluationError):
+    """
+    Raised when an include violates causality
+    """
+
 class NoMatching(EvaluationError):
     pass
 

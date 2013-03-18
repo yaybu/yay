@@ -7,6 +7,30 @@ import re
 The ``yay.ast`` module contains the classes that make up the graph.
 """
 
+import collections
+import functools
+
+class cached(object):
+
+    def __init__(self, func):
+        self.func = func
+        self.cache = None
+
+    def __call__(descriptor, self):
+        if not hasattr(self, "cache") or not self.cache:
+            can_cache, result = descriptor.func(self)
+            if not can_cache:
+                return result
+            self.cache = result
+        return self.cache
+
+    def __repr__(self):
+        return self.func.__doc__
+
+    def __get__(self, obj, objtype):
+        return functools.partial(self.__call__, obj)
+
+
 class AST(object):
 
     lineno = 0
@@ -292,6 +316,37 @@ class Proxy(object):
         return self.expand().resolve()
 
 
+class Tripwire(Proxy, AST):
+
+    def __init__(self):
+        self.node = None
+        self.expressions = []
+        self.expanding = False
+
+    def add_tripwire(self, expression, expected):
+        self.expressions.append((expression, expected))
+
+    def get_callable(self, key):
+        p = self.node
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except errors.NoMatching:
+                    pass
+            p = p.predecessor
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+    def expand(self):
+        if not self.expanding:
+            self.expanding = True
+            for expr, expected in self.expressions:
+                if expr.resolve() != expected:
+                    raise errors.ParadoxError("Inconsistent configuration detected", anchor=self.anchor)
+            self.expanding = False
+        return self.node
+
+
 class Root(Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
@@ -550,8 +605,11 @@ class Not(Scalarish, AST):
 class ConditionalExpression(Proxy, AST):
     def __init__(self, or_test, if_clause, else_clause):
         self.or_test = or_test
+        or_test.parent = self
         self.if_clause = if_clause
+        if_clause.parent = self
         self.else_clause = else_clause
+        else_clause.parent = self
 
     def expand(self):
         if self.or_test.resolve():
@@ -622,14 +680,23 @@ class LazyPredecessor(Proxy, AST):
         return predecessor.get(key)
 
     def expand(self):
-        if not self.node.predecessor:
-            raise errors.NoPredecessor
-        return self.node.predecessor.expand().get(self.identifier)
+        if self.node.predecessor:
+            parent_pred = self.node.predecessor.expand()
+            try:
+                pred = parent_pred.get(self.identifier)
+            except errors.NoMatching:
+                raise errors.NoPredecessor
+            return pred.expand()
+        raise errors.NoPredecessor
 
 class UseMyPredecessorStandin(Proxy, AST):
     def __init__(self, node):
         # This is a sideways reference! No parenting...
         self.node = node
+
+    @property
+    def predecessor(self):
+        return self.node.predecessor
 
     def get(self, key):
         predecessor = self.expand()
@@ -772,7 +839,7 @@ class CallCallable(Scalarish, AST):
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
         if not self.primary.identifier in self.allowed:
-            raise errors.NoMatching()
+            raise errors.NoMatching("Could not find '%s'" % self.primary.identifier)
 
         self.args = args
         for a in args:
@@ -912,10 +979,7 @@ class YayDict(AST):
         keys = set(self.values.keys())
         if self.predecessor:
             try:
-                expanded = self.predecessor.expand()
-                if not hasattr(expanded, "keys"):
-                    self.error("Mapping cannot mask or replace field with same name and different type")
-                keys.update(expanded.keys())
+                keys.update(k.resolve() for k in self.predecessor.as_iterable(anchor=self.anchor))
             except errors.NoPredecessor:
                 pass
         return sorted(list(keys))
@@ -923,13 +987,12 @@ class YayDict(AST):
     def get(self, key):
         if key in self.values:
             return self.values[key]
-        if not self.predecessor:
-            #FIXME: I would dearly love to get rid of this check and have every node have a LazyPredecessor
-            raise errors.NoMatching("No such key '%s'" % key)
-        try:
-            return self.predecessor.expand().get(key)
-        except errors.NoPredecessor:
-            raise errors.NoMatching("Key '%s' not found" % key)
+        if self.predecessor:
+            try:
+                return self.predecessor.expand().get(key)
+            except errors.NoPredecessor:
+                pass
+        raise errors.NoMatching("Key '%s' not found" % key)
 
     def as_iterable(self, anchor=None):
         for k in self.keys():
@@ -937,15 +1000,8 @@ class YayDict(AST):
 
     def resolve(self):
         d = {}
-        try:
-            if self.predecessor:
-                d = self.predecessor.resolve()
-        except errors.NoPredecessor:
-            d = {}
-
-        for k, v in self.values.items():
-            d[k] = v.resolve()
-
+        for key in self.keys():
+            d[key] = self.get(key).resolve()
         return d
 
 class YayExtend(Streamish, AST):
@@ -1144,14 +1200,34 @@ class Include(Proxy, AST):
         self.expr = expr
         expr.parent = self
         self.detector = []
+        self.expanding = False
 
     def get_callable(self, key):
-        expanded = self.expand()
-        if hasattr(expanded, "get_callable"):
-            return expanded.get_callable(key)
-        raise errors.NoMatching("Could not find a macro called 'SomeMacro'")
+        try:
+            expanded = self.expand()
+        except errors.NoPredecessor:
+            raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+        p = expanded
+        while p:
+            if hasattr(p, "get_callable"):
+                try:
+                    return p.get_callable(key)
+                except errors.NoMatching:
+                    pass
+            p = p.predecessor
+
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get(self, key):
+        if self.expanding:
+            if not self.predecessor:
+                raise errors.NoMatching("No such key '%s'" % key)
+            try:
+                return self.predecessor.get(key)
+            except errors.NoPredecessor:
+                raise errors.NoMatching("No such key '%s'" % key)
+
         if key in self.detector:
             raise errors.NoMatching("'%s' not found" % key)
         try:
@@ -1160,11 +1236,26 @@ class Include(Proxy, AST):
         finally:
             self.detector.remove(key)
 
+    @cached
     def expand(self):
-        expanded = self.get_root().parse(self.expr.resolve())
+        if self.expanding:
+            return False, self.predecessor
+
+        self.expanding = True
+        expr = self.expr.resolve()
+        self.expanding = False
+
+        expanded = self.get_root().parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
-        return expanded
+
+        t = Tripwire()
+        t.anchor = self.anchor
+        t.add_tripwire(self.expr, expr)
+        t.node = expanded
+
+        return True, t
+
 
 class Search(AST):
 
@@ -1190,7 +1281,6 @@ class Set(Proxy, AST):
 
 
 class If(Proxy, AST):
-    # FIXME: This implementation ignores the elifs...
 
     """
     An If block has a guard condition. If that condition is True the
@@ -1204,63 +1294,48 @@ class If(Proxy, AST):
     """
 
     def __init__(self, condition, result, elifs=None, else_=None):
-        self.condition = condition
-        condition.parent = self
-        self.result = result
-        result.parent = self
-        self.elifs = elifs
+        self.elifs = ElifList(Elif(condition, result))
+        self.elifs.parent = self
+        self.elifs.predecessor = UseMyPredecessorStandin(self)
+
         if elifs:
-            elifs.parent = self
+            for elif_ in elifs.elifs:
+                self.elifs.append(elif_)
+
         self.else_ = else_
         if else_:
             else_.parent = self
+            else_.predecessor = UseMyPredecessorStandin(self)
+
         self.passthrough_mode = False
 
-    def dynamic(self):
-        if self.condition.dynamic():
-            return True
-        if self.condition.resolve():
-            if self.result.dynamic():
-                return True
-        else:
-            if self.else_.dynamic():
-                return True
-        return False
-
-    def simplify(self):
-        if self.condition.dynamic():
-            return If(self.condition.simplify(), self.result.simplify(), else_=self.else_.simplify())
-        if self.condition.resolve():
-            return self.result.simplify()
-        else:
-            return self.else_.simplify()
-
-    def get(self, key):
-        return self.expand().get(key)
-
+    @cached
     def expand(self):
         if self.passthrough_mode:
-            return self.predecessor.expand()
+            return False, self.predecessor.expand()
 
-        self.passthrough_mode = True
-        cond = self.condition.resolve()
-        self.passthrough_mode = False
+        t = Tripwire()
+        t.anchor = self.anchor
 
-        if cond:
-            return self.result.expand()
-
-        if self.elifs:
-            for elif_ in self.elifs.elifs:
-                self.passthrough_mode = True
+        for elif_ in self.elifs.elifs:
+            self.passthrough_mode = True
+            try:
                 cond = elif_.condition.resolve()
+            finally:
                 self.passthrough_mode = False
-                if cond:
-                    return elif_.node.expand()
+
+            t.add_tripwire(elif_.condition, cond)
+
+            if cond:
+                t.node = elif_.node.expand()
+                return True, t
 
         if self.else_ is not None:
-            return self.else_.expand()
+            t.node = self.else_.expand()
+            return True, t
 
-        return self.predecessor.expand()
+        t.node = self.predecessor.expand()
+        return True, t
 
 
 class ElifList(AST):
@@ -1270,14 +1345,17 @@ class ElifList(AST):
 
     def append(self, elif_):
         elif_.parent = self
+        elif_.predecessor = UseMyPredecessorStandin(self)
         self.elifs.append(elif_)
 
-class Elif(AST):
+class Elif(Tripwire, AST):
     def __init__(self, condition, node):
         self.condition = condition
         condition.parent = self
+        condition.predecessor = UseMyPredecessorStandin(self)
         self.node = node
         node.parent = self
+        node.predecessor = UseMyPredecessorStandin(self)
 
 class Select(Proxy, AST):
 
@@ -1286,13 +1364,28 @@ class Select(Proxy, AST):
         expr.parent = self
         self.cases = cases
         cases.parent = self
+        self.expanding = False
 
+    @cached
     def expand(self):
+        if self.expanding:
+            return False, self.predecessor
+
+        self.expanding = True
         value = self.expr.resolve()
+        self.expanding = False
+
+        t = Tripwire()
+        t.add_tripwire(self.expr, value)
+        t.anchor = self.anchor
+
         for case in self.cases.cases:
             if case.key == value:
-                return case.node.expand()
+                t.node = case.node.expand()
+                return True, t
+
         raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
+
 
 class CaseList(AST):
     def __init__(self, *cases):
@@ -1389,7 +1482,12 @@ class Template(Scalarish, AST):
         # Otherwise defer to Scalarish behaviour
         if len(self.value) == 1:
             return self.value[0].as_iterable()
-        super(Template, self).as_iterator(anchor)
+        return super(Template, self).as_iterator(anchor)
+
+    def get(self, key):
+        if len(self.value) == 1:
+            return self.value[0].get(key)
+        return super(Template, self).get(key)
 
     def resolve(self):
         if len(self.value) == 1:
