@@ -1629,7 +1629,7 @@ class PythonDict(AST):
             yield YayScalar(key)
 
     def resolve(self):
-        return dict((k, v.get(key).resolve()) for k in self.dict.keys())
+        return dict((k, self.get(k).resolve()) for k in self.dict.keys())
 
 
 bindings = [
