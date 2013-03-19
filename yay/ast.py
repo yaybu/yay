@@ -1617,19 +1617,20 @@ class PythonDict(AST):
 
     def as_iterable(self, anchor=None):
         seen = set()
-        try:
-            for key in self.predecessor.as_iterable(anchor):
-                seen.add(key.resolve())
-                yield key
-        except errors.NoPredecessor:
-            pass
+        if self.predecessor:
+            try:
+                for key in self.predecessor.as_iterable(anchor):
+                    seen.add(key.resolve())
+                    yield key
+            except errors.NoPredecessor:
+                pass
         for key in sorted(self.dict.keys()):
             if key in seen:
                 continue
             yield YayScalar(key)
 
     def resolve(self):
-        return dict((k, self.get(k).resolve()) for k in self.dict.keys())
+        return dict((k.resolve(), self.get(k.resolve()).resolve()) for k in self.as_iterable())
 
 
 bindings = [
