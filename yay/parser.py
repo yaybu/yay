@@ -21,15 +21,12 @@ from . import ast
 import warnings
 
 class Anchor(object):
-    def __init__(self, p, i):
+    def __init__(self, source, p, i):
+        self.source = source
         self.lineno = p.lineno(i)
         self.linespan = p.linespan(i)
         self.lexpos = p.lexpos(i)
         self.lexspan = p.lexspan(i)
-
-def anchor(p, i):
-    """ Set the position of p[0] from symbol i """
-    p[0].anchor = Anchor(p, i)
 
 class ParseError(Exception):
 
@@ -52,8 +49,9 @@ class Parser(object):
             tabmodule='yay.parsetab',
             outputdir=os.path.dirname(__file__))
 
-    def parse(self, value, tracking=True, debug=False):
+    def parse(self, value, source="<unknown>", tracking=True, debug=False):
         self.errors = 0
+        self.source = source
         rv = self.parser.parse(value,
                                  lexer=self.lexer(),
                                  tracking=tracking,
@@ -61,6 +59,10 @@ class Parser(object):
         if self.errors > 0:
             raise SyntaxError
         return rv
+
+    def anchor(self, p, i):
+        """ Set the position of p[0] from symbol i """
+        p[0].anchor = Anchor(self.source, p, i)
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html
@@ -75,7 +77,7 @@ class Parser(object):
         atom : identifier
         '''
         p[0] = p[1]
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_atom_literal(self, p):
         '''
@@ -84,7 +86,7 @@ class Parser(object):
              | FLOAT
         '''
         p[0] = ast.Literal(p[1])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_atom_enclosure(self, p):
         '''
@@ -130,7 +132,7 @@ class Parser(object):
             p[0] = ast.ParentForm()
         else:
             p[0] = ast.ParentForm(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_list_display(self, p):
         '''
@@ -155,14 +157,14 @@ class Parser(object):
             p[0] = ast.ListDisplay()
         else:
             p[0] = ast.ListDisplay(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_list_comprehension(self, p):
         '''
         list_comprehension : expression list_for
         '''
         p[0] = ast.ListComprehension(p[1], p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_list_for(self, p):
         '''
@@ -173,7 +175,7 @@ class Parser(object):
             p[0] = ast.ListFor(p[2], p[4])
         else:
             p[0] = ast.ListFor(p[2], p[4], p[5])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_old_expression_list(self, p):
         '''
@@ -244,14 +246,14 @@ class Parser(object):
             p[0] = ast.CompIf(p[2])
         else:
             p[0] = ast.CompIf(p[2], p[3])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_generator_expression(self, p):
         '''
         generator_expression : "(" expression comp_for ")"
         '''
         p[0] = ast.GeneratorExpression(p[2], p[3])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_dict_display(self, p):
         '''
@@ -263,7 +265,7 @@ class Parser(object):
             p[0] = ast.DictDisplay()
         else:
             p[0] = ast.DictDisplay(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_key_datum_list(self, p):
         '''
@@ -281,14 +283,14 @@ class Parser(object):
         key_datum : expression ":" expression
         '''
         p[0] = ast.KeyDatum(p[1], p[3])
-        anchor(p, 2)
+        self.anchor(p, 2)
 
     def p_dict_comprehension(self, p):
         '''
         dict_comprehension : expression ":" expression comp_for
         '''
         p[0] = ast.DictComprehension(p[1], p[3], p[4])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_set_display(self, p):
         '''
@@ -296,14 +298,14 @@ class Parser(object):
                     | "{" comprehension "}"
         '''
         p[0] = ast.SetDisplay(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_string_conversion(self, p):
         '''
         string_conversion : "`" expression_list "`"
         '''
         p[0] = ast.StringConversion(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_primary(self, p):
         '''
@@ -341,14 +343,14 @@ class Parser(object):
         simple_slicing : primary "[" short_slice "]"
         '''
         p[0] = ast.SimpleSlicing(p[1], p[3])
-        anchor(p, 2)
+        self.anchor(p, 2)
 
     def p_extended_slicing(self, p):
         '''
         extended_slicing : primary "[" slice_list "]"
         '''
         p[0] = ast.ExtendedSlicing(p[1], p[3])
-        anchor(p, 2)
+        self.anchor(p, 2)
 
     def p_slice_list(self, p):
         '''
@@ -393,7 +395,7 @@ class Parser(object):
         short_slice : ":" upper_bound
         '''
         p[0] = ast.Slice(None, p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_short_slice_both(self, p):
         '''
@@ -494,7 +496,7 @@ class Parser(object):
         kwarg : identifier "=" expression
         '''
         p[0] = ast.Kwarg(p[1], p[3])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_power(self, p):
         '''
@@ -530,12 +532,12 @@ class Parser(object):
         else:
             if p[1] == '-':
                 p[0] = ast.UnaryMinus(p[2])
-                anchor(p, 1)
+                self.anchor(p, 1)
             elif p[1] == '+':
                 p[0] == p[2]
             elif p[1] == '~':
                 p[0] = ast.Invert(p[2])
-                anchor(p, 1)
+                self.anchor(p, 1)
 
     def p_m_expr(self, p):
         '''
@@ -668,7 +670,7 @@ class Parser(object):
             p[0].anchor = p[1].anchor
         else:
             p[0] = ast.Not(p[2])
-            anchor(p, 1)
+            self.anchor(p, 1)
 
     def p_conditional_expression(self, p):
         '''
@@ -750,7 +752,7 @@ class Parser(object):
         identifier : IDENTIFIER
         '''
         p[0] = ast.Identifier(p[1])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_target(self, p):
         '''
@@ -859,14 +861,14 @@ class Parser(object):
         include_directive : INCLUDE expression_list NEWLINE
         '''
         p[0] = ast.Include(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_search_directive(self, p):
         '''
         search_directive : SEARCH expression_list NEWLINE
         '''
         p[0] = ast.Search(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_create_directive(self, p):
         '''
@@ -885,7 +887,7 @@ class Parser(object):
         call_directive : CALL target_list ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.CallDirective(p[2], p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_for_directive(self, p):
         '''
@@ -896,42 +898,42 @@ class Parser(object):
             p[0] = ast.For(p[2], p[4], p[8])
         else:
             p[0] = ast.For(p[2], p[4], p[10], p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_set_directive(self, p):
         '''
         set_directive : SET target_list "=" expression_list NEWLINE
         '''
         p[0] = ast.Set(p[2], p[4])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_if_directive_plain(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_if_directive_else(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[6], else_=p[12])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_if_directive_elif(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list
         '''
         p[0] = ast.If(p[2], p[6], p[8])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_if_directive_else_elif(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[6], p[8], p[13])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_elif_list(self, p):
         '''
@@ -950,14 +952,14 @@ class Parser(object):
         elif : ELIF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.Elif(p[2], p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_select_directive(self, p):
         '''
         select_directive : SELECT expression_list ":" NEWLINE INDENT case_list DEDENT
         '''
         p[0] = ast.Select(p[2], p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_case_list(self, p):
         '''
@@ -976,14 +978,14 @@ class Parser(object):
         case_block : key NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.Case(p[1], p[4])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_stanza_VALUE(self, p):
         '''
         stanza : VALUE NEWLINE
         '''
         p[0] = p[1]
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_stanza_COMMENT(self, p):
         '''
@@ -1017,7 +1019,7 @@ class Parser(object):
         stanzas : stanza stanza
         '''
         p[0] = ast.Stanzas(p[1], p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_stanzas_merge(self, p):
         '''
@@ -1036,7 +1038,7 @@ class Parser(object):
         key, value = p[2].values.items()[0]
         extend = ast.YayExtend(value)
         p[0] = ast.YayDict([(key, extend)])
-        anchor(p, 1)
+        self.anchor(p, 1)
         extend.anchor = p[0].anchor
 
     def p_configure(self, p):
@@ -1053,21 +1055,21 @@ class Parser(object):
         scalar : EMPTYDICT
         '''
         p[0] = ast.YayDict()
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_scalar_emptylist(self, p):
         '''
         scalar : EMPTYLIST
         '''
         p[0] = ast.YayList()
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_scalar_value(self, p):
         '''
         scalar : VALUE
         '''
         p[0] = ast.YayScalar(p[1])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_key(self, p):
         '''
@@ -1080,7 +1082,7 @@ class Parser(object):
         scalar : LDBRACE expression_list RDBRACE
         '''
         p[0] = ast.Template(p[2])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_scalar_multiline(self, p):
         '''
@@ -1107,14 +1109,14 @@ class Parser(object):
         yaydict : key scalar NEWLINE
         '''
         p[0] = ast.YayDict([(p[1], p[2])])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_yaydict_keystanza(self, p):
         '''
         yaydict : key NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.YayDict([(p[1], p[4])])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_multiline(self, p):
         '''
@@ -1122,7 +1124,7 @@ class Parser(object):
         '''
         p[0] = ast.YayMultilineScalar(p[2], p[1].strip())
         p[0].append(p[3])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_multiline_merge(self, p):
         '''
@@ -1144,21 +1146,21 @@ class Parser(object):
         listitem : HYPHEN scalar NEWLINE
         '''
         p[0] = p[2]
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_listitem_key_newline(self, p):
         '''
         listitem : HYPHEN key NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.YayDict([(p[2], p[5])])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_listitem_key_scalar(self, p):
         '''
         listitem : HYPHEN key scalar NEWLINE
         '''
         p[0] = ast.YayDict([(p[2], p[3])])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_listitem_dict(self, p):
         '''
@@ -1166,7 +1168,7 @@ class Parser(object):
         '''
         p[0] = ast.YayDict([(p[2], p[3])])
         p[0].merge(p[6])
-        anchor(p, 1)
+        self.anchor(p, 1)
 
     def p_yaylist(self, p):
         '''

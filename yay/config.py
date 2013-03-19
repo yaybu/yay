@@ -27,22 +27,24 @@ class Config(ast.Root):
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri
-        return self.load(self.openers.open(uri))
+        return self.load(self.openers.open(uri)), uri
 
     def load(self, stream, name="<Unknown>", secret=False):
         __context__ = "Loading stream %s. secret=%s." % (name, secret)
         p = parser.Parser()
-        node = p.parse(stream.read())
+        node = p.parse(stream.read(), source=name)
+        node.parent = self
         mda = node
         while mda.predecessor:
             mda = mda.predecessor
-        mda = self.node
+        mda.predecessor = self.node
         self.node = node
 
     def add(self, data):
         if not isinstance(data, dict):
             raise ProgrammingError("You must pass a dictionary to Config.add")
         bound = ast.bind(data)
+        bound.parent = self
         bound.predecessor = self.node
         self.node = bound
 
