@@ -972,6 +972,26 @@ class TestInclude(unittest.TestCase):
             """)
         self.assertEqual(res['lol'], 'it works')
 
+    def test_multiple_lazy_includes(self):
+        res = resolve("""
+            include foo
+            include "magic_1_1"
+            include "magic_1_2"
+            """,
+            magic_1_1="""
+            foo: lol_1
+            """,
+            magic_1_2="""
+            foo: lol_2
+            """,
+            lol_1="""
+            bar: one
+            """,
+            lol_2="""
+            bar: two
+            """)
+        self.assertEqual(res['bar'], 'two')
+
 
 class TestSelect(unittest.TestCase):
 
