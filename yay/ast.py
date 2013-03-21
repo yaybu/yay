@@ -88,7 +88,7 @@ class AST(object):
             for line in _yield_graph(k, v):
                 yield line
 
-        if self.predecessor:
+        if self.predecessor and not isinstance(self.predecessor, NoPredecessorStandin):
             yield '%s -> %s [label="predecessor",style=dotted];' % (id(self), id(self.predecessor))
             for node in self.predecessor.as_digraph(visited):
                 yield node
@@ -1613,7 +1613,7 @@ class PythonDict(AST):
             return self.predecessor.get(key)
         except errors.NoPredecessor:
             pass
- 
+
         raise errors.NoMatching("No key '%s'" % key)
 
     def as_iterable(self, anchor=None):
