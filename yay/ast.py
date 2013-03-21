@@ -1123,7 +1123,7 @@ class YayMultilineScalar(Scalarish, AST):
     def append(self, value):
         self.__value = self.__value + value
 
-class YayMerged(AST):
+class YayMerged(Scalarish, AST):
     """ Combined scalars and templates """
 
     def __init__(self, *v):

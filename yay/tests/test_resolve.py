@@ -239,6 +239,13 @@ class TestTemplate(unittest.TestCase):
           "doug and steve!"
           )
 
+    def test_multiple_expressions(self):
+        t = parse("""
+            sitename: example.com
+            log_location: /var/log/{{ sitename }}
+            """)
+        self.assertEqual(t.get("log_location").as_string(), "/var/log/example.com")
+
 
 class TestIdentifier(unittest.TestCase):
 
