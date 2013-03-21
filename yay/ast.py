@@ -350,10 +350,13 @@ class Root(Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
     """
-    def __init__(self, node):
+    def __init__(self, node=None):
         self.openers = Openers(searchpath=[])
-        self.node = node
-        node.parent = self
+        self.node = NoPredecessorStandin()
+        if node:
+            node.predecessor = self.node
+            self.node = node
+            node.parent = self
 
     def as_digraph(self, visited=None):
         visited = visited or []
@@ -704,9 +707,16 @@ class UseMyPredecessorStandin(Proxy, AST):
         return predecessor.get(key)
 
     def expand(self):
-        if not self.node.predecessor:
-            raise errors.NoPredecessor
         return self.node.predecessor.expand()
+
+
+class NoPredecessorStandin(Proxy, AST):
+
+    predecessor = None
+
+    def expand(self):
+        raise errors.NoPredecessor("Node has no predecessor")
+
 
 class Subscription(Proxy, AST):
     def __init__(self, primary, *expression_list):
@@ -955,7 +965,7 @@ class YayDict(AST):
         self.values[k] = v
 
         # Respect any existing predecessors rather than blindly settings v.predecessor
-        while v.predecessor and not isinstance(v.predecessor, LazyPredecessor):
+        while v.predecessor and not isinstance(v.predecessor, (NoPredecessorStandin, LazyPredecessor)):
             v = v.predecessor
             v.parent = self
         v.predecessor = predecessor
@@ -968,21 +978,19 @@ class YayDict(AST):
 
     def keys(self):
         keys = set(self.values.keys())
-        if self.predecessor:
-            try:
-                keys.update(k.resolve() for k in self.predecessor.as_iterable(anchor=self.anchor))
-            except errors.NoPredecessor:
-                pass
+        try:
+            keys.update(k.resolve() for k in self.predecessor.as_iterable(anchor=self.anchor))
+        except errors.NoPredecessor:
+            pass
         return sorted(list(keys))
 
     def get(self, key):
         if key in self.values:
             return self.values[key]
-        if self.predecessor:
-            try:
-                return self.predecessor.expand().get(key)
-            except errors.NoPredecessor:
-                pass
+        try:
+            return self.predecessor.expand().get(key)
+        except errors.NoPredecessor:
+            pass
         raise errors.NoMatching("Key '%s' not found" % key)
 
     def as_iterable(self, anchor=None):
@@ -1001,12 +1009,11 @@ class YayExtend(Streamish, AST):
         value.parent = self
 
     def as_iterable(self, anchor=None):
-        if self.predecessor:
-            try:
-                for node in self.predecessor.as_iterable(anchor or self.anchor):
-                    yield node
-            except errors.NoPredecessor:
-                pass
+        try:
+            for node in self.predecessor.as_iterable(anchor or self.anchor):
+                yield node
+        except errors.NoPredecessor:
+            pass
 
         for node in self.value.as_iterable(anchor or self.anchor):
             yield node
@@ -1142,7 +1149,7 @@ class Stanzas(Proxy, AST):
             self.append(s)
 
     def append(self, stanza):
-        stanza.predecessor = self.value
+        stanza.predecessor = self.value or NoPredecessorStandin()
         stanza.parent = self
         self.value = stanza
 
@@ -1168,7 +1175,7 @@ class Directives(Proxy, AST):
 
     def append(self, directive):
         directive.parent = self
-        directive.predecessor = self.value
+        directive.predecessor = self.value or NoPredecessorStandin()
         self.value = directive
 
     def get_callable(self, key):
@@ -1212,8 +1219,6 @@ class Include(Proxy, AST):
 
     def get(self, key):
         if self.expanding:
-            if not self.predecessor:
-                raise errors.NoMatching("No such key '%s'" % key)
             try:
                 return self.predecessor.get(key)
             except errors.NoPredecessor:
@@ -1266,8 +1271,6 @@ class Set(Proxy, AST):
         self.expr = expr
 
     def expand(self):
-        if not self.predecessor:
-            raise errors.NoPredecessor
         return self.predecessor
 
 
@@ -1412,8 +1415,6 @@ class Macro(Proxy, AST):
         return self.expand().get(key)
 
     def expand(self):
-        if not self.predecessor:
-            raise errors.NoPredecessor()
         return self.predecessor.expand()
 
 class CallDirective(Proxy, AST):
@@ -1608,22 +1609,22 @@ class PythonDict(AST):
         except KeyError:
             pass
 
-        if self.predecessor:
-            try:
-                return self.predecessor.get(key)
-            except errors.NoPredecessor:
-                pass
+        try:
+            return self.predecessor.get(key)
+        except errors.NoPredecessor:
+            pass
+ 
         raise errors.NoMatching("No key '%s'" % key)
 
     def as_iterable(self, anchor=None):
         seen = set()
-        if self.predecessor:
-            try:
-                for key in self.predecessor.as_iterable(anchor):
-                    seen.add(key.resolve())
-                    yield key
-            except errors.NoPredecessor:
-                pass
+        try:
+            for key in self.predecessor.as_iterable(anchor):
+                seen.add(key.resolve())
+                yield key
+        except errors.NoPredecessor:
+            pass
+
         for key in sorted(self.dict.keys()):
             if key in seen:
                 continue
@@ -1646,3 +1647,5 @@ def bind(v):
             return wrapper(v)
     raise error.TypeError("Encountered unbindable object")
 
+
+AST.predecessor = NoPredecessorStandin()

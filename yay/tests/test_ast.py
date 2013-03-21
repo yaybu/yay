@@ -132,6 +132,7 @@ class TestYayList(unittest.TestCase):
 class TestYayDict(unittest.TestCase):
     def test_resolve(self):
         y = YayDict([("a", Literal(1))])
+        y.anchor = Mock()
         self.assertEqual(y.resolve(), {"a": 1})
 
     def test_get(self):
