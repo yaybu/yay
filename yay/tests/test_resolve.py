@@ -866,6 +866,31 @@ class TestMacroCall(unittest.TestCase):
             {"SomeOtherItem": {"name": "foobar"}},
             ])
 
+    def test_macro_call_within_loop(self):
+        res = resolve("""
+            macro SomeMacro:
+                - SomeItem:
+                    name: {{ name }}
+                - SomeOtherItem:
+                    name: {{ name }}
+
+            names:
+                - foo
+                - bar
+
+            extend resources:
+                for name in names:
+                    call SomeMacro:
+                        name: {{ name }}
+            """)
+
+        self.assertEqual(res["resources"], [
+            {"SomeItem": {"name": "foo"}},
+            {"SomeOtherItem": {"name": "foo"}},
+            {"SomeItem": {"name": "bar"}},
+            {"SomeOtherItem": {"name": "bar"}},
+        ])
+
 
 class TestExtend(unittest.TestCase):
 
