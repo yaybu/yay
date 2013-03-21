@@ -937,6 +937,17 @@ class TestMacroCall(unittest.TestCase):
             {"SomeItem": {"name": "hoju"}},
         ])
 
+    def test_mapping_macro(self):
+        res = resolve("""
+            macro SomeMacro:
+                SomeKey: {{ some_value }}
+
+            call SomeMacro:
+                some_value: foo
+            """)
+
+        self.assertEqual(res["SomeKey"], "foo")
+
 class TestExtend(unittest.TestCase):
 
     def test_simple_extend(self):
