@@ -164,11 +164,6 @@ class TestFor(unittest.TestCase):
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a'])
 
-class TestTemplate(unittest.TestCase):
-    def test_resolve(self):
-        t = Template(Literal('a'), Literal('b'))
-        self.assertEqual(t.resolve(), 'ab')
-
 class TestContext(unittest.TestCase):
 
     def test_get_context_hit(self):

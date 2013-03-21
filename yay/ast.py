@@ -701,10 +701,10 @@ class UseMyPredecessorStandin(Proxy, AST):
         return self.node.predecessor
 
     def get(self, key):
-        predecessor = self.expand()
-        if not predecessor:
+        try:
+            return self.expand().get(key)
+        except NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
-        return predecessor.get(key)
 
     def expand(self):
         return self.node.predecessor.expand()
@@ -749,7 +749,7 @@ class SimpleSlicing(Streamish, AST):
         self.short_slice = short_slice
         short_slice.parent = self
 
-    def as_iterable(self):
+    def as_iterable(self, anchor=None):
         lower_bound = self.short_slice.lower_bound.resolve()
         upper_bound = self.short_slice.upper_bound.resolve()
         stride = self.short_slice.stride.resolve()
@@ -777,7 +777,7 @@ class ExtendedSlicing(Streamish, AST):
         if len (self.slice_list.slice_list) > 1:
             raise errors.SyntaxError("Only a single slice at a time is supported", anchor=self.anchor)
 
-    def as_iterable(self):
+    def as_iterable(self, anchor=None):
         short_slice = self.slice_list.slice_list[0]
 
         lower_bound = short_slice.lower_bound.resolve()
@@ -1411,9 +1411,6 @@ class Macro(Proxy, AST):
             return self
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
-    def get(self, key):
-        return self.expand().get(key)
-
     def expand(self):
         return self.predecessor.expand()
 
@@ -1463,28 +1460,15 @@ class For(Streamish, AST):
                 yield node
 
 
-class Template(Scalarish, AST):
-    def __init__(self, *value):
-        self.value = list(value)
-        for v in self.value:
-            v.parent = self
+class Template(Proxy, AST):
 
-    def as_iterable(self, anchor=None):
-        # If template only contains one item it may be iterable - let it try
-        # Otherwise defer to Scalarish behaviour
-        if len(self.value) == 1:
-            return self.value[0].as_iterable()
-        return super(Template, self).as_iterator(anchor)
+    def __init__(self, value):
+        self.value = value
+        value.parent = self
 
-    def get(self, key):
-        if len(self.value) == 1:
-            return self.value[0].get(key)
-        return super(Template, self).get(key)
+    def expand(self):
+        return self.value
 
-    def resolve(self):
-        if len(self.value) == 1:
-            return self.value[0].resolve()
-        return ''.join(str(v.resolve()) for v in self.value)
 
 class Context(Proxy, AST):
 
@@ -1516,8 +1500,8 @@ class ListComprehension(Streamish, AST):
         self.list_for = list_for
         list_for.parent = self
 
-    def as_iterable(self):
-        for node in self.list_for.expressions.as_iterable():
+    def as_iterable(self, anchor=None):
+        for node in self.list_for.expressions.as_iterable(anchor or self.anchor):
             ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
             ctx.anchor = self.anchor
             ctx.parent = self
@@ -1619,7 +1603,7 @@ class PythonDict(AST):
     def as_iterable(self, anchor=None):
         seen = set()
         try:
-            for key in self.predecessor.as_iterable(anchor):
+            for key in self.predecessor.as_iterable(anchor or self.anchor):
                 seen.add(key.resolve())
                 yield key
         except errors.NoPredecessor:
