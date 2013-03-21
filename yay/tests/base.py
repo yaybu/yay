@@ -30,8 +30,11 @@ class MockRoot(ast.Root):
         return p.parse(self.data[path], debug=0)
 
 def bare_parse(value):
-    import yay.parsetab
-    reload(yay.parsetab)
+    try:
+        import yay.parsetab
+        reload(yay.parsetab)
+    except ImportError:
+        pass
     p = parser.Parser()
     return p.parse(value)
 
