@@ -257,11 +257,19 @@ class Streamish(object):
 
     def __init__(self):
         self._buffer = []
+        self._position = 0
         self._iterator = None
+
+    def as_iterable(self, anchor=None):
+        idx = 0
+        while True:
+            self._fill_to(idx)
+            yield self._buffer[idx]
+            idx += 1
 
     def _fill_to(self, index):
         if not self._iterator:
-            self._iterator = self.as_iterable()
+            self._iterator = self.get_unwinder()
 
         while len(self._buffer) < index+1:
             self._buffer.append(self._iterator.next())
@@ -738,7 +746,7 @@ class SimpleSlicing(Streamish, AST):
     ``Streamish`` interface.
 
     Because of the default methods provided by the ``Streamish`` mixin this
-    class only needs to implement ``as_iterable``. This yields objects that
+    class only needs to implement ``get_unwinder``. This yields objects that
     match the specified stride.
     """
 
@@ -749,7 +757,7 @@ class SimpleSlicing(Streamish, AST):
         self.short_slice = short_slice
         short_slice.parent = self
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         lower_bound = self.short_slice.lower_bound.resolve()
         upper_bound = self.short_slice.upper_bound.resolve()
         stride = self.short_slice.stride.resolve()
@@ -764,11 +772,12 @@ class ExtendedSlicing(Streamish, AST):
     ``Streamish`` interface.
 
     Because of the default methods provided by the ``Streamish`` mixin this
-    class only needs to implement ``as_iterable``. This yields objects that
+    class only needs to implement ``get_unwinder``. This yields objects that
     match the specified strides.
     """
 
     def __init__(self, primary, slice_list):
+        super(ExtendedSlicing, self).__init__()
         self.primary = primary
         primary.parent = self
         self.slice_list = slice_list
@@ -777,7 +786,7 @@ class ExtendedSlicing(Streamish, AST):
         if len (self.slice_list.slice_list) > 1:
             raise errors.SyntaxError("Only a single slice at a time is supported", anchor=self.anchor)
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         short_slice = self.slice_list.slice_list[0]
 
         lower_bound = short_slice.lower_bound.resolve()
@@ -1005,10 +1014,11 @@ class YayDict(AST):
 
 class YayExtend(Streamish, AST):
     def __init__(self, value):
+        super(YayExtend, self).__init__()
         self.value = value
         value.parent = self
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         try:
             for node in self.predecessor.as_iterable(anchor or self.anchor):
                 yield node
@@ -1444,7 +1454,7 @@ class For(Streamish, AST):
         self.node = node
         node.parent = self
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         for item in self.in_clause.as_iterable(anchor or self.anchor):
             # self.target.identifier: This probably shouldn't be an identifier
             c = Context(self.node.clone(), {self.target.identifier: item})
@@ -1495,12 +1505,13 @@ class Context(Proxy, AST):
 
 class ListComprehension(Streamish, AST):
     def __init__(self, expression, list_for):
+        super(ListComprehension, self).__init__()
         self.expression = expression
         expression.parent = self
         self.list_for = list_for
         list_for.parent = self
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         for node in self.list_for.expressions.as_iterable(anchor or self.anchor):
             ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
             ctx.anchor = self.anchor
@@ -1509,6 +1520,7 @@ class ListComprehension(Streamish, AST):
 
 class ListFor(Streamish, AST):
     def __init__(self, targets, expressions, iterator=None):
+        super(ListFor, self).__init__()
         self.targets = targets
         targets.parent = self
         self.expressions = expressions
@@ -1570,9 +1582,10 @@ class Comment(AST):
 class PythonIterable(Streamish, AST):
 
     def __init__(self, iterable):
+        super(PythonIterable, self).__init__()
         self.iterable = iterable
 
-    def as_iterable(self, anchor=None):
+    def get_unwinder(self, anchor=None):
         for node in self.iterable:
             obj = bind(node)
             obj.parent = self
