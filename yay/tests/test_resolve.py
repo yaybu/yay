@@ -918,6 +918,24 @@ class TestMacroCall(unittest.TestCase):
             {"SomeOtherItem": {"name": "bar"}},
         ])
 
+    def test_nested_macro(self):
+        res = resolve("""
+            macro SomeMacro:
+                - SomeItem:
+                    name: {{ name }}
+
+            macro SomeOtherMacro:
+                call SomeMacro:
+                    name: {{ name }}
+
+            extend resources:
+                call SomeOtherMacro:
+                    name: hoju
+            """)
+
+        self.assertEqual(res["resources"], [
+            {"SomeItem": {"name": "hoju"}},
+        ])
 
 class TestExtend(unittest.TestCase):
 

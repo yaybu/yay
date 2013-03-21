@@ -881,6 +881,7 @@ class Parser(object):
         macro_directive : MACRO target_list ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.Macro(p[2], p[6])
+        self.anchor(p, 1)
 
     def p_call_directive(self, p):
         '''
