@@ -711,6 +711,33 @@ class TestFor(unittest.TestCase):
             {'name': 'badgers', 'env': 'production'},
             ])
 
+    def test_complicated_chained_for(self):
+        res = resolve("""
+            wibble:
+              for i in range(1):
+                - {{ i }}
+
+                for i in range(2,3):
+                    - {{ i }}
+
+                - {{ i + 1}}
+
+                if 1:
+                    - {{ 3 }}
+
+                - {{ i + 2 }}
+
+                if 0:
+                    - {{ 1 }}
+
+                - {{ i + 3 }}
+
+                select i
+                    0:
+                      - {{ i }}
+
+            """)
+        self.assertEqual(res["wibble"], [0, 2, 3])
 
 class TestSlicing(unittest.TestCase):
 
