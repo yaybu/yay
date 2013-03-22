@@ -9,7 +9,7 @@ except ImportError:
     yaml = None
 
 
-def graph_to_yaml(graph):
+def graph_to_yaml(opts, graph):
     if not yaml:
         print >>sys.stderr, "Please install PyYAML to use this tool"
         sys.exit(1)
@@ -25,7 +25,10 @@ def graph_to_yaml(graph):
     # Dump as YAML
     return yaml.dump(resolved, default_flow_style=False)
 
-def graph_to_dot(graph):
+def graph_to_dot(opts, graph):
+    if opts.phase == "normalized":
+        graph = graph.normalize_predecessors()
+
     return "\n".join(graph.as_digraph())
 
 def main():
@@ -36,6 +39,7 @@ def main():
 
     p = optparse.OptionParser()
     #p.add_option() to set up yaypath?
+    p.add_option('-p', '--phase', action="store", default="initial")
     opts, args = p.parse_args()
 
     if len(args) != 2:
@@ -44,6 +48,11 @@ def main():
 
     if not args[0] in converters:
         print >>sys.stderr, "Output format must be one of: %r" % converters.keys()
+        sys.exit(1)
+
+    phases = ("initial", "normalized")
+    if not opts.phase in phases:
+        print >>sys.stderr, "Phase must be one of: %r" % opts.phase
         sys.exit(1)
 
     if not os.path.exists(args[1]):
@@ -62,5 +71,5 @@ def main():
         print >>sys.stderr, str(e)
         sys.exit(1)
 
-    print converters[args[0]](graph)
+    print converters[args[0]](opts, graph)
 

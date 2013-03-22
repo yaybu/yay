@@ -99,6 +99,41 @@ class AST(object):
         """
         return False
 
+    def normalize_predecessors(self):
+        """
+        Forces inclusion of dependencies and ensures LazyPredecessor and UseMyPredecessorStandin nodes 
+        """
+
+        for k, v in self.__clone_vars().items():
+            if k in ("anchor", ):
+                continue
+
+            if isinstance(v, AST):
+                v.normalize_predecessors()
+
+            elif isinstance(v, list):
+                for v2 in v:
+                    if isinstance(v2, AST):
+                        v2.normalize_predecessors()
+
+            elif isinstance(v, dict):
+                for v2 in v.values():
+                    if isinstance(v2, AST):
+                        v2.normalize_predecessors()
+
+        obj = self
+        while obj.predecessor and not isinstance(obj.predecessor, NoPredecessorStandin):
+            if isinstance(obj.predecessor, (LazyPredecessor, UseMyPredecessorStandin)):
+                try:
+                    obj.predecessor = obj.predecessor.expand()
+                except errors.NoPredecessor:
+                    obj.predecessor = NoPredecessorStandin()
+                    break
+
+            obj = obj.predecessor
+
+        return self
+
     def simplify(self):
         """
         Resolve any parts of the graph that are constant
