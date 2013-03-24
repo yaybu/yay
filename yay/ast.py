@@ -1633,6 +1633,8 @@ class PythonDict(AST):
 
     def __init__(self, dict):
         self.dict = dict
+        #FIXME: We should either have a fake anchor or generate one by inspecting the frame
+        self.anchor = None
 
     def get(self, key):
         try:
@@ -1653,7 +1655,7 @@ class PythonDict(AST):
     def as_iterable(self, anchor=None):
         seen = set()
         try:
-            for key in self.predecessor.as_iterable(anchor or self.anchor):
+            for key in self.predecessor.as_iterable(anchor):
                 seen.add(key.resolve())
                 yield key
         except errors.NoPredecessor:
