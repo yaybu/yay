@@ -101,7 +101,7 @@ class AST(object):
 
     def normalize_predecessors(self):
         """
-        Forces inclusion of dependencies and ensures LazyPredecessor and UseMyPredecessorStandin nodes 
+        Forces inclusion of dependencies and ensures LazyPredecessor and UseMyPredecessorStandin nodes
         """
 
         for k, v in self.__clone_vars().items():
@@ -131,6 +131,8 @@ class AST(object):
                     break
 
             obj = obj.predecessor
+
+            obj.normalize_predecessors()
 
         return self
 
