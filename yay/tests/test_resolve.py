@@ -794,19 +794,17 @@ class TestSlicing(unittest2.TestCase):
         self.assertEqual(res['listb'], [1,3,5])
 
 
-class TestPythonClassMock(ast.AST):
+class TestPythonClassMock(ast.PythonClass):
 
-    def __init__(self, params):
-        self.params = params
+    keys = [
+        'hello'
+    ]
 
     def get(self, key):
-        return ast.YayScalar("world")
+        if key == "hello":
+            return ast.YayScalar("world")
+        return super(TestPythonClassMock, self).get(key)
 
-    def as_iterable(self):
-        yield ast.YayScalar("hello")
-
-    def resolve(self):
-        return {"hello": "world"}
 
 class TestPythonClass(unittest2.TestCase):
     def test_simple_class(self):

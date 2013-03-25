@@ -1460,8 +1460,13 @@ class Create(Proxy, AST):
             raise errors.NoMatching("Module '%s' has no class '%s'" % (modname, classname))
 
         klass = getattr(mod, classname)
+
+        if not issubclass(klass, PythonClass):
+            raise errors.TypeError("'%s' is not usable from Yay" % classname)
+
         node = klass(self.node.clone())
         node.parent = self
+        node.anchor = self.anchor
         node.predecessor = self.predecessor
 
         return True, node
@@ -1658,6 +1663,33 @@ class LambdaForm(AST):
 class Comment(AST):
     def __init__(self, v):
         self.v = v
+
+
+class PythonClass(AST):
+
+    """
+    This is a Mixin for writing nodes that can be created with the ``create`` syntax
+    """
+
+    def __init__(self, params):
+        self.params = params
+        params.parent = self
+
+    def get(self, key):
+        return self.params.get(key)
+
+    def as_iterable(self, anchor=None):
+        seen = set()
+        for key in self.params.as_iterable(anchor or self.anchor):
+            seen.add(key.resolve())
+            yield key
+
+        for key in self.keys:
+            if key not in seen:
+                yield YayScalar(key)
+
+    def resolve(self):
+        return dict((k.resolve(), self.get(k.resolve()).resolve()) for k in self.as_iterable())
 
 
 class PythonIterable(Streamish, AST):
