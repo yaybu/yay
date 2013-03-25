@@ -535,6 +535,7 @@ class TestDictDisplay(unittest2.TestCase):
             """)
         self.assertEqual(t.get("foo").resolve(), {})
 
+    @unittest2.expectedFailure
     def test_none(self):
         t = parse("""
             foo:
