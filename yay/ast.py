@@ -1480,6 +1480,31 @@ class Macro(Proxy, AST):
     def expand(self):
         return self.predecessor.expand()
 
+class YayClass(Proxy, AST):
+    def __init__(self, target, node):
+        self.target = target
+        self.node = node
+
+    def get_callable(self, key):
+        if key == self.target.identifier:
+            return self
+        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+    def construct(self, params):
+        base = self.node.clone()
+        # context = Context(base, {"self": base})
+
+        params = params.clone()
+        params.predecessor = base
+
+        context = Context(params, {"self": params})
+        base.parent = context
+
+        return context
+
+    def expand(self):
+        return self.predecessor.expand()
+
 class CallDirective(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
