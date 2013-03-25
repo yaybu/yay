@@ -355,3 +355,55 @@ You can then call it later::
             call mymacro:
                 thing: {{q}}
 
+
+Prototypes
+~~~~~~~~~~
+
+Prototypes contain a default mapping which you can then override.
+
+In their final form, they behave exactly like mappings::
+
+    prototype DjangoSite:
+        set self = here
+
+        name: www.example-site.com
+
+        sitedir: /var/local/sites/{{ self.name }}
+        rundir: /var/run/{{ self.name }}
+        tmpdir: /var/tmp/{{ self.name }}
+
+        resources:
+            - Directory:
+                name: {{ self.tmpdir }}
+
+            - Checkout:
+                name: {{ self.sitedir}}
+                source: git://github.com/
+
+    some_key:
+        new DjangoSite:
+            sitename: www.example.com
+
+
+Here
+~~~~
+
+Here is a reserved word that expands to the nearest parent node that is a mapping.
+
+You can use it to refer to siblings::
+
+    some_data:
+        sitename: www.example.com
+        sitedir: /var/www/{{ here.sitename }}
+
+You can use it with ``set`` to refer to specific points of the graph::
+
+     some_data:
+         set self = here
+
+        nested:
+            something: goodbye
+            mapping: {{ self.something }}         # Should be 'hello'
+            other_mapping: {{ here.something }}   # Should be 'goodbye'
+
+        something: hello
