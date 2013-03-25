@@ -63,7 +63,7 @@ class TestRoot(unittest.TestCase):
 
     def test_get_root(self):
         root = Root(Mock())
-        self.assertEqual(root.get_root(), root)
+        self.assertEqual(root.root, root)
 
     def test_get_context(self):
         root = Root(Mock())

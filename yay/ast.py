@@ -165,11 +165,12 @@ class AST(object):
         """
         return self.parent.get_context(key)
 
-    def get_root(self):
+    @property
+    def root(self):
         """
         Find and return the root of this document.
         """
-        return self.parent.get_root()
+        return self.parent.root
 
     def error(self, exc):
         raise ValueError("Runtime errors deliberately nerfed for PoC")
@@ -410,7 +411,8 @@ class Root(Proxy, AST):
             yield line
         yield "}"
 
-    def get_root(self):
+    @property
+    def root(self):
         return self
 
     def get_callable(self, key):
@@ -871,7 +873,7 @@ class Call(Proxy, AST):
                 k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
 
         try:
-            macro = self.get_root().get_callable(self.primary.identifier)
+            macro = self.root.get_callable(self.primary.identifier)
             call = CallDirective(self.primary, None)
             node = Context(call, kwargs)
         except errors.NoMatching:
@@ -1288,7 +1290,7 @@ class Include(Proxy, AST):
         expr = self.expr.resolve()
         self.expanding = False
 
-        expanded = self.get_root().parse(expr)
+        expanded = self.root.parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
 
@@ -1516,7 +1518,7 @@ class CallDirective(Proxy, AST):
         self.node = node
 
     def expand(self):
-        macro = self.get_root().get_callable(self.target.identifier)
+        macro = self.root.get_callable(self.target.identifier)
         clone = macro.node.clone()
         if not self.node:
             clone.parent = self
