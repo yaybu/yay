@@ -1,6 +1,6 @@
 import unittest2
 from .base import parse, resolve
-from yay import errors
+from yay import errors, ast
 from yay.parser import ParseError
 
 
@@ -792,6 +792,30 @@ class TestSlicing(unittest2.TestCase):
             """)
 
         self.assertEqual(res['listb'], [1,3,5])
+
+
+class TestPythonClassMock(ast.AST):
+
+    def __init__(self, params):
+        self.params = params
+
+    def get(self, key):
+        return ast.YayScalar("world")
+
+    def as_iterable(self):
+        yield ast.YayScalar("hello")
+
+    def resolve(self):
+        return {"hello": "world"}
+
+class TestPythonClass(unittest2.TestCase):
+    def test_simple_class(self):
+        res = resolve("""
+            foo:
+              create "yay.tests.test_resolve:TestPythonClassMock":
+                  foo: bar
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
 
 
 class TestPythonCall(unittest2.TestCase):

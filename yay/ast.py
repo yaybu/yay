@@ -1443,10 +1443,29 @@ class Case(AST):
         self.node = node
         node.parent = self
 
-class Create(AST):
+class Create(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node
+
+    @cached
+    def expand(self):
+        modname, classname = self.target.as_string().split(":", 1)
+        try:
+            mod = __import__(modname, globals(), locals(), ['tofu'])
+        except ImportError:
+            raise errors.NoMatching("Could not import '%s'" % modname)
+
+        if not hasattr(mod, classname):
+            raise errors.NoMatching("Module '%s' has no class '%s'" % (modname, classname))
+
+        klass = getattr(mod, classname)
+        node = klass(self.node.clone())
+        node.parent = self
+        node.predecessor = self.predecessor
+
+        return True, node
+
 
 class Macro(Proxy, AST):
     def __init__(self, target, node):
