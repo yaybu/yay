@@ -1088,7 +1088,7 @@ class Parser(object):
 
     def p_scalar_multiline(self, p):
         '''
-        scalar : multiline
+        scalar : multiline MULTILINE_END
         '''
         p[0] = ast.YayScalar(p[1].value)
 

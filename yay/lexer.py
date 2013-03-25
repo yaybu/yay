@@ -69,6 +69,7 @@ class Lexer(object):
     tokens = (
         'VALUE',      # represents either a key or value in yamlish
         'MULTILINE',  # the start of a multiline block
+        'MULTILINE_END', # the end of a multiline block
         'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
@@ -137,7 +138,9 @@ class Lexer(object):
 
     def t_TEMPLATE_RDBRACE(self, t):
         """}}"""
-        t.lexer.begin('VALUE')
+        #t.lexer.begin('VALUE')
+        #t.lexer.begin('BLOCK')
+        t.lexer.pop_state()
         return t
 
     # Literals
@@ -258,7 +261,7 @@ class Lexer(object):
 
     def t_VALUE_LISTVALUE_BLOCK_LDBRACE(self, t):
         """{{"""
-        t.lexer.begin("TEMPLATE")
+        t.lexer.push_state("TEMPLATE")
         return t
 
     def t_VALUE_LISTVALUE_MULTILINE(self, t):
@@ -336,10 +339,10 @@ class Lexer(object):
             yield token
             self.at_line_start = at_line_start
 
-    def _new_token(self, type, lineno):
+    def _new_token(self, type, lineno, value=None):
         tok = lex.LexToken()
         tok.type = type
-        tok.value = None
+        tok.value = value
         tok.lineno = lineno
         tok.lexpos = -1
         return tok
@@ -350,8 +353,11 @@ class Lexer(object):
     def DEDENT(self, lineno):
         return self._new_token("DEDENT", lineno)
 
+    def MULTILINE_END(self, lineno):
+        return self._new_token("MULTILINE_END", lineno)
+
     def NEWLINE(self, lineno):
-        return self._new_token("NEWLINE", lineno)
+        return self._new_token("NEWLINE", lineno, '\n')
 
     def indentation_filter(self, tokens):
         """ Track the indentation level and emit the right INDENT / DEDENT events. """
@@ -376,11 +382,14 @@ class Lexer(object):
                 prev_was_ws = True
                 if self.lexer.lexstate == 'BLOCK':
                     if depth < levels[-1]:
+                        # here endeth the block
+                        # switch back into initial mode, with the same
+                        # state as before we entered the block
+                        # TODO: check indent levels make sense
                         self.lexer.begin("INITIAL")
-                        i = levels.index(depth)
-                        for _ in range(i+1, len(levels)):
-                            yield self.NEWLINE(token.lineno)
                         levels.pop()
+                        yield self.MULTILINE_END(token.lineno)
+                        yield self.NEWLINE(token.lineno)
                 continue
             elif token.type in ('NEWLINE', 'MULTILINE'):
                 if depth is not None:

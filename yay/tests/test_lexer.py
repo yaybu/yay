@@ -457,7 +457,6 @@ class TestLexer(unittest2.TestCase):
                value('a'), colon, value('b'), newline
         ])
 
-    @unittest2.expectedFailure
     def test_multiline_fold_simple(self):
         self.compare(self._lex("""
         a: >
@@ -470,9 +469,10 @@ class TestLexer(unittest2.TestCase):
            newline,
            value('quux quuux'),
            newline,
+           t('MULTILINE_END'),
+           newline,
            ])
 
-    @unittest2.expectedFailure
     def test_multiline_fold(self):
         self.compare(self._lex("""
         a: >
@@ -486,9 +486,10 @@ class TestLexer(unittest2.TestCase):
                t('NEWLINE', '\n\n'),
                value('quux quuux'),
                newline,
+               t('MULTILINE_END'),
+               newline,
                ])
 
-    @unittest2.expectedFailure
     def test_multiline_literal(self):
         self.compare(self._lex("""
         a: |
@@ -504,9 +505,10 @@ class TestLexer(unittest2.TestCase):
            t('NEWLINE', '\n\n'),
            value('quux quuux'),
            t('NEWLINE', '\n\n\n'),
+           t('MULTILINE_END'),
+           newline,
            ])
 
-    @unittest2.expectedFailure
     def test_multiline_literal_complex(self):
         self.compare(self._lex("""
         a:
@@ -527,6 +529,8 @@ class TestLexer(unittest2.TestCase):
                    newline,
                    value('l2'),
                    newline,
+                   t('MULTILINE_END'),
+                   newline,
                    value('c'),
                    colon,
                    value('x'),
@@ -538,7 +542,6 @@ class TestLexer(unittest2.TestCase):
                newline,
                ])
 
-    @unittest2.expectedFailure
     def test_multiline_strip(self):
         self.compare(self._lex("""
         a: |-
@@ -555,9 +558,10 @@ class TestLexer(unittest2.TestCase):
            t('NEWLINE', '\n\n'),
            value('quux quuux'),
            t('NEWLINE', '\n\n\n'),
+           t('MULTILINE_END'),
+           newline,
            ])
 
-    @unittest2.expectedFailure
     def test_multiline_strip_with_template(self):
         self.compare(self._lex("""
         a: |-
@@ -573,10 +577,11 @@ class TestLexer(unittest2.TestCase):
            value('quux '),
            ldbrace, identifier('quux'), rdbrace,
            t('NEWLINE', '\n\n\n'),
+           t('MULTILINE_END'),
+           newline
            ])
 
 
-    @unittest2.expectedFailure
     def test_multiline_keep(self):
         self.compare(self._lex("""
         a: |+
@@ -592,6 +597,8 @@ class TestLexer(unittest2.TestCase):
            t('NEWLINE', '\n\n'),
            value('quux quuux'),
            t('NEWLINE', '\n\n\n'),
+           t('MULTILINE_END'),
+           newline,
            ])
 
     def test_python_line_continuation(self):

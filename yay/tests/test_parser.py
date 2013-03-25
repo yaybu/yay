@@ -294,7 +294,6 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
-    @unittest2.expectedFailure
     def test_simple_dict_colon_in_value(self):
         res = parse("""
             a: b:c
@@ -781,7 +780,6 @@ class TestParser(unittest2.TestCase):
                                          ('foo', YayScalar('bar')),
                                          ])))
 
-    @unittest2.expectedFailure
     def test_multiline_fold_simple(self):
         res = parse("""
         a: >
