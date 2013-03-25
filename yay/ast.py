@@ -172,9 +172,6 @@ class AST(object):
         """
         return self.parent.root
 
-    def error(self, exc):
-        raise ValueError("Runtime errors deliberately nerfed for PoC")
-
     def clone(self):
         """
         Return a copy of this node.
@@ -980,12 +977,12 @@ class YayList(Streamish, AST):
         try:
             idx = int(idx)
         except ValueError:
-            self.error("Expected integer but got '%s'" % idx)
+            raise errors.TypeError("Expected integer", anchor=self.anchor)
 
         if idx < 0:
-            self.error("Index must be greater than 0")
+            raise errors.TypeError("Index must be greater than 0", anchor=self.anchor)
         elif idx >= len(self.value):
-            self.error("Index out of range")
+            raise errors.TypeError("Index out of range", anchor=self.anchor)
 
         return self.value[idx]
 
