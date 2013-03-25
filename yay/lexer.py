@@ -269,7 +269,7 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_VALUE(self, t):
-        """[^:\{\n]+"""
+        """([^:\{\n]|{(?!{))+"""
         return t
 
     def t_ANY_WS(self, t):

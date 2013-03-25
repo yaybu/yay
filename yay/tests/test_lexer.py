@@ -392,9 +392,7 @@ class TestLexer(unittest2.TestCase):
             foo: hello {world}
         """), [
                value('foo'), colon,
-               value('hello '),
-               t('{', '{'),
-               value('world}'),
+               value('hello {world}'),
                newline,
            ])
 
@@ -445,7 +443,6 @@ class TestLexer(unittest2.TestCase):
             dedent,
         ])
 
-    @unittest2.expectedFailure
     def test_braces(self):
         self.compare(self._lex("""
         foo: a{b}
