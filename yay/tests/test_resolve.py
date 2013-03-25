@@ -145,6 +145,20 @@ class TestYayDict(unittest2.TestCase):
             })
 
 
+class TestEmptyDocument(unittest2.TestCase):
+
+    @unittest2.expectedFailure
+    def test_empty_document(self):
+        res = resolve("")
+
+    @unittest2.expectedFailure
+    def test_include_empty_document(self):
+        res = resolve("""
+            include "foo"
+            """,
+            foo="",
+        )
+
 class TestYayList(unittest2.TestCase):
 
     def test_list_of_dicts(self):
