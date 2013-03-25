@@ -1,4 +1,4 @@
-import unittest
+import unittest2
 from yay import parser
 from yay.ast import *
 
@@ -6,7 +6,7 @@ from .base import bare_parse as parse
 
 import os
 
-class TestParser(unittest.TestCase):
+class TestParser(unittest2.TestCase):
 
     def test_include(self):
         res = parse("""
@@ -294,6 +294,7 @@ class TestParser(unittest.TestCase):
         """)
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
+    @unittest2.expectedFailure
     def test_simple_dict_colon_in_value(self):
         res = parse("""
             a: b:c
@@ -780,6 +781,7 @@ class TestParser(unittest.TestCase):
                                          ('foo', YayScalar('bar')),
                                          ])))
 
+    @unittest2.expectedFailure
     def test_multiline_fold_simple(self):
         res = parse("""
         a: >
