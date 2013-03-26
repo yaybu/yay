@@ -33,7 +33,7 @@ class cached(object):
 class AST(object):
 
     lineno = 0
-    predecessor = None
+    _predecessor = None
 
     def as_int(self, anchor=None):
         raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
@@ -166,6 +166,25 @@ class AST(object):
         return self.parent.get_context(key)
 
     @property
+    def predecessor(self):
+        return self._predecessor
+
+    @predecessor.setter
+    def predecessor(self, value):
+        if self._predecessor:
+            self._predecessor.successor = None
+        self._predecessor = value
+        value.successor = self
+
+    @property
+    def head(self):
+        """ Walks successors (the weak-ref reverse of predecessors) to find the most recent node """
+        n = self
+        while getattr(n, 'successor', None):
+            n = n.successor
+        return n
+
+    @property
     def root(self):
         """
         Find and return the root of this document.
@@ -207,14 +226,14 @@ class AST(object):
 
     def __clone_vars(self):
         d = self.__dict__.copy()
-        for var in ('parent', 'predecessor'):
+        for var in ('parent', '_predecessor', 'successor'):
             if var in d:
                 del d[var]
         return d
 
     def __repr_vars(self):
         d = self.__dict__.copy()
-        for var in ('anchor', 'parent', 'predecessor'):
+        for var in ('anchor', 'parent', '_predecessor', 'successor'):
             if var in d:
                 del d[var]
         return d
@@ -1029,6 +1048,11 @@ class YayDict(AST):
             pass
         return sorted(list(keys))
 
+    def get_context(self, key):
+        if key == "here":
+            return self.head
+        return super(YayDict, self).get_context(key)
+
     def get(self, key):
         if key in self.values:
             return self.values[key]
@@ -1759,4 +1783,4 @@ def bind(v):
     raise error.TypeError("Encountered unbindable object")
 
 
-AST.predecessor = NoPredecessorStandin()
+AST._predecessor = NoPredecessorStandin()

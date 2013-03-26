@@ -144,6 +144,17 @@ class TestYayDict(unittest2.TestCase):
                 }
             })
 
+    def test_here(self):
+        res = resolve("""
+            foo:
+                site: www.example.com
+                sitedir: /var/www/{{ here.site }}
+
+            foo:
+                site: www.example.org
+            """)
+        self.assertEqual(res['foo']['sitedir'], '/var/www/www.example.org')
+
 
 class TestEmptyDocument(unittest2.TestCase):
 
