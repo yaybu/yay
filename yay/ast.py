@@ -238,6 +238,21 @@ class AST(object):
                 del d[var]
         return d
 
+    def __getattr__(self, key):
+        try:
+            return self.get(key)
+        except errors.NoMatching as e:
+            raise AttributeError(str(e))
+
+    def __getitem__(self, key):
+        try:
+            return self.get(key)
+        except errors.NoMatching as e:
+            raise IndexError(str(e))
+
+    def __iter__(self):
+        return self.as_iterable(self.anchor)
+
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
@@ -1688,31 +1703,31 @@ class Comment(AST):
         self.v = v
 
 
-class PythonClass(AST):
+class PythonClass(Proxy, AST):
 
     """
     This is a Mixin for writing nodes that can be created with the ``create`` syntax
     """
 
     def __init__(self, params):
-        self.params = params
-        params.parent = self
+        # Object to store metadata exported by this class
+        self.class_provided = PythonDict()
+        self.class_provided.parent = self
+        self.class_provided.predecessor = params
 
-    def get(self, key):
-        return self.params.get(key)
+        # Node containing metadata provided by the user
+        self.user_provided = params
+        self.user_provided.parent = self
 
-    def as_iterable(self, anchor=None):
-        seen = set()
-        for key in self.params.as_iterable(anchor or self.anchor):
-            seen.add(key.resolve())
-            yield key
+        # Let the class write directly into the dict
+        self.metadata = self.node.dict
 
-        for key in self.keys:
-            if key not in seen:
-                yield YayScalar(key)
+    def apply(self):
+        raise NotImplementError(self.apply)
 
-    def resolve(self):
-        return dict((k.resolve(), self.get(k.resolve()).resolve()) for k in self.as_iterable())
+    def expand(self):
+        self.apply()
+        return self.node
 
 
 class PythonIterable(Streamish, AST):
