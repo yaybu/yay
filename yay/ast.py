@@ -473,6 +473,7 @@ class Identifier(Proxy, AST):
         self.identifier = identifier
 
     def expand(self):
+        __context__ = "Looking up '%s' in current scope" % self.identifier
         return self.get_context(self.identifier).expand()
 
 class Literal(Scalarish, AST):
@@ -741,6 +742,7 @@ class AttributeRef(Proxy, AST):
         self.identifier = identifier
 
     def expand(self):
+        __context__ = " -> Looking up subkey '%s'" % self.identifier
         return self.primary.expand().get(self.identifier).expand()
 
 class LazyPredecessor(Proxy, AST):
@@ -1719,8 +1721,8 @@ class PythonClass(Proxy, AST):
         self.class_provided.predecessor = params
 
         # Node containing metadata provided by the user
-        self.user_provided = params
-        self.user_provided.parent = self
+        self.params = params
+        self.params.parent = self
 
     def apply(self):
         raise NotImplementError(self.apply)
@@ -1728,6 +1730,13 @@ class PythonClass(Proxy, AST):
     def expand(self):
         self.apply()
         return self.node
+
+    def __getattr__(self, key):
+        #frame = inspect.currentframe().f_back.f_back
+        #if isinstance(frame.f_locals.get(self), PythonClass):
+        if True:
+            raise AttributeError("No such attribute '%s'" % key)
+        return super(PythonClass, self).__getattr__(key)
 
 
 class PythonIterable(Streamish, AST):
