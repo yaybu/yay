@@ -1710,17 +1710,17 @@ class PythonClass(Proxy, AST):
     """
 
     def __init__(self, params):
-        # Object to store metadata exported by this class
-        self.class_provided = PythonDict()
+        # Dictionary to hold data created/fetched by this class
+        self.metadata = {}
+
+        # Object to exposed metadata exported by this class to yay
+        self.class_provided = PythonDict(self.metadata)
         self.class_provided.parent = self
         self.class_provided.predecessor = params
 
         # Node containing metadata provided by the user
         self.user_provided = params
         self.user_provided.parent = self
-
-        # Let the class write directly into the dict
-        self.metadata = self.node.dict
 
     def apply(self):
         raise NotImplementError(self.apply)
