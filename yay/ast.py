@@ -13,15 +13,16 @@ class cached(object):
 
     def __init__(self, func):
         self.func = func
-        self.cache = None
 
     def __call__(descriptor, self):
-        if not hasattr(descriptor, "cache") or not descriptor.cache:
+        if not hasattr(self, "cache"):
+            self.cache = None
+        if not self.cache:
             can_cache, result = descriptor.func(self)
             if not can_cache:
                 return result
-            descriptor.cache = result
-        return descriptor.cache
+            self.cache = result
+        return self.cache
 
     def __repr__(self):
         return self.func.__doc__
@@ -244,11 +245,12 @@ class AST(object):
                 del d[var]
         return d
 
-    def __getattr__(self, key):
-        try:
-            return self.get(key)
-        except errors.NoMatching as e:
-            raise AttributeError(str(e))
+    #def __getattr__(self, key):
+    #    print key
+    #    try:
+    #        return self.get(key)
+    #    except errors.NoMatching as e:
+    #        raise AttributeError(str(e))
 
     def __getitem__(self, key):
         try:
@@ -367,7 +369,7 @@ class Dictish(object):
         return self.resolve()
 
     def resolve(self):
-        return dict((key, self.get(key)) for key in self.keys())
+        return dict((key, self.get(key).resolve()) for key in self.keys())
 
 
 class Proxy(object):
@@ -782,8 +784,9 @@ class LazyPredecessor(Proxy, AST):
         return self.expand().anchor
 
     def get(self, key):
-        predecessor = self.expand()
-        if not predecessor:
+        try:
+            predecessor = self.expand()
+        except errors.NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
         return predecessor.get(key)
 
@@ -1744,7 +1747,7 @@ class PythonClass(Proxy, AST):
         self.stale = True
 
     def apply(self):
-        raise NotImplementError(self.apply)
+        raise NotImplementedError(self.apply)
 
     def expand(self):
         if self.stale:
@@ -1752,13 +1755,6 @@ class PythonClass(Proxy, AST):
             self.stale = False
 
         return self.class_provided.expand()
-
-    def __getattr__(self, key):
-        #frame = inspect.currentframe().f_back.f_back
-        #if isinstance(frame.f_locals.get(self), PythonClass):
-        if True:
-            raise AttributeError("No such attribute '%s'" % key)
-        return super(PythonClass, self).__getattr__(key)
 
 
 class PythonIterable(Streamish, AST):

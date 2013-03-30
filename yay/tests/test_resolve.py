@@ -829,14 +829,9 @@ class TestSlicing(unittest2.TestCase):
 
 class TestPythonClassMock(ast.PythonClass):
 
-    keys = [
-        'hello'
-    ]
-
-    def get(self, key):
-        if key == "hello":
-            return ast.YayScalar("world")
-        return super(TestPythonClassMock, self).get(key)
+    def apply(self):
+        assert self.params.get('foo').as_string() == 'bar'
+        self.metadata['hello'] = 'world'
 
 
 class TestPythonClass(unittest2.TestCase):
