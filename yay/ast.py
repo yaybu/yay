@@ -50,6 +50,12 @@ class AST(object):
     def as_string(self, anchor=None):
         raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
 
+    def as_dict(self, anchor=None):
+        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+
+    def keys(self, anchor=None):
+        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+
     def as_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
 
@@ -350,6 +356,20 @@ class Streamish(object):
     def resolve(self):
         return [x.resolve() for x in self.as_iterable()]
 
+
+class Dictish(object):
+
+    def as_iterable(self, anchor=None):
+        for key in self.keys(anchor or self.anchor):
+            yield YayScalar(key)
+
+    def as_dict(self):
+        return self.resolve()
+
+    def resolve(self):
+        return dict((key, self.get(key)) for key in self.keys())
+
+
 class Proxy(object):
     """
     A mixin that forwards requested on to an expanded form
@@ -381,6 +401,12 @@ class Proxy(object):
 
     def as_string(self, anchor=None):
         return self.expand().as_string(anchor or self.anchor)
+
+    def as_dict(self, anchor=None):
+        return self.expand().as_dict(anchor or self.anchor)
+
+    def keys(self, anchor=None):
+        return self.expand().keys(anchor or self.anchor)
 
     def as_iterable(self, anchor=None):
         return self.expand().as_iterable(anchor or self.anchor)
@@ -1025,7 +1051,7 @@ class YayList(Streamish, AST):
     def as_iterable(self, anchor=None):
         return iter(self.value)
 
-class YayDict(AST):
+class YayDict(Dictish, AST):
 
     """ A dictionary in yay may redefine items, so update merely appends. The
     value is a list of 2-tuples """
@@ -1057,10 +1083,10 @@ class YayDict(AST):
         for k, v in other_dict.values.items():
             self.update(k, v)
 
-    def keys(self):
+    def keys(self, anchor=None):
         keys = set(self.values.keys())
         try:
-            keys.update(k.resolve() for k in self.predecessor.as_iterable(anchor=self.anchor))
+            keys.update(self.predecessor.keys(anchor=self.anchor))
         except errors.NoPredecessor:
             pass
         return sorted(list(keys))
@@ -1079,15 +1105,6 @@ class YayDict(AST):
             pass
         raise errors.NoMatching("Key '%s' not found" % key)
 
-    def as_iterable(self, anchor=None):
-        for k in self.keys():
-            yield YayScalar(k)
-
-    def resolve(self):
-        d = {}
-        for key in self.keys():
-            d[key] = self.get(key).resolve()
-        return d
 
 class YayExtend(Streamish, AST):
     def __init__(self, value):
@@ -1757,7 +1774,7 @@ class PythonIterable(Streamish, AST):
             yield obj
 
 
-class PythonDict(AST):
+class PythonDict(Dictish, AST):
 
     def __init__(self, dict):
         self.dict = dict
@@ -1780,11 +1797,11 @@ class PythonDict(AST):
 
         raise errors.NoMatching("No key '%s'" % key)
 
-    def as_iterable(self, anchor=None):
+    def keys(self, anchor=None):
         seen = set()
         try:
-            for key in self.predecessor.as_iterable(anchor):
-                seen.add(key.resolve())
+            for key in self.predecessor.keys(anchor or self.anchor):
+                seen.add(key)
                 yield key
         except errors.NoPredecessor:
             pass
@@ -1792,10 +1809,7 @@ class PythonDict(AST):
         for key in sorted(self.dict.keys()):
             if key in seen:
                 continue
-            yield YayScalar(key)
-
-    def resolve(self):
-        return dict((k.resolve(), self.get(k.resolve()).resolve()) for k in self.as_iterable())
+            yield key
 
 
 bindings = [
