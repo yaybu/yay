@@ -16,12 +16,12 @@ class cached(object):
         self.cache = None
 
     def __call__(descriptor, self):
-        if not hasattr(self, "cache") or not self.cache:
+        if not hasattr(descriptor, "cache") or not descriptor.cache:
             can_cache, result = descriptor.func(self)
             if not can_cache:
                 return result
-            self.cache = result
-        return self.cache
+            descriptor.cache = result
+        return descriptor.cache
 
     def __repr__(self):
         return self.func.__doc__
@@ -1724,12 +1724,17 @@ class PythonClass(Proxy, AST):
         self.params = params
         self.params.parent = self
 
+        self.stale = True
+
     def apply(self):
         raise NotImplementError(self.apply)
 
     def expand(self):
-        self.apply()
-        return self.node
+        if self.stale:
+            self.apply()
+            self.stale = False
+
+        return self.class_provided.expand()
 
     def __getattr__(self, key):
         #frame = inspect.currentframe().f_back.f_back
