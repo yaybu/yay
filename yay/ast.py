@@ -9,6 +9,10 @@ import inspect
 The ``yay.ast`` module contains the classes that make up the graph.
 """
 
+
+_DEFAULT = object()
+
+
 class cached(object):
 
     def __init__(self, func):
@@ -36,19 +40,19 @@ class AST(object):
     lineno = 0
     _predecessor = None
 
-    def as_int(self, anchor=None):
+    def as_int(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
 
-    def as_float(self, anchor=None):
+    def as_float(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
 
-    def as_number(self, anchor=None):
+    def as_number(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
 
-    def as_safe_string(self, anchor=None):
+    def as_safe_string(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
 
-    def as_string(self, anchor=None):
+    def as_string(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
 
     def as_dict(self, anchor=None):
@@ -286,24 +290,37 @@ class Scalarish(object):
     A scalar cannot be treated as a stream.
     """
 
-    def as_int(self, anchor=None):
+    def as_int(self, default=_DEFAULT, anchor=None):
         try:
             return int(self.resolve())
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
         except ValueError:
             raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
 
-    def as_float(self, anchor=None):
+    def as_float(self, default=_DEFAULT, anchor=None):
         try:
             return float(self.resolve())
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
         except ValueError:
             raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
 
-    def as_number(self, anchor=None):
+    def as_number(self, default=_DEFAULT, anchor=None):
         """
         This will return an integer, and if it can't return an integer it
         will return a float. Otherwise it will fail with a TypeError.
         """
-        resolved = self.resolve()
+        try:
+            resolved = self.resolve()
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
         try:
             return int(resolved)
         except ValueError:
@@ -312,12 +329,17 @@ class Scalarish(object):
             except ValueError:
                 raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
 
-    def as_safe_string(self, anchor=None):
+    def as_safe_string(self, default=_DEFAULT, anchor=None):
         """ Returns a string that might includes obfuscation where secrets are used """
         return self.as_string(anchor)
 
-    def as_string(self, anchor=None):
-        resolved = self.resolve()
+    def as_string(self, default=_DEFAULT, anchor=None):
+        try:
+            resolved = self.resolve()
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
         if isinstance(resolved, (int, float, bool)):
             resolved = str(resolved)
         if not isinstance(resolved, basestring):
@@ -389,19 +411,19 @@ class Proxy(object):
     returned by ``self.expand()``.
     """
 
-    def as_int(self, anchor=None):
+    def as_int(self, default=_DEFAULT, anchor=None):
         return self.expand().as_int(anchor or self.anchor)
 
-    def as_float(self, anchor=None):
+    def as_float(self, default=_DEFAULT, anchor=None):
         return self.expand().as_float(anchor or self.anchor)
 
-    def as_number(self, anchor=None):
+    def as_number(self, default=_DEFAULT, anchor=None):
         return self.expand().as_number(anchor or self.anchor)
 
-    def as_safe_string(self, anchor=None):
+    def as_safe_string(self, default=_DEFAULT, anchor=None):
         return self.expand().as_safe_string(anchor or self.anchor)
 
-    def as_string(self, anchor=None):
+    def as_string(self, default=_DEFAULT, anchor=None):
         return self.expand().as_string(anchor or self.anchor)
 
     def as_dict(self, anchor=None):
