@@ -831,6 +831,9 @@ class TestPythonClassMock(ast.PythonClass):
 
     def apply(self):
         assert self.params.get('foo').as_string() == 'bar'
+        assert self.params['foo'].as_string() == 'bar'
+        assert self.params.foo.as_string() == 'bar'
+
         self.metadata['hello'] = 'world'
 
 
@@ -1287,6 +1290,46 @@ class TestSet(unittest2.TestCase):
     #        quux: {{ bar }}
     #        """)
     #    self.assertEqual(res, {"quux": "bar"})
+
+class TestPythonicWrapper(unittest2.TestCase):
+
+    def setUp(self):
+        self.graph = parse("""
+            foo: 1
+            bar: 2.0
+            baz:
+               hello: bonjour
+            qux: a string
+            quux:
+                - fruit: apple
+                - fruit: pear
+            """)
+
+    def test_attr_access(self):
+        self.assertEqual(self.graph.foo.resolve(), 1)
+
+    def test_nested_attr_access(self):
+        self.assertEqual(self.graph.baz.hello.as_string(), "bonjour")
+
+    def test_subscription(self):
+        self.assertEqual(self.graph['baz']['hello'].as_string(), "bonjour")
+
+    def test_float(self):
+        self.assertEqual(float(self.graph.bar), 2.0)
+
+    def test_int(self):
+        self.assertEqual(int(self.graph.foo), 1)
+
+    def test_str(self):
+        self.assertEqual(str(self.graph.qux), "a string")
+
+    def test_dir(self):
+        self.assertEqual(dir(self.graph.baz), ["hello"])
+
+    def test_iter(self):
+        it = iter(self.graph.quux)
+        self.assertEqual(str(it.next().fruit), "apple")
+        self.assertEqual(str(it.next().fruit), "pear")
 
 
 class TestOpeners(unittest2.TestCase):

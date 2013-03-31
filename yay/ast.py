@@ -451,7 +451,44 @@ class Tripwire(Proxy, AST):
         return self.node
 
 
-class Root(Proxy, AST):
+class Pythonic(object):
+
+    def __int__(self):
+        return self.as_int()
+
+    def __long__(self):
+        return self.as_int()
+
+    def __float__(self):
+        return self.as_float()
+
+    def __str__(self):
+        return self.as_string()
+
+    def __dir__(self):
+        return self.keys()
+
+    def __getattr__(self, key):
+        return PythonicWrapper(AttributeRef(self, key))
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return PythonicWrapper(SliceyThing(self, key))
+        return PythonicWrapper(Subscription(self, YayScalar(key)))
+
+    def __iter__(self):
+        for val in self.as_iterable():
+            yield PythonicWrapper(val)
+
+class PythonicWrapper(Pythonic, Proxy, AST):
+    def __init__(self, inner):
+        self.inner = inner
+        inner.parent = self
+
+    def expand(self):
+        return self.inner.expand()
+
+class Root(Pythonic, Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
     """
@@ -1741,7 +1778,7 @@ class PythonClass(Proxy, AST):
         self.class_provided.predecessor = params
 
         # Node containing metadata provided by the user
-        self.params = params
+        self.params = PythonicWrapper(params)
         self.params.parent = self
 
         self.stale = True
