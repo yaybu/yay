@@ -248,13 +248,13 @@ class AST(object):
     #def __getattr__(self, key):
     #    print key
     #    try:
-    #        return self.get(key)
+    #        return self.get_key(key)
     #    except errors.NoMatching as e:
     #        raise AttributeError(str(e))
 
     def __getitem__(self, key):
         try:
-            return self.get(key)
+            return self.get_key(key)
         except errors.NoMatching as e:
             raise IndexError(str(e))
 
@@ -369,7 +369,7 @@ class Dictish(object):
         return self.resolve()
 
     def resolve(self):
-        return dict((key, self.get(key).resolve()) for key in self.keys())
+        return dict((key, self.get_key(key).resolve()) for key in self.keys())
 
 
 class Proxy(object):
@@ -413,8 +413,8 @@ class Proxy(object):
     def as_iterable(self, anchor=None):
         return self.expand().as_iterable(anchor or self.anchor)
 
-    def get(self, key):
-        return self.expand().get(key)
+    def get_key(self, key):
+        return self.expand().get_key(key)
 
     def resolve(self):
         return self.expand().resolve()
@@ -480,6 +480,7 @@ class Pythonic(object):
         for val in self.as_iterable():
             yield PythonicWrapper(val)
 
+
 class PythonicWrapper(Pythonic, Proxy, AST):
     def __init__(self, inner):
         self.inner = inner
@@ -523,7 +524,7 @@ class Root(Pythonic, Proxy, AST):
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get_context(self, key):
-        return self.node.get(key)
+        return self.node.get_key(key)
 
     def expand(self):
         return self.node.expand()
@@ -808,7 +809,7 @@ class AttributeRef(Proxy, AST):
 
     def expand(self):
         __context__ = " -> Looking up subkey '%s'" % self.identifier
-        return self.primary.expand().get(self.identifier).expand()
+        return self.primary.expand().get_key(self.identifier).expand()
 
 class LazyPredecessor(Proxy, AST):
     def __init__(self, node, identifier):
@@ -820,18 +821,18 @@ class LazyPredecessor(Proxy, AST):
     def anchor(self):
         return self.expand().anchor
 
-    def get(self, key):
+    def get_key(self, key):
         try:
             predecessor = self.expand()
         except errors.NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
-        return predecessor.get(key)
+        return predecessor.get_key(key)
 
     def expand(self):
         if self.node.predecessor:
             parent_pred = self.node.predecessor.expand()
             try:
-                pred = parent_pred.get(self.identifier)
+                pred = parent_pred.get_key(self.identifier)
             except errors.NoMatching:
                 raise errors.NoPredecessor
             return pred.expand()
@@ -846,9 +847,9 @@ class UseMyPredecessorStandin(Proxy, AST):
     def predecessor(self):
         return self.node.predecessor
 
-    def get(self, key):
+    def get_key(self, key):
         try:
-            return self.expand().get(key)
+            return self.expand().get_key(key)
         except NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
 
@@ -875,7 +876,7 @@ class Subscription(Proxy, AST):
             e.parent = self
 
     def expand(self):
-        return self.primary.expand().get(self.expression_list[0].resolve()).expand()
+        return self.primary.expand().get_key(self.expression_list[0].resolve()).expand()
 
 class SimpleSlicing(Streamish, AST):
 
@@ -1072,7 +1073,7 @@ class YayList(Streamish, AST):
         self.value.append(item)
         item.parent = self
 
-    def get(self, idx):
+    def get_key(self, idx):
         return self.get_index(idx)
 
     def get_index(self, idx):
@@ -1104,7 +1105,7 @@ class YayDict(Dictish, AST):
 
     def update(self, k, v):
         try:
-            predecessor = self.get(k)
+            predecessor = self.get_key(k)
         except errors.NoMatching:
             predecessor = LazyPredecessor(self, k)
 
@@ -1136,11 +1137,11 @@ class YayDict(Dictish, AST):
             return self.head
         return super(YayDict, self).get_context(key)
 
-    def get(self, key):
+    def get_key(self, key):
         if key in self.values:
             return self.values[key]
         try:
-            return self.predecessor.expand().get(key)
+            return self.predecessor.expand().get_key(key)
         except errors.NoPredecessor:
             pass
         raise errors.NoMatching("Key '%s' not found" % key)
@@ -1361,10 +1362,10 @@ class Include(Proxy, AST):
 
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
-    def get(self, key):
+    def get_key(self, key):
         if self.expanding:
             try:
-                return self.predecessor.get(key)
+                return self.predecessor.get_key(key)
             except errors.NoPredecessor:
                 raise errors.NoMatching("No such key '%s'" % key)
 
@@ -1372,7 +1373,7 @@ class Include(Proxy, AST):
             raise errors.NoMatching("'%s' not found" % key)
         try:
             self.detector.append(key)
-            return self.expand().get(key)
+            return self.expand().get_key(key)
         finally:
             self.detector.remove(key)
 
@@ -1814,7 +1815,7 @@ class PythonDict(Dictish, AST):
         #FIXME: We should either have a fake anchor or generate one by inspecting the frame
         self.anchor = None
 
-    def get(self, key):
+    def get_key(self, key):
         try:
             obj = bind(self.dict[key])
             obj.parent = self
@@ -1824,7 +1825,7 @@ class PythonDict(Dictish, AST):
             pass
 
         try:
-            return self.predecessor.get(key)
+            return self.predecessor.get_key(key)
         except errors.NoPredecessor:
             pass
 

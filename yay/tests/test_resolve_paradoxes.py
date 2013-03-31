@@ -41,7 +41,7 @@ class TestResolveParadoxes(unittest.TestCase):
                 example="""
                 foo: 0
                 """)
-        self.assertEqual(t.get("foo").as_int(), 1)
+        self.assertEqual(t.get_key("foo").as_int(), 1)
 
     def test_select_preventing_itself(self):
         """
@@ -78,7 +78,7 @@ class TestResolveParadoxes(unittest.TestCase):
                 foo: ok
             """)
 
-        self.assertEqual(t.get("out").get("foo").resolve(), "ok")
+        self.assertEqual(t.get_key("out").get_key("foo").resolve(), "ok")
 
     def test_if_preventing_itself(self):
         """
@@ -106,7 +106,7 @@ class TestResolveParadoxes(unittest.TestCase):
             bar: 1
             """)
 
-        self.assertEqual(t.get("bar").resolve(), 1)
+        self.assertEqual(t.get_key("bar").resolve(), 1)
 
     def test_include_var_changes_in_include(self):
         t = parse("""
@@ -120,7 +120,7 @@ class TestResolveParadoxes(unittest.TestCase):
             never: ever
             """)
 
-        self.assertRaises(errors.ParadoxError, t.get, "never")
+        self.assertRaises(errors.ParadoxError, t.get_key, "never")
 
     def test_include_var_changes_in_include_overidden(self):
         t = parse("""
@@ -135,4 +135,4 @@ class TestResolveParadoxes(unittest.TestCase):
             never: ever
             """)
 
-        self.assertEqual(t.get("never").resolve(), "ever")
+        self.assertEqual(t.get_key("never").resolve(), "ever")

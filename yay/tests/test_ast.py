@@ -68,7 +68,7 @@ class TestRoot(unittest.TestCase):
     def test_get_context(self):
         root = Root(Mock())
         root.get_context('hello')
-        root.node.get.assert_called_with('hello')
+        root.node.get_key.assert_called_with('hello')
 
     def test_get_context_no_matching(self):
         # FIXME
