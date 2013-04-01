@@ -17,6 +17,7 @@ Contents:
    advanced/index
    examples
    patterns
+   python
    hacking
    debugging
 
