@@ -330,39 +330,6 @@ class TestParentForm(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").resolve(), [])
 
 
-class TestPower(unittest2.TestCase):
-
-    def test_power_literals(self):
-        t = parse("""
-            foo: {{ 2 ** 2 }}
-            """)
-
-        self.assertEqual(t.get_key("foo").as_int(), 4)
-
-    def test_power_ident1(self):
-        t = parse("""
-            foo: 2
-            qux: {{ 2 ** foo }}
-            """)
-
-        self.assertEqual(t.get_key("qux").as_int(), 4)
-
-    def test_power_ident2(self):
-        t = parse("""
-            foo: 2
-            bar: {{ foo ** 2 }}
-            """)
-
-        self.assertEqual(t.get_key("bar").as_int(), 4)
-
-    def test_type_error(self):
-        t = parse("""
-            foo: {{ 2 ** [] }}
-            """)
-
-        self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
-
-
 class TestUnaryMinus(unittest2.TestCase):
 
     def test_simple_case(self):
@@ -389,21 +356,11 @@ class TestUnaryMinus(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("bar").as_int)
 
 
-class TestExpression(unittest2.TestCase):
-
-    def test_type_error(self):
-        t = parse("""
-            foo: {{ [] + {} }}
-            """)
-        self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
+class TestEqual(unittest2.TestCase):
 
     def test_equals(self):
-        res = resolve("bar: {{ 1 == 2}}\n")
+        res = resolve("bar: {{ 1 == 2 }}\n")
         self.assertEqual(res, {"bar": False})
-
-    def test_not_equals(self):
-        res = resolve("bar: {{ 1 != 2}}\n")
-        self.assertEqual(res, {"bar": True})
 
     def test_variables_equals(self):
         res = resolve("""
@@ -412,6 +369,158 @@ class TestExpression(unittest2.TestCase):
           c: {{ a == b}}
           """)
         self.assertEqual(res['c'], True)
+    
+    def test_different_types(self):
+        res = resolve("""
+          bar: {{ 1 == "one" }}
+          """)
+        self.assertEqual(res['bar'], False)
+
+
+class TestNotEqual(unittest2.TestCase):
+
+    def test_not_equals(self):
+        res = resolve("bar: {{ 1 != 2}}\n")
+        self.assertEqual(res, {"bar": True})
+
+    def test_different_types(self):
+        res = resolve("""
+          bar: {{ 1 != "one" }}
+          """)
+        self.assertEqual(res['bar'], True)
+
+
+class TestGreaterThan(unittest2.TestCase):
+    def test_gt(self):
+        res = resolve("""
+            bar: {{ 2 > 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_not_gt(self):
+        res = resolve("""
+            bar: {{ 1 > 2 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_eq(self):
+        res = resolve("""
+            bar: {{ 1 > 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_lhs_neg(self):
+        res = resolve("""
+            bar: {{ -1 > 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_rhs_neg(self):
+        res = resolve("""
+            bar: {{ 1 > -1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+
+class TestLessThan(unittest2.TestCase):
+
+    def test_gt(self):
+        res = resolve("""
+            bar: {{ 2 < 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_not_gt(self):
+        res = resolve("""
+            bar: {{ 1 < 2 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_eq(self):
+        res = resolve("""
+            bar: {{ 1 < 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_lhs_neg(self):
+        res = resolve("""
+            bar: {{ -1 < 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_rhs_neg(self):
+        res = resolve("""
+            bar: {{ 1 < -1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+
+class TestGreaterThanEqual(unittest2.TestCase):
+    def test_gt(self):
+        res = resolve("""
+            bar: {{ 2 >= 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_not_gt(self):
+        res = resolve("""
+            bar: {{ 1 >= 2 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_eq(self):
+        res = resolve("""
+            bar: {{ 1 >= 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_lhs_neg(self):
+        res = resolve("""
+            bar: {{ -1 >= 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_rhs_neg(self):
+        res = resolve("""
+            bar: {{ 1 >= -1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+
+class TestLessThanEqual(unittest2.TestCase):
+
+    def test_gt(self):
+        res = resolve("""
+            bar: {{ 2 <= 1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+    def test_not_gt(self):
+        res = resolve("""
+            bar: {{ 1 <= 2 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_eq(self):
+        res = resolve("""
+            bar: {{ 1 <= 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_lhs_neg(self):
+        res = resolve("""
+            bar: {{ -1 <= 1 }}
+            """)
+        self.assertEqual(res['bar'], True)
+
+    def test_rhs_neg(self):
+        res = resolve("""
+            bar: {{ 1 <= -1 }}
+            """)
+        self.assertEqual(res['bar'], False)
+
+
+class TestAdd(unittest2.TestCase):
 
     def test_plus(self):
         t = parse("""
@@ -419,30 +528,175 @@ class TestExpression(unittest2.TestCase):
             """)
         self.assertEqual(t.get_key("foo").as_int(), 2)
 
+    def test_add_strings(self):
+        t = parse("""
+            foo: {{ "foo" + "bar" }}
+            """)
+        self.assertEqual(t.get_key('foo').as_string(), 'foobar')
+
+    def test_type_error(self):
+        t = parse("""
+            foo: {{ [] + {} }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
+
+
+class TestSubtract(unittest2.TestCase):
     def test_minus(self):
         t = parse("""
             foo: {{ 1 - 1 }}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 0)
 
+    def test_negative(self):
+        t = parse("""
+            foo: {{ 1 - 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), -1)
+
+    def test_negative_negative(self):
+        t = parse("""
+            foo: {{ 1 - -2 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 3)
+
+    def test_subtract_strings(self):
+        t = parse("""
+            foo: {{ "foo" - "foo" }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
+
+
+class TestMultiply(unittest2.TestCase):
     def test_multiply(self):
         t = parse("""
             foo: {{ 2 * 3 }}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 6)
 
+    def test_multiply_neg(self):
+        t = parse("""
+            foo: {{ -2 * 3 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), -6)
+
+    def test_multiply_strings(self):
+        t = parse("""
+            foo: {{ "foo" * "foo" }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
+
+
+class TestDivide(unittest2.TestCase):
     def test_divide(self):
         t = parse("""
             foo: {{ 8 / 2 }}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 4)
 
+    def test_divide_pep238(self):
+        """ Yay has python 3 style PEP238 division """
+        t = parse("""
+            foo: {{ 5 / 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").resolve(), 2.5)
+
+    def test_divide_strings(self):
+        t = parse("""
+            foo: {{ "foo" / "foo" }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
+
+
+class TestFloorDivide(unittest2.TestCase):
+
+    def test_divide(self):
+        t = parse("""
+            foo: {{ 5 // 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").resolve(), 2)
+
+    def test_divide_strings(self):
+        t = parse("""
+            foo: {{ "foo" // "foo" }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
+
+class TestMod(unittest2.TestCase):
+
+    def test_no_remainder(self):
+        t = parse("""
+            foo: {{ 8 % 8 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 0)
+
+    def test_1_remainder(self):
+        t = parse("""
+            foo: {{ 9 % 8 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 1)
+
+    def test_7_remainder(self):
+        t = parse("""
+            foo: {{ 15 % 8 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 7)
+
+    def test_8_remainder(self):
+        t = parse("""
+            foo: {{ 16 % 8 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 0)
+
+    def test_divide_strings(self):
+        t = parse("""
+            foo: {{ "foo" % "foo" }}
+            """)
+        self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
+
+
+class TestRshift(unittest2.TestCase):
+
+    def test_rshift(self):
+        t = parse("""
+            foo: {{ 6 >> 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 1)
+
+
+class TestLshift(unittest2.TestCase):
+
+    def test_lshift(self):
+        t = parse("""
+            foo: {{ 6 << 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 24)
+
+
+class TestXor(unittest2.TestCase):
     def test_xor(self):
         t = parse("""
-            foo: {{ 6 ^ 2}}
+            foo: {{ 6 ^ 2 }}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 6 ^ 2)
 
+
+class TestBitwiseAnd(unittest2.TestCase):
+
+    def test_bitwise_and_0(self):
+        t = parse("""
+            foo: {{ 8 & 7 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 0)
+
+    def test_bitwise_and_8(self):
+        t = parse("""
+            foo: {{ 15 & 8 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 8)
+
+
+class TestAnd(unittest2.TestCase):
     def test_and_true_true(self):
         t = parse("""
             foo: {{ 1 and 1 }}
@@ -466,6 +720,15 @@ class TestExpression(unittest2.TestCase):
             foo: {{ 0 and 0 }}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 0)
+
+
+class TestBitwiseOr(unittest2.TestCase):
+
+    def test_bitwise_or(self):
+        t = parse("""
+            foo: {{ 8 | 2 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 10)
 
 
 class TestOr(unittest2.TestCase):
@@ -507,6 +770,50 @@ class TestOr(unittest2.TestCase):
             """,
             foo_inc="hello:world\n")
         self.assertEqual(res['hello'], 'world')
+
+class TestNotIn(unittest2.TestCase):
+
+    def test_not_in(self):
+        t = parse("""
+            fruit:
+              - apple
+              - pear
+            foo: {{ "potato" not in fruit }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), 1)
+
+
+class TestPower(unittest2.TestCase):
+
+    def test_power_literals(self):
+        t = parse("""
+            foo: {{ 2 ** 2 }}
+            """)
+
+        self.assertEqual(t.get_key("foo").as_int(), 4)
+
+    def test_power_ident1(self):
+        t = parse("""
+            foo: 2
+            qux: {{ 2 ** foo }}
+            """)
+
+        self.assertEqual(t.get_key("qux").as_int(), 4)
+
+    def test_power_ident2(self):
+        t = parse("""
+            foo: 2
+            bar: {{ foo ** 2 }}
+            """)
+
+        self.assertEqual(t.get_key("bar").as_int(), 4)
+
+    def test_type_error(self):
+        t = parse("""
+            foo: {{ 2 ** [] }}
+            """)
+
+        self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
 
 
 class TestNot(unittest2.TestCase):

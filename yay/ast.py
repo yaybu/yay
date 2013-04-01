@@ -678,7 +678,7 @@ class NotEqual(Expr):
         return self.lhs.resolve() != self.rhs.resolve()
 
 class LessThan(Expr):
-    op = operator.le
+    op = operator.lt
 
 class GreaterThan(Expr):
     op = operator.gt
@@ -779,7 +779,8 @@ class And(Expr):
 
 
 class NotIn(Expr):
-    op = lambda x,y: not x in y
+    def resolve(self):
+        return self.lhs.resolve() not in self.rhs.resolve()    
 
 class Power(Expr):
     op = operator.pow
