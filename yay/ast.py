@@ -607,6 +607,16 @@ class UnaryExpr(Scalarish, AST):
         self.inner = inner
         inner.parent = self
 
+    def dynamic(self):
+        return self.inner.dynamic()
+
+    @cached
+    def simplify(self):
+        if not self.dynamic():
+            return True, Literal(self.resolve())
+        else:
+            return True, self.__class__(self.inner.simplify())
+
     def resolve(self):
         return self.op(self.inner.as_number())
 
@@ -633,7 +643,7 @@ class Not(UnaryExpr):
 class Expr(Scalarish, AST):
 
     """
-    The ``Expr`` node tests for equality between a left and a right child. The
+    The ``Expr`` nodes tests for equality between a left and a right child. The
     result is either True or False.
 
     Tree reduction rules
@@ -642,7 +652,7 @@ class Expr(Scalarish, AST):
     If both children are constant then this node can be reduced to a
     ``Literal``
 
-    Otherwise, an equivalent ``Expr`` node is returned that has had its children
+    Otherwise, an equivalent expression node is returned that has had its children
     simplified.
     """
 
