@@ -600,15 +600,6 @@ class ExpressionList(AST):
     def resolve(self):
         return [expr.resolve() for expr in self.expression_list]
 
-class Power(Scalarish, AST):
-    def __init__(self, primary, power=None):
-        self.primary = primary
-        primary.parent = self
-        self.power = power
-        power.parent = self
-
-    def resolve(self):
-        return self.primary.as_number() ** self.power.as_number()
 
 class UnaryMinus(Scalarish, AST):
     """ The unary - (minus) operator yields the negation of its numeric
@@ -632,6 +623,14 @@ class Invert(Scalarish, AST):
     def resolve(self):
         return ~self.u_expr.as_number()
 
+class Not(Scalarish, AST):
+    def __init__(self, value):
+        self.value = value
+        value.parent = self
+
+    def resolve(self):
+        return not self.value.resolve()
+
 class Expr(Scalarish, AST):
 
     """
@@ -648,35 +647,11 @@ class Expr(Scalarish, AST):
     simplified.
     """
 
-    operators = {
-        "==": operator.eq,
-        "!=": operator.ne,
-        "<": operator.lt,
-        ">": operator.gt,
-        "<=": operator.le,
-        ">=": operator.ge,
-        "+": operator.add,
-        "-": operator.sub,
-        "*": operator.mul,
-        "/": operator.div,
-        "^": operator.xor,
-        "or": operator.or_,
-        "and": operator.and_,
-        "not in": lambda x, y: not x in y,
-    }
-
-    def __init__(self, lhs, rhs, operator):
+    def __init__(self, lhs, rhs):
         self.lhs = lhs
         lhs.parent = self
         self.rhs = rhs
         rhs.parent = self
-        self.operator = operator
-        self.op = self.operators[operator]
-
-    def resolve(self):
-        l = self.lhs.resolve()
-        r = self.rhs.resolve()
-        return self.op(l, r)
 
     def dynamic(self):
         for c in (self.lhs, self.rhs):
@@ -684,40 +659,86 @@ class Expr(Scalarish, AST):
                 return True
         return False
 
+    @cached
     def simplify(self):
-        # FIXME: Would be kind of nice if parser could directly spawn And nodes, i guess...
-        # (And and Or can be more agressively simplified than the others)
-        if self.operator == "and":
-            return And(self.lhs.simplify(), self.rhs.simplify()).simplify()
-        elif self.operator == "or":
-            return Or(self.lhs.simplify(), self.rhs.simplify()).simplify()
-        elif not self.dynamic():
-            return Literal(self.op(self.lhs.resolve(), self.rhs.resolve()))
+        if not self.dynamic():
+            return True, Literal(self.resolve())
         else:
-            return Expr(self.lhs.simplify(), self.rhs.simplify(), self.operator)
+            return True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
 
     def resolve(self):
-        # FIXME: This is horrible and requires more thought
-        if self.operator == "or":
-            try:
-                res = self.lhs.resolve()
-                if res:
-                    return res
-            except errors.NoMatching:
-                pass
-            return self.rhs.resolve()
-        elif self.operator in ("==", "!="):
-            return self.op(self.lhs.resolve(), self.rhs.resolve())
-        elif self.operator == "+":
-            try:
-                return self.op(self.lhs.as_number(), self.rhs.as_number())
-            except errors.TypeError:
-                return self.op(self.lhs.as_string(), self.rhs.as_string())
-        else:
+        return self.op(self.lhs.as_number(), self.rhs.as_number())
+
+class Equal(Expr):
+    def resolve(self):
+        return self.lhs.resolve() == self.rhs.resolve()
+
+class NotEqual(Expr):
+    def resolve(self):
+        return self.lhs.resolve() != self.rhs.resolve()
+
+class LessThan(Expr):
+    op = operator.le
+
+class GreaterThan(Expr):
+    op = operator.gt
+
+class LessThanEqual(Expr):
+    op = operator.le
+
+class GreaterThanEqual(Expr):
+    op = operator.ge
+
+class Add(Expr):
+    op = operator.add
+
+    def resolve(self):
+        try:
             return self.op(self.lhs.as_number(), self.rhs.as_number())
+        except errors.TypeError:
+            return self.op(self.lhs.as_string(), self.rhs.as_string())
 
+class Subtract(Expr):
+    op = operator.sub
 
-class And(Scalarish, AST):
+class Multiply(Expr):
+    op = operator.mul
+
+class Divide(Expr):
+    op = operator.truediv
+
+class FloorDivide(Expr):
+    op = operator.floordiv
+
+class Mod(Expr):
+    op = operator.mod
+
+class Lshift(Expr):
+    op = operator.lshift
+
+class Rshift(Expr):
+    op = operator.rshift
+
+class Xor(Expr):
+    op = operator.xor
+
+class BitwiseOr(Expr):
+    op = operator.or_
+
+class Or(Expr):
+    def resolve(self):
+        try:
+            res = self.lhs.resolve()
+            if res:
+                return res
+        except errors.NoMatching:
+            pass
+        return self.rhs.resolve()
+
+class BitwiseAnd(Expr):
+    op = operator.and_
+
+class And(Expr):
 
     """
     An ``And`` expression behaves much like the ``and`` keyword in python.
@@ -737,46 +758,32 @@ class And(Scalarish, AST):
     And is returned that has its contents reduced).
     """
 
-    def __init__(self, left, right):
-        self.left = left
-        self.left.parent = self
-        self.right = right
-        self.right.parent = self
-
-    def dynamic(self):
-        for c in (self.left, self.right):
-            if c.dynamic():
-                return True
-        return False
+    op = lambda self, lhs, rhs: lhs and rhs
 
     def simplify(self):
-        if self.left.dynamic():
-            if self.right.dynamic():
-                return And(self.left.simplify(), self.right.simplify())
-            elif self.right.resolve():
-                return self.left.simplify()
+        if self.lhs.dynamic():
+            if self.rhs.dynamic():
+                return And(self.lhs.simplify(), self.rhs.simplify())
+            elif self.rhs.resolve():
+                return self.lhs.simplify()
             else:
                 return Literal(False)
 
-        elif self.right.dynamic():
-            if self.left.resolve():
-                return self.right.simplify()
+        elif self.rhs.dynamic():
+            if self.lhs.resolve():
+                return self.rhs.simplify()
             else:
                 return Literal(False)
 
-        return Literal(self.left.resolve() and self.right.resolve())
-
-    def resolve(self):
-        return self.left.resolve() and self.right.resolve()
+        return Literal(self.resolve())
 
 
-class Not(Scalarish, AST):
-    def __init__(self, value):
-        self.value = value
-        value.parent = self
+class NotIn(Expr):
+    op = lambda x,y: not x in y
 
-    def resolve(self):
-        return not self.value.resolve()
+class Power(Expr):
+    op = operator.pow
+
 
 class ConditionalExpression(Proxy, AST):
     def __init__(self, or_test, if_clause, else_clause):

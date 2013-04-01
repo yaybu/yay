@@ -442,6 +442,7 @@ class TestExpression(unittest2.TestCase):
             foo: {{ 6 ^ 2}}
             """)
         self.assertEqual(t.get_key("foo").as_int(), 6 ^ 2)
+
     def test_and_true_true(self):
         t = parse("""
             foo: {{ 1 and 1 }}

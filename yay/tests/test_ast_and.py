@@ -1,4 +1,4 @@
-# Copyright 2013 Isotoma Limited
+# Copyrhs 2013 Isotoma Limited
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,37 +20,37 @@ from yay.tests.test_ast_common import DynamicLiteral
 class TestAndSimplification(unittest.TestCase):
 
     def test_both_dynamic(self):
-        n = And(DynamicLiteral('left'), DynamicLiteral('right'))
+        n = And(DynamicLiteral('lhs'), DynamicLiteral('rhs'))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, And))
         self.assertNotEqual(res, n)
-        self.assertEqual(n.left.literal, 'left')
-        self.assertEqual(n.right.literal, 'right')
+        self.assertEqual(n.lhs.literal, 'lhs')
+        self.assertEqual(n.rhs.literal, 'rhs')
 
-    def test_dynamic_left_right_true(self):
-        n = And(DynamicLiteral('left'), Literal(True))
+    def test_dynamic_lhs_rhs_true(self):
+        n = And(DynamicLiteral('lhs'), Literal(True))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, DynamicLiteral))
-        self.assertEqual(res.literal, 'left')
+        self.assertEqual(res.literal, 'lhs')
 
-    def test_dynamic_left_right_false(self):
-        n = And(DynamicLiteral('left'), Literal(False))
+    def test_dynamic_lhs_rhs_false(self):
+        n = And(DynamicLiteral('lhs'), Literal(False))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, Literal))
         self.assertEqual(res.literal, False)
 
-    def test_dynamic_right_left_true(self):
-        n = And(Literal(True), DynamicLiteral('right'))
+    def test_dynamic_rhs_lhs_true(self):
+        n = And(Literal(True), DynamicLiteral('rhs'))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, DynamicLiteral))
-        self.assertEqual(res.literal, 'right')
+        self.assertEqual(res.literal, 'rhs')
 
-    def test_dynamic_right_left_false(self):
-        n = And(Literal(False), DynamicLiteral('right'))
+    def test_dynamic_rhs_lhs_false(self):
+        n = And(Literal(False), DynamicLiteral('rhs'))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, Literal))

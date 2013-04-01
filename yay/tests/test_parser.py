@@ -42,7 +42,7 @@ class TestParser(unittest2.TestCase):
         res = parse("""
         set a = 'foo ' + 'bar'
         """)
-        self.assertEqual(res, Set(Identifier('a'), Expr(Literal('foo '), Literal('bar'), '+')))
+        self.assertEqual(res, Set(Identifier('a'), Add(Literal('foo '), Literal('bar'))))
 
     def test_set_float_literal(self):
         res = parse("""
@@ -60,23 +60,21 @@ class TestParser(unittest2.TestCase):
         res = parse("""
         set a = 2+2
         """)
-        self.assertEqual(res, Set(Identifier('a'), Expr(Literal(2), Literal(2), '+')))
+        self.assertEqual(res, Set(Identifier('a'), Add(Literal(2), Literal(2))))
 
     def test_set_complex_expr(self):
         res = parse("""
         set a = (2+2)*5/12.0
         """)
         self.assertEqual(res, Set(Identifier('a'),
-            Expr(
-                Expr(
+            Divide(
+                Multiply(
                     ParentForm(
-                            Expr(Literal(2), Literal(2), '+'),
+                            Add(Literal(2), Literal(2)),
                         ),
-                    Literal(5),
-                    '*'),
+                    Literal(5)),
                 Literal(12.0),
-                '/')
-            ))
+                )))
 
     def test_set_list(self):
         res = parse("""
@@ -187,13 +185,13 @@ class TestParser(unittest2.TestCase):
         res = parse("""
         set a = b and c
         """)
-        self.assertEqual(res, Set(Identifier('a'), Expr(Identifier('b'), Identifier('c'), 'and')))
+        self.assertEqual(res, Set(Identifier('a'), And(Identifier('b'), Identifier('c'))))
 
     def test_set_or(self):
         res = parse("""
         set a = b or c
         """)
-        self.assertEqual(res, Set(Identifier('a'), Expr(Identifier('b'), Identifier('c'), 'or')))
+        self.assertEqual(res, Set(Identifier('a'), Or(Identifier('b'), Identifier('c'))))
 
     def test_set_conditional_expression(self):
         res = parse("""
@@ -249,32 +247,30 @@ class TestParser(unittest2.TestCase):
         set a = b * c + d
         """)
         self.assertEqual(res, Set(Identifier('a'),
-                                  Expr(Expr(Identifier('b'), Identifier('c'), '*'),
-                                       Identifier('d'),
-                                       '+')))
+                                  Add(Multiply(Identifier('b'), Identifier('c')),
+                                       Identifier('d'))))
 
     def test_set_precedence_2(self):
         res = parse("""
         set a = b + c * d
         """)
         self.assertEqual(res, Set(Identifier('a'),
-                                  Expr(Identifier('b'),
-                                       Expr(Identifier('c'), Identifier('d'), '*'),
-                                       '+')))
+                                  Add(Identifier('b'),
+                                       Multiply(Identifier('c'), Identifier('d')))))
 
     def test_comparison_1(self):
         res = parse("""
         set a = b < c
         """)
         self.assertEqual(res, Set(Identifier('a'),
-                                  Expr(Identifier('b'), Identifier('c'), '<')))
+                                  LessThan(Identifier('b'), Identifier('c'))))
 
     def test_comparison_2(self):
         res = parse("""
         set a = b not in c
         """)
         self.assertEqual(res, Set(Identifier('a'),
-                                  Expr(Identifier('b'), Identifier('c'), 'not in')))
+                                  NotIn(Identifier('b'), Identifier('c'))))
 
     def test_emptydict(self):
         res = parse("""
@@ -427,7 +423,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', Template(Expr(Expr(Literal('this '), Identifier('a'), '+'), Literal(" that"), "+")))
+            ('c', Template(Add(Add(Literal('this '), Identifier('a')), Literal(" that"))))
         ]))
 
     def test_template_6(self):
@@ -437,7 +433,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', Template(Expr(Literal(1.0), Literal(2), "+")))
+            ('c', Template(Add(Literal(1.0), Literal(2))))
         ]))
 
     def test_list_of_complex_dicts(self):
@@ -866,14 +862,9 @@ class TestParser(unittest2.TestCase):
              - x
         """)
         self.assertEqual(res, If(
-            Expr(
-                Expr(Identifier('x'),
-                     Identifier('y'),
-                     '=='),
-                Expr(Identifier('c'),
-                     Identifier('d'),
-                     '=='),
-                "and"),
+            And(
+                Equal(Identifier('x'), Identifier('y')),
+                Equal(Identifier('c'), Identifier('d'))),
             YayList(YayScalar('x'))
             )
         )

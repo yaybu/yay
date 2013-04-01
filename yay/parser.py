@@ -20,6 +20,30 @@ from . import ast
 
 import warnings
 
+expressions = {
+    "==": ast.Equal,
+    "!=": ast.NotEqual,
+    "<": ast.LessThan,
+    ">": ast.GreaterThan,
+    "<=": ast.LessThanEqual,
+    ">=": ast.GreaterThanEqual,
+    "+": ast.Add,
+    "-": ast.Subtract,
+    "*": ast.Multiply,
+    "/": ast.Divide,
+    "//": ast.FloorDivide,
+    "%": ast.Mod,
+    "<<": ast.Lshift,
+    ">>": ast.Rshift,
+    "^": ast.Xor,
+    "or": ast.Or,
+    "|": ast.BitwiseOr,
+    "and": ast.And,
+    "&": ast.BitwiseAnd,
+    "not in": ast.NotIn,
+    }
+
+
 class Anchor(object):
     def __init__(self, source, p, i):
         self.source = source
@@ -550,7 +574,7 @@ class Parser(object):
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
 
@@ -563,7 +587,7 @@ class Parser(object):
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_shift_expr(self, p):
@@ -575,7 +599,7 @@ class Parser(object):
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_and_expr(self, p):
@@ -586,7 +610,7 @@ class Parser(object):
         if len(p) ==2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_xor_expr(self, p):
@@ -597,7 +621,7 @@ class Parser(object):
         if len(p) ==2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_or_expr(self, p):
@@ -608,7 +632,7 @@ class Parser(object):
         if len(p) ==2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_comparison(self, p):
@@ -619,7 +643,7 @@ class Parser(object):
         if len(p) == 2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_comp_operator(self, p):
@@ -646,7 +670,7 @@ class Parser(object):
         if len(p) ==2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_and_test(self, p):
@@ -657,7 +681,7 @@ class Parser(object):
         if len(p) ==2:
             p[0] = p[1]
         else:
-            p[0] = ast.Expr(p[1], p[3], p[2])
+            p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
     def p_not_test(self, p):

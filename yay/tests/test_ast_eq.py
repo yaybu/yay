@@ -13,14 +13,14 @@
 # limitations under the License.
 
 import unittest
-from yay.ast import Expr, Literal
+from yay.ast import Expr, Equal, Literal
 from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
 
 
 class TestEqSimplification(unittest.TestCase):
 
     def test_both_dynamic(self):
-        n = Expr(DynamicLiteral('left'), DynamicLiteral('right'), '==')
+        n = Equal(DynamicLiteral('left'), DynamicLiteral('right'))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, Expr))
@@ -28,7 +28,7 @@ class TestEqSimplification(unittest.TestCase):
         self.assertEqual(res.rhs.literal, 'right')
 
     def test_left_dynamic(self):
-        n = Expr(DynamicLiteral('left'), ComplexLiteral('right'), '==')
+        n = Equal(DynamicLiteral('left'), ComplexLiteral('right'))
         res = n.simplify()
 
         # Unable to simplify Expr because left side not constant
@@ -41,7 +41,7 @@ class TestEqSimplification(unittest.TestCase):
         self.assertTrue(not isinstance(res.rhs, ComplexLiteral))
 
     def test_right_dynamic(self):
-        n = Expr(ComplexLiteral('left'), DynamicLiteral('right'), '==')
+        n = Equal(ComplexLiteral('left'), DynamicLiteral('right'))
         res = n.simplify()
 
         # Unable to simplify Expr because right side not constant
@@ -54,7 +54,7 @@ class TestEqSimplification(unittest.TestCase):
         self.assertTrue(isinstance(res.rhs, DynamicLiteral))
 
     def test_neither_dynamic(self):
-        n = Expr(ComplexLiteral('left'), ComplexLiteral('right'), '==')
+        n = Equal(ComplexLiteral('left'), ComplexLiteral('right'))
         res = n.simplify()
 
         # Both sides constant so expression simplified to a literal
@@ -65,10 +65,10 @@ class TestEqSimplification(unittest.TestCase):
 class TestEqResolve(unittest.TestCase):
 
     def test_cond_true(self):
-        n = Expr(Literal(4), Literal(4), '==')
+        n = Equal(Literal(4), Literal(4))
         self.assertEqual(n.resolve(), True)
 
     def test_cond_false(self):
-        n = Expr(Literal(4), Literal(5), '==')
+        n = Equal(Literal(4), Literal(5))
         self.assertEqual(n.resolve(), False)
 

@@ -159,7 +159,7 @@ class TestFor(unittest.TestCase):
         self.assertEqual(f.resolve(), ['a', 'b'])
 
     def test_resolve_filtered(self):
-        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")), Expr(Identifier("x"), Literal("a"), "=="))
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")), Equal(Identifier("x"), Literal("a")))
         f.parent = Mock()
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a'])
