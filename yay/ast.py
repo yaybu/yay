@@ -601,35 +601,34 @@ class ExpressionList(AST):
         return [expr.resolve() for expr in self.expression_list]
 
 
-class UnaryMinus(Scalarish, AST):
+class UnaryExpr(Scalarish, AST):
+
+    def __init__(self, inner):
+        self.inner = inner
+        inner.parent = self
+
+    def resolve(self):
+        return self.op(self.inner.as_number())
+
+
+class UnaryMinus(UnaryExpr):
     """ The unary - (minus) operator yields the negation of its numeric
     argument. """
 
-    def __init__(self, u_expr):
-        self.u_expr = u_expr
-        u_expr.parent = self
+    op = operator.neg
 
-    def resolve(self):
-        return -self.u_expr.as_number()
 
-class Invert(Scalarish, AST):
+class Invert(UnaryExpr):
     """ The unary ~ (invert) operator yields the bitwise inversion of its
     plain or long integer argument. The bitwise inversion of x is defined as
     -(x+1). It only applies to integral numbers. """
-    def __init__(self, u_expr):
-        self.u_expr = u_expr
-        u_expr.parent = self
 
-    def resolve(self):
-        return ~self.u_expr.as_number()
+    op = operator.invert
 
-class Not(Scalarish, AST):
-    def __init__(self, value):
-        self.value = value
-        value.parent = self
 
-    def resolve(self):
-        return not self.value.resolve()
+class Not(UnaryExpr):
+    op = operator.not_
+
 
 class Expr(Scalarish, AST):
 

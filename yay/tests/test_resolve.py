@@ -356,6 +356,15 @@ class TestUnaryMinus(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("bar").as_int)
 
 
+class TestInvert(unittest2.TestCase):
+
+    def test_simple_case(self):
+        t = parse("""
+            foo: {{ ~5 }}
+            """)
+        self.assertEqual(t.get_key("foo").as_int(), -6)
+
+
 class TestEqual(unittest2.TestCase):
 
     def test_equals(self):
