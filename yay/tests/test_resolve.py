@@ -1317,11 +1317,20 @@ class TestPythonicWrapper(unittest2.TestCase):
     def test_float(self):
         self.assertEqual(float(self.graph.bar), 2.0)
 
+    def test_float_default(self):
+        self.assertEqual(self.graph.ribbon.quilt.as_float(5.0), 5.0)
+
     def test_int(self):
         self.assertEqual(int(self.graph.foo), 1)
 
+    def test_int_default(self):
+        self.assertEqual(self.graph.ribbon.quilt.as_int(5), 5)
+
     def test_str(self):
         self.assertEqual(str(self.graph.qux), "a string")
+
+    def test_str_default(self):
+        self.assertEqual(self.graph.ribbon.quilt.as_string("default"), "default")
 
     def test_dir(self):
         self.assertEqual(dir(self.graph.baz), ["hello"])
