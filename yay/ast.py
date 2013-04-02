@@ -40,6 +40,7 @@ class AST(object):
     lineno = 0
     _predecessor = None
     _resolving = False
+    _expanding = False
 
     def as_int(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
@@ -173,6 +174,15 @@ class AST(object):
         raise NotImplementedError(self.resolve)
 
     def expand(self):
+        if self._expanding:
+            raise errors.CycleError("A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
+        self._expanding = True
+        try:
+            return self.expand_once()
+        finally:
+            self._expanding = False
+
+    def expand_once(self):
         """
         Generate a simplification of this object that can replace it in the graph
         """
@@ -456,8 +466,8 @@ class Proxy(object):
     def get_key(self, key):
         return self.expand().get_key(key)
 
-    def expand(self):
-        raise NotImplementedError("%r does not implement expand or expand - but proxy types must" % type(self))
+    def expand_once(self):
+        raise NotImplementedError("%r does not implement expand or expand_once - but proxy types must" % type(self))
 
     def resolve_once(self):
         return self.expand().resolve()
@@ -529,7 +539,7 @@ class PythonicWrapper(Pythonic, Proxy, AST):
         self.inner = inner
         inner.parent = self
 
-    def expand(self):
+    def expand_once(self):
         return self.inner.expand()
 
 class Root(Pythonic, Proxy, AST):
@@ -581,7 +591,7 @@ class Identifier(Proxy, AST):
     def __init__(self, identifier):
         self.identifier = identifier
 
-    def expand(self):
+    def expand_once(self):
         __context__ = "Looking up '%s' in current scope" % self.identifier
         return self.get_context(self.identifier).expand()
 
@@ -818,7 +828,7 @@ class ConditionalExpression(Proxy, AST):
         self.else_clause = else_clause
         else_clause.parent = self
 
-    def expand(self):
+    def expand_once(self):
         if self.or_test.resolve():
             return self.if_clause.expand()
         else:
@@ -830,7 +840,7 @@ class ListDisplay(Proxy, AST):
         if expression_list:
             expression_list.parent = self
 
-    def expand(self):
+    def expand_once(self):
         if not self.expression_list:
             lst = YayList()
             lst.parent = self
@@ -867,7 +877,7 @@ class AttributeRef(Proxy, AST):
         primary.parent = self
         self.identifier = identifier
 
-    def expand(self):
+    def expand_once(self):
         __context__ = " -> Looking up subkey '%s'" % self.identifier
         return self.primary.expand().get_key(self.identifier).expand()
 
@@ -888,7 +898,7 @@ class LazyPredecessor(Proxy, AST):
             raise errors.NoMatching("No such key '%s'" % key)
         return predecessor.get_key(key)
 
-    def expand(self):
+    def expand_once(self):
         if self.node.predecessor:
             parent_pred = self.node.predecessor.expand()
             try:
@@ -913,7 +923,7 @@ class UseMyPredecessorStandin(Proxy, AST):
         except NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
 
-    def expand(self):
+    def expand_once(self):
         return self.node.predecessor.expand()
 
 
@@ -935,7 +945,7 @@ class Subscription(Proxy, AST):
         for e in self.expression_list:
             e.parent = self
 
-    def expand(self):
+    def expand_once(self):
         return self.primary.expand().get_key(self.expression_list[0].resolve()).expand()
 
 class SimpleSlicing(Streamish, AST):
@@ -1021,7 +1031,7 @@ class Call(Proxy, AST):
                 arg.parent = self
         self.kwargs = kwargs
 
-    def expand(self):
+    def expand_once(self):
         args = []
         if self.args:
             for arg in self.args:
@@ -1066,7 +1076,7 @@ class CallCallable(Proxy, AST):
         for k in kwargs:
             k.parent = self
 
-    def expand(self):
+    def expand_once(self):
         args = [x.resolve() for x in self.args]
         kwargs = dict((k, v.resolve()) for (k, v) in self.kwargs.items())
         result = self.allowed[self.primary.identifier](*args, **kwargs)
@@ -1475,7 +1485,7 @@ class Set(Proxy, AST):
         self.var = var
         self.expr = expr
 
-    def expand(self):
+    def expand_once(self):
         return self.predecessor
 
 
@@ -1640,7 +1650,7 @@ class Macro(Proxy, AST):
             return self
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
-    def expand(self):
+    def expand_once(self):
         return self.predecessor.expand()
 
 class YayClass(Proxy, AST):
@@ -1665,7 +1675,7 @@ class YayClass(Proxy, AST):
 
         return context
 
-    def expand(self):
+    def expand_once(self):
         return self.predecessor.expand()
 
 class CallDirective(Proxy, AST):
@@ -1673,7 +1683,7 @@ class CallDirective(Proxy, AST):
         self.target = target
         self.node = node
 
-    def expand(self):
+    def expand_once(self):
         macro = self.root.get_callable(self.target.identifier)
         clone = macro.node.clone()
         if not self.node:
@@ -1720,7 +1730,7 @@ class Template(Proxy, AST):
         self.value = value
         value.parent = self
 
-    def expand(self):
+    def expand_once(self):
         return self.value.expand()
 
 
@@ -1744,7 +1754,7 @@ class Context(Proxy, AST):
             val = super(Context, self).get_context(key)
         return val
 
-    def expand(self):
+    def expand_once(self):
         return self.value.expand()
 
 class ListComprehension(Streamish, AST):
@@ -1847,7 +1857,7 @@ class PythonClass(Proxy, AST):
     def apply(self):
         raise NotImplementedError(self.apply)
 
-    def expand(self):
+    def expand_once(self):
         if self.stale:
             self.apply()
             self.stale = False
