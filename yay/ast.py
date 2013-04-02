@@ -39,6 +39,7 @@ class AST(object):
 
     lineno = 0
     _predecessor = None
+    _resolving = False
 
     def as_int(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
@@ -154,6 +155,15 @@ class AST(object):
         return self
 
     def resolve(self):
+        if self._resolving:
+            raise errors.CycleError("A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
+        self._resolving = True
+        try:
+            return self.resolve_once()
+        finally:
+            self._resolving = False
+
+    def resolve_once(self):
         """
         Resolve an object into a simple type, like a string or a dictionary.
 
@@ -328,6 +338,7 @@ class Scalarish(object):
             raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
         return resolved
 
+
 class Streamish(object):
     """
     A mixin for a class that behaves like a stream - i.e. is iterable
@@ -359,7 +370,7 @@ class Streamish(object):
         self._fill_to(index)
         return self._buffer[index]
 
-    def resolve(self):
+    def resolve_once(self):
         return [x.resolve() for x in self.as_iterable()]
 
 
@@ -372,7 +383,7 @@ class Dictish(object):
     def as_dict(self):
         return self.resolve()
 
-    def resolve(self):
+    def resolve_once(self):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
 
 
@@ -445,7 +456,10 @@ class Proxy(object):
     def get_key(self, key):
         return self.expand().get_key(key)
 
-    def resolve(self):
+    def expand(self):
+        raise NotImplementedError("%r does not implement expand or expand - but proxy types must" % type(self))
+
+    def resolve_once(self):
         return self.expand().resolve()
 
 
@@ -574,7 +588,7 @@ class Identifier(Proxy, AST):
 class Literal(Scalarish, AST):
     def __init__(self, literal):
         self.literal = literal
-    def resolve(self):
+    def resolve_once(self):
         return self.literal
 
 class ParentForm(Scalarish, AST):
@@ -583,7 +597,7 @@ class ParentForm(Scalarish, AST):
         self.expression_list = expression_list
         if expression_list:
             expression_list.parent = self
-    def resolve(self):
+    def resolve_once(self):
         if not self.expression_list:
             return []
         return self.expression_list.resolve()
@@ -597,7 +611,7 @@ class ExpressionList(AST):
     def append(self, expression):
         self.expression_list.append(expression)
 
-    def resolve(self):
+    def resolve_once(self):
         return [expr.resolve() for expr in self.expression_list]
 
 
@@ -617,7 +631,7 @@ class UnaryExpr(Scalarish, AST):
         else:
             return True, self.__class__(self.inner.simplify())
 
-    def resolve(self):
+    def resolve_once(self):
         return self.op(self.inner.as_number())
 
 
@@ -675,15 +689,15 @@ class Expr(Scalarish, AST):
         else:
             return True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
 
-    def resolve(self):
+    def resolve_once(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
 
 class Equal(Expr):
-    def resolve(self):
+    def resolve_once(self):
         return self.lhs.resolve() == self.rhs.resolve()
 
 class NotEqual(Expr):
-    def resolve(self):
+    def resolve_once(self):
         return self.lhs.resolve() != self.rhs.resolve()
 
 class LessThan(Expr):
@@ -701,7 +715,7 @@ class GreaterThanEqual(Expr):
 class Add(Expr):
     op = operator.add
 
-    def resolve(self):
+    def resolve_once(self):
         try:
             return self.op(self.lhs.as_number(), self.rhs.as_number())
         except errors.TypeError:
@@ -735,7 +749,7 @@ class BitwiseOr(Expr):
     op = operator.or_
 
 class Or(Expr):
-    def resolve(self):
+    def resolve_once(self):
         try:
             res = self.lhs.resolve()
             if res:
@@ -788,8 +802,8 @@ class And(Expr):
 
 
 class NotIn(Expr):
-    def resolve(self):
-        return self.lhs.resolve() not in self.rhs.resolve()    
+    def resolve_once(self):
+        return self.lhs.resolve() not in self.rhs.resolve()
 
 class Power(Expr):
     op = operator.pow
@@ -829,7 +843,7 @@ class DictDisplay(AST):
     def __init__(self, key_datum_list=None):
         self.key_datum_list = key_datum_list
 
-    def resolve(self):
+    def resolve_once(self):
         if not self.key_datum_list:
             return {}
 
@@ -1220,7 +1234,7 @@ class YayScalar(Scalarish, AST):
             except ValueError:
                 self.value = value
 
-    def resolve(self):
+    def resolve_once(self):
         return self.value
 
 class YayMultilineScalar(Scalarish, AST):
@@ -1330,7 +1344,7 @@ class YayMerged(Scalarish, AST):
         self.value.insert(0, value)
         value.parent = self
 
-    def resolve(self):
+    def resolve_once(self):
         return "".join(str(v.resolve()) for v in self.value)
 
 class Stanzas(Proxy, AST):

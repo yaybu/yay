@@ -79,6 +79,11 @@ class EvaluationError(LanguageError):
 class TypeError(LanguageError):
     pass
 
+class CycleError(EvaluationError):
+    """
+    Raise when a value depends on itself
+    """
+
 class ParadoxError(EvaluationError):
     """
     Raised when an include violates causality
