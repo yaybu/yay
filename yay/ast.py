@@ -1721,7 +1721,7 @@ class Template(Proxy, AST):
         value.parent = self
 
     def expand(self):
-        return self.value
+        return self.value.expand()
 
 
 class Context(Proxy, AST):
