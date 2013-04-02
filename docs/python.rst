@@ -2,6 +2,9 @@
 Using yay in your code
 ======================
 
+Basic use
+=========
+
 There are 2 ways to work with the Yay configuration language. The primary method is one that embraces the lazy nature of the configuration language but is still pythonic.
 
 Consider the following configuration::
@@ -73,3 +76,57 @@ Finally, if you just want to examine your configuration via python simple types 
     assert isinstance(config, dict)
 
 The disadvantage of this approach is you lose access to line/column metadata for error reporting.
+
+
+Writing a 'graph program'
+=========================
+
+You can factor your application as a series of graph objects that are plumbed together using the Yay language.
+
+For example, in example_module/weather.py::
+
+    from yay.ast import PythonClass
+    from weather import Api
+
+    class Weather(PythonClass):
+
+        def apply(self):
+            api = Api(
+                token = str(self.params.token),
+                secret = str(self.params.secret),
+                )
+
+            for location in self.params.locations:
+                self.metadata[str(location)] = api.lookup(str(location))
+
+This can then be consumed from your configuration like so::
+
+    weather:
+        create "example_module.weather:Weather":
+            token: mytoken
+            secret: mysecret
+            locations:
+                - york
+
+    # Deploy a funny MOTD when its cold
+    if weather.york.temperature < 0:
+        extend resources:
+            - File:
+                name: /etc/motd
+                static: motd/motd.cold
+    else:
+        extend resources:
+            - File:
+                name: /etc/motd
+                static: motd/motd
+
+With this API your classes only need to do the following:
+
+ * Descend from ``yay.ast.PythonClass``
+
+ * Implement the ``apply`` method. This is where you can look things up and change the external environment - for example, you might use ``libcloud`` to start a cloud compute node.
+
+ * To access settings passed to you (effictively as constructors), use ``self.params``. This has the same interface as described in the previous section.
+
+ * To expose new metadata you have generated in your apply method, set it on the metadata dictionary. These will be 'bound' as Yay objects as they are accessed so you can just put basic python types in the dictionary and it will do the rest.
+
