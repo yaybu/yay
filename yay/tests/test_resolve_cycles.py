@@ -21,7 +21,7 @@ class TestResolveCycles(unittest.TestCase):
 
     def test_addition_self_recursion(self):
         res = parse("""
-            foo: 1 + {{ foo }}
+            foo: {{ 1 + foo }}
             """)
         self.assertRaises(errors.CycleError, int, res.foo)
         self.assertRaises(errors.CycleError, res.resolve)
