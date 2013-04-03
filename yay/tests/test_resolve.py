@@ -1625,6 +1625,9 @@ class TestPythonicWrapper(unittest2.TestCase):
     def test_attr_access(self):
         self.assertEqual(self.graph.foo.resolve(), 1)
 
+    def test_nested_attr_access_is_pythonic(self):
+        self.assertTrue(isinstance(self.graph.baz.hello, ast.PythonicWrapper))
+
     def test_nested_attr_access(self):
         self.assertEqual(self.graph.baz.hello.as_string(), "bonjour")
 

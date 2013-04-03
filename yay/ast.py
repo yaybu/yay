@@ -269,22 +269,6 @@ class AST(object):
                 del d[var]
         return d
 
-    #def __getattr__(self, key):
-    #    print key
-    #    try:
-    #        return self.get_key(key)
-    #    except errors.NoMatching as e:
-    #        raise AttributeError(str(e))
-
-    def __getitem__(self, key):
-        try:
-            return self.get_key(key)
-        except errors.NoMatching as e:
-            raise IndexError(str(e))
-
-    def __iter__(self):
-        return self.as_iterable(self.anchor)
-
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
