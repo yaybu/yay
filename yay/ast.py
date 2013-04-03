@@ -205,7 +205,8 @@ class AST(object):
         if self._predecessor:
             self._predecessor.successor = None
         self._predecessor = value
-        value.successor = self
+        if value:
+            value.successor = self
 
     @property
     def head(self):
