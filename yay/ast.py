@@ -375,7 +375,7 @@ class Dictish(object):
         for key in self.keys(anchor or self.anchor):
             yield YayScalar(key)
 
-    def as_dict(self):
+    def as_dict(self, anchor=None):
         return self.resolve()
 
     def resolve_once(self):
