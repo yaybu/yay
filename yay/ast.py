@@ -42,6 +42,9 @@ class AST(object):
     _resolving = False
     _expanding = False
 
+    def as_bool(self, default=_DEFAULT, anchor=None):
+        raise errors.TypeError("Expected boolean", anchor=anchor or self.anchor)
+
     def as_int(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
 
@@ -295,6 +298,12 @@ class Scalarish(object):
     A scalar cannot be treated as a stream.
     """
 
+    def as_bool(self, default=_DEFAULT, anchor=None):
+        try:
+            return bool(self.resolve())
+        except ValueError:
+            raise errors.TypeError("Expected bool", anchor=anchor or self.anchor)
+
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
             return int(self.resolve())
@@ -398,6 +407,14 @@ class Proxy(object):
     This mixin proxies all the standard interface methods to the node
     returned by ``self.expand()``.
     """
+
+    def as_bool(self, default=_DEFAULT, anchor=None):
+        try:
+            return self.expand().as_bool(anchor or self.anchor)
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
