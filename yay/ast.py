@@ -1428,7 +1428,7 @@ class Stanzas(Proxy, AST):
 
 class Directives(Proxy, AST):
     def __init__(self, *directives):
-        self.value = None
+        self.value = UseMyPredecessorStandin(self)
         for d in directives:
             self.append(d)
 
