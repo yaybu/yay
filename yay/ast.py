@@ -1591,7 +1591,7 @@ class If(Proxy, AST):
         for elif_ in self.elifs.elifs:
             self.passthrough_mode = True
             try:
-                cond = elif_.condition.resolve()
+                cond = elif_.condition.as_bool()
             finally:
                 self.passthrough_mode = False
 
