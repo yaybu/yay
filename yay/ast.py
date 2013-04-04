@@ -500,8 +500,9 @@ class Tripwire(Proxy, AST):
         if not self.expanding:
             self.expanding = True
             for expr, expected in self.expressions:
-                if expr.resolve() != expected:
-                    raise errors.ParadoxError("Inconsistent configuration detected", anchor=self.anchor)
+                current = expr()
+                if current != expected:
+                    raise errors.ParadoxError("Inconsistent configuration detected - changed from %r to %r" % (expected, current), anchor=self.anchor)
             self.expanding = False
         return self.node
 
@@ -1516,7 +1517,7 @@ class Include(Proxy, AST):
 
         t = Tripwire()
         t.anchor = self.anchor
-        t.add_tripwire(self.expr, expr)
+        t.add_tripwire(self.expr.resolve, expr)
         t.node = expanded
 
         return True, t
@@ -1595,7 +1596,7 @@ class If(Proxy, AST):
             finally:
                 self.passthrough_mode = False
 
-            t.add_tripwire(elif_.condition, cond)
+            t.add_tripwire(elif_.condition.as_bool, cond)
 
             if cond:
                 t.node = elif_.node.expand()
@@ -1647,7 +1648,7 @@ class Select(Proxy, AST):
         self.expanding = False
 
         t = Tripwire()
-        t.add_tripwire(self.expr, value)
+        t.add_tripwire(self.expr.resolve, value)
         t.anchor = self.anchor
 
         for case in self.cases.cases:
