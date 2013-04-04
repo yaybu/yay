@@ -843,14 +843,36 @@ class ListDisplay(Proxy, AST):
             return lst
         return self.expression_list.expand()
 
-class DictDisplay(AST):
+class DictDisplay(Dictish, AST):
 
     def __init__(self, key_datum_list=None):
         self.key_datum_list = key_datum_list
+        self._dict = None
+        self._ordered_keys = None
 
-    def resolve_once(self):
-        if not self.key_datum_list:
-            return {}
+    def _refresh_self(self):
+        self._dict = {}
+        self._ordered_keys = []
+
+        if self.key_datum_list:
+            for kv in self.key_datum_list.key_data:
+                key = kv.key.resolve()
+                self._dict[key] = kv.value
+                self._ordered_keys.append(key)
+
+    def get_key(self, key):
+        if not self._dict:
+            self._refresh_self()
+        try:
+            return self._dict[key]
+        except KeyError:
+            raise errors.NoMatching("No such key '%s" % key, anchor=self.anchor)
+
+    def keys(self):
+        if not self._dict:
+            self._refresh_self()
+        return self._ordered_keys
+
 
 class KeyDatumList(AST):
 

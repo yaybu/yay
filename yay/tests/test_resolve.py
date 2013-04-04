@@ -1607,6 +1607,47 @@ class TestSet(unittest2.TestCase):
             """)
         self.assertEqual(res, {"quux": "Simple expression"})
 
+    def test_set_function(self):
+        res = resolve("""
+            set foo = range(5)
+            quux: {{ foo }}
+            """)
+        self.assertEqual(res, {"quux": [0,1,2,3,4]})
+
+    def test_set_list(self):
+        res = resolve("""
+            set foo = [1,2,3,4,5]
+            quux: {{ foo }}
+            """)
+        self.assertEqual(res, {"quux": [1,2,3,4,5]})
+
+    def test_set_dict(self):
+        res = resolve("""
+            set foo = {'a': 'b'}
+            quux: {{ foo.a }}
+            """)
+        self.assertEqual(res, {"quux": 'b'})
+
+    @unittest2.expectedFailure
+    def test_set_self(self):
+        #FIXME: A parse error seemed to be stopping this working.
+        res = resolve("""
+            foo:
+                set self = here
+
+                sitename: www.example.com
+                sitedir: /var/www/{{ self.sitedir }}
+
+                wakeup_urls:
+                    - http://{{ self.sitename }}/
+
+                settings:
+                    DSN: postgres://{{ self.sitename }}
+            """)
+
+        self.assertEqual(res, {"wakeup_urls": ["http://www.example.com"]})
+        self.assertEqual(res, {"settings": {"DSN": "postgres://www.example.com"}})
+
 
 class TestPythonicWrapper(unittest2.TestCase):
 

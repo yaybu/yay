@@ -129,3 +129,12 @@ class TestResolveCycles(unittest.TestCase):
         self.assertRaises(errors.CycleError, str, res.flip)
         self.assertRaises(errors.CycleError, res.resolve)
 
+    def test_set_loop(self):
+        res = parse("""
+            set a = b
+            set b = a
+
+            foo: {{ a }}
+            """)
+        self.assertRaises(errors.CycleError, str, res.foo)
+        self.assertRaises(errors.CycleError, res.resolve)
