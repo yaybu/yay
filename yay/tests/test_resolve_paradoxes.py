@@ -136,3 +136,19 @@ class TestResolveParadoxes(unittest.TestCase):
             """)
 
         self.assertEqual(t.get_key("never").resolve(), "ever")
+
+    def test_paradoxical_directives_predecessor(self):
+        """ Exercise looking up predecessors of Stanza/Directive nodes, but in a paradox situation """
+
+        t = parse("""
+            lol: foo
+
+            if lol == 'foo':
+                bar: baz
+
+            if bar == 'baz':
+                lol: zinga
+            """)
+
+        self.assertRaises(errors.ParadoxError, t.get_key, "lol")
+
