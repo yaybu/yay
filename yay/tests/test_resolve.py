@@ -1598,15 +1598,15 @@ class TestYayScalar(unittest2.TestCase):
 
 
 class TestSet(unittest2.TestCase):
-    pass
 
-    #def test_set(self):
-    #    res = resolve("""
-    #        set foo = "Simple expression"
-    #        set bar = foo
-    #        quux: {{ bar }}
-    #        """)
-    #    self.assertEqual(res, {"quux": "bar"})
+    def test_set(self):
+        res = resolve("""
+            set foo = "Simple expression"
+            set bar = foo
+            quux: {{ bar }}
+            """)
+        self.assertEqual(res, {"quux": "Simple expression"})
+
 
 class TestPythonicWrapper(unittest2.TestCase):
 

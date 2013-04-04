@@ -194,7 +194,7 @@ class AST(object):
 
         This doesn't do any resolving, the return value will be a subclass of Node.
         """
-        return self.parent.get_context(key)
+        raise errors.NoMatching("Could not find '%s'" % key)
 
     @property
     def predecessor(self):
@@ -578,7 +578,17 @@ class Identifier(Proxy, AST):
 
     def expand_once(self):
         __context__ = "Looking up '%s' in current scope" % self.identifier
-        return self.get_context(self.identifier).expand()
+        node = self.head
+        root = self.root
+        while node != root:
+            try:
+                return node.get_context(self.identifier).expand()
+            except errors.NoMatching:
+                pass
+            node = node.parent
+
+        assert node == root
+        return node.get_context(self.identifier).expand()
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
@@ -1364,6 +1374,16 @@ class Stanzas(Proxy, AST):
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
+    def get_context(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            try:
+                return p.get_context(key)
+            except errors.NoMatching:
+                pass
+            p = p.predecessor
+        raise errors.NoMatching("Could not find '%s'" % key)
+
     def expand(self):
         return self.value.expand()
 
@@ -1388,6 +1408,16 @@ class Directives(Proxy, AST):
                     pass
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
+
+    def get_context(self, key):
+        p = self.value
+        while p and p != self.predecessor:
+            try:
+                return p.get_context(key)
+            except errors.NoMatching:
+                pass
+            p = p.predecessor
+        raise errors.NoMatching("Could not find '%s'" % key)
 
     def expand(self):
         return self.value.expand()
@@ -1468,7 +1498,15 @@ class Set(Proxy, AST):
 
     def __init__(self, var, expr):
         self.var = var
+        var.parent = self
+
         self.expr = expr
+        expr.parent = self
+
+    def get_context(self, key):
+        if key == self.var.identifier:
+            return self.expr
+        return super(Set, self).get_context(key)
 
     def expand_once(self):
         return self.predecessor
