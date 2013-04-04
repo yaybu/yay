@@ -1581,6 +1581,19 @@ class TestIf(unittest2.TestCase):
         self.assertEqual(res['foo']['hey']['baz'], 2)
         self.assertEqual(res['foo']['quux'], 3)
 
+    def test_complicated_nesting(self):
+        res = resolve("""
+            lol: foo
+
+            if lol:
+                bar: baz
+
+            if bar == 'baz':
+                lol: zinga
+            """)
+
+        self.assertEqual(res['lol'], 'zinga')
+
 
 class TestYayScalar(unittest2.TestCase):
 
