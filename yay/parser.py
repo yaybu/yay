@@ -944,7 +944,7 @@ class Parser(object):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6], else_=p[12])
+        p[0] = ast.If(p[2], p[6], p[12])
         self.anchor(p, 1)
 
     def p_if_directive_elif(self, p):
@@ -958,7 +958,8 @@ class Parser(object):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6], p[8], p[13])
+        p[0] = ast.If(p[2], p[6], p[8])
+        p[0].add_else(p[13])
         self.anchor(p, 1)
 
     def p_elif_list(self, p):
@@ -966,18 +967,15 @@ class Parser(object):
         elif_list : elif
                   | elif_list elif
         '''
-        if len(p) == 2:
-            p[0] = ast.ElifList(p[1])
-            p[0].anchor = p[1].anchor
-        else:
-            p[0] = p[1]
-            p[0].append(p[2])
+        p[0] = p[1]
+        if len(p) != 2:
+            p[0].add_elif(p[2])
 
     def p_elif(self, p):
         '''
         elif : ELIF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Elif(p[2], p[6])
+        p[0] = ast.If(p[2], p[6])
         self.anchor(p, 1)
 
     def p_select_directive(self, p):

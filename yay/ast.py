@@ -1567,19 +1567,20 @@ class If(Proxy, AST):
     simplified out of the graph.
     """
 
-    def __init__(self, condition, result, elifs=None, else_=None):
-        self.elifs = ElifList(Elif(condition, result))
-        self.elifs.parent = self
-        self.elifs.predecessor = UseMyPredecessorStandin(self)
+    def __init__(self, condition, on_true, on_false=None):
+        self.condition = condition
+        self.condition.parent = self
 
-        if elifs:
-            for elif_ in elifs.elifs:
-                self.elifs.append(elif_)
+        self.on_true = on_true
+        self.on_true.parent = self
+        self.on_true.predecessor = UseMyPredecessorStandin(self)
 
-        self.else_ = else_
-        if else_:
-            else_.parent = self
-            else_.predecessor = UseMyPredecessorStandin(self)
+        if on_false:
+            self.on_false = on_false
+            self.on_false.predecessor = UseMyPredecessorStandin(self)
+            self.on_false.parent = self
+        else:
+            self.on_false = None
 
         self.passthrough_mode = False
 
@@ -1591,45 +1592,38 @@ class If(Proxy, AST):
         t = Tripwire()
         t.anchor = self.anchor
 
-        for elif_ in self.elifs.elifs:
-            self.passthrough_mode = True
-            try:
-                cond = elif_.condition.as_bool()
-            finally:
-                self.passthrough_mode = False
+        self.passthrough_mode = True
+        try:
+            cond = self.condition.as_bool()
+        finally:
+            self.passthrough_mode = False
 
-            t.add_tripwire(elif_.condition.as_bool, cond)
+        t.add_tripwire(self.condition.as_bool, cond)
 
-            if cond:
-                t.node = elif_.node.expand()
-                return True, t
-
-        if self.else_ is not None:
-            t.node = self.else_.expand()
-            return True, t
-
-        t.node = self.predecessor.expand()
+        if cond:
+            t.node = self.on_true.expand()
+        elif self.on_false:
+            t.node = self.on_false.expand()
+        else:
+            t.node = self.predecessor.expand()
         return True, t
 
+    def add_elif(self, elif_):
+        node = self
+        while isinstance(node.on_false, If):
+            node = node.on_false
 
-class ElifList(AST):
-    def __init__(self, *elifs):
-        self.elifs = []
-        [self.append(e) for e in elifs]
+        node.on_false = elif_
+        elif_.parent = node
 
-    def append(self, elif_):
-        elif_.parent = self
-        elif_.predecessor = UseMyPredecessorStandin(self)
-        self.elifs.append(elif_)
+    def add_else(self, else_):
+        node = self
+        while isinstance(node.on_false, If):
+            node = node.on_false
 
-class Elif(Tripwire, AST):
-    def __init__(self, condition, node):
-        self.condition = condition
-        condition.parent = self
-        condition.predecessor = UseMyPredecessorStandin(self)
-        self.node = node
-        node.parent = self
-        node.predecessor = UseMyPredecessorStandin(self)
+        node.on_false = else_
+        else_.parent = node
+
 
 class Select(Proxy, AST):
 

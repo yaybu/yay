@@ -704,7 +704,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, If(Identifier('True'),
                                  YayDict([('x', YayScalar('y'))]),
-                                 else_=YayDict([('x', YayScalar('z'))]),
+                                 YayDict([('x', YayScalar('z'))]),
                                  ))
 
     def test_if_elif(self):
@@ -716,13 +716,10 @@ class TestParser(unittest2.TestCase):
         elif True:
             x: a
         """)
-        self.assertEqual(res, If(Identifier('True'),
-                                 YayDict([('x', YayScalar('y'))]),
-                                 ElifList(
-                                     Elif(Identifier('True'), YayDict([('x', YayScalar('z'))])),
-                                     Elif(Identifier('True'), YayDict([('x', YayScalar('a'))])),
-                                 )))
-
+        self.assertEqual(res,
+            If(Identifier('True'), YayDict([('x', YayScalar('y'))]),
+            If(Identifier('True'), YayDict([('x', YayScalar('z'))]),
+            If(Identifier('True'), YayDict([('x', YayScalar('a'))])))))
 
     def test_if_elif_else(self):
         res = parse("""
@@ -735,11 +732,9 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, If(Identifier('True'),
                                  YayDict([('x', YayScalar('y'))]),
-                                 ElifList(
-                                     Elif(Identifier('True'), YayDict([('x', YayScalar('z'))]))
-                                     ),
+                                 If(Identifier('True'), YayDict([('x', YayScalar('z'))]),
                                  YayDict([('x', YayScalar('a'))])
-                                 ))
+                                 )))
 
     def test_error_else(self):
         self.assertRaises(SyntaxError, parse, """

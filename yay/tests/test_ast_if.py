@@ -70,12 +70,12 @@ class TestIfSimplification(unittest.TestCase):
 class TestIfResolve(unittest.TestCase):
 
     def test_if_resolve_true(self):
-        n = If(Literal(True), Literal("dog"), else_=Literal("cat"))
+        n = If(Literal(True), Literal("dog"), Literal("cat"))
         n.anchor = mock.Mock()
         self.assertEqual(n.resolve(), "dog")
 
     def test_if_resolve_false(self):
-        n = If(Literal(False), Literal("dog"), else_=Literal("cat"))
+        n = If(Literal(False), Literal("dog"), Literal("cat"))
         n.anchor = mock.Mock()
         self.assertEqual(n.resolve(), "cat")
 
