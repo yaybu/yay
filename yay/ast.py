@@ -540,7 +540,6 @@ class Pythonic(object):
 class PythonicWrapper(Pythonic, Proxy, AST):
     def __init__(self, inner):
         self.inner = inner
-        inner.parent = self
 
     def expand_once(self):
         return self.inner.expand()
@@ -556,6 +555,9 @@ class Root(Pythonic, Proxy, AST):
             node.predecessor = self.node
             self.node = node
             node.parent = self
+        else:
+            self.node = NoPredecessorStandin()
+            self.node.parent = self
 
     def as_digraph(self, visited=None):
         visited = visited or []
@@ -1912,6 +1914,7 @@ class PythonClass(Proxy, AST):
         self.class_provided.predecessor = params
 
         # Node containing metadata provided by the user
+        params.parent = self
         self.params = PythonicWrapper(params)
         self.params.parent = self
 

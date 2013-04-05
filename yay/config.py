@@ -23,7 +23,7 @@ class Config(ast.Root):
     def __init__(self, special_term='yay', searchpath=None, config=None):
         self.special_term = special_term
         self.openers = Openers(searchpath=searchpath)
-        self.node = None
+        self.node = ast.NoPredecessorStandin()
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri
