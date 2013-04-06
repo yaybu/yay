@@ -5,8 +5,11 @@ Resolving
 The language is parsed into a directed acyclic graph, with each node representing some data or an expression that must be evaluated in order to produce some data. This sections describes in detail the properties of members of this graph structure.
 
 
+Relationships
+=============
+
 Parenting
-=========
+---------
 
 Every node should have one and only one parent. Detached nodes are not valid.
 It is the responsibility of the parent to adopt its child nodes and let them
@@ -17,7 +20,7 @@ parent can be a weakref.
 
 
 Predecessors
-============
+------------
 
 When a node is inserted into a Mapping it might supercede an existing key. The
 graph will keep track of this, which allows mappings to perform operations that
@@ -50,15 +53,45 @@ This would parse to:
 With this structure it is then easy to combine the original list with the 2nd
 list.
 
+Root
+----
+
+Any node is able to find the root of the graph by following the parent edges to a leaf node.
+
+Head & Successor
+----------------
+
+These are calculated references.
+
+Consider the following::
+
+    foo:
+        a: {{ here.b }}
+    foo:
+        b: 1
+
+Because of the inherent locality of graph scoping, the ``here`` variable is unable to find b.
+
+Because the second ``foo`` block has a predecessor relationship with the first ``foo``, we implicitly track the inverse ``successor`` relationship. ``here`` can therefore follow the ``successor`` chain to its tip (the ``head``) and use that to lookup ``b``.
+
 
 Just-in-time visiting
 =====================
 
-In order to transform the graph into it's final form we need to perform a series of transformations to the graph.
+In order to transform the graph into it's final form we need to perform a series of transformations on the graph.
 
-The standard approach would be a series of transformations performed via the visitor pattern. Each visitor would know one transformation and they would be performed in order. This does approach to graph rewriting does not suit a graph that is as dynamic as ours. To simplify an ``If`` node one might need to have first simplified a ``For`` node. But also vice-versa.
+The standard approach would be a series of transformations performed via the visitor pattern. Each visitor would know one transformation and they would be performed in order. This does approach to graph rewriting does not suit a graph that is as dynamic as ours:
 
-This means that any graph transformation needs to happen just-in-time. Another way of thinking about this is that while a traditional visitor might visit the graph in the order it is parsed, we need to apply the transformations as a depth first exploration of its dependencies.
+ 1. We can't have a list of transformations to apply in order. For example, to simplify an ``If`` node one might need to have first simplified a ``For`` node. But also vice-versa.
+
+ 2. You must resolve parts of the graph to even type check other parts of it. For example::
+
+        foo: {{ 1 + 2 }}
+        bar: {{ baz[foo] }}
+
+    In order to even begin to speculate about some parts of the graph, other parts must be completely resolved. In order to build a standard dependency graph, some parts of the graph must be fully solved.
+
+The conclusion here is that any graph transformation needs to happen just-in-time. Another way of thinking about this is that while a traditional visitor might visit the graph in the order it is parsed, we need to apply the transformations as a depth first exploration of its dependencies.
 
 (FIXME: There are some really icky and hard to qualify things here, really hard to qualify, come back and fix this!)
 
@@ -109,8 +142,8 @@ A simple example is a nested mapping::
          quix: 2
 
 You shouldn't need to resolve ``bar`` (and hence the whole of
-``some_other_section``). That would rather limit the flexibility of lazy
-evaluation.
+``some_other_section``) to get to ``baz``. That would rather limit the
+flexibility of lazy evaluation.
 
 So mapping nodes can be traversed without needing to resolve the entire graph.
 We do this with the ``get`` function::
@@ -123,11 +156,11 @@ consider the ``if`` operation::
     cond: hello
     default: happy
 
-    % if cond == "hello"
+    if cond == "hello"
         default: really happy
-        dont_resolve_me: ${some.datastructure[0].somewhere.else}
+        dont_resolve_me: {{ some.datastructure[0].somewhere.else }}
 
-The parser will return an If node that has a predecessor mapping. The If node
+The parser will return an If node that has a predecessor. The If node
 needs to be traversal friendly. There is no need to resolve the
 ``dont_resolve_me`` variable when attempting to access ``default``.
 
@@ -139,9 +172,6 @@ In this case, calling expand() will return the predecessor mapping if the
 condition is false and the child mapping if it is true. In otherwords, the
 condition is resolved but the mapping that is guarded by the condition is not.
 We can then access ``default`` without triggering ``dont_resolve_me``.
-
-(#FIXME: I think the correct thing is to return a clone of the child mapping,
-but predecessored and parented as though it were the if).
 
 It is important that when a node is expanded the node that it returns is indeed
 expanded. To clarify, consider this example::
@@ -170,7 +200,7 @@ just return itself. This is the correct behaviour.
 Folding
 ========
 
-Of course there are some nodes that cannot be simplified. It helps me to think of the Yay graph as an equation. A completely pure graph can be entirely solved to a single value. However (as discussed later in "Native Classes") not all graph members are pure. An extra stage is required to fully support these non-pure elements. We call this the folding step.
+Of course there are some nodes that cannot be simplified. A completely pure graph can be entirely solved to a single value. However (as discussed later in "Native Classes") not all graph members are pure. An extra stage is required to fully support these non-pure elements. We call this the folding step.
 
 When the graph is folded we are essentially doing a traditional constant folding step that a compiler might do to try and generate better code. The graph is resolved to "simple types" like:
 
@@ -528,7 +558,6 @@ in yaybu atm - there is a schema system in yaybu.
 Short term problems to solve
 ============================
 
- * Need to satisfy ourselves of the target states
  * Need to consider ``.get()`` - in particular how it interacts with ``traversible``. My worry is things that need to be resolved to traverse an ``If`` node might be dynamic and side effect causing. The rules there need qualifying here, I think.
  
 
