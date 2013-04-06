@@ -477,13 +477,11 @@ class Proxy(object):
 
 class Tripwire(Proxy, AST):
 
-    def __init__(self):
-        self.node = None
-        self.expressions = []
+    def __init__(self, node, expression, expected):
+        self.node = node
+        self.expression = expression
+        self.expected = expected
         self.expanding = False
-
-    def add_tripwire(self, expression, expected):
-        self.expressions.append((expression, expected))
 
     def get_callable(self, key):
         p = self.node
@@ -499,10 +497,9 @@ class Tripwire(Proxy, AST):
     def expand(self):
         if not self.expanding:
             self.expanding = True
-            for expr, expected in self.expressions:
-                current = expr()
-                if current != expected:
-                    raise errors.ParadoxError("Inconsistent configuration detected - changed from %r to %r" % (expected, current), anchor=self.anchor)
+            current = self.expression()
+            if current != self.expected:
+                raise errors.ParadoxError("Inconsistent configuration detected - changed from %r to %r" % (self.expected, current), anchor=self.anchor)
             self.expanding = False
         return self.node
 
@@ -1517,11 +1514,8 @@ class Include(Proxy, AST):
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
 
-        t = Tripwire()
+        t = Tripwire(expanded, self.expr.resolve, expr)
         t.anchor = self.anchor
-        t.add_tripwire(self.expr.resolve, expr)
-        t.node = expanded
-
         return True, t
 
 
@@ -1589,23 +1583,21 @@ class If(Proxy, AST):
         if self.passthrough_mode:
             return False, self.predecessor.expand()
 
-        t = Tripwire()
-        t.anchor = self.anchor
-
         self.passthrough_mode = True
         try:
             cond = self.condition.as_bool()
         finally:
             self.passthrough_mode = False
 
-        t.add_tripwire(self.condition.as_bool, cond)
-
         if cond:
-            t.node = self.on_true.expand()
+            node = self.on_true.expand()
         elif self.on_false:
-            t.node = self.on_false.expand()
+            node = self.on_false.expand()
         else:
-            t.node = self.predecessor.expand()
+            node = self.predecessor.expand()
+
+        t = Tripwire(node, self.condition.as_bool, cond)
+        t.anchor = self.anchor
         return True, t
 
     def add_elif(self, elif_):
@@ -1643,13 +1635,10 @@ class Select(Proxy, AST):
         value = self.expr.resolve()
         self.expanding = False
 
-        t = Tripwire()
-        t.add_tripwire(self.expr.resolve, value)
-        t.anchor = self.anchor
-
         for case in self.cases.cases:
             if case.key == value:
-                t.node = case.node.expand()
+                t = Tripwire(case.node.expand(), self.expr.resolve, value)
+                t.anchor = self.anchor
                 return True, t
 
         raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
