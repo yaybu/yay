@@ -66,7 +66,7 @@ class AST(object):
     def keys(self, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
-    def as_iterable(self, anchor=None):
+    def get_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
 
     def as_digraph(self, visited=None):
@@ -363,7 +363,7 @@ class Streamish(object):
         """
         raise NotImplementedError(self._get_source_iterator)
 
-    def as_iterable(self, anchor=None):
+    def get_iterable(self, anchor=None):
         idx = 0
         while True:
             self._fill_to(idx)
@@ -382,12 +382,12 @@ class Streamish(object):
         return self._buffer[index]
 
     def resolve_once(self):
-        return [x.resolve() for x in self.as_iterable()]
+        return [x.resolve() for x in self.get_iterable()]
 
 
 class Dictish(object):
 
-    def as_iterable(self, anchor=None):
+    def get_iterable(self, anchor=None):
         for key in self.keys(anchor or self.anchor):
             yield YayScalar(key)
 
@@ -469,8 +469,8 @@ class Proxy(object):
     def keys(self, anchor=None):
         return self.expand().keys(anchor or self.anchor)
 
-    def as_iterable(self, anchor=None):
-        return self.expand().as_iterable(anchor or self.anchor)
+    def get_iterable(self, anchor=None):
+        return self.expand().get_iterable(anchor or self.anchor)
 
     def get_key(self, key):
         return self.expand().get_key(key)
@@ -537,7 +537,7 @@ class Pythonic(object):
         return PythonicWrapper(Subscription(self, YayScalar(key)))
 
     def __iter__(self):
-        for val in self.as_iterable():
+        for val in self.get_iterable():
             yield PythonicWrapper(val)
 
 
@@ -1200,7 +1200,7 @@ class YayList(Streamish, AST):
 
         return self.value[idx]
 
-    def as_iterable(self, anchor=None):
+    def get_iterable(self, anchor=None):
         return iter(self.value)
 
 class YayDict(Dictish, AST):
@@ -1274,12 +1274,12 @@ class YayExtend(Streamish, AST):
 
     def _get_source_iterator(self, anchor=None):
         try:
-            for node in self.predecessor.as_iterable(anchor or self.anchor):
+            for node in self.predecessor.get_iterable(anchor or self.anchor):
                 yield node
         except errors.NoPredecessor:
             pass
 
-        for node in self.value.as_iterable(anchor or self.anchor):
+        for node in self.value.get_iterable(anchor or self.anchor):
             yield node
 
 
@@ -1772,7 +1772,7 @@ class For(Streamish, AST):
         node.parent = self
 
     def _get_source_iterator(self, anchor=None):
-        for item in self.in_clause.as_iterable(anchor or self.anchor):
+        for item in self.in_clause.get_iterable(anchor or self.anchor):
             # self.target.identifier: This probably shouldn't be an identifier
             c = Context(self.node.clone(), {self.target.identifier: item})
             c.parent = self.parent
@@ -1783,7 +1783,7 @@ class For(Streamish, AST):
                 if not f.resolve():
                     continue
 
-            for node in c.as_iterable(anchor or self.anchor):
+            for node in c.get_iterable(anchor or self.anchor):
                 yield node
 
 
@@ -1829,7 +1829,7 @@ class ListComprehension(Streamish, AST):
         list_for.parent = self
 
     def _get_source_iterator(self, anchor=None):
-        for node in self.list_for.expressions.as_iterable(anchor or self.anchor):
+        for node in self.list_for.expressions.get_iterable(anchor or self.anchor):
             ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
             ctx.anchor = self.anchor
             ctx.parent = self

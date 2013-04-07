@@ -305,7 +305,7 @@ class TestIdentifier(unittest2.TestCase):
               for f in foo:
                 -  {{ f }}
             """)
-        results = t.get_key("bar").as_iterable()
+        results = t.get_key("bar").get_iterable()
         self.assertEqual([r.resolve() for r in results], [1,2,3])
 
 
