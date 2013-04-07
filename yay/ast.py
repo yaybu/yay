@@ -954,7 +954,7 @@ class UseMyPredecessorStandin(Proxy, AST):
     def get_key(self, key):
         try:
             return self.expand().get_key(key)
-        except NoPredecessor:
+        except errors.NoPredecessor:
             raise errors.NoMatching("No such key '%s'" % key)
 
     def expand_once(self):
