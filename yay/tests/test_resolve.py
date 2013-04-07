@@ -243,6 +243,21 @@ class TestYayList(unittest2.TestCase):
         """)
         self.assertEquals(res['bar'], [2, 3, 3, 4])
 
+    def test_as_list(self):
+        res = parse("""
+            foo:
+              - 1
+              - 2
+            """)
+        self.assertEqual(res.foo.as_list(), [1, 2])
+
+    def test_as_iterable(self):
+        res = parse("""
+            foo:
+              - 1
+              - 2
+            """)
+        self.assertEqual(list(res.foo.as_iterable()), [1, 2])
 
 class TestTemplate(unittest2.TestCase):
 
@@ -321,6 +336,24 @@ class TestLiteral(unittest2.TestCase):
     def test_get_integer(self):
         t = parse("foo: {{ 5 }}\n")
         self.assertEqual(t.get_key("foo").as_int(), 5)
+
+    def test_as_dict(self):
+        t = parse("""
+            foo: {{ 5 }}
+            """)
+        self.assertRaises(errors.TypeError, t.foo.as_dict)
+
+    def test_as_list(self):
+        t = parse("""
+            foo: {{ 5 }}
+            """)
+        self.assertRaises(errors.TypeError, t.foo.as_list)
+
+    def test_as_iterable(self):
+        t = parse("""
+            foo: {{ 5 }}
+            """)
+        self.assertRaises(errors.TypeError, t.foo.as_iterable)
 
 
 class TestParentForm(unittest2.TestCase):

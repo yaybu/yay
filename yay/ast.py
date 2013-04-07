@@ -60,6 +60,12 @@ class AST(object):
     def as_string(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
 
+    def as_list(self, default=_DEFAULT, anchor=None):
+        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+
+    def as_iterable(self, default=_DEFAULT, anchor=None):
+        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+
     def as_dict(self, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
@@ -363,6 +369,21 @@ class Streamish(object):
         """
         raise NotImplementedError(self._get_source_iterator)
 
+    def as_list(self, default=_DEFAULT, anchor=None):
+        return list(self.as_iterable(default, anchor))
+
+    def as_iterable(self, default=_DEFAULT, anchor=None):
+        try:
+            generator = self.get_iterable(anchor=anchor or self.anchor)
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                for val in default:
+                    yield default
+            raise
+
+        for val in generator:
+            yield val.resolve()
+
     def get_iterable(self, anchor=None):
         idx = 0
         while True:
@@ -462,6 +483,12 @@ class Proxy(object):
             if default != _DEFAULT:
                 return default
             raise
+
+    def as_list(self, default=_DEFAULT, anchor=None):
+        return self.expand().as_list(default, anchor or self.anchor)
+
+    def as_iterable(self, default=_DEFAULT, anchor=None):
+        return self.expand().as_iterable(default, anchor or self.anchor)
 
     def as_dict(self, anchor=None):
         return self.expand().as_dict(anchor or self.anchor)
