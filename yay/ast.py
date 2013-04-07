@@ -66,7 +66,7 @@ class AST(object):
     def as_iterable(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
-    def as_dict(self, anchor=None):
+    def as_dict(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
     def keys(self, anchor=None):
@@ -412,7 +412,7 @@ class Dictish(object):
         for key in self.keys(anchor or self.anchor):
             yield YayScalar(key)
 
-    def as_dict(self, anchor=None):
+    def as_dict(self, default=_DEFAULT, anchor=None):
         return self.resolve()
 
     def resolve_once(self):
@@ -490,8 +490,13 @@ class Proxy(object):
     def as_iterable(self, default=_DEFAULT, anchor=None):
         return self.expand().as_iterable(default, anchor or self.anchor)
 
-    def as_dict(self, anchor=None):
-        return self.expand().as_dict(anchor or self.anchor)
+    def as_dict(self, default=_DEFAULT, anchor=None):
+        try:
+            return self.expand().as_dict(anchor or self.anchor)
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
 
     def keys(self, anchor=None):
         return self.expand().keys(anchor or self.anchor)

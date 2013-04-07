@@ -323,6 +323,13 @@ class TestIdentifier(unittest2.TestCase):
         results = t.get_key("bar").get_iterable()
         self.assertEqual([r.resolve() for r in results], [1,2,3])
 
+    def test_as_dict(self):
+        t = parse("""
+            foo: {{ other_identifier }}
+            """)
+        self.assertEqual(t.get_key("foo").as_dict({}), {})
+        self.assertEqual(t.foo.as_dict({}), {})
+
 
 class TestLiteral(unittest2.TestCase):
 
