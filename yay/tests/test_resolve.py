@@ -1643,23 +1643,22 @@ class TestSet(unittest2.TestCase):
 
     @unittest2.expectedFailure
     def test_set_self(self):
-        #FIXME: A parse error seemed to be stopping this working.
         res = resolve("""
             foo:
                 set self = here
 
                 sitename: www.example.com
-                sitedir: /var/www/{{ self.sitedir }}
+                sitedir: /var/www/{{ self.sitename }}
 
                 wakeup_urls:
-                    - http://{{ self.sitename }}/
+                    - http//{{ self.sitename }}/
 
                 settings:
-                    DSN: postgres://{{ self.sitename }}
+                    DSN: postgres//{{ self.sitename }}
             """)
 
-        self.assertEqual(res, {"wakeup_urls": ["http://www.example.com"]})
-        self.assertEqual(res, {"settings": {"DSN": "postgres://www.example.com"}})
+        self.assertEqual(res['foo']['wakeup_urls'], ["http//www.example.com/"])
+        self.assertEqual(res['foo']['settings'], {"DSN": "postgres//www.example.com"})
 
 
 class TestPythonicWrapper(unittest2.TestCase):
