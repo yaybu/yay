@@ -519,7 +519,7 @@ class Pythonic(object):
         return self.as_string()
 
     def __dir__(self):
-        return self.keys()
+        return list(self.keys())
 
     def __getattr__(self, key):
         return PythonicWrapper(AttributeRef(self, key))
@@ -1203,6 +1203,7 @@ class YayDict(Dictish, AST):
 
     def __init__(self, value=None):
         self.values = {}
+        self._ordered_keys = []
         if value:
             for (k, v) in value:
                 self.update(k, v)
@@ -1216,6 +1217,9 @@ class YayDict(Dictish, AST):
         v.parent = self
         self.values[k] = v
 
+        if not k in self._ordered_keys:
+            self._ordered_keys.append(k)
+
         # Respect any existing predecessors rather than blindly settings v.predecessor
         while v.predecessor and not isinstance(v.predecessor, (NoPredecessorStandin, LazyPredecessor)):
             v = v.predecessor
@@ -1225,16 +1229,20 @@ class YayDict(Dictish, AST):
     def merge(self, other_dict):
         # This function should ONLY be called by parser and ONLY to merge 2 YayDict nodes...
         assert isinstance(other_dict, YayDict)
-        for k, v in other_dict.values.items():
-            self.update(k, v)
+        for k in other_dict.keys():
+            self.update(k, other_dict.get_key(k))
 
     def keys(self, anchor=None):
-        keys = set(self.values.keys())
+        seen = set()
         try:
-            keys.update(self.predecessor.keys(anchor=self.anchor))
+            for key in self.predecessor.keys(anchor=anchor or self.anchor):
+                seen.add(key)
+                yield key
         except errors.NoPredecessor:
             pass
-        return sorted(list(keys))
+        for key in self._ordered_keys:
+            if not key in seen:
+                yield key
 
     def get_context(self, key):
         if key == "here":

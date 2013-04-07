@@ -115,8 +115,8 @@ class TestYayDict(unittest2.TestCase):
 
             """)
 
-        self.assertEqual(res['out'], ['bar', 'baz', 'foo'])
-        self.assertEqual(res['out2'], ['www.bar.com', 'www.baz.com', 'www.foo.com'])
+        self.assertEqual(res['out'], ['foo', 'bar', 'baz'])
+        self.assertEqual(res['out2'], ['www.foo.com', 'www.bar.com', 'www.baz.com'])
 
     def test_sample1(self):
         res = resolve("""
@@ -378,7 +378,7 @@ class TestEqual(unittest2.TestCase):
           c: {{ a == b}}
           """)
         self.assertEqual(res['c'], True)
-    
+
     def test_different_types(self):
         res = resolve("""
           bar: {{ 1 == "one" }}
