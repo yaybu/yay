@@ -1594,6 +1594,16 @@ class TestIf(unittest2.TestCase):
 
         self.assertEqual(res['lol'], 'zinga')
 
+    def test_if_within_dict(self):
+        res = resolve("""
+            lol:
+                foo: bar
+                if 1:
+                    baz: qux
+                quux: zap
+            """)
+
+        self.assertEqual(res['lol'], {'foo': 'bar', 'baz': 'qux', 'quux': 'zap'})
 
 class TestYayScalar(unittest2.TestCase):
 
@@ -1641,7 +1651,14 @@ class TestSet(unittest2.TestCase):
             """)
         self.assertEqual(res, {"quux": 'b'})
 
-    @unittest2.expectedFailure
+    def test_set_within_mapping(self):
+        res = resolve("""
+            foo:
+                set bar = "baz"
+                qux: {{ bar }}
+            """)
+        self.assertEqual(res['foo']['qux'], 'baz')
+
     def test_set_self(self):
         res = resolve("""
             foo:

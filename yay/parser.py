@@ -1138,6 +1138,7 @@ class Parser(object):
     def p_yaydict_keystanza(self, p):
         '''
         yaydict : key NEWLINE INDENT stanza DEDENT
+                | key NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.YayDict([(p[1], p[4])])
         self.anchor(p, 1)
