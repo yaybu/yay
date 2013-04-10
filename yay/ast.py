@@ -1436,7 +1436,7 @@ class YayMerged(Scalarish, AST):
         value.parent = self
 
     def resolve_once(self):
-        return "".join(str(v.resolve()) for v in self.value)
+        return "".join(v.as_string() for v in self.value)
 
 class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
