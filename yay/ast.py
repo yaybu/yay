@@ -5,6 +5,8 @@ import re
 import functools
 import inspect
 
+from .graph import Node
+
 """
 The ``yay.ast`` module contains the classes that make up the graph.
 """
@@ -35,10 +37,13 @@ class cached(object):
         return functools.partial(self.__call__, obj)
 
 
-class AST(object):
+class AST(Node):
+
+    parent = graph.Incoming()
+    successor = graph.Incoming()
+    predecessor = graph.Outgoing(incoming="successor")
 
     lineno = 0
-    _predecessor = None
     _resolving = False
     _expanding = False
 
@@ -204,18 +209,6 @@ class AST(object):
         This doesn't do any resolving, the return value will be a subclass of Node.
         """
         raise errors.NoMatching("Could not find '%s'" % key)
-
-    @property
-    def predecessor(self):
-        return self._predecessor
-
-    @predecessor.setter
-    def predecessor(self, value):
-        if self._predecessor:
-            self._predecessor.successor = None
-        self._predecessor = value
-        if value:
-            value.successor = self
 
     @property
     def head(self):
@@ -653,17 +646,17 @@ class Literal(Scalarish, AST):
         return self.literal
 
 class ParentForm(Scalarish, AST):
-    # FIXME: Understand this better...
-    def __init__(self, expression_list=None):
-        self.expression_list = expression_list
-        if expression_list:
-            expression_list.parent = self
+
+    expression_list = graph.Child()
+
     def resolve_once(self):
         if not self.expression_list:
             return []
         return self.expression_list.resolve()
 
 class ExpressionList(AST):
+    # FIXME: How do this?
+
     def __init__(self, *expressions):
         self.expression_list = list(expressions)
         for expr in self.expression_list:
@@ -678,9 +671,7 @@ class ExpressionList(AST):
 
 class UnaryExpr(Scalarish, AST):
 
-    def __init__(self, inner):
-        self.inner = inner
-        inner.parent = self
+    inner = graph.Child()
 
     def dynamic(self):
         return self.inner.dynamic()
@@ -690,7 +681,7 @@ class UnaryExpr(Scalarish, AST):
         if not self.dynamic():
             return True, Literal(self.resolve())
         else:
-            return True, self.__class__(self.inner.simplify())
+            return True, self.__class__(inner=self.inner.simplify())
 
     def resolve_once(self):
         return self.op(self.inner.as_number())
@@ -731,11 +722,8 @@ class Expr(Scalarish, AST):
     simplified.
     """
 
-    def __init__(self, lhs, rhs):
-        self.lhs = lhs
-        lhs.parent = self
-        self.rhs = rhs
-        rhs.parent = self
+    lhs = graph.Child()
+    rhs = graph.Child()
 
     def dynamic(self):
         for c in (self.lhs, self.rhs):
@@ -748,7 +736,10 @@ class Expr(Scalarish, AST):
         if not self.dynamic():
             return True, Literal(self.resolve())
         else:
-            return True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
+            return True, self.__class__(
+                lhs = self.lhs.simplify(), 
+                rhs = self.rhs.simplify()
+                )
 
     def resolve_once(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
@@ -871,13 +862,10 @@ class Power(Expr):
 
 
 class ConditionalExpression(Proxy, AST):
-    def __init__(self, or_test, if_clause, else_clause):
-        self.or_test = or_test
-        or_test.parent = self
-        self.if_clause = if_clause
-        if_clause.parent = self
-        self.else_clause = else_clause
-        else_clause.parent = self
+
+    or_test = graph.Child()
+    if_clause = graph.Child()
+    else_clause = graph.Child()
 
     def expand_once(self):
         if self.or_test.resolve():
@@ -885,11 +873,10 @@ class ConditionalExpression(Proxy, AST):
         else:
             return self.else_clause.expand()
 
+
 class ListDisplay(Proxy, AST):
-    def __init__(self, expression_list=None):
-        self.expression_list = expression_list
-        if expression_list:
-            expression_list.parent = self
+
+    expression_list = graph.Child()
 
     def expand_once(self):
         if not self.expression_list:
@@ -898,6 +885,7 @@ class ListDisplay(Proxy, AST):
             lst.anchor = self.anchor
             return lst
         return self.expression_list.expand()
+
 
 class DictDisplay(Dictish, AST):
 
@@ -945,9 +933,11 @@ class KeyDatum(AST):
         self.value = value
 
 class AttributeRef(Proxy, AST):
+    
+    primary = graph.Child()
+
     def __init__(self, primary, identifier):
         self.primary = primary
-        primary.parent = self
         self.identifier = identifier
 
     def expand_once(self):
@@ -1009,6 +999,9 @@ class NoPredecessorStandin(Proxy, AST):
 
 
 class Subscription(Proxy, AST):
+
+    #FIXME: buh
+
     def __init__(self, primary, *expression_list):
         self.primary = primary
         primary.parent = self
@@ -1032,12 +1025,8 @@ class SimpleSlicing(Streamish, AST):
     match the specified stride.
     """
 
-    def __init__(self, primary, short_slice):
-        super(SimpleSlicing, self).__init__()
-        self.primary = primary
-        primary.parent = self
-        self.short_slice = short_slice
-        short_slice.parent = self
+    primary = graph.Child()
+    short_slice = graph.Child()
 
     def _get_source_iterator(self, anchor=None):
         lower_bound = self.short_slice.lower_bound.resolve()
@@ -1058,13 +1047,11 @@ class ExtendedSlicing(Streamish, AST):
     match the specified strides.
     """
 
-    def __init__(self, primary, slice_list):
-        super(ExtendedSlicing, self).__init__()
-        self.primary = primary
-        primary.parent = self
-        self.slice_list = slice_list
-        slice_list.parent = self
+    primary = graph.Child()
+    slice_list = graph.Child()
 
+    def __init__(self, **kwargs):
+        super(ExtendedSlicing, self).__init__(**kwargs)
         if len (self.slice_list.slice_list) > 1:
             raise errors.SyntaxError("Only a single slice at a time is supported", anchor=self.anchor)
 
@@ -1207,6 +1194,9 @@ class Sublist(AST):
         self.sublist.append(parameter)
 
 class YayList(Streamish, AST):
+
+    #FIXME: Buh
+
     def __init__(self, *items):
         self.value = list(items)
         for x in self.value:
@@ -1299,10 +1289,8 @@ class YayDict(Dictish, AST):
 
 
 class YayExtend(Streamish, AST):
-    def __init__(self, value):
-        super(YayExtend, self).__init__()
-        self.value = value
-        value.parent = self
+
+    value = graph.Child()
 
     def _get_source_iterator(self, anchor=None):
         try:
@@ -1423,6 +1411,7 @@ class YayMerged(Scalarish, AST):
     """ Combined scalars and templates """
 
     def __init__(self, *v):
+        # FIXME: Hmmf
         self.value = list(v)
         for v in self.value:
             v.parent = self
@@ -1473,46 +1462,19 @@ class Stanzas(Proxy, AST):
     def expand(self):
         return self.value.expand()
 
-class Directives(Proxy, AST):
-    def __init__(self, *directives):
-        self.value = UseMyPredecessorStandin(self)
-        for d in directives:
-            self.append(d)
 
-    def append(self, directive):
-        directive.parent = self
-        directive.predecessor = self.value or NoPredecessorStandin()
-        self.value = directive
+class Directives(Stanzas):
+    # FIXME: The implementation of Directives and Stanzas ended up the same
+    # Perhaps parser should create same primitive?
+    pass
 
-    def get_callable(self, key):
-        p = self.value
-        while p and p != self.predecessor:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
-            p = p.predecessor
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
-    def get_context(self, key):
-        p = self.value
-        while p and p != self.predecessor:
-            try:
-                return p.get_context(key)
-            except errors.NoMatching:
-                pass
-            p = p.predecessor
-        raise errors.NoMatching("Could not find '%s'" % key)
-
-    def expand(self):
-        return self.value.expand()
 
 class Include(Proxy, AST):
 
-    def __init__(self, expr):
-        self.expr = expr
-        expr.parent = self
+    expr = graph.Child()
+
+    def __init__(self, **kwargs):
+        super(Include, self).__init__(**kwargs)
         self.detector = []
         self.expanding = False
 
@@ -1568,8 +1530,8 @@ class Include(Proxy, AST):
 
 class Search(AST):
 
-    def __init__(self, expr):
-        self.expr = expr
+    expr = graph.Child()
+
 
 class Configure(AST):
 
@@ -1579,12 +1541,8 @@ class Configure(AST):
 
 class Set(Proxy, AST):
 
-    def __init__(self, var, expr):
-        self.var = var
-        var.parent = self
-
-        self.expr = expr
-        expr.parent = self
+    var = graph.Child()
+    expr = graph.Child()
 
     def get_context(self, key):
         if key == self.var.identifier:
@@ -1608,22 +1566,20 @@ class If(Proxy, AST):
     simplified out of the graph.
     """
 
-    def __init__(self, condition, on_true, on_false=None):
-        self.condition = condition
-        self.condition.parent = self
+    condition = graph.Child()
+    on_true = graph.Child()
+    on_false = graph.Child()
 
-        self.on_true = on_true
-        self.on_true.parent = self
+    passthrough_mode = False
+
+    def __init__(self, **kwargs):
+        super(If, self).__init__(**kwargs)
+
+        # FIXME: It feels like there are some rules about predecessors that could be applied globally?
+        # Perhaps the default value for all nodes predecessors is UseMyPredecessorStandin - apart from direct children of mappings?
         self.on_true.predecessor = UseMyPredecessorStandin(self)
-
-        if on_false:
-            self.on_false = on_false
+        if self.on_false:
             self.on_false.predecessor = UseMyPredecessorStandin(self)
-            self.on_false.parent = self
-        else:
-            self.on_false = None
-
-        self.passthrough_mode = False
 
     @cached
     def expand(self):
@@ -1666,12 +1622,10 @@ class If(Proxy, AST):
 
 class Select(Proxy, AST):
 
-    def __init__(self, expr, cases):
-        self.expr = expr
-        expr.parent = self
-        self.cases = cases
-        cases.parent = self
-        self.expanding = False
+    expanding = False
+
+    expr = graph.Child()
+    cases = graph.Child()
 
     @cached
     def expand(self):
@@ -1692,6 +1646,7 @@ class Select(Proxy, AST):
 
 
 class CaseList(AST):
+    #FIXME: Gah lists
     def __init__(self, *cases):
         self.cases = []
         [self.append(c) for c in cases]
@@ -1701,6 +1656,9 @@ class CaseList(AST):
         self.cases.append(case)
 
 class Case(AST):
+
+    node = graph.Child()
+
     def __init__(self, key, node):
         self.key = key
         self.node = node
@@ -1790,18 +1748,10 @@ class CallDirective(Proxy, AST):
 
 class For(Streamish, AST):
 
-    def __init__(self, target, in_clause, node, if_clause=None):
-        super(For, self).__init__()
-
-        self.target = target
-        target.parent = self
-        self.if_clause = if_clause
-        if if_clause:
-            if_clause.parent = self
-        self.in_clause = in_clause
-        in_clause.parent = self
-        self.node = node
-        node.parent = self
+    target = graph.Child()
+    if_clause = graph.Child()
+    in_clause = graph.Child()
+    node = graph.Child()
 
     def _get_source_iterator(self, anchor=None):
         for item in self.in_clause.get_iterable(anchor or self.anchor):
@@ -1821,9 +1771,9 @@ class For(Streamish, AST):
 
 class Template(Proxy, AST):
 
-    def __init__(self, value):
-        self.value = value
-        value.parent = self
+    # FIXME: Does this node ever do anything? Can parser just skip creating it?
+
+    value = graph.Child()
 
     def expand_once(self):
         return self.value.expand()
@@ -1831,9 +1781,10 @@ class Template(Proxy, AST):
 
 class Context(Proxy, AST):
 
+    value = graph.Child()
+
     def __init__(self, value, context):
-        self.value = value
-        self.value.parent = self
+        super(Context, self).__init__(value=value)
 
         # Context should not be reparented as we want things to be
         # evaluated in the original context.
@@ -1853,12 +1804,9 @@ class Context(Proxy, AST):
         return self.value.expand()
 
 class ListComprehension(Streamish, AST):
-    def __init__(self, expression, list_for):
-        super(ListComprehension, self).__init__()
-        self.expression = expression
-        expression.parent = self
-        self.list_for = list_for
-        list_for.parent = self
+
+    expression = graph.Child()
+    list_for = graph.Child()
 
     def _get_source_iterator(self, anchor=None):
         for node in self.list_for.expressions.get_iterable(anchor or self.anchor):
@@ -1867,26 +1815,25 @@ class ListComprehension(Streamish, AST):
             ctx.parent = self
             yield ctx.expand()
 
+
 class ListFor(Streamish, AST):
-    def __init__(self, targets, expressions, iterator=None):
-        super(ListFor, self).__init__()
-        self.targets = targets
-        targets.parent = self
-        self.expressions = expressions
-        expressions.parent = self
-        self.iterator = iterator
-        if iterator:
-            iterator.parent = self
+
+    targets = graph.Child()
+    expressions = graph.Child()
+    iterator = graph.Child()
+
 
 class ListIf(AST):
     def __init__(self, expression, iterator=None):
         self.expression = expression
         self.iterator = iterator
 
+
 class Comprehension(AST):
     def __init__(self, expression, comp_for):
         self.expression = expression
         self.comp_for = comp_for
+
 
 class CompFor(AST):
     def __init__(self, targets, test, iterator=None):
@@ -1894,21 +1841,25 @@ class CompFor(AST):
         self.test = test
         self.iterator = iterator
 
+
 class CompIf(AST):
     def __init__(self, expression, iterator=None):
         self.expression = expression
         self.iterator = iterator
+
 
 class GeneratorExpression(AST):
     def __init__(self, expression, comp_for):
         self.expression = expression
         self.comp_for = comp_for
 
+
 class DictComprehension(AST):
     def __init__(self, key, value, comp_for):
         self.key = key
         self.value = value
         self.comp_for = comp_for
+
 
 class SetDisplay(AST):
     def __init__(self, v):
@@ -1933,6 +1884,8 @@ class PythonClass(Proxy, AST):
     """
     This is a Mixin for writing nodes that can be created with the ``create`` syntax
     """
+
+    params = graph.Child()
 
     def __init__(self, params):
         # Dictionary to hold data created/fetched by this class
