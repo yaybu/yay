@@ -1566,10 +1566,14 @@ class Include(Proxy, AST):
         return True, t
 
 
-class Search(AST):
+class Search(Proxy, AST):
 
     def __init__(self, expr):
         self.expr = expr
+        expr.parent = self
+
+    def expand_once(self):
+        return self.predecessor.expand()
 
 class Configure(AST):
 
@@ -1592,7 +1596,7 @@ class Set(Proxy, AST):
         return super(Set, self).get_context(key)
 
     def expand_once(self):
-        return self.predecessor
+        return self.predecessor.expand()
 
 
 class If(Proxy, AST):
