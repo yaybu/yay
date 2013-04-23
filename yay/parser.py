@@ -155,7 +155,7 @@ class Parser(object):
         if len(p) == 3:
             p[0] = ast.ParentForm()
         else:
-            p[0] = ast.ParentForm(p[2])
+            p[0] = ast.ParentForm(expression_list=p[2])
         self.anchor(p, 1)
 
     def p_list_display(self, p):
@@ -180,7 +180,7 @@ class Parser(object):
         if len(p) == 3:
             p[0] = ast.ListDisplay()
         else:
-            p[0] = ast.ListDisplay(p[2])
+            p[0] = ast.ListDisplay(expression_list=p[2])
         self.anchor(p, 1)
 
     def p_list_comprehension(self, p):
@@ -196,9 +196,9 @@ class Parser(object):
                  | FOR target_list IN old_expression_list list_iter
         '''
         if len(p) == 5:
-            p[0] = ast.ListFor(p[2], p[4])
+            p[0] = ast.ListFor(targets=p[2], expressions=p[4])
         else:
-            p[0] = ast.ListFor(p[2], p[4], p[5])
+            p[0] = ast.ListFor(targets=p[2], expressions=p[4], iterator=p[5])
         self.anchor(p, 1)
 
     def p_old_expression_list(self, p):
@@ -230,9 +230,9 @@ class Parser(object):
                 | IF old_expression list_iter
         '''
         if len(p) == 3:
-            p[0] = ast.ListIf(p[2])
+            p[0] = ast.ListIf(expression=p[2])
         else:
-            p[0] = ast.ListIf(p[2], p[3])
+            p[0] = ast.ListIf(expression=p[2], iterator=p[3])
 
     def p_comprehension(self, p):
         '''
@@ -246,9 +246,9 @@ class Parser(object):
                  | FOR target_list IN or_test comp_iter
         '''
         if len(p) == 5:
-            p[0] = ast.CompFor(p[2], p[4])
+            p[0] = ast.CompFor(targets=p[2], test=p[4])
         else:
-            p[0] = ast.CompFor(p[2], p[4], p[5])
+            p[0] = ast.CompFor(targets=p[2], test=p[4], iterator=p[5])
 
     def p_comp_iter(self, p):
         '''
@@ -267,16 +267,16 @@ class Parser(object):
         # i do not know what this means
         # http://docs.python.org/2/reference/expressions.html#displays-for-sets-and-dictionaries
         if len(p) == 3:
-            p[0] = ast.CompIf(p[2])
+            p[0] = ast.CompIf(expression=p[2])
         else:
-            p[0] = ast.CompIf(p[2], p[3])
+            p[0] = ast.CompIf(expression=p[2], iterator=p[3])
         self.anchor(p, 1)
 
     def p_generator_expression(self, p):
         '''
         generator_expression : "(" expression comp_for ")"
         '''
-        p[0] = ast.GeneratorExpression(p[2], p[3])
+        p[0] = ast.GeneratorExpression(expression=p[2], comp_for=p[3])
         self.anchor(p, 1)
 
     def p_dict_display(self, p):
@@ -288,7 +288,7 @@ class Parser(object):
         if len(p) == 3:
             p[0] = ast.DictDisplay()
         else:
-            p[0] = ast.DictDisplay(p[2])
+            p[0] = ast.DictDisplay(key_datum_list=p[2])
         self.anchor(p, 1)
 
     def p_key_datum_list(self, p):
@@ -297,7 +297,7 @@ class Parser(object):
                        | key_datum_list "," key_datum
         '''
         if len(p) == 2:
-            p[0] = ast.KeyDatumList(p[1])
+            p[0] = ast.KeyDatumList(key_data=p[1])
         else:
             p[0] = p[1]
             p[0].append(p[3])
@@ -313,7 +313,7 @@ class Parser(object):
         '''
         dict_comprehension : expression ":" expression comp_for
         '''
-        p[0] = ast.DictComprehension(p[1], p[3], p[4])
+        p[0] = ast.DictComprehension(key=p[1], value=p[3], comp_for=p[4])
         self.anchor(p, 1)
 
     def p_set_display(self, p):
@@ -321,14 +321,14 @@ class Parser(object):
         set_display : "{" expression_list "}"
                     | "{" comprehension "}"
         '''
-        p[0] = ast.SetDisplay(p[2])
+        p[0] = ast.SetDisplay(v=p[2])
         self.anchor(p, 1)
 
     def p_string_conversion(self, p):
         '''
         string_conversion : "`" expression_list "`"
         '''
-        p[0] = ast.StringConversion(p[2])
+        p[0] = ast.StringConversion(v=p[2])
         self.anchor(p, 1)
 
     def p_primary(self, p):
@@ -345,14 +345,14 @@ class Parser(object):
         '''
         attributeref : primary "." IDENTIFIER
         '''
-        p[0] = ast.AttributeRef(p[1], p[3])
+        p[0] = ast.AttributeRef(primary=p[1], identifier=p[3])
         p[0].anchor = p[1].anchor
 
     def p_subscription(self, p):
         '''
         subscription : primary "[" expression_list "]"
         '''
-        p[0] = ast.Subscription(p[1], p[3])
+        p[0] = ast.Subscription(primary=p[1], expression_list=p[3])
         p[0].anchor = p[1].anchor
 
     def p_slicing(self, p):
@@ -366,14 +366,14 @@ class Parser(object):
         '''
         simple_slicing : primary "[" short_slice "]"
         '''
-        p[0] = ast.SimpleSlicing(p[1], p[3])
+        p[0] = ast.SimpleSlicing(primary=p[1], short_slice=p[3])
         self.anchor(p, 2)
 
     def p_extended_slicing(self, p):
         '''
         extended_slicing : primary "[" slice_list "]"
         '''
-        p[0] = ast.ExtendedSlicing(p[1], p[3])
+        p[0] = ast.ExtendedSlicing(primary=p[1], slice_list=p[3])
         self.anchor(p, 2)
 
     def p_slice_list(self, p):
@@ -937,28 +937,28 @@ class Parser(object):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6])
+        p[0] = ast.If(condition=p[2], on_true=p[6])
         self.anchor(p, 1)
 
     def p_if_directive_else(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6], p[12])
+        p[0] = ast.If(condition=p[2], on_true=p[6], on_false=p[12])
         self.anchor(p, 1)
 
     def p_if_directive_elif(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list
         '''
-        p[0] = ast.If(p[2], p[6], p[8])
+        p[0] = ast.If(condition=p[2], on_true=p[6], on_false=p[8])
         self.anchor(p, 1)
 
     def p_if_directive_else_elif(self, p):
         '''
         if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list ELSE ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6], p[8])
+        p[0] = ast.If(condition=p[2], on_true=p[6], on_false=p[8])
         p[0].add_else(p[13])
         self.anchor(p, 1)
 
@@ -975,14 +975,14 @@ class Parser(object):
         '''
         elif : ELIF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.If(p[2], p[6])
+        p[0] = ast.If(contion=p[2], on_true=p[6])
         self.anchor(p, 1)
 
     def p_select_directive(self, p):
         '''
         select_directive : SELECT expression_list ":" NEWLINE INDENT case_list DEDENT
         '''
-        p[0] = ast.Select(p[2], p[6])
+        p[0] = ast.Select(expr=p[2], case=p[6])
         self.anchor(p, 1)
 
     def p_case_list(self, p):
@@ -991,17 +991,17 @@ class Parser(object):
                   | case_list case_block
         '''
         if len(p) == 2:
-            p[0] = ast.CaseList(p[1])
-            p[0].anchor = p[1].anchor
-        else:
             p[0] = p[1]
-            p[0].append(p[2])
+        else:
+            # FIXME: The order of a case-list doesn't matter, but even so...
+            p[0] = p[1]
+            p[1].next = p[2]
 
     def p_case_block(self, p):
         '''
         case_block : key NEWLINE INDENT stanza DEDENT
         '''
-        p[0] = ast.Case(p[1], p[4])
+        p[0] = ast.Case(key=p[1], node=p[4])
         self.anchor(p, 1)
 
     def p_stanza_VALUE(self, p):
@@ -1085,7 +1085,7 @@ class Parser(object):
         '''
         scalar : EMPTYLIST
         '''
-        p[0] = ast.YayList()
+        p[0] = ast.EmptyList()
         self.anchor(p, 1)
 
     def p_scalar_value(self, p):
@@ -1118,15 +1118,8 @@ class Parser(object):
         '''
         scalar : scalar scalar
         '''
-        if isinstance(p[1], ast.YayMerged):
-            p[0] = p[1]
-            p[0].append(p[2])
-        elif isinstance(p[2], ast.YayMerged):
-            p[0] = p[2]
-            p[0].prepend(p[1])
-        else:
-            p[0] = ast.YayMerged(p[1], p[2])
-            p[0].anchor = p[1].anchor
+        p[0] = ast.YayMerged(lhs=p[1], rhs=p[2])
+        p[0].anchor = p[1].anchor
 
     def p_yaydict_keyscalar(self, p):
         '''
@@ -1201,11 +1194,12 @@ class Parser(object):
                 | yaylist listitem
         '''
         if len(p) == 2:
-            p[0] = ast.YayList(p[1])
+            p[0] = ast.YayList(value=p[1])
             p[0].anchor = p[1].anchor
         elif len(p) == 3:
             p[0] = p[1]
-            p[0].append(p[2])
+            nl = p[0].next = ast.YayList(value=p[2])
+            nl.anchor = self.anchor(p, 1)
 
     def p_error(self, p):
         if p is None:

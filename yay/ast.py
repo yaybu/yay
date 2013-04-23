@@ -773,6 +773,12 @@ class Add(Expr):
         except errors.TypeError:
             return self.op(self.lhs.as_string(), self.rhs.as_string())
 
+class YayMerged(Expr):
+    """ Combined scalars and templates. This is basically the same as Add, but it never tries to do number addition. """
+
+    def resolve_once(self):
+        return self.lhs.as_string() + self.rhs.as_string()
+
 class Subtract(Expr):
     op = operator.sub
 
@@ -937,7 +943,7 @@ class AttributeRef(Proxy, AST):
     primary = graph.Child()
 
     def __init__(self, primary, identifier):
-        self.primary = primary
+        super(AttributeRef, self).__init__(primary=primary)
         self.identifier = identifier
 
     def expand_once(self):
@@ -1000,19 +1006,12 @@ class NoPredecessorStandin(Proxy, AST):
 
 class Subscription(Proxy, AST):
 
-    #FIXME: buh
-
-    def __init__(self, primary, *expression_list):
-        self.primary = primary
-        primary.parent = self
-        self.expression_list = list(expression_list)
-        if len(self.expression_list) > 1:
-            raise errors.SyntaxError("Keys must be scalars, not tuples", anchor=self.anchor)
-        for e in self.expression_list:
-            e.parent = self
+    primary = graph.Child()
+    expression_list = graph.Child()
 
     def expand_once(self):
-        return self.primary.expand().get_key(self.expression_list[0].resolve()).expand()
+        return self.primary.expand().get_key(self.expression_list.resolve()).expand()
+
 
 class SimpleSlicing(Streamish, AST):
 
@@ -1193,37 +1192,24 @@ class Sublist(AST):
     def append(self, parameter):
         self.sublist.append(parameter)
 
+
+class EmptyList(Streamish, AST):
+
+    def _get_source_iterator(self, anchor=None):
+        raise StopIteration
+
+
 class YayList(Streamish, AST):
 
-    #FIXME: Buh
+    next = graph.Child()
+    value = graph.Child()
 
-    def __init__(self, *items):
-        self.value = list(items)
-        for x in self.value:
-            x.parent = self
+    def _get_source_iterator(self, anchor=None):
+        yield self.value
+        if self.next:
+            for child in self.next.as_iterable():
+                yield
 
-    def append(self, item):
-        self.value.append(item)
-        item.parent = self
-
-    def get_key(self, idx):
-        return self.get_index(idx)
-
-    def get_index(self, idx):
-        try:
-            idx = int(idx)
-        except ValueError:
-            raise errors.TypeError("Expected integer", anchor=self.anchor)
-
-        if idx < 0:
-            raise errors.TypeError("Index must be greater than 0", anchor=self.anchor)
-        elif idx >= len(self.value):
-            raise errors.TypeError("Index out of range", anchor=self.anchor)
-
-        return self.value[idx]
-
-    def get_iterable(self, anchor=None):
-        return iter(self.value)
 
 class YayDict(Dictish, AST):
 
@@ -1406,26 +1392,6 @@ class YayMultilineScalar(Scalarish, AST):
 
     def append(self, value):
         self.__value = self.__value + value
-
-class YayMerged(Scalarish, AST):
-    """ Combined scalars and templates """
-
-    def __init__(self, *v):
-        # FIXME: Hmmf
-        self.value = list(v)
-        for v in self.value:
-            v.parent = self
-
-    def append(self, v):
-        self.value.append(v)
-        v.parent = self
-
-    def prepend(self, value):
-        self.value.insert(0, value)
-        value.parent = self
-
-    def resolve_once(self):
-        return "".join(v.as_string() for v in self.value)
 
 class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
@@ -1625,7 +1591,7 @@ class Select(Proxy, AST):
     expanding = False
 
     expr = graph.Child()
-    cases = graph.Child()
+    case = graph.Child()
 
     @cached
     def expand(self):
@@ -1636,33 +1602,24 @@ class Select(Proxy, AST):
         value = self.expr.resolve()
         self.expanding = False
 
-        for case in self.cases.cases:
+        case = self.case
+        while case:
             if case.key == value:
                 t = Tripwire(case.node.expand(), self.expr.resolve, value)
                 t.anchor = self.anchor
                 return True, t
+            case = case.next
 
-        raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
-
-
-class CaseList(AST):
-    #FIXME: Gah lists
-    def __init__(self, *cases):
-        self.cases = []
-        [self.append(c) for c in cases]
-
-    def append(self, case):
-        case.parent = self
-        self.cases.append(case)
 
 class Case(AST):
 
     node = graph.Child()
+    next = graph.Child()
 
-    def __init__(self, key, node):
+    def __init__(self, key, **kwargs):
+        super(Case, self).__init__(**kwargs)
         self.key = key
-        self.node = node
-        node.parent = self
+
 
 class Create(Proxy, AST):
     def __init__(self, target, node):
