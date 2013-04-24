@@ -22,8 +22,11 @@ class Config(ast.Root):
 
     def __init__(self, special_term='yay', searchpath=None, config=None):
         self.special_term = special_term
-        self.openers = Openers(searchpath=searchpath)
         self.node = ast.NoPredecessorStandin()
+        self.setup_openers(searchpath)
+
+    def setup_openers(self, searchpath):
+        self.openers = Openers(searchpath=searchpath)
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri

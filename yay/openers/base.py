@@ -20,8 +20,9 @@ import sys
 import subprocess
 import hashlib
 import base64
+import itertools
 
-from yay.errors import NotFound, NotModified
+from yay.errors import NotFound, NotModified, ParadoxError
 
 def etag_stream(fp):
     s = hashlib.sha1()
@@ -298,4 +299,43 @@ class Openers(object):
             fp = Gpg().filter(fp)
 
         return fp
+
+
+class SearchpathFromGraph(object):
+
+    """
+    SearchpathFromGraph is an adaptor for basing the search path on an
+    expression in the Graph::
+
+        class CustomRoot(ast.Root):
+
+            def setup_openers(self, searchpath):
+                # Add a yay.searchpath variable to the graph
+                self.add({"yay": {"searchpath": searchpath or []}})
+
+                # Allow nodes in the graph to extend the searchpath
+                self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
+
+    As far as the openers code is concerned, the searchpath is a simple list.
+    However, if a user changes the searchpath in a way that violates causality
+    the appropriate exception is raised.
+    """
+
+    def __init__(self, expression):
+        self.expression = expression
+        self._previous = []
+
+    def __iter__(self):
+        marker = object()
+        previous = list(self._previous)
+        current = self.expression.as_iterable()
+
+        for p, c in itertools.izip_longest(previous, current, fillvalue=marker):
+            if p != marker:
+                if p != c:
+                    raise ParadoxError("Searchpath changed after we started depending on it")
+            else:
+                self._previous.append(c)
+
+            yield c
 
