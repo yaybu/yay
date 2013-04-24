@@ -310,10 +310,10 @@ class SearchpathFromGraph(object):
         class CustomRoot(ast.Root):
 
             def setup_openers(self, searchpath):
-                # Add a yay.searchpath variable to the graph
+                #Add a yay.searchpath variable to the graph
                 self.add({"yay": {"searchpath": searchpath or []}})
 
-                # Allow nodes in the graph to extend the searchpath
+                #Allow nodes in the graph to extend the searchpath
                 self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
 
     As far as the openers code is concerned, the searchpath is a simple list.
