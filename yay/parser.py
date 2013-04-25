@@ -1054,14 +1054,16 @@ class Parser(object):
 
     def p_extend(self, p):
         '''
-        extend : EXTEND yaydict
+        extend : EXTEND key scalar NEWLINE
+               | EXTEND key NEWLINE INDENT stanza DEDENT
+               | EXTEND key NEWLINE INDENT stanzas DEDENT
         '''
-
-        # an extend should only have one member
-        assert len(p[2].values) == 1
-        key, value = p[2].values.items()[0]
+        if len(p) == 5:
+            value = p[3]
+        else:
+            value = p[5]
         extend = ast.YayExtend(value)
-        p[0] = ast.YayDict([(key, extend)])
+        p[0] = ast.YayDict([(p[2], extend)])
         self.anchor(p, 1)
         extend.anchor = p[0].anchor
 
