@@ -158,11 +158,9 @@ class TestYayDict(unittest2.TestCase):
 
 class TestEmptyDocument(unittest2.TestCase):
 
-    @unittest2.expectedFailure
     def test_empty_document(self):
         res = resolve("")
 
-    @unittest2.expectedFailure
     def test_include_empty_document(self):
         res = resolve("""
             include "foo"
@@ -1385,6 +1383,22 @@ class TestExtend(unittest2.TestCase):
             {"Foo": {"bar": "baz"}},
             {"Qux": {"bar": "baz"}}
             ])
+
+    def test_extend(self):
+        res = resolve("""
+            a: []
+            extend foo: []
+            extend bar: []
+            baz: []
+            extend qux: []
+            """)
+        self.assertEquals(res, {
+            "a": [],
+            "foo": [],
+            "bar": [],
+            "baz": [],
+            "qux": [],
+            })
 
     def test_extend_list_with_variable(self):
         res = resolve("""
