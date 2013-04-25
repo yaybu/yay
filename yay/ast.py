@@ -61,10 +61,10 @@ class AST(object):
         raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
 
     def as_list(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting list", anchor=anchor or self.anchor)
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting iterable", anchor=anchor or self.anchor)
 
     def as_dict(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
@@ -626,7 +626,8 @@ class Root(Pythonic, Proxy, AST):
     def parse(self, path):
         stream = self.openers.open(path)
         from yay import parser
-        return parser.parse(stream.read())
+        p = parser.Parser()
+        return p.parse(stream.read())
 
 class Identifier(Proxy, AST):
     def __init__(self, identifier):
@@ -810,14 +811,28 @@ class BitwiseOr(Expr):
     op = operator.or_
 
 class Or(Expr):
-    def resolve_once(self):
+    op = lambda self, lhs, rhs: lhs or rhs
+
+class Else(Proxy, AST):
+
+    def __init__(self, lhs, rhs):
+        self.lhs = lhs
+        lhs.parent = self
+        self.rhs = rhs
+        rhs.parent = self
+
+    def dynamic(self):
+        for c in (self.lhs, self.rhs):
+            if c.dynamic():
+                return True
+        return False
+
+    def expand(self):
         try:
-            res = self.lhs.resolve()
-            if res:
-                return res
+            return self.lhs.expand()
         except errors.NoMatching:
-            pass
-        return self.rhs.resolve()
+            return self.rhs.expand()
+
 
 class BitwiseAnd(Expr):
     op = operator.and_
@@ -1555,9 +1570,9 @@ class Include(Proxy, AST):
 
         self.expanding = True
         expr = self.expr.resolve()
+        expanded = self.root.parse(expr)
         self.expanding = False
 
-        expanded = self.root.parse(expr)
         expanded.predecessor = self.predecessor
         expanded.parent = self.parent
 

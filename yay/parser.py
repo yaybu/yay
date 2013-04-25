@@ -707,9 +707,17 @@ class Parser(object):
             p[0] = ast.ConditionalExpression(p[3], p[1], p[5])
             p[0].anchor = p[1].anchor
 
+    def p_else(self, p):
+        '''
+        else_test : expression ELSE expression
+        '''
+        p[0] = ast.Else(p[1], p[3])
+        self.anchor(p, 1)
+
     def p_expression(self, p):
         '''
         expression : conditional_expression
+                   | else_test
                    | lambda_form
         '''
         p[0] = p[1]
