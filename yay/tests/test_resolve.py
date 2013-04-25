@@ -1521,6 +1521,16 @@ class TestSelect(unittest2.TestCase):
 
         self.assertEqual(res['qux'], ['b'])
 
+    def test_select_sameline(self):
+        res = resolve("""
+            foo: baz
+            qux:
+                select foo:
+                  baz: []
+            """)
+
+        self.assertEqual(res['qux'], [])
+
     def test_iter_over_select(self):
         res = resolve("""
             foo: baz

@@ -1000,8 +1000,13 @@ class Parser(object):
     def p_case_block(self, p):
         '''
         case_block : key NEWLINE INDENT stanza DEDENT
+                   | key NEWLINE INDENT stanzas DEDENT
+                   | key scalar NEWLINE
         '''
-        p[0] = ast.Case(p[1], p[4])
+        if len(p) == 6:
+            p[0] = ast.Case(p[1], p[4])
+        else:
+            p[0] = ast.Case(p[1], p[2])
         self.anchor(p, 1)
 
     def p_stanza_VALUE(self, p):
