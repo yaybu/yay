@@ -627,7 +627,7 @@ class Root(Pythonic, Proxy, AST):
         stream = self.openers.open(path)
         from yay import parser
         p = parser.Parser()
-        return p.parse(stream.read())
+        return p.parse(stream.read(), source=path)
 
 class Identifier(Proxy, AST):
     def __init__(self, identifier):
@@ -1707,7 +1707,7 @@ class Select(Proxy, AST):
                 t.anchor = self.anchor
                 return True, t
 
-        raise NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
+        raise errors.NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
 
 
 class CaseList(AST):

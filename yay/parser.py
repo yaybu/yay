@@ -1227,7 +1227,7 @@ class Parser(object):
             raise ParseError("End of file reached unexpectedly", 0)
         else:
             if p.type == 'NEWLINE':
-                raise ParseError("Unexpected end of line", p.lineno)
+                raise ParseError("Unexpected end of line in %s", (p.lineno, self.source))
             else:
-                raise ParseError("Unexpected %s symbol %r" % (p.type, p.value), p.lineno)
+                raise ParseError("Unexpected %s symbol %r in %s" % (p.type, p.value, self.source), p.lineno)
 
