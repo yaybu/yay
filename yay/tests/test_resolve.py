@@ -778,16 +778,16 @@ class TestBitwiseOr(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 10)
 
 
-class TestOr(unittest2.TestCase):
+class TestElse(unittest2.TestCase):
 
     def test_else(self):
         res = resolve("""
             foo:
                 bar: 42
                 wibble: 22
-            bar: {{ foo.baz or foo.bar }}
-            baz: {{ foo.baz or foo.qux or foo.bar }}
-            qux: {{ foo.wibble or foo.baz }}
+            bar: {{ foo.baz else foo.bar }}
+            baz: {{ foo.baz else foo.qux else foo.bar }}
+            qux: {{ foo.wibble else foo.baz }}
             """)
         self.assertEqual(res['bar'], 42)
         self.assertEqual(res['baz'], 42)
@@ -795,25 +795,25 @@ class TestOr(unittest2.TestCase):
 
     def test_else_empty_list(self):
         res = resolve("""
-            foo: {{ a or [] }}
+            foo: {{ a else [] }}
             """)
         self.assertEqual(res['foo'], [])
 
     def test_else_empty_dict(self):
         res = resolve("""
-            foo: {{ a or {} }}
+            foo: {{ a else {} }}
             """)
         self.assertEqual(res['foo'], {})
 
     def test_else_string(self):
         res = resolve("""
-            foo: {{ a or "foo" }}
+            foo: {{ a else "foo" }}
             """)
         self.assertEqual(res['foo'], "foo")
 
     def test_else_include(self):
         res = resolve("""
-            include (a or "foo") + "_inc"
+            include (a else "foo") + "_inc"
             """,
             foo_inc="hello:world\n")
         self.assertEqual(res['hello'], 'world')
