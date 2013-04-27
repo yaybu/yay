@@ -21,13 +21,6 @@ class TestComments(unittest2.TestCase):
             """)
         self.assertEqual(res, {"baz": "foo"})
 
-    def test_inline_comment(self):
-        res = resolve("""
-            baz: foo # wibble
-            qux: foo
-            """)
-        self.assertEqual(res, {"baz": "foo", "qux": "foo"})
-
 
 class TestYayDict(unittest2.TestCase):
 
