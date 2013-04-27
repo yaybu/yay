@@ -1010,9 +1010,12 @@ class Parser(object):
         case_block : key NEWLINE INDENT stanza DEDENT
                    | key NEWLINE INDENT stanzas DEDENT
                    | key scalar NEWLINE
+                   | key NEWLINE
         '''
         if len(p) == 6:
             p[0] = ast.Case(p[1], p[4])
+        elif len(p) == 3:
+            p[0] = ast.Case(p[1], ast.YayScalar(""))
         else:
             p[0] = ast.Case(p[1], p[2])
         self.anchor(p, 1)
@@ -1157,6 +1160,15 @@ class Parser(object):
         '''
         p[0] = ast.YayDict([(p[1], p[4])])
         self.anchor(p, 1)
+
+    def p_yaydict_keyblank(self, p):
+        '''
+        yaydict : key NEWLINE
+        '''
+        value = ast.YayScalar("")
+        p[0] = ast.YayDict([(p[1], value)])
+        self.anchor(p, 1)
+        value.anchor = p[0].anchor
 
     def p_multiline(self, p):
         '''

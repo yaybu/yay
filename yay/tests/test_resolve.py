@@ -915,13 +915,12 @@ class TestDictDisplay(unittest2.TestCase):
             """)
         self.assertEqual(t.get_key("foo").resolve(), {})
 
-    @unittest2.expectedFailure
     def test_none(self):
         t = parse("""
             foo:
             bar: baz
             """)
-        self.assertEqual(t.get_key("foo").resolve(), None)
+        self.assertEqual(t.get_key("foo").resolve(), "")
 
 
 class TestAttributeRef(unittest2.TestCase):
