@@ -1942,9 +1942,14 @@ class LambdaForm(AST):
         self.expression = expression
         self.params = params
 
-class Comment(AST):
+
+class Comment(Proxy, AST):
+
     def __init__(self, v):
         self.v = v
+
+    def expand_once(self):
+        return self.predecessor.expand()
 
 
 class PythonClass(Proxy, AST):

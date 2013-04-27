@@ -4,6 +4,31 @@ from yay import errors, ast
 from yay.parser import ParseError
 
 
+class TestComments(unittest2.TestCase):
+
+    def test_simple_comment(self):
+        res = resolve("""
+            # foo
+            bar: foo
+            """)
+        self.assertEqual(res, {"bar": "foo"})
+
+    def test_double_comment(self):
+        res = resolve("""
+            # foo
+            # bar
+            baz: foo
+            """)
+        self.assertEqual(res, {"baz": "foo"})
+
+    def test_inline_comment(self):
+        res = resolve("""
+            baz: foo # wibble
+            qux: foo
+            """)
+        self.assertEqual(res, {"baz": "foo", "qux": "foo"})
+
+
 class TestYayDict(unittest2.TestCase):
 
     def test_very_lazy(self):

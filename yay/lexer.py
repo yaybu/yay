@@ -135,7 +135,6 @@ class Lexer(object):
 
     def t_INITIAL_VALUE_LISTVALUE_TEMPLATE_COMMAND_COMMENT(self, t):
         r"""\#[^\n]*"""
-        return
         return t
 
 
