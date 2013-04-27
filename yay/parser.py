@@ -45,12 +45,12 @@ expressions = {
 
 
 class Anchor(object):
-    def __init__(self, source, p, i):
+    def __init__(self, source, lineno=0, linespan=0, lexpos=0, lexspan=0):
         self.source = source
-        self.lineno = p.lineno(i)
-        self.linespan = p.linespan(i)
-        self.lexpos = p.lexpos(i)
-        self.lexspan = p.lexspan(i)
+        self.lineno = lineno
+        self.linespan = linespan
+        self.lexpos = lexpos
+        self.lexspan = lexspan
 
 class ParseError(Exception):
 
@@ -86,7 +86,13 @@ class Parser(object):
 
     def anchor(self, p, i):
         """ Set the position of p[0] from symbol i """
-        p[0].anchor = Anchor(self.source, p, i)
+        p[0].anchor = Anchor(
+            source = self.source,
+            lineno = p.lineno(i),
+            linespan = p.linespan(i),
+            lexpos = p.lexpos(i),
+            lexspan = p.lexspan(i),
+            )
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html
@@ -1033,10 +1039,18 @@ class Parser(object):
         '''
         p[0] = ast.Comment(p[1])
 
+    def p_empty(self, p):
+        '''
+        empty :
+        '''
+        p[0] = ast.YayDict()
+        p[0].anchor = Anchor(self.source, 0, 0)
+
     def p_root(self, p):
         '''
         root : stanza
              | stanzas
+             | empty
         '''
         p[0] = p[1]
 

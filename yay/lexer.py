@@ -31,6 +31,8 @@ from ply import lex
 class Lexer(object):
 
     def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0):
+        self.lineno = 0
+        self.lexpos = 0
         self.lexer = lex.lex(module=self, debug=debug, optimize=optimize,
                              lextab=lextab, reflags=reflags,
                              outputdir=os.path.dirname(__file__))
