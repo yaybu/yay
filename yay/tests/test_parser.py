@@ -291,10 +291,9 @@ class TestParser(unittest2.TestCase):
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
     def test_simple_dict_colon_in_value(self):
-        res = parse("""
+        self.assertRaises(parser.ParseError, parse,"""
             a: b:c
         """)
-        self.assertEqual(res, YayDict([('a', YayScalar('b:c'))]))
 
     def test_simple_dict_space(self):
         res = parse("""
