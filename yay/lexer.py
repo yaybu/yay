@@ -273,6 +273,12 @@ class Lexer(object):
         self.lexer.block_substate = t.value = t.value.strip()
         return t
 
+    def t_VALUE_LISTVALUE_QVALUE(self, t):
+        """\"[^"]*\""""
+        t.type = "VALUE"
+        t.value = t.value[1:-1]
+        return t
+
     def t_VALUE_LISTVALUE_VALUE(self, t):
         """([^:\{\n]|{(?!{))+"""
         return t

@@ -629,4 +629,9 @@ class TestLexer(unittest2.TestCase):
                value('x'), colon, value('y'), newline,
            ])
 
-
+    def test_quoted_values(self):
+        self.compare(self._lex(r"""
+        a: "b: c d"
+        """), [
+               value('a'), colon, value('b: c d'), newline,
+               ])
