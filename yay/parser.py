@@ -1150,15 +1150,8 @@ class Parser(object):
         '''
         scalar : scalar scalar
         '''
-        if isinstance(p[1], ast.YayMerged):
-            p[0] = p[1]
-            p[0].append(p[2])
-        elif isinstance(p[2], ast.YayMerged):
-            p[0] = p[2]
-            p[0].prepend(p[1])
-        else:
-            p[0] = ast.YayMerged(p[1], p[2])
-            p[0].anchor = p[1].anchor
+        p[0] = ast.YayMerged(p[1], p[2])
+        p[0].anchor = p[1].anchor
 
     def p_yaydict_keyscalar(self, p):
         '''

@@ -411,7 +411,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', YayMerged(YayScalar('woo '), Template(Identifier('a')), YayScalar(' hello'))),
+            ('c', YayMerged(YayScalar('woo '), YayMerged(Template(Identifier('a')), YayScalar(' hello')))),
         ]))
 
     def test_template_5(self):

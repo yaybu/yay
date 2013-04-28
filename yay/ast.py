@@ -783,6 +783,12 @@ class Add(Expr):
         except errors.TypeError:
             return self.op(self.lhs.as_string(), self.rhs.as_string())
 
+class YayMerged(Expr):
+    """ Combined scalars and templates """
+
+    def resolve_once(self):
+        return self.lhs.as_string() + self.rhs.as_string()
+
 class Subtract(Expr):
     op = operator.sub
 
@@ -1434,24 +1440,6 @@ class YayMultilineScalar(Scalarish, AST):
     def append(self, value):
         self.__value = self.__value + value
 
-class YayMerged(Scalarish, AST):
-    """ Combined scalars and templates """
-
-    def __init__(self, *v):
-        self.value = list(v)
-        for v in self.value:
-            v.parent = self
-
-    def append(self, v):
-        self.value.append(v)
-        v.parent = self
-
-    def prepend(self, value):
-        self.value.insert(0, value)
-        value.parent = self
-
-    def resolve_once(self):
-        return "".join(v.as_string() for v in self.value)
 
 class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
