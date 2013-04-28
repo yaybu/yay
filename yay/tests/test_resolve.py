@@ -833,7 +833,7 @@ class TestElse(unittest2.TestCase):
         res = resolve("""
             include (a else "foo") + "_inc"
             """,
-            foo_inc="hello:world\n")
+            foo_inc="hello: world\n")
         self.assertEqual(res['hello'], 'world')
 
 class TestNotIn(unittest2.TestCase):

@@ -228,7 +228,7 @@ class Lexer(object):
         return t
 
     def t_INITIAL_VALUE(self, t):
-        """[^:\n ]+"""
+        """([^:\n ]|:(?!\s))+"""
         t.type = self.reserved.get(t.value, 'VALUE')
         if t.value in ('configure', 'extend'):
             self.lexer.begin("INITIAL")
@@ -239,7 +239,7 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_COLON(self, t):
-        """[ ]*:[ ]*"""
+        """[ ]*:[ ]*((?:\n)| )"""
         t.value = ':'
         return t
 
@@ -280,7 +280,7 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_VALUE(self, t):
-        """([^:\{\n]|{(?!{))+"""
+        """([^:\{\n]|{(?!{)|:(?!\s))+"""
         return t
 
     def t_ANY_WS(self, t):

@@ -209,7 +209,7 @@ class TestLexer(unittest2.TestCase):
     def test_sample2(self):
         self.compare(self._lex("""
         a:
-            b:c
+            b: c
             e:
                 - f
                 - g
@@ -635,3 +635,23 @@ class TestLexer(unittest2.TestCase):
         """), [
                value('a'), colon, value('b: c d'), newline,
                ])
+
+    def test_colon_key_nospace(self):
+        self.compare(self._lex(r"""
+        a:b
+        """), [value('a:b'), newline])
+
+    def test_colon_key_space(self):
+        self.compare(self._lex(r"""
+        a: b
+        """), [value('a'), colon, value('b'), newline])
+
+    def test_colon_value_nospace(self):
+        self.compare(self._lex(r"""
+        a: b:c
+        """), [value('a'), colon, value('b:c'), newline])
+
+    def test_colon_value_nospace(self):
+        self.compare(self._lex(r"""
+        a: b: c
+        """), [value('a'), colon, value('b'), colon, value('c'), newline])

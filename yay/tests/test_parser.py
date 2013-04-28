@@ -292,7 +292,7 @@ class TestParser(unittest2.TestCase):
 
     def test_simple_dict_colon_in_value(self):
         self.assertRaises(parser.ParseError, parse,"""
-            a: b:c
+            a: b: c
         """)
 
     def test_simple_dict_space(self):
@@ -396,7 +396,7 @@ class TestParser(unittest2.TestCase):
 
     def test_template_3(self):
         res = parse("""
-        a:b
+        a: b
         c: {{a}} hello
         """)
         self.assertEqual(res, YayDict([
@@ -406,7 +406,7 @@ class TestParser(unittest2.TestCase):
 
     def test_template_4(self):
         res = parse("""
-        a:b
+        a: b
         c: woo {{a}} hello
         """)
         self.assertEqual(res, YayDict([
@@ -416,7 +416,7 @@ class TestParser(unittest2.TestCase):
 
     def test_template_5(self):
         res = parse("""
-        a:b
+        a: b
         c: {{"this " + a + " that"}}
         """)
         self.assertEqual(res, YayDict([
@@ -426,7 +426,7 @@ class TestParser(unittest2.TestCase):
 
     def test_template_6(self):
         res = parse("""
-        a:b
+        a: b
         c: {{1.0 + 2}}
         """)
         self.assertEqual(res, YayDict([
