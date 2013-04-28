@@ -31,10 +31,23 @@ def graph_to_dot(opts, graph):
 
     return "\n".join(graph.as_digraph())
 
+def graph_to_py(opts, graph):
+    import pprint
+
+    try:
+        resolved = graph.resolve()
+    except errors.Error as e:
+        print >>sys.stderr, "A runtime error was captured"
+        print >>sys.stderr, str(e)
+        sys.exit(1)
+
+    return pprint.pformat(resolved)
+
 def main():
     converters = {
         "dot": graph_to_dot,
         "yaml": graph_to_yaml,
+        "py": graph_to_py,
         }
 
     p = optparse.OptionParser()
