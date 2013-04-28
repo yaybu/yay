@@ -664,18 +664,6 @@ class ParentForm(Scalarish, AST):
             return []
         return self.expression_list.resolve()
 
-class ExpressionList(AST):
-    def __init__(self, *expressions):
-        self.expression_list = list(expressions)
-        for expr in self.expression_list:
-            expr.parent = self
-
-    def append(self, expression):
-        self.expression_list.append(expression)
-
-    def resolve_once(self):
-        return [expr.resolve() for expr in self.expression_list]
-
 
 class UnaryExpr(Scalarish, AST):
 
@@ -1255,6 +1243,11 @@ class YayList(Streamish, AST):
 
     def get_iterable(self, anchor=None):
         return iter(self.value)
+
+
+class ExpressionList(YayList):
+    pass
+
 
 class YayDict(Dictish, AST):
 
