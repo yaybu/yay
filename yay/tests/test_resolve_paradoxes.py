@@ -1,5 +1,5 @@
 import unittest
-from .base import parse, resolve
+from .base import parse, resolve, TestCase
 from yay import errors
 
 
@@ -152,3 +152,39 @@ class TestResolveParadoxes(unittest.TestCase):
 
         self.assertRaises(errors.ParadoxError, t.get_key, "lol")
 
+
+class TestSearchPathParadoxes(TestCase):
+
+    def test_searchpath_cant_change(self):
+        self._add("mem://foodir/example2.yay", """
+            foo: bar
+            """)
+        self._add("mem://bardir/example.yay", """
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+            """)
+        self.assertRaises(errors.ParadoxError, self._resolve, """
+            yay:
+                searchpath:
+                  - {{ 'mem://bardir/' }}
+            include "example.yay"
+            include "example2.yay"
+            """)
+
+    def test_searchpath_cant_change_2(self):
+        self._add("mem://foodir/example2.yay", """
+            foo: bar
+            """)
+        self._add("mem://bardir/example.yay", """
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+            """)
+        self.assertRaises(errors.ParadoxError, self._resolve, """
+            yay:
+                searchpath:
+                  - {{ 'mem://bardir/' }}
+            include "example2.yay"
+            include "example.yay"
+            """)

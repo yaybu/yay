@@ -320,8 +320,9 @@ class SearchpathFromGraph(object):
     def __init__(self, expression):
         self.expression = expression
         self._previous = []
+        self._iterating = False
 
-    def __iter__(self):
+    def _iterate_over_expression(self):
         marker = object()
         previous = list(self._previous)
         current = self.expression.as_iterable()
@@ -332,6 +333,15 @@ class SearchpathFromGraph(object):
                     raise ParadoxError("Searchpath changed after we started depending on it")
             else:
                 self._previous.append(c)
-
             yield c
+
+    def __iter__(self):
+        if not self._iterating:
+            self._iterating = True
+            for val in self._iterate_over_expression():
+                yield val
+            self._iterating = False
+            return
+        for val in self._previous:
+            yield val
 
