@@ -1,5 +1,5 @@
 import unittest2
-from .base import parse, resolve
+from .base import parse, resolve, TestCase
 from yay import errors, ast
 from yay.parser import ParseError
 
@@ -1812,6 +1812,48 @@ class TestPythonicWrapper(unittest2.TestCase):
         self.assertEqual(str(it.next().fruit), "pear")
 
 
+class TestSearchPath(TestCase):
+
+    def test_openers_search_pre(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._resolve("""
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+            include "example.yay"
+            """)
+        self.assertEqual(res['foo'], 'bar')
+
+    def test_openers_search_post(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._resolve("""
+            include "example.yay"
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+            """)
+        self.assertEqual(res['foo'], 'bar')
+
+    def test_openers_search_mid(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._resolve("""
+            yay:
+                searchpath:
+                  - {{ 'mem://bardir/' }}
+            include "example.yay"
+            yay:
+                extend searchpath:
+                  - {{ 'mem://foodir/' }}
+            """)
+        self.assertEqual(res['foo'], 'bar')
+
+
 class TestOpeners(unittest2.TestCase):
     pass
 
@@ -1820,16 +1862,6 @@ class TestOpeners(unittest2.TestCase):
             #% include "package://yay.tests/fixtures/hello_world.yay"
             #""")
         #self.assertEqual(res['hello'], 'world')
-
-    #def test_openers_search(self):
-        #res = resolve("""
-            #% search "package://yay/tests/fixtures"
-            #% include "somefile.yay"
-            #% include "onlyin2.yay"
-            #""")
-
-        ## FIXME: Need to figure out how search interacts with the MockRoot searchpath..
-        #self.assertEqual(True, False)
 
     #def test_openers_config(self):
         #res = resolve("""

@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import unittest
-from yay import parser
-from yay import ast
+from yay import parser, ast, config
+from yay.openers.base import MemOpener
+import StringIO
+
 
 class MockRoot(ast.Root):
 
@@ -38,21 +40,34 @@ def bare_parse(value):
     p = parser.Parser()
     return p.parse(value)
 
-def parse(value, **kwargs):
-    root = MockRoot(bare_parse(value))
+def parse(value, root=MockRoot, **kwargs):
+    r = root(bare_parse(value))
     for k, v in kwargs.items():
-        root.add(k, v)
-    return root
+        r.add(k, v)
+    return r
 
-def resolve(value, **kwargs):
-    root = parse(value, **kwargs)
-    return root.resolve()
+def resolve(value, root=MockRoot, **kwargs):
+    r = parse(value, root, **kwargs)
+    return r.resolve()
 
 
 class TestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.addCleanup(MemOpener.reset)
+
+    def _add(self, key, data):
+        MemOpener.add(key, data)
+
     def _parse(self, source):
-        return parse(source)
+        from yay.openers.base import Openers, SearchpathFromGraph
+        class Config(config.Config):
+            def setup_openers(self, searchpath):
+                self.add({"yay": {"searchpath": searchpath or []}})
+                self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
+        c = Config()
+        c.load(StringIO.StringIO(source))
+        return c
 
     def _resolve(self, source):
         return self._parse(source).resolve()

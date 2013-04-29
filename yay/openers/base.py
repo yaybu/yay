@@ -175,11 +175,7 @@ class MemOpener(IOpener):
         try:
             data = self.data[uri]
         except KeyError:
-            import yaml
-            data = self.get_setting(uri)
-            if not data:
-                raise NotFound("Memory cell '%s' does not exist" % uri)
-            data = yaml.dump(data, default_flow_style=False)
+            raise NotFound("Memory cell '%s' does not exist" % uri)
 
         fp = StringIO.StringIO(data)
         fp.len = len(data)
