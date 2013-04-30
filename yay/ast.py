@@ -620,7 +620,10 @@ class Root(Pythonic, Proxy, AST):
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def get_context(self, key):
-        return self.node.get_key(key)
+        try:
+            return self.node.get_key(key)
+        except KeyError:
+            raise errors.NoMatching("Key not found '%s'" % key, anchor=self.anchor)
 
     def expand(self):
         return self.node.expand()
