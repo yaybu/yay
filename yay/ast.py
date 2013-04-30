@@ -561,7 +561,9 @@ class Pythonic(object):
         return list(self.keys())
 
     def __getattr__(self, key):
-        return PythonicWrapper(AttributeRef(self, key))
+        ref = AttributeRef(self, key)
+        ref.anchor = None
+        return PythonicWrapper(ref)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -645,7 +647,10 @@ class Identifier(Proxy, AST):
             node = node.parent
 
         assert node == root
-        return node.get_context(self.identifier).expand()
+        try:
+            return node.get_context(self.identifier).expand()
+        except errors.NoMatching:
+            raise errors.NoMatching("Could not find key '%s'" % self.identifier, anchor=self.anchor)
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
@@ -928,10 +933,7 @@ class DictDisplay(Dictish, AST):
     def get_key(self, key):
         if not self._dict:
             self._refresh_self()
-        try:
-            return self._dict[key]
-        except KeyError:
-            raise errors.NoMatching("No such key '%s" % key, anchor=self.anchor)
+        return self._dict[key]
 
     def keys(self):
         if not self._dict:
@@ -961,7 +963,11 @@ class AttributeRef(Proxy, AST):
 
     def expand_once(self):
         __context__ = " -> Looking up subkey '%s'" % self.identifier
-        return self.primary.expand().get_key(self.identifier).expand()
+        try:
+            return self.primary.expand().get_key(self.identifier).expand()
+        except KeyError:
+            raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
+
 
 class LazyPredecessor(Proxy, AST):
     def __init__(self, node, identifier):
@@ -977,7 +983,7 @@ class LazyPredecessor(Proxy, AST):
         try:
             predecessor = self.expand()
         except errors.NoPredecessor:
-            raise errors.NoMatching("No such key '%s'" % key)
+            raise KeyError(key)
         return predecessor.get_key(key)
 
     def expand_once(self):
@@ -985,7 +991,7 @@ class LazyPredecessor(Proxy, AST):
             parent_pred = self.node.predecessor.expand()
             try:
                 pred = parent_pred.get_key(self.identifier)
-            except errors.NoMatching:
+            except KeyError:
                 raise errors.NoPredecessor
             return pred.expand()
         raise errors.NoPredecessor
@@ -1003,7 +1009,7 @@ class UseMyPredecessorStandin(Proxy, AST):
         try:
             return self.expand().get_key(key)
         except errors.NoPredecessor:
-            raise errors.NoMatching("No such key '%s'" % key)
+            raise KeyError(key)
 
     def expand_once(self):
         return self.node.predecessor.expand()
@@ -1028,7 +1034,11 @@ class Subscription(Proxy, AST):
             e.parent = self
 
     def expand_once(self):
-        return self.primary.expand().get_key(self.expression_list[0].resolve()).expand()
+        key = self.expression_list[0].resolve()
+        try:
+            return self.primary.expand().get_key(key).expand()
+        except KeyError:
+            raise errors.NoMatching("Could not find '%s'" % key, anchor=self.anchor)
 
 class SimpleSlicing(Streamish, AST):
 
@@ -1264,7 +1274,7 @@ class YayDict(Dictish, AST):
     def update(self, k, v):
         try:
             predecessor = self.get_key(k)
-        except errors.NoMatching:
+        except KeyError:
             predecessor = LazyPredecessor(self, k)
 
         v.parent = self
@@ -1309,7 +1319,7 @@ class YayDict(Dictish, AST):
             return self.predecessor.expand().get_key(key)
         except errors.NoPredecessor:
             pass
-        raise errors.NoMatching("Key '%s' not found" % key)
+        raise KeyError("Key '%s' not found" % key)
 
 
 class YayExtend(Streamish, AST):
@@ -1534,10 +1544,10 @@ class Include(Proxy, AST):
             try:
                 return self.predecessor.get_key(key)
             except errors.NoPredecessor:
-                raise errors.NoMatching("No such key '%s'" % key)
+                raise KeyError("No such key '%s'" % key)
 
         if key in self.detector:
-            raise errors.NoMatching("'%s' not found" % key)
+            raise KeyError("'%s' not found" % key)
         try:
             self.detector.append(key)
             return self.expand().get_key(key)
@@ -2000,7 +2010,7 @@ class PythonDict(Dictish, AST):
         except errors.NoPredecessor:
             pass
 
-        raise errors.NoMatching("No key '%s'" % key)
+        raise KeyError("No key '%s'" % key)
 
     def keys(self, anchor=None):
         seen = set()

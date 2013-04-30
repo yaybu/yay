@@ -17,6 +17,7 @@ from ply import yacc
 
 from lexer import Lexer
 from . import ast
+from .errors import Anchor
 
 import warnings
 
@@ -44,14 +45,6 @@ expressions = {
     }
 
 
-class Anchor(object):
-    def __init__(self, source, lineno=0, linespan=0, lexpos=0, lexspan=0):
-        self.source = source
-        self.lineno = lineno
-        self.linespan = linespan
-        self.lexpos = lexpos
-        self.lexspan = lexspan
-
 class ParseError(Exception):
 
     def __init__(self, token, lineno, error=None):
@@ -77,7 +70,7 @@ class Parser(object):
         self.errors = 0
         self.source = source
         rv = self.parser.parse(value,
-                                 lexer=self.lexer(),
+                                 lexer=self.lexer(source=source),
                                  tracking=tracking,
                                  debug=debug)
         if self.errors > 0:

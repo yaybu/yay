@@ -31,6 +31,15 @@ def get_exception_context():
     return "While:\n" + "\n".join(context)
 
 
+class Anchor(object):
+    def __init__(self, source="<unknown>", lineno=0, linespan=0, lexpos=0, lexspan=0):
+        self.source = source
+        self.lineno = lineno
+        self.linespan = linespan
+        self.lexpos = lexpos
+        self.lexspan = lexspan
+
+
 class Error(Exception):
 
     def get_string(self):
@@ -62,12 +71,17 @@ class LanguageError(Error):
     def __str__(self):
         error = self.description
         if self.anchor:
-            error += "\nFile %s, line %s, column %s" % ("<unknown>", self.anchor.lineno, self.anchor.lexpos)
+            error += "\nFile %s, line %s, column %s" % (self.anchor.source, self.anchor.lineno, self.anchor.lexpos)
         #if self.snippet:
         #    error += "\n%s" % self.snippet
         return error
+    get_string = __str__
+
 
 class LexerError(LanguageError):
+    pass
+
+class WhitespaceError(LexerError):
     pass
 
 class ParseError(LanguageError):

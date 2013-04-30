@@ -28,11 +28,15 @@
 import os
 from ply import lex
 
+from yay.errors import WhitespaceError, Anchor
+
+
 class Lexer(object):
 
-    def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0):
+    def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0, source="<unknown>"):
         self.lineno = 0
         self.lexpos = 0
+        self.source = source
         self.lexer = lex.lex(module=self, debug=debug, optimize=optimize,
                              lextab=lextab, reflags=reflags,
                              outputdir=os.path.dirname(__file__))
@@ -421,7 +425,7 @@ class Lexer(object):
                     try:
                         i = levels.index(depth)
                     except ValueError:
-                        raise IndentationError("inconsistent indentation")
+                        raise WhitespaceError("inconsistent indentation", anchor=Anchor(source=self.source, lineno=token.lineno))
                     for _ in range(i+1, len(levels)):
                         if self.lexer.lexstate == 'BLOCK':
                             yield self.NEWLINE(token.lineno)

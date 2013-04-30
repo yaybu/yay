@@ -30,7 +30,7 @@ class Config(ast.Root):
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri
-        return self.load(self.openers.open(uri)), uri
+        return self.load(self.openers.open(uri), uri)
 
     def load(self, stream, name="<Unknown>", secret=False):
         __context__ = "Loading stream %s. secret=%s." % (name, secret)
