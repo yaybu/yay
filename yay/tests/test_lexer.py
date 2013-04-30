@@ -196,12 +196,10 @@ class TestLexer(unittest2.TestCase):
               # foo
               - e
             """), [
-                   t('COMMENT', '# example'),  newline,
                    value('a'), colon, value('b'), newline,
                    value('c'), colon, newline,
                    indent,
                    hyphen, value('d'), newline,
-                   t('COMMENT', '# foo'), newline,
                    hyphen, value('e'), newline,
                    dedent,
             ])
