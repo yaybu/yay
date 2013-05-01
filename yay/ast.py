@@ -567,8 +567,11 @@ class Pythonic(object):
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            return PythonicWrapper(SliceyThing(self, key))
-        return PythonicWrapper(Subscription(self, YayScalar(key)))
+            ref = SliceyThing(self, key)
+        else:
+            ref = Subscription(self, YayScalar(key))
+        ref.anchor = None
+        return PythonicWrapper(ref)
 
     def __iter__(self):
         for val in self.get_iterable():
