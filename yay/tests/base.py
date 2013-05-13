@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
+import unittest2
 from yay import parser, ast, config
 from yay.openers.base import MemOpener
 import StringIO
@@ -51,7 +51,7 @@ def resolve(value, root=MockRoot, **kwargs):
     return r.resolve()
 
 
-class TestCase(unittest.TestCase):
+class TestCase(unittest2.TestCase):
 
     def setUp(self):
         self.addCleanup(MemOpener.reset)

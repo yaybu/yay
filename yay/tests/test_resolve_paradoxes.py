@@ -1,9 +1,9 @@
-import unittest
+import unittest2
 from .base import parse, resolve, TestCase
 from yay import errors
 
 
-class TestResolveParadoxes(unittest.TestCase):
+class TestResolveParadoxes(TestCase):
 
     """
     Because of the lazily evaluated nature of yay there are various scenarios

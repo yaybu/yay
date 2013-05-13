@@ -17,7 +17,7 @@ from yay.ast import And, Literal
 from yay.tests.test_ast_common import DynamicLiteral
 
 
-class TestAndSimplification(unittest.TestCase):
+class TestAndSimplification(unittest2.TestCase):
 
     def test_both_dynamic(self):
         n = And(DynamicLiteral('lhs'), DynamicLiteral('rhs'))
@@ -64,7 +64,7 @@ class TestAndSimplification(unittest.TestCase):
         self.assertEqual(res.literal, False)
 
 
-class TestAndResolve(unittest.TestCase):
+class TestAndResolve(unittest2.TestCase):
 
     def test_if_true_true(self):
         n = And(Literal(True), Literal(True))

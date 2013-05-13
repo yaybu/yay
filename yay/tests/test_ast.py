@@ -1,9 +1,9 @@
-import unittest
+import unittest2
 from yay.ast import *
 from mock import Mock
 
 
-class TestAST(unittest.TestCase):
+class TestAST(unittest2.TestCase):
 
     def test_dynamic(self):
         self.assertEqual(AST().dynamic(), False)
@@ -59,7 +59,7 @@ class TestAST(unittest.TestCase):
         e2.value = "goodbye"
         self.assertNotEqual(e1, e2)
 
-class TestRoot(unittest.TestCase):
+class TestRoot(unittest2.TestCase):
 
     def test_get_root(self):
         root = Root(Mock())
@@ -82,7 +82,7 @@ class TestRoot(unittest.TestCase):
         root.resolve()
         inner.resolve.assert_called_with()
 
-class TestIdentifier(unittest.TestCase):
+class TestIdentifier(unittest2.TestCase):
 
     def test_resolve(self):
         identifier = Identifier("global_var")
@@ -90,27 +90,27 @@ class TestIdentifier(unittest.TestCase):
         identifier.resolve()
         identifier.parent.get_context.assert_called_with("global_var")
 
-class TestLiteral(unittest.TestCase):
+class TestLiteral(unittest2.TestCase):
     def test_resolve(self):
         self.assertEqual(Literal("hello").resolve(), "hello")
 
-class TestPower(unittest.TestCase):
+class TestPower(unittest2.TestCase):
     def test_resolve(self):
         self.assertEqual(Power(Literal(2), Literal(2)).resolve(), 4)
 
-class TestUnary(unittest.TestCase):
+class TestUnary(unittest2.TestCase):
     def test_resolve(self):
         self.assertEqual(UnaryMinus(Literal(2)).resolve(), -2)
 
-class TestInvert(unittest.TestCase):
+class TestInvert(unittest2.TestCase):
     def test_resolve(self):
         self.assertEqual(Invert(Literal(2)).resolve(), ~2)
 
-class TestNot(unittest.TestCase):
+class TestNot(unittest2.TestCase):
     def test_resolve(self):
         self.assertEqual(Not(Literal(False)).resolve(), True)
 
-class TestConditionalExpression(unittest.TestCase):
+class TestConditionalExpression(unittest2.TestCase):
 
     def test_resolve_if(self):
         self.assertEqual(
@@ -124,12 +124,12 @@ class TestConditionalExpression(unittest.TestCase):
             "ELSE"
             )
 
-class TestYayList(unittest.TestCase):
+class TestYayList(unittest2.TestCase):
     def test_resolve(self):
         y = YayList(Literal(1), Literal(2), Literal(3))
         self.assertEqual(y.resolve(), [1,2,3])
 
-class TestYayDict(unittest.TestCase):
+class TestYayDict(unittest2.TestCase):
     def test_resolve(self):
         y = YayDict([("a", Literal(1))])
         y.anchor = Mock()
@@ -143,7 +143,7 @@ class TestYayDict(unittest.TestCase):
         #FIXME
         pass
 
-class TestYayExtend(unittest.TestCase):
+class TestYayExtend(unittest2.TestCase):
     def test_resolve(self):
         y = YayExtend(YayList(Literal(1)))
         y.anchor = None
@@ -151,7 +151,7 @@ class TestYayExtend(unittest.TestCase):
         y.parent = Mock()
         self.assertEqual(y.resolve(), [2, 1])
 
-class TestFor(unittest.TestCase):
+class TestFor(unittest2.TestCase):
     def test_resolve(self):
         f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")))
         f.parent = Mock()
@@ -164,7 +164,7 @@ class TestFor(unittest.TestCase):
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a'])
 
-class TestContext(unittest.TestCase):
+class TestContext(unittest2.TestCase):
 
     def test_get_context_hit(self):
         c = Context(Mock(), {"x": Mock()})
