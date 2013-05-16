@@ -373,14 +373,7 @@ class Streamish(object):
         return list(self.as_iterable(default, anchor))
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        try:
-            generator = self.get_iterable(anchor=anchor or self.anchor)
-        except errors.NoMatching:
-            if default != _DEFAULT:
-                for val in default:
-                    yield default
-            raise
-
+        generator = self.get_iterable(anchor=anchor or self.anchor)
         for val in generator:
             yield val.resolve()
 
@@ -485,10 +478,20 @@ class Proxy(object):
             raise
 
     def as_list(self, default=_DEFAULT, anchor=None):
-        return self.expand().as_list(default, anchor or self.anchor)
+        try:
+            return self.expand().as_list(default, anchor or self.anchor)
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        return self.expand().as_iterable(default, anchor or self.anchor)
+        try:
+            return self.expand().as_iterable(default, anchor or self.anchor)
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
 
     def as_dict(self, default=_DEFAULT, anchor=None):
         try:
@@ -1984,6 +1987,8 @@ class PythonClass(Proxy, AST):
 
 class PythonIterable(Streamish, AST):
 
+    anchor = None
+
     def __init__(self, iterable):
         super(PythonIterable, self).__init__()
         self.iterable = iterable
@@ -1996,6 +2001,8 @@ class PythonIterable(Streamish, AST):
 
 
 class PythonDict(Dictish, AST):
+
+    anchor = None
 
     def __init__(self, dict):
         self.dict = dict

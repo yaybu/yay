@@ -38,7 +38,7 @@ class Config(ast.Root):
         node = p.parse(stream.read(), source=name)
         node.parent = self
         mda = node
-        while mda.predecessor:
+        while mda.predecessor and not isinstance(mda.predecessor, ast.NoPredecessorStandin):
             mda = mda.predecessor
         mda.predecessor = self.node
         self.node = node
