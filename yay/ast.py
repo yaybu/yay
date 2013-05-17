@@ -1425,7 +1425,7 @@ class YayMultilineScalar(Scalarish, AST):
         scalar's content. However, any trailing empty lines are excluded
         from the scalar's content.
         """
-        return re.sub("[\n]+", "\n", value)
+        return re.sub("[\n]+$", "\n", value)
 
     @staticmethod
     def chomp_keep(value):
@@ -1447,7 +1447,7 @@ class YayMultilineScalar(Scalarish, AST):
         excluded from the scalar's content.
         """
 
-        return value.rstrip()
+        return value.rstrip("\n")
 
     def append(self, value):
         self.__value = self.__value + value
