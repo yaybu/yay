@@ -1613,7 +1613,6 @@ class Set(Proxy, AST):
     def expand_once(self):
         return self.predecessor.expand()
 
-
 class If(Proxy, AST):
 
     """
@@ -1725,7 +1724,12 @@ class Case(AST):
         self.node = node
         node.parent = self
 
-class Create(Proxy, AST):
+class Prototype(Proxy, AST):
+    def __init__(self, target, node):
+        self.target = target
+        self.node = node
+
+class New(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
         self.node = node

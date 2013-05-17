@@ -855,11 +855,12 @@ class Parser(object):
         '''
         directive : include_directive
                   | search_directive
+                  | new_directive
+                  | prototype_directive
                   | for_directive
                   | set_directive
                   | if_directive
                   | select_directive
-                  | create_directive
                   | macro_directive
                   | call_directive
                   | err_else
@@ -899,13 +900,6 @@ class Parser(object):
         search_directive : SEARCH expression_list NEWLINE
         '''
         p[0] = ast.Search(p[2])
-        self.anchor(p, 1)
-
-    def p_create_directive(self, p):
-        '''
-        create_directive : CREATE expression_list ":" NEWLINE INDENT stanza DEDENT
-        '''
-        p[0] = ast.Create(p[2], p[6])
         self.anchor(p, 1)
 
     def p_macro_directive(self, p):
@@ -983,6 +977,20 @@ class Parser(object):
         elif : ELIF expression_list ":" NEWLINE INDENT stanza DEDENT
         '''
         p[0] = ast.If(p[2], p[6])
+        self.anchor(p, 1)
+
+    def p_new_directive(self, p):
+        '''
+        new_directive : NEW expression_list ":" NEWLINE INDENT stanza DEDENT
+        '''
+        p[0] = ast.New(p[2], p[6])
+        self.anchor(p, 1)
+
+    def p_prototype_directive(self, p):
+        '''
+        prototype_directive : PROTOTYPE expression_list ":" NEWLINE INDENT stanza DEDENT
+        '''
+        p[0] = ast.Prototype(p[2], p[6])
         self.anchor(p, 1)
 
     def p_select_directive(self, p):

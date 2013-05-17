@@ -672,15 +672,26 @@ class TestParser(unittest2.TestCase):
                        expression=Identifier('x'))))
 
 
-    def test_create(self):
+    def test_new(self):
         res = parse("""
-        create foo
+        new foo:
             x: y
         """)
-        self.assertEqual(res, Create(
+        self.assertEqual(res, New(
             Identifier('foo'),
             YayDict([('x', YayScalar('y'))]),
             ))
+
+    def test_prototype(self):
+        res = parse("""
+        prototype foo:
+            x: y
+        """)
+        self.assertEqual(res, Prototype(
+            Identifier('foo'),
+            YayDict([('x', YayScalar('y'))]),
+            ))
+
 
     def test_if(self):
         res = parse("""
@@ -755,16 +766,6 @@ class TestParser(unittest2.TestCase):
                                      Case("bar", YayList(YayScalar("a"))),
                                      Case("baz", YayList(YayScalar("b"))),
                                      )))
-
-    def test_create(self):
-        res = parse("""
-        create "Compute":
-            foo: bar
-        """)
-        self.assertEqual(res, Create(Literal("Compute"),
-                                     YayDict([
-                                         ('foo', YayScalar('bar')),
-                                         ])))
 
     def test_multiline_fold_simple(self):
         res = parse("""

@@ -94,7 +94,6 @@ class Lexer(object):
         'SELECT',
         'AND',
         'CALL',
-        'CREATE',
         'ELSE',
         'IF',
         'IS',
@@ -205,7 +204,6 @@ class Lexer(object):
     reserved = {
         'and': 'AND',
         'call': 'CALL',
-        'create': 'CREATE',
         'else': 'ELSE',
         'if': 'IF',
         'elif': 'ELIF',

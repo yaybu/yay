@@ -1195,7 +1195,7 @@ class TestPythonClass(unittest2.TestCase):
     def test_simple_class(self):
         res = resolve("""
             foo:
-              create "yay.tests.test_resolve:TestPythonClassMock":
+              new yay.tests.test_resolve.TestPythonClassMock:
                   foo: bar
             """)
         self.assertEqual(res['foo']['hello'], 'world')
