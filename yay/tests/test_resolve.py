@@ -1191,14 +1191,58 @@ class TestPythonClassMock(ast.PythonClass):
         self.metadata['hello'] = 'world'
 
 
-class TestPythonClass(unittest2.TestCase):
+class TestPythonClass(TestCase):
+
+    builtins = {
+        "TestPythonClassMock": ast.PythonClassFactory(TestPythonClassMock),
+        }
+
     def test_simple_class(self):
-        res = resolve("""
+        res = self._resolve("""
             foo:
-              new yay.tests.test_resolve.TestPythonClassMock:
+              new TestPythonClassMock:
                   foo: bar
             """)
         self.assertEqual(res['foo']['hello'], 'world')
+
+    def test_alias(self):
+        res = self._resolve("""
+            set MyAlias = TestPythonClassMock
+            foo:
+              new MyAlias:
+                  foo: bar
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
+
+
+class TestNew(TestCase):
+
+    def test_new_on_scalar(self):
+        self.assertRaises(errors.TypeError, self._resolve, """
+            Bar: hello
+            foo:
+              new Bar:
+                  foo: bar
+            """)
+
+    def test_new_on_list(self):
+        self.assertRaises(errors.TypeError, self._resolve, """
+            Bar:
+              - hello
+            foo:
+              new Bar:
+                  foo: bar
+            """)
+
+    def test_new_on_identifier(self):
+        self.assertRaises(errors.TypeError, self._resolve, """
+            Bar: {{ baz }}
+            baz: hello
+
+            foo:
+              new Bar:
+                  foo: bar
+            """)
 
 
 class TestPythonCall(unittest2.TestCase):

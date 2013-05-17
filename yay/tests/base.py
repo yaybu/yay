@@ -53,6 +53,8 @@ def resolve(value, root=MockRoot, **kwargs):
 
 class TestCase(unittest2.TestCase):
 
+    builtins = None
+
     def setUp(self):
         self.addCleanup(MemOpener.reset)
 
@@ -66,6 +68,7 @@ class TestCase(unittest2.TestCase):
                 self.add({"yay": {"searchpath": searchpath or []}})
                 self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
         c = Config()
+        c.builtins = self.builtins or {}
         c.load(StringIO.StringIO(source))
         return c
 

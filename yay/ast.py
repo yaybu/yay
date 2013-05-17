@@ -75,6 +75,9 @@ class AST(object):
     def get_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
 
+    def construct(self, inner):
+        raise errors.TypeError("Expected constructable", anchor=self.anchor)
+
     def as_digraph(self, visited=None):
         visited = visited or []
         if id(self) in visited:
@@ -510,6 +513,9 @@ class Proxy(object):
     def get_key(self, key):
         return self.expand().get_key(key)
 
+    def construct(self, inner):
+        return self.expand().construct(inner)
+
     def expand_once(self):
         raise NotImplementedError("%r does not implement expand or expand_once - but proxy types must" % type(self))
 
@@ -525,14 +531,13 @@ class Tripwire(Proxy, AST):
         self.expected = expected
         self.expanding = False
 
-    def get_callable(self, key):
+    def get_context(self, key):
         p = self.node
-        while p:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
+        while p and not isinstance(p, NoPredecessorStandin):
+            try:
+                return p.get_context(key)
+            except errors.NoMatching:
+                pass
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
@@ -614,18 +619,14 @@ class Root(Pythonic, Proxy, AST):
     def root(self):
         return self
 
-    def get_callable(self, key):
-        p = self.node
-        while p:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
-            p = p.predecessor
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
     def get_context(self, key):
+        p = self.node
+        while p and not isinstance(p, NoPredecessorStandin):
+            try:
+                return p.get_context(key)
+            except errors.NoMatching:
+                pass
+            p = p.predecessor
         try:
             return self.node.get_key(key)
         except KeyError:
@@ -651,15 +652,20 @@ class Identifier(Proxy, AST):
         while node != root:
             try:
                 return node.get_context(self.identifier).expand()
+            except errors.NoPredecessor:
+                pass
             except errors.NoMatching:
                 pass
             node = node.parent
-
         assert node == root
         try:
             return node.get_context(self.identifier).expand()
         except errors.NoMatching:
-            raise errors.NoMatching("Could not find key '%s'" % self.identifier, anchor=self.anchor)
+            pass
+        except errors.NoPredecessor:
+            pass
+
+        raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
@@ -1126,6 +1132,7 @@ class Call(Proxy, AST):
 
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
+        primary.parent = self
         self.args = args
         if self.args:
             for arg in self.args:
@@ -1144,7 +1151,7 @@ class Call(Proxy, AST):
                 k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
 
         try:
-            macro = self.root.get_callable(self.primary.identifier)
+            macro = self.primary.expand()
             call = CallDirective(self.primary, None)
             node = Context(call, kwargs)
         except errors.NoMatching:
@@ -1464,17 +1471,6 @@ class Stanzas(Proxy, AST):
         stanza.parent = self
         self.value = stanza
 
-    def get_callable(self, key):
-        p = self.value
-        while p and p != self.predecessor:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
-            p = p.predecessor
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
     def get_context(self, key):
         p = self.value
         while p and p != self.predecessor:
@@ -1499,17 +1495,6 @@ class Directives(Proxy, AST):
         directive.predecessor = self.value or NoPredecessorStandin()
         self.value = directive
 
-    def get_callable(self, key):
-        p = self.value
-        while p and p != self.predecessor:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
-            p = p.predecessor
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
     def get_context(self, key):
         p = self.value
         while p and p != self.predecessor:
@@ -1531,22 +1516,21 @@ class Include(Proxy, AST):
         self.detector = []
         self.expanding = False
 
-    def get_callable(self, key):
+    def get_context(self, key):
         try:
             expanded = self.expand()
         except errors.NoPredecessor:
-            raise errors.NoMatching("Could not find a macro called '%s'" % key)
+            raise errors.NoMatching("Could not find '%s'" % key)
 
         p = expanded
-        while p:
-            if hasattr(p, "get_callable"):
-                try:
-                    return p.get_callable(key)
-                except errors.NoMatching:
-                    pass
+        while p and not isinstance(p, NoPredecessorStandin):
+            try:
+                return p.get_context(key)
+            except errors.NoMatching:
+                pass
             p = p.predecessor
 
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+        raise errors.NoMatching("Could not find '%s'" % key)
 
     def get_key(self, key):
         if self.expanding:
@@ -1729,59 +1713,53 @@ class Prototype(Proxy, AST):
         self.target = target
         self.node = node
 
+
 class New(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
+        target.parent = self
         self.node = node
 
     @cached
     def expand(self):
-        modname, classname = self.target.as_string().split(":", 1)
-        try:
-            mod = __import__(modname, globals(), locals(), ['tofu'])
-        except ImportError:
-            raise errors.NoMatching("Could not import '%s'" % modname)
-
-        if not hasattr(mod, classname):
-            raise errors.NoMatching("Module '%s' has no class '%s'" % (modname, classname))
-
-        klass = getattr(mod, classname)
-
-        if not issubclass(klass, PythonClass):
-            raise errors.TypeError("'%s' is not usable from Yay" % classname)
-
-        node = klass(self.node.clone())
-        node.parent = self
-        node.anchor = self.anchor
-        node.predecessor = self.predecessor
-
-        return True, node
+       node = self.target.construct(self.node.clone())
+       node.parent = self
+       node.anchor = self.anchor
+       node.predecessor = self.predecessor
+       return True, node
 
 
-class Macro(Proxy, AST):
-    def __init__(self, target, node):
+class Ephemeral(Proxy, AST):
+
+    def __init__(self, target, inner):
         self.target = target
-        self.node = node
+        self.inner = inner
 
-    def get_callable(self, key):
+    def get_context(self, key):
         if key == self.target.identifier:
-            return self
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+            return self.inner
+        raise errors.NoMatching("Could not find '%s'" % key)
 
     def expand_once(self):
         return self.predecessor.expand()
 
-class YayClass(Proxy, AST):
-    def __init__(self, target, node):
-        self.target = target
+
+class Macro(AST):
+
+    def __init__(self, node):
         self.node = node
 
-    def get_callable(self, key):
-        if key == self.target.identifier:
-            return self
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
+    def call(self, params):
+        pass
 
-    def construct(self, params):
+
+class YayClass(AST):
+    def __init__(self, target, node):
+        self.target = target
+        target.parent = self
+        self.node = node
+
+    def construct(self, inner):
         base = self.node.clone()
         # context = Context(base, {"self": base})
 
@@ -1793,16 +1771,15 @@ class YayClass(Proxy, AST):
 
         return context
 
-    def expand_once(self):
-        return self.predecessor.expand()
 
 class CallDirective(Proxy, AST):
     def __init__(self, target, node):
         self.target = target
+        target.parent = self
         self.node = node
 
     def expand_once(self):
-        macro = self.root.get_callable(self.target.identifier)
+        macro = self.target.expand()
         clone = macro.node.clone()
         if not self.node:
             clone.parent = self
@@ -1956,6 +1933,18 @@ class Comment(Proxy, AST):
         return self.predecessor.expand()
 
 
+class PythonClassFactory(AST):
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    def construct(self, inner):
+        if not issubclass(self.inner, PythonClass):
+            raise errors.TypeError("'%s' is not usable from Yay" % classname)
+
+        return self.inner(inner)
+
+ 
 class PythonClass(Proxy, AST):
 
     """

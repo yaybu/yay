@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from yay.openers import Openers
-from yay.errors import ProgrammingError
+from yay import errors
 from yay import parser
 from yay import ast
 
@@ -22,6 +22,7 @@ class Config(ast.Root):
 
     def __init__(self, special_term='yay', searchpath=None, config=None):
         self.special_term = special_term
+        self.builtins = {}
         self.node = ast.NoPredecessorStandin()
         self.setup_openers(searchpath)
 
@@ -45,11 +46,19 @@ class Config(ast.Root):
 
     def add(self, data):
         if not isinstance(data, dict):
-            raise ProgrammingError("You must pass a dictionary to Config.add")
+            raise errors.ProgrammingError("You must pass a dictionary to Config.add")
         bound = ast.bind(data)
         bound.parent = self
         bound.predecessor = self.node
         self.node = bound
+
+    def get_context(self, key):
+        try:
+            return super(Config, self).get_context(key)
+        except errors.NoMatching:
+            if not key in self.builtins:
+                raise
+            return self.builtins[key]
 
     def clear(self):
         self.node = None

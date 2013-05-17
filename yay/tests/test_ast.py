@@ -65,11 +65,6 @@ class TestRoot(unittest2.TestCase):
         root = Root(Mock())
         self.assertEqual(root.root, root)
 
-    def test_get_context(self):
-        root = Root(Mock())
-        root.get_context('hello')
-        root.node.get_key.assert_called_with('hello')
-
     def test_get_context_no_matching(self):
         # FIXME
         pass
