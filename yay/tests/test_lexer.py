@@ -315,6 +315,15 @@ class TestLexer(unittest2.TestCase):
             newline,
             ])
 
+    def test_new(self):
+        result = self._lex("""
+            new Compute:
+        """)
+        self.compare(result, [
+            t('NEW', 'new'), identifier('Compute'), t(':', ':'),
+            newline,
+            ])
+
     def test_if(self):
         result = self._lex("""
             if selector == "hey":

@@ -119,6 +119,8 @@ class Lexer(object):
         'FLOOR_DIVIDE',
         'WS',
         'NEWLINE',
+        'NEW',
+        'PROTOTYPE',
         'COLON',      # not to be confused with ":" this is yamlish only
     )
 
@@ -220,6 +222,8 @@ class Lexer(object):
         'extend': 'EXTEND',
         'configure': 'CONFIGURE',
         'select': 'SELECT',
+        'new': 'NEW',
+        'prototype': 'PROTOTYPE',
     }
 
     t_INITIAL_EXTEND = "extend"

@@ -11,7 +11,9 @@ A particularly significant restriction is that keys may not contain
 whitespace. keys in a configuration language are expected to be simple bare
 terms. This also helpfully keeps the magic smoke firmly inside our parser.
 
-It is important to understand that for any line of input it is imperative "pythonish" or declarative "yamlish". It actually works well and we find it very easy to read, for example::
+It is important to understand that for any line of input it is imperative
+"pythonish" or declarative "yamlish". It actually works well and we find it
+very easy to read, for example::
 
     a: b
     if a == 'b':
