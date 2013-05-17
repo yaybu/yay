@@ -303,44 +303,20 @@ Classes can be constructed on-the-fly::
 
     parts:
         web:
-            create "Compute":
+            new Compute:
                 foo: bar
                 % for x in range(4)
                     baz: x
 
 Classes may have special side-effects, or provide additional data, at runtime.
 
-Each name for a class will be looked up in a registry for a concrete implementation that must provide
-the following methods::
-
-    class Example:
-
-        def __init__(self, contents):
-            self.contents = contents
-
-        def resolve(self):
-            """ Returns a python dictionary, if possible, that is a completely resolved structure of scalars, lists and dictionaries """
-            # this method is responsible for ensuring the contents are completely resolved
-
-        def traversible(self):
-
-            Return a traversible object based on self (which could be self or could be a mapping or could be something else that inherits from Node)
-
-            To be traversible it must be able to execute the get method successfully for all direct children
-
-            For example a for loop has to unroll itself so it is able to return its indexed members
-
-
-        def get(self, key/index):
-
-            """ Returns a node object that, when resolved, will contain the value of
-            the specified key. Any side-effects required to obtain the value should
-            occur on resolution of the returned node, not on the call to get(). """
-
-
+Each name for a class will be looked up in a registry for a concrete implementation that is
+implemented in python.
 
 Macros
 ~~~~~~
+
+Macros provided parameterised blocks that can be reused.
 
 you can define a macro with::
 
@@ -355,11 +331,12 @@ You can then call it later::
             call mymacro:
                 thing: {{q}}
 
-
 Prototypes
 ~~~~~~~~~~
 
-Prototypes contain a default mapping which you can then override.
+Prototypes contain a default mapping which you can then override. They
+are different from macros in that a prototype is not parameterised, but
+can instead be extended.
 
 In their final form, they behave exactly like mappings::
 
@@ -383,7 +360,6 @@ In their final form, they behave exactly like mappings::
     some_key:
         new DjangoSite:
             sitename: www.example.com
-
 
 Here
 ~~~~
