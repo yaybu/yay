@@ -691,7 +691,6 @@ class TestParser(unittest2.TestCase):
             YayDict([('x', YayScalar('y'))]),
             ))
         
-    @unittest2.expectedFailure        
     def test_new_as(self):
         res = parse("""
             new Provisioner as foo:

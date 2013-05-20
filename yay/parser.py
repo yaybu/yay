@@ -980,6 +980,15 @@ class Parser(object):
         p[0] = ast.If(p[2], p[6])
         self.anchor(p, 1)
 
+    def p_new_as_directive(self, p):
+        '''
+        yaydict : NEW expression_list AS identifier ":" NEWLINE INDENT stanza DEDENT
+        '''
+        new = ast.New(p[2], p[8])
+        p[0] = ast.YayDict([(p[4].identifier, new)])
+        self.anchor(p, 1)
+        new.anchor = p[0].anchor
+
     def p_new_directive(self, p):
         '''
         new_directive : NEW expression_list ":" NEWLINE INDENT stanza DEDENT
