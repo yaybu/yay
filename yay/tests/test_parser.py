@@ -13,7 +13,16 @@ class TestParser(unittest2.TestCase):
         include 'foo.yay'
         """)
         self.assertEqual(res, Include(Literal('foo.yay')))
-
+        
+    def test_include_levels(self):
+        res = parse("""
+        a:
+            include 'foo.yay'
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', Include(Literal('foo.yay')))
+            ]))
+        
     def test_comment(self):
         res = parse("""
         # i am a little teapot
