@@ -662,3 +662,24 @@ class TestLexer(unittest2.TestCase):
         self.compare(self._lex(r"""
         a: b: c
         """), [value('a'), colon, value('b'), colon, value('c'), newline])
+        
+    def test_code_in_list(self):
+        self.compare(self._lex(r"""
+        a:
+          - a
+          - b
+          for i in j:
+            - {{i}}
+          - c
+        """), [value('a'), colon, newline,
+               indent,
+               hyphen, value('a'), newline,
+               hyphen, value('b'), newline,
+               t('FOR', 'for'), identifier('i'), t('IN', 'in'), identifier('j'), t(':', ':'), newline,
+               indent,
+               hyphen, ldbrace, identifier('i'), rdbrace, newline,
+               dedent,
+               hyphen, value('c'), newline,
+               dedent
+               ])
+               
