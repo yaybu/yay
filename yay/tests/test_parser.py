@@ -868,5 +868,31 @@ class TestParser(unittest2.TestCase):
             ('x', YayScalar('y')),
             ]))
 
-
+    def test_code_in_list(self):
+        res = parse(r"""
+        a:
+          - a
+          - b
+          for i in j:
+            - {{i}}
+          - c
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', Stanzas(
+                YayList(
+                    YayScalar('a'),
+                    YayScalar('b'),
+                ),
+                For(Identifier('i'),
+                    Identifier('j'),
+                    YayList(
+                        Template(Identifier('i'))
+                    )
+                ),
+                YayList(
+                    YayScalar('c'),
+                    )
+                )
+             )
+            ]))
 
