@@ -339,6 +339,14 @@ class TestLexer(unittest2.TestCase):
             newline,
             ])
 
+    def test_new_as(self):
+        result = self._lex("""
+            new Provisioner as foo:
+        """)
+        self.compare(result, [
+            t('NEW', 'new'), identifier('Provisioner'), t('AS', 'as'), identifier('foo'), t(':', ':'), newline,
+            ])
+            
     def test_if(self):
         result = self._lex("""
             if selector == "hey":

@@ -690,6 +690,18 @@ class TestParser(unittest2.TestCase):
             Identifier('foo'),
             YayDict([('x', YayScalar('y'))]),
             ))
+        
+    @unittest2.expectedFailure        
+    def test_new_as(self):
+        res = parse("""
+            new Provisioner as foo:
+                x: y
+        """)
+        self.assertEqual(res, YayDict([
+            ('foo', New(
+                Identifier('Provisioner'),
+                YayDict([('x', YayScalar('y'))]),
+                ))]))
 
     def test_prototype(self):
         res = parse("""

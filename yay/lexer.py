@@ -73,6 +73,7 @@ class Lexer(object):
     ]
 
     tokens = (
+        'AS',
         'VALUE',      # represents either a key or value in yamlish
         'MULTILINE',  # the start of a multiline block
         'MULTILINE_END', # the end of a multiline block
@@ -221,6 +222,7 @@ class Lexer(object):
         'configure': 'CONFIGURE',
         'select': 'SELECT',
         'new': 'NEW',
+        'as': 'AS',
         'prototype': 'PROTOTYPE',
     }
 
