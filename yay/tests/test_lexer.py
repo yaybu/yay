@@ -314,6 +314,21 @@ class TestLexer(unittest2.TestCase):
             t('STRING', 'foo.yay'),
             newline,
             ])
+        
+    def test_include_levels(self):
+        result = self._lex("""
+        a:
+            include 'foo.yay'
+        """)
+        self.compare(result, [
+            value('a'), colon, newline,
+            indent,
+            t('INCLUDE', 'include'),
+            t('STRING', 'foo.yay'),
+            newline,
+            dedent,
+            ])
+            
 
     def test_new(self):
         result = self._lex("""
