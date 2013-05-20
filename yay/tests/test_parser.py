@@ -13,7 +13,7 @@ class TestParser(unittest2.TestCase):
         include 'foo.yay'
         """)
         self.assertEqual(res, Include(Literal('foo.yay')))
-        
+
     def test_include_levels(self):
         res = parse("""
         a:
@@ -22,7 +22,7 @@ class TestParser(unittest2.TestCase):
         self.assertEqual(res, YayDict([
             ('a', Include(Literal('foo.yay')))
             ]))
-        
+
     def test_comment(self):
         res = parse("""
         # i am a little teapot
@@ -690,7 +690,7 @@ class TestParser(unittest2.TestCase):
             Identifier('foo'),
             YayDict([('x', YayScalar('y'))]),
             ))
-        
+
     def test_new_as(self):
         res = parse("""
             new Provisioner as foo:
@@ -914,5 +914,33 @@ class TestParser(unittest2.TestCase):
                     )
                 )
              )
+            ]))
+
+    def test_for_in_list_in_for(self):
+        res = parse(r"""
+        a:
+          for x in y:
+            - a
+            for i in j:
+              - {{i}}
+            - c
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', For(Identifier('x'),
+                      Identifier('y'),
+                      Stanzas(
+                          YayList(
+                              YayScalar('a'),
+                          ),
+                          For(Identifier('i'),
+                              Identifier('j'),
+                              YayList(
+                                  Template(Identifier('i'))
+                              )
+                          ),
+                          YayList(
+                              YayScalar('c'),
+                          )
+                      )))
             ]))
 
