@@ -1452,7 +1452,7 @@ class TestExtend(unittest2.TestCase):
         self.assertEqual(res['somelist'], ['julian'])
 
 
-class TestInclude(unittest2.TestCase):
+class TestInclude(TestCase):
 
     def test_simple_include(self):
         res = resolve("""
@@ -1546,6 +1546,28 @@ class TestInclude(unittest2.TestCase):
             bar: two
             """)
         self.assertEqual(res['bar'], 'two')
+
+    def test_simple_nested_include(self):
+        self._add("mem://example.yay", """
+            foo: bar
+            """)
+        res = self._resolve("""
+            foo:
+                include "mem://example.yay"
+            """)
+        self.assertEqual(res['foo'], {"foo": "bar"})
+
+    def test_simple_nested_include_surrounded(self):
+        self._add("mem://example.yay", """
+            foo: bar
+            """)
+        res = self._resolve("""
+            foo:
+                bar: wibble
+                include "mem://example.yay"
+                baz: quux
+            """)
+        self.assertEqual(res['foo'], {"foo": "bar", "bar": "wibble", "baz": "quux"})
 
 
 class TestSelect(unittest2.TestCase):
