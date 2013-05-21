@@ -706,3 +706,26 @@ class TestLexer(unittest2.TestCase):
                dedent
                ])
                
+    def test_for_in_list_in_for(self):
+        self.compare(self._lex("""
+        a:
+          for x in y:
+            - a
+            for i in j:
+              - {{i}}
+            - c
+        """), [value('a'), colon, newline,
+               indent,
+               t('FOR', 'for'), identifier('x'), t('IN', 'in'), identifier('y'), t(':', ':'), newline,
+               indent,
+               hyphen, value('a'), newline,
+               t('FOR', 'for'), identifier('i'), t('IN', 'in'), identifier('j'), t(':', ':'), newline,
+               indent,
+               hyphen, ldbrace, identifier('i'), rdbrace, newline,
+               dedent,
+               hyphen, value('c'), newline,
+               dedent,
+               dedent,
+               ])
+        
+               
