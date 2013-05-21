@@ -523,6 +523,27 @@ class Proxy(object):
         return self.expand().resolve()
 
 
+class Subgraph(Proxy, AST):
+
+    def __init__(self, inner):
+        self.inner = inner
+        inner.parent = self
+
+    def get_context(self, key):
+        try:
+            return self.parent.get_key(key)
+        except KeyError:
+            pass
+
+        try:
+            return self.inner.get_context(key)
+        except errors.NoMatching:
+            raise errors.NoMoreContext("'%s' not found in root of subgraph" % key)
+
+    def expand(self):
+        return self.inner
+
+
 class Tripwire(Proxy, AST):
 
     def __init__(self, node, expression, expected):
@@ -656,8 +677,14 @@ class Identifier(Proxy, AST):
                 pass
             except errors.NoMatching:
                 pass
+            except errors.NoMoreContext:
+		# We are at the root of a Subgraph and shouldn't traverse
+		# further.
+                raise errors.NoMatching("Could not find '%s'" % self.identifier)
             node = node.parent
+
         assert node == root
+
         try:
             return node.get_context(self.identifier).expand()
         except errors.NoMatching:
@@ -1561,8 +1588,11 @@ class Include(Proxy, AST):
         expanded.parent = self.parent
 
         t = Tripwire(expanded, self.expr.resolve, expr)
-        t.anchor = self.anchor
-        return True, t
+        s = Subgraph(t)
+        s.parent = self.parent
+        s.anchor = t.anchor = self.anchor
+        
+        return True, s
 
 
 class Search(Proxy, AST):

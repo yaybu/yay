@@ -106,4 +106,7 @@ class ParadoxError(EvaluationError):
 class NoMatching(EvaluationError):
     pass
 
+class NoMoreContext(EvaluationError):
+    pass
+
 
