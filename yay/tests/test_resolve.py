@@ -1126,6 +1126,14 @@ class TestFor(unittest2.TestCase):
             """)
         self.assertEqual(res["wibble"], [0, 2, 3])
 
+    def test_adjacent_list_and_dict(self):
+        self.assertRaises(errors.TypeError, resolve, """
+            a: 10
+            for i in range(a):
+                - {{ i }}
+            """)
+
+
 class TestSlicing(unittest2.TestCase):
 
     def test_simple_slicing(self):

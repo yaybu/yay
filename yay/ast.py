@@ -398,6 +398,11 @@ class Streamish(object):
             self._buffer.append(self._iterator.next())
 
     def get_key(self, index):
+        try:
+            index = int(index)
+        except ValueError:
+            raise errors.TypeError("Expected an integer, '%s' is not an integer" % index, anchor=self.anchor)
+
         self._fill_to(index)
         return self._buffer[index]
 
