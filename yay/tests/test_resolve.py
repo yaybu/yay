@@ -248,6 +248,7 @@ class TestYayList(unittest2.TestCase):
               - 2
             """)
         self.assertEqual(res.foo.as_list(), [1, 2])
+        self.assertEqual(res.foo.get_type(), "streamish")
 
     def test_as_iterable(self):
         res = parse("""
@@ -283,6 +284,8 @@ class TestTemplate(unittest2.TestCase):
             log_location: /var/log/{{ sitename }}
             """)
         self.assertEqual(t.get_key("log_location").as_string(), "/var/log/example.com")
+        self.assertEqual(t.get_type(), "dictish")
+        self.assertEqual(t.get_key("log_location").get_type(), "scalarish")
 
 
 class TestIdentifier(unittest2.TestCase):
@@ -299,6 +302,7 @@ class TestIdentifier(unittest2.TestCase):
             bar: {{ foo }}
             """)
         self.assertEqual(t.get_key("bar").as_int(), 5)
+        self.assertEqual(t.get_key("bar").get_type(), "scalarish")
 
     def test_get_integer_type_error(self):
         t = parse("""

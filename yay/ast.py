@@ -81,6 +81,9 @@ class AST(object):
     def construct(self, inner):
         raise errors.TypeError("Expected constructable", anchor=self.anchor)
 
+    def get_type(self):
+        raise errors.TypeError("I don't know who I am, or what my destiny is", anchor=self.anchor)
+
     def as_digraph(self, visited=None):
         visited = visited or []
         if id(self) in visited:
@@ -354,6 +357,9 @@ class Scalarish(object):
             raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
         return resolved
 
+    def get_type(self):
+        return "scalarish"
+
 
 class Streamish(object):
     """
@@ -406,6 +412,9 @@ class Streamish(object):
         self._fill_to(index)
         return self._buffer[index]
 
+    def get_type(self):
+        return "streamish"
+
     def resolve_once(self):
         return [x.resolve() for x in self.get_iterable()]
 
@@ -418,6 +427,9 @@ class Dictish(object):
 
     def as_dict(self, default=_DEFAULT, anchor=None):
         return self.resolve()
+
+    def get_type(self):
+        return "dictish"
 
     def resolve_once(self):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
@@ -523,6 +535,9 @@ class Proxy(object):
 
     def construct(self, inner):
         return self.expand().construct(inner)
+
+    def get_type(self):
+        return self.expand().get_type()
 
     def expand_once(self):
         raise NotImplementedError("%r does not implement expand or expand_once - but proxy types must" % type(self))
@@ -1512,6 +1527,9 @@ class Stanzas(Proxy, AST):
                 pass
             p = p.predecessor
         raise errors.NoMatching("Could not find '%s'" % key)
+
+    def get_type(self):
+        return self.value.get_type()
 
     def expand(self):
         return self.value.expand()
