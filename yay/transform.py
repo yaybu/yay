@@ -43,6 +43,13 @@ def graph_to_py(opts, graph):
 
     return pprint.pformat(resolved)
 
+
+usage = """\
+usage: %prog [options] [filename]
+
+Where output is one of "dot", "yaml" or "py"\
+"""
+
 def main():
     converters = {
         "dot": graph_to_dot,
@@ -50,30 +57,32 @@ def main():
         "py": graph_to_py,
         }
 
-    p = optparse.OptionParser()
-    #p.add_option() to set up yaypath?
-    p.add_option('-p', '--phase', action="store", default="initial")
+    phases = ("initial", "normalized")
+    p = optparse.OptionParser(usage=usage)
+    p.add_option('-p', '--phase', action="store", default="initial", help="phase, one of %s" % ",".join(phases))
+    p.add_option('-f', '--format', action="store", default="yaml", help="output format, one of: %s. defaults to 'yaml'" % ", ".join(converters.keys()))
     opts, args = p.parse_args()
 
-    if len(args) != 2:
-        print >>sys.stderr, "Expected output type and path to a single yay file"
+    if len(args) == 0:
+        instream = sys.stdin
+    elif len(args) == 1:
+        if not os.path.exists(args[0]):
+            print >>sys.stderr, "Path '%s' does not exist" % args[0]
+            sys.exit(1)
+        instream = open(args[0])
+    else:
+        p.print_usage()
         sys.exit(1)
 
-    if not args[0] in converters:
+    if not opts.format in converters:
         print >>sys.stderr, "Output format must be one of: %r" % converters.keys()
         sys.exit(1)
 
-    phases = ("initial", "normalized")
     if not opts.phase in phases:
         print >>sys.stderr, "Phase must be one of: %r" % opts.phase
         sys.exit(1)
 
-    if not os.path.exists(args[1]):
-        print >>sys.stderr, "Path '%s' does not exist" % args[0]
-        sys.exit(1)
-
-    data = open(args[1]).read()
-
+    data = instream.read()
     p = parser.Parser()
 
     # Parse
@@ -84,5 +93,5 @@ def main():
         print >>sys.stderr, str(e)
         sys.exit(1)
 
-    print converters[args[0]](opts, graph)
+    print converters[opts.format](opts, graph)
 

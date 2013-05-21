@@ -35,7 +35,7 @@ setup(
         ),
     entry_points = {
         'console_scripts': [
-            'yay-dump = yay.transform:main',
+            'yay = yay.transform:main',
             ],
         },
 )
