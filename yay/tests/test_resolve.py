@@ -1638,6 +1638,16 @@ class TestSelect(unittest2.TestCase):
 
         self.assertEqual(res['quux'], 'b')
 
+    def test_integer_keys(self):
+        res = resolve("""
+            a: 10
+            b:
+                select a:
+                    10: bar
+                    20: quux
+            """)
+        self.assertEqual(res['b'], 'bar')
+
 
 class TestIf(unittest2.TestCase):
 

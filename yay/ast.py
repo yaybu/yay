@@ -1734,12 +1734,12 @@ class Select(Proxy, AST):
             return False, self.predecessor
 
         self.expanding = True
-        value = self.expr.resolve()
+        value = self.expr.as_string()
         self.expanding = False
 
         for case in self.cases.cases:
             if case.key == value:
-                t = Tripwire(case.node.expand(), self.expr.resolve, value)
+                t = Tripwire(case.node.expand(), self.expr.as_string, value)
                 t.anchor = self.anchor
                 return True, t
 
