@@ -38,7 +38,7 @@ def bare_parse(value):
     except ImportError:
         pass
     p = parser.Parser()
-    return p.parse(value)
+    return p.parse(value, debug=False)
 
 def parse(value, root=MockRoot, **kwargs):
     r = root(bare_parse(value))

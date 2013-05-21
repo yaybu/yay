@@ -859,7 +859,7 @@ class Parser(object):
 
     def p_err_else(self, p):
         '''
-        err_else : ELSE ":" NEWLINE INDENT stanza DEDENT
+        err_else : ELSE ":" NEWLINE INDENT stanzas DEDENT
         '''
         self.errors += 1
         warnings.warn("Unmatched else at line %d" % p.lineno(1), SyntaxWarning)
@@ -894,7 +894,7 @@ class Parser(object):
 
     def p_macro_directive(self, p):
         '''
-        macro_directive : MACRO target_list ":" NEWLINE INDENT stanza DEDENT
+        macro_directive : MACRO target_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.Ephemeral(p[2], ast.Macro(p[6]))
         self.anchor(p, 1)
@@ -902,15 +902,15 @@ class Parser(object):
 
     def p_call_directive(self, p):
         '''
-        call_directive : CALL target_list ":" NEWLINE INDENT stanza DEDENT
+        call_directive : CALL target_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.CallDirective(p[2], p[6])
         self.anchor(p, 1)
 
     def p_for_directive(self, p):
         '''
-        for_directive : FOR target_list IN expression_list ":" NEWLINE INDENT stanza DEDENT
-                      | FOR target_list IN or_test IF expression ":" NEWLINE INDENT stanza DEDENT
+        for_directive : FOR target_list IN expression_list ":" NEWLINE INDENT stanzas DEDENT
+                      | FOR target_list IN or_test IF expression ":" NEWLINE INDENT stanzas DEDENT
         '''
         if len(p) == 10:
             p[0] = ast.For(p[2], p[4], p[8])
@@ -927,28 +927,28 @@ class Parser(object):
 
     def p_if_directive_plain(self, p):
         '''
-        if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT
+        if_directive : IF expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.If(p[2], p[6])
         self.anchor(p, 1)
 
     def p_if_directive_else(self, p):
         '''
-        if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT ELSE ":" NEWLINE INDENT stanza DEDENT
+        if_directive : IF expression_list ":" NEWLINE INDENT stanzas DEDENT ELSE ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.If(p[2], p[6], p[12])
         self.anchor(p, 1)
 
     def p_if_directive_elif(self, p):
         '''
-        if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list
+        if_directive : IF expression_list ":" NEWLINE INDENT stanzas DEDENT elif_list
         '''
         p[0] = ast.If(p[2], p[6], p[8])
         self.anchor(p, 1)
 
     def p_if_directive_else_elif(self, p):
         '''
-        if_directive : IF expression_list ":" NEWLINE INDENT stanza DEDENT elif_list ELSE ":" NEWLINE INDENT stanza DEDENT
+        if_directive : IF expression_list ":" NEWLINE INDENT stanzas DEDENT elif_list ELSE ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.If(p[2], p[6], p[8])
         p[0].add_else(p[13])
@@ -965,14 +965,14 @@ class Parser(object):
 
     def p_elif(self, p):
         '''
-        elif : ELIF expression_list ":" NEWLINE INDENT stanza DEDENT
+        elif : ELIF expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.If(p[2], p[6])
         self.anchor(p, 1)
 
     def p_new_as_directive(self, p):
         '''
-        yaydict : NEW expression_list AS identifier ":" NEWLINE INDENT stanza DEDENT
+        yaydict : NEW expression_list AS identifier ":" NEWLINE INDENT stanzas DEDENT
         '''
         new = ast.New(p[2], p[8])
         p[0] = ast.YayDict([(p[4].identifier, new)])
@@ -981,14 +981,14 @@ class Parser(object):
 
     def p_new_directive(self, p):
         '''
-        new_directive : NEW expression_list ":" NEWLINE INDENT stanza DEDENT
+        new_directive : NEW expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.New(p[2], p[6])
         self.anchor(p, 1)
 
     def p_prototype_directive(self, p):
         '''
-        prototype_directive : PROTOTYPE expression_list ":" NEWLINE INDENT stanza DEDENT
+        prototype_directive : PROTOTYPE expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.Prototype(p[2], p[6])
         self.anchor(p, 1)
@@ -1014,8 +1014,7 @@ class Parser(object):
 
     def p_case_block(self, p):
         '''
-        case_block : key NEWLINE INDENT stanza DEDENT
-                   | key NEWLINE INDENT stanzas DEDENT
+        case_block : key NEWLINE INDENT stanzas DEDENT
                    | key scalar NEWLINE
                    | key NEWLINE
         '''
@@ -1049,8 +1048,7 @@ class Parser(object):
 
     def p_root(self, p):
         '''
-        root : stanza
-             | stanzas
+        root : stanzas
              | empty
         '''
         p[0] = p[1]
@@ -1071,10 +1069,14 @@ class Parser(object):
 
     def p_stanzas(self, p):
         '''
-        stanzas : stanza stanza
+        stanzas : stanza
+                | stanza stanza
         '''
-        p[0] = ast.Stanzas(p[1], p[2])
-        self.anchor(p, 1)
+        if len(p) == 2:
+            p[0] = p[1]
+        else:
+            p[0] = ast.Stanzas(p[1], p[2])
+            self.anchor(p, 1)
 
     def p_stanzas_merge(self, p):
         '''
@@ -1086,7 +1088,6 @@ class Parser(object):
     def p_extend(self, p):
         '''
         extend : EXTEND key scalar NEWLINE
-               | EXTEND key NEWLINE INDENT stanza DEDENT
                | EXTEND key NEWLINE INDENT stanzas DEDENT
         '''
         if len(p) == 5:
@@ -1163,8 +1164,7 @@ class Parser(object):
 
     def p_yaydict_keystanza(self, p):
         '''
-        yaydict : key NEWLINE INDENT stanza DEDENT
-                | key NEWLINE INDENT stanzas DEDENT
+        yaydict : key NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.YayDict([(p[1], p[4])])
         self.anchor(p, 1)
@@ -1210,7 +1210,7 @@ class Parser(object):
 
     def p_listitem_key_newline(self, p):
         '''
-        listitem : HYPHEN key NEWLINE INDENT stanza DEDENT
+        listitem : HYPHEN key NEWLINE INDENT stanzas DEDENT
         '''
         p[0] = ast.YayDict([(p[2], p[5])])
         self.anchor(p, 1)
