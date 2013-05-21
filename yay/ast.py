@@ -71,7 +71,7 @@ class AST(object):
 
     def get_key(self, key, anchor=None):
         raise errors.TypeError("Expecting dictionary or list", anchor=anchor or self.anchor)
-        
+
     def keys(self, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
@@ -701,8 +701,8 @@ class Identifier(Proxy, AST):
             except errors.NoMatching:
                 pass
             except errors.NoMoreContext:
-		# We are at the root of a Subgraph and shouldn't traverse
-		# further.
+                # We are at the root of a Subgraph and shouldn't traverse
+                # further.
                 raise errors.NoMatching("Could not find '%s'" % self.identifier)
             node = node.parent
 
@@ -1219,7 +1219,7 @@ class CallCallable(Proxy, AST):
         "range": range,
         "replace": lambda i, r, w: i.replace(r, w),
         "sub": re.sub,
-        }
+    }
 
     def __init__(self, primary, args=None, kwargs=None):
         self.primary = primary
@@ -1614,7 +1614,7 @@ class Include(Proxy, AST):
         s = Subgraph(t)
         s.parent = self.parent
         s.anchor = t.anchor = self.anchor
-        
+
         return True, s
 
 
@@ -1775,11 +1775,11 @@ class New(Proxy, AST):
 
     @cached
     def expand(self):
-       node = self.target.construct(self.node.clone())
-       node.parent = self
-       node.anchor = self.anchor
-       node.predecessor = self.predecessor
-       return True, node
+        node = self.target.construct(self.node.clone())
+        node.parent = self
+        node.anchor = self.anchor
+        node.predecessor = self.predecessor
+        return True, node
 
 
 class Ephemeral(Proxy, AST):
@@ -1997,7 +1997,7 @@ class PythonClassFactory(AST):
 
         return self.inner(inner)
 
- 
+
 class PythonClass(Proxy, AST):
 
     """
