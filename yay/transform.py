@@ -1,4 +1,4 @@
-from yay import parser, ast, errors
+from yay import parser, config, errors
 import sys
 import os
 import optparse
@@ -65,11 +65,15 @@ def main():
 
     if len(args) == 0:
         instream = sys.stdin
+        source = "<stdin>"
+        searchpath = []
     elif len(args) == 1:
         if not os.path.exists(args[0]):
             print >>sys.stderr, "Path '%s' does not exist" % args[0]
             sys.exit(1)
         instream = open(args[0])
+        source = args[0]
+        searchpath = [os.path.realpath(os.path.dirname(args[0]))]
     else:
         p.print_usage()
         sys.exit(1)
@@ -82,16 +86,16 @@ def main():
         print >>sys.stderr, "Phase must be one of: %r" % opts.phase
         sys.exit(1)
 
-    data = instream.read()
     p = parser.Parser()
-
+    root = config.Config(searchpath=searchpath)
+    
     # Parse
     try:
-        graph = ast.Root(p.parse(data))
+        root.load(instream, name=source)
     except errors.Error as e:
         print >>sys.stderr, "An error occured parsing the first file"
         print >>sys.stderr, str(e)
         sys.exit(1)
 
-    print converters[opts.format](opts, graph)
+    print converters[opts.format](opts, root)
 
