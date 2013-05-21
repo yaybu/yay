@@ -69,6 +69,9 @@ class AST(object):
     def as_dict(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
+    def get_key(self, key, anchor=None):
+        raise errors.TypeError("Expecting dictionary or list", anchor=anchor or self.anchor)
+        
     def keys(self, anchor=None):
         raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
 
@@ -394,7 +397,7 @@ class Streamish(object):
         while len(self._buffer) < index+1:
             self._buffer.append(self._iterator.next())
 
-    def get_index(self, index):
+    def get_key(self, index):
         self._fill_to(index)
         return self._buffer[index]
 
@@ -1106,7 +1109,7 @@ class SimpleSlicing(Streamish, AST):
         stride = self.short_slice.stride.resolve()
 
         for i in range(lower_bound, upper_bound, stride):
-            yield self.primary.expand().get_index(i)
+            yield self.primary.expand().get_key(i)
 
 class ExtendedSlicing(Streamish, AST):
 
@@ -1137,7 +1140,7 @@ class ExtendedSlicing(Streamish, AST):
         stride = short_slice.stride.resolve()
 
         for i in range(lower_bound, upper_bound, stride):
-            yield self.primary.expand().get_index(i)
+            yield self.primary.expand().get_key(i)
 
 class SliceList(AST):
     def __init__(self, slice_item):
@@ -1279,9 +1282,6 @@ class YayList(Streamish, AST):
         item.parent = self
 
     def get_key(self, idx):
-        return self.get_index(idx)
-
-    def get_index(self, idx):
         try:
             idx = int(idx)
         except ValueError:
