@@ -17,7 +17,7 @@ from ply import yacc
 
 from lexer import Lexer
 from . import ast
-from .errors import Anchor
+from .errors import Anchor, ParseError
 
 import warnings
 
@@ -44,16 +44,6 @@ expressions = {
     "not in": ast.NotIn,
     }
 
-
-class ParseError(Exception):
-
-    def __init__(self, token, lineno, error=None):
-        self.token = token
-        self.lineno = lineno
-        self.error = error
-
-    def __str__(self):
-        return "Syntax error at line %d: '%s'" % (self.lineno, self.token)
 
 class Parser(object):
 
@@ -1254,10 +1244,10 @@ class Parser(object):
 
     def p_error(self, p):
         if p is None:
-            raise ParseError("End of file reached unexpectedly", 0)
+            raise ParseError("End of file reached unexpectedly", Anchor(self.source, 0))
         else:
             if p.type == 'NEWLINE':
-                raise ParseError("Unexpected end of line in %s", (p.lineno, self.source))
+                raise ParseError("Unexpected end of line", Anchor(self.source, p.lineno))
             else:
-                raise ParseError("Unexpected %s symbol %r in %s" % (p.type, p.value, self.source), p.lineno)
+                raise ParseError("Unexpected %s symbol %r" % (p.type, p.value), Anchor(self.source, p.lineno))
 
