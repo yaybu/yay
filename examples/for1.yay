@@ -1,0 +1,5 @@
+quantity: 4
+items:
+    for i in range(quantity):
+        - {{i}}
+

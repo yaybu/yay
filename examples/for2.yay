@@ -1,0 +1,13 @@
+staff:
+    - name: alfred
+      age: 40
+    - name: bill
+      age: 30
+    - name: cyril
+      age: 65
+
+ages:
+    for i in staff:
+        - {{i.name}} is {{i.age}}
+
+

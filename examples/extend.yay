@@ -1,0 +1,24 @@
+config:
+    path: /var/tmp
+    binary: /usr/bin/server
+    args:
+        - 10
+        - 20
+    kwargs:
+        size: 40
+        width: 50
+    numbers:
+        - 100
+
+config:
+    output: {{config.path}}/output
+    extend args:
+        - 30
+    kwargs:
+        length: 12
+    numbers:
+        - 80
+
+
+
+

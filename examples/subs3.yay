@@ -1,0 +1,8 @@
+details: 
+    quantity: 10
+
+how_many: {{details.quantity}}
+
+details:
+    quantity: 12
+

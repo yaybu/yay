@@ -1,0 +1,8 @@
+a: 10
+b: 
+    if a == 10:
+        - foo
+    else:
+        - bar
+
+

@@ -1,0 +1,7 @@
+a: 10
+b:
+    select a:
+        10: bar
+        20: quux
+
+
