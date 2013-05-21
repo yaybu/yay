@@ -1098,7 +1098,6 @@ class TestFor(unittest2.TestCase):
             {'name': 'badgers', 'env': 'production'},
             ])
 
-    @unittest2.expectedFailure
     def test_complicated_chained_for(self):
         res = resolve("""
             wibble:
@@ -1120,7 +1119,7 @@ class TestFor(unittest2.TestCase):
 
                 - {{ i + 3 }}
 
-                select i
+                select i:
                     0:
                       - {{ i }}
 
