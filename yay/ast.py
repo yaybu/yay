@@ -244,29 +244,33 @@ class AST(object):
     def clone(self):
         """
         Return a copy of this node.
-
-        This boldly assumes the graph is acyclic.
         """
+        mapping = {}
+
         def _clone(parent, v):
+            if id(v) in mapping:
+                return mapping[id(v)]
+
             if isinstance(v, AST):
                 child = v.__class__.__new__(v.__class__)
                 for k, v in v.__clone_vars().items():
                     child.__dict__[k] = _clone(child, v)
                 if parent:
                     child.parent = parent
-                return child
             elif isinstance(v, list):
-                lst = []
-                for child in v:
-                    lst.append(_clone(parent, child))
-                return lst
+                child = []
+                for inner in v:
+                    child.append(_clone(parent, inner))
             elif isinstance(v, dict):
-                dct = {}
-                for k, child in v.items():
-                    dct[k] = _clone(parent, child)
-                return dct
+                child = {}
+                for k, inner in v.items():
+                    child[k] = _clone(parent, inner)
             else:
-                return v
+                child = v
+
+            mapping[id(v)] = child
+
+            return child
 
         return _clone(None, self)
 
