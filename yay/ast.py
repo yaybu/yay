@@ -247,29 +247,28 @@ class AST(object):
 
         This boldly assumes the graph is acyclic.
         """
-        def _clone(v):
+        def _clone(parent, v):
             if isinstance(v, AST):
-                child = v.clone()
-                child.parent = instance
+                child = v.__class__.__new__(v.__class__)
+                for k, v in v.__clone_vars().items():
+                    child.__dict__[k] = _clone(child, v)
+                if parent:
+                    child.parent = parent
                 return child
             elif isinstance(v, list):
                 lst = []
                 for child in v:
-                    lst.append(_clone(child))
+                    lst.append(_clone(parent, child))
                 return lst
             elif isinstance(v, dict):
                 dct = {}
                 for k, child in v.items():
-                    dct[k] = _clone(child)
+                    dct[k] = _clone(parent, child)
                 return dct
             else:
                 return v
 
-        instance = self.__class__.__new__(self.__class__)
-        for k, v in self.__clone_vars().items():
-            instance.__dict__[k] = _clone(v)
-
-        return instance
+        return _clone(None, self)
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
