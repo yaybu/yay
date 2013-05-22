@@ -1606,7 +1606,7 @@ class Include(Proxy, AST):
         expanded = self.root.parse(expr)
         self.expanding = False
 
-        expanded.predecessor = self.predecessor
+        expanded.predecessor = UseMyPredecessorStandin(self)
         expanded.parent = self.parent
 
         t = Tripwire(expanded, self.expr.resolve, expr)
@@ -1777,7 +1777,7 @@ class New(Proxy, AST):
         node = self.target.construct(self.node.clone())
         node.parent = self
         node.anchor = self.anchor
-        node.predecessor = self.predecessor
+        node.predecessor = UseMyPredecessorStandin(self)
         return True, node
 
 
