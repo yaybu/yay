@@ -1737,7 +1737,11 @@ class If(Proxy, AST):
         elif self.on_false:
             node = self.on_false.expand()
         else:
-            node = self.predecessor.expand()
+            if self.predecessor.get_type() == "streamish":
+                node = YayList()
+                node.anchor = self.anchor
+            else:
+                node = self.predecessor.expand()
 
         t = Tripwire(node, self.condition.as_bool, cond)
         t.anchor = self.anchor
