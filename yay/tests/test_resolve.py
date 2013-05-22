@@ -1923,6 +1923,17 @@ class TestSearchPath(TestCase):
         self.assertEqual(res['foo'], 'bar')
 
 
+class TestRegression(TestCase):
+
+    def test_foo(self):
+        res = self._resolve("""
+            somekey:
+                - a: - "{{ 1 }}"
+                for i in [] if i == "True":
+                  - foo
+            """)
+
+
 class TestOpeners(unittest2.TestCase):
     pass
 
