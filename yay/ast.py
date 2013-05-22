@@ -253,22 +253,27 @@ class AST(object):
 
             if isinstance(v, AST):
                 child = v.__class__.__new__(v.__class__)
+                mapping[id(v)] = child
+
                 for k, v in v.__clone_vars().items():
                     child.__dict__[k] = _clone(child, v)
                 if parent:
                     child.parent = parent
             elif isinstance(v, list):
                 child = []
+                mapping[id(v)] = child
+
                 for inner in v:
                     child.append(_clone(parent, inner))
             elif isinstance(v, dict):
                 child = {}
+                mapping[id(v)] = child
+
                 for k, inner in v.items():
                     child[k] = _clone(parent, inner)
+
             else:
                 child = v
-
-            mapping[id(v)] = child
 
             return child
 
@@ -279,7 +284,7 @@ class AST(object):
 
     def __clone_vars(self):
         d = self.__dict__.copy()
-        for var in ('parent', '_predecessor', 'successor'):
+        for var in ('parent', 'successor'):
             if var in d:
                 del d[var]
         return d
@@ -1535,7 +1540,40 @@ class Stanzas(Proxy, AST):
         return self.value.get_type()
 
     def expand(self):
+        if self.get_type() == "streamish":
+            i = StanzasIterator(self).expand()
+            i.anchor = self.anchor
+            i.parent = self
+            return i
         return self.value.expand()
+
+
+class StanzasIterator(Streamish, AST):
+
+    def __init__(self, inner):
+        super(StanzasIterator, self).__init__()
+        self.inner = inner
+
+    def _get_source_iterator(self, anchor=None):
+        stack = []
+        cur = self.inner.value
+        while not isinstance(cur, (UseMyPredecessorStandin, NoPredecessorStandin)):
+            stack.insert(0, cur)
+            cur = cur.predecessor
+        stack.insert(0, cur)
+
+        assert isinstance(stack[0], UseMyPredecessorStandin)
+
+        try:
+            first = stack.pop(0).expand()
+            stack.insert(0, first)
+        except errors.NoPredecessor:
+            pass
+
+        for node in stack:
+            for child in node.get_iterable():
+                yield child
+
 
 class Directives(Proxy, AST):
     def __init__(self, *directives):

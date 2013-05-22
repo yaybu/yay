@@ -1128,7 +1128,7 @@ class TestFor(unittest2.TestCase):
                       - {{ i }}
 
             """)
-        self.assertEqual(res["wibble"], [0, 2, 3])
+        self.assertEqual(res["wibble"], [0, 2, 1, 3, 2, 3, 0])
 
     def test_adjacent_list_and_dict(self):
         self.assertRaises(errors.TypeError, resolve, """
