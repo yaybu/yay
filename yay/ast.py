@@ -1652,9 +1652,11 @@ class Include(Proxy, AST):
         expanded.parent = self.parent
 
         t = Tripwire(expanded, self.expr.resolve, expr)
-        s = Subgraph(t)
-        s.parent = self.parent
-        s.anchor = t.anchor = self.anchor
+
+        #s = Subgraph(t)
+        #s.parent = self.parent
+        #s.anchor = t.anchor = self.anchor
+        s = t
 
         return True, s
 
