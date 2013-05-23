@@ -728,4 +728,15 @@ class TestLexer(unittest2.TestCase):
                dedent,
                ])
         
+    def test_quote_corner_case(self):
+        self.compare(self._lex("""
+          a: - "{{x}}"
+          b: "y"
+          """),[value('a'), colon, value('- "'), ldbrace, identifier('x'), rdbrace, value('"'),
+                newline,
+                value('b'), colon, value('y'), newline,
+                ])
+        
+        
+        
                

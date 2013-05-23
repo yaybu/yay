@@ -282,7 +282,7 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_QVALUE(self, t):
-        """\"[^"]*\""""
+        """\"[^"\n]*\""""
         t.type = "VALUE"
         t.value = t.value[1:-1]
         return t
