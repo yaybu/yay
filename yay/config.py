@@ -31,13 +31,15 @@ class Config(ast.Root):
 
     def load_uri(self, uri):
         __context__ = "Loading URI %s" % uri
-        return self.load(self.openers.open(uri), uri)
+        fp = self.openers.open(uri)
+        return self.load(fp, uri, getattr(fp, "labels", ()))
 
-    def load(self, stream, name="<Unknown>", secret=False):
-        __context__ = "Loading stream %s. secret=%s." % (name, secret)
+    def load(self, stream, name="<Unknown>", labels=()):
+        __context__ = "Loading stream %s. labels=%r." % (name, labels)
         p = parser.Parser()
         node = p.parse(stream.read(), source=name)
         node.parent = self
+        node.labels = labels
         mda = node
         while mda.predecessor and not isinstance(mda.predecessor, ast.NoPredecessorStandin):
             mda = mda.predecessor

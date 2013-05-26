@@ -61,7 +61,7 @@ class TestCase(unittest2.TestCase):
     def _add(self, key, data):
         MemOpener.add(key, data)
 
-    def _parse(self, source):
+    def _parse(self, source, labels=()):
         from yay.openers.base import Openers, SearchpathFromGraph
         class Config(config.Config):
             def setup_openers(self, searchpath):
@@ -69,7 +69,7 @@ class TestCase(unittest2.TestCase):
                 self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
         c = Config()
         c.builtins = self.builtins or {}
-        c.load(StringIO.StringIO(source))
+        c.load(StringIO.StringIO(source), labels=labels)
         return c
 
     def _resolve(self, source):

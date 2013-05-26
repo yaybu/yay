@@ -221,7 +221,7 @@ class Gpg(object):
         stream.etag = fp.etag
         stream.len = len(stdout)
         stream.uri = fp.uri
-        stream.secret = True
+        stream.labels = ('secret', )
         return stream
 
 

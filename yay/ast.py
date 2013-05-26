@@ -301,6 +301,22 @@ class AST(object):
             return False
         return self.__repr_vars() == other.__repr_vars()
 
+    def get_local_labels(self):
+        labels = set()
+        if "labels" in self.__dict__:
+            labels.update(self.__dict__['labels'])
+        return labels
+
+    def get_labels(self):
+        root = self.root
+        cur = self
+        labels = set()
+        while cur != root:
+            labels.update(cur.get_local_labels())
+            cur = cur.parent
+        labels.update(root.get_local_labels())
+        return labels
+
 
 class Scalarish(object):
 
@@ -547,6 +563,13 @@ class Proxy(object):
     def get_type(self):
         return self.expand().get_type()
 
+    def get_local_labels(self):
+        labels = super(Proxy, self).get_local_labels()
+        expanded = self.expand()
+        if expanded != self:
+            labels.update(expanded.get_local_labels())
+        return labels
+
     def expand_once(self):
         raise NotImplementedError("%r does not implement expand or expand_once - but proxy types must" % type(self))
 
@@ -623,6 +646,7 @@ class Pythonic(object):
     def __getattr__(self, key):
         ref = AttributeRef(self, key)
         ref.anchor = None
+        ref.parent = None
         return PythonicWrapper(ref)
 
     def __getitem__(self, key):
@@ -631,6 +655,7 @@ class Pythonic(object):
         else:
             ref = Subscription(self, YayScalar(key))
         ref.anchor = None
+        ref.parent = None
         return PythonicWrapper(ref)
 
     def __iter__(self):
@@ -644,6 +669,10 @@ class PythonicWrapper(Pythonic, Proxy, AST):
 
     def expand_once(self):
         return self.inner.expand()
+
+    def get_labels(self):
+        return self.expand().get_labels()
+
 
 class Root(Pythonic, Proxy, AST):
     """ The root of the document
@@ -762,6 +791,10 @@ class UnaryExpr(Scalarish, AST):
     def resolve_once(self):
         return self.op(self.inner.as_number())
 
+    def get_local_labels(self):
+        labels = super(UnaryEpr, self).get_local_labels()
+        labels.update(self.inner.get_local_labels())
+        return labels
 
 class UnaryMinus(UnaryExpr):
     """ The unary - (minus) operator yields the negation of its numeric
@@ -819,6 +852,13 @@ class Expr(Scalarish, AST):
 
     def resolve_once(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
+
+    def get_local_labels(self):
+        labels = super(Expr, self).get_local_labels()
+        labels.update(self.lhs.get_local_labels())
+        labels.update(self.rhs.get_local_labels())
+        return labels
+
 
 class Equal(Expr):
     def resolve_once(self):
@@ -1246,8 +1286,9 @@ class CallCallable(Proxy, AST):
         args = [x.resolve() for x in self.args]
         kwargs = dict((k, v.resolve()) for (k, v) in self.kwargs.items())
         result = self.allowed[self.primary.identifier](*args, **kwargs)
-        return bind(result)
-
+        bound = bind(result)
+        bound.parent = self
+        return bound
 
 class ArgumentList(AST):
     def __init__(self, args, kwargs=None):
@@ -1652,13 +1693,10 @@ class Include(Proxy, AST):
         expanded.parent = self.parent
 
         t = Tripwire(expanded, self.expr.resolve, expr)
+        t.parent = self.parent
+        t.anchor = self.anchor
 
-        #s = Subgraph(t)
-        #s.parent = self.parent
-        #s.anchor = t.anchor = self.anchor
-        s = t
-
-        return True, s
+        return True, t
 
 
 class Search(Proxy, AST):
