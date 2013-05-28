@@ -1828,6 +1828,15 @@ class TestSet(unittest2.TestCase):
         self.assertEqual(res['foo']['wakeup_urls'], ["http//www.example.com/"])
         self.assertEqual(res['foo']['settings'], {"DSN": "postgres//www.example.com"})
 
+    def test_set_in_for(self):
+        res = resolve("""
+            foo:
+                for i in range(2):
+                    set j = i + 1
+                    - {{ j }}
+            """)
+        self.assertEqual(res['foo'], [1, 2])
+
 
 class TestPythonicWrapper(unittest2.TestCase):
 

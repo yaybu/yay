@@ -1605,11 +1605,14 @@ class StanzasIterator(Streamish, AST):
 
         assert isinstance(stack[0], UseMyPredecessorStandin)
 
-        try:
-            first = stack.pop(0).expand()
-            stack.insert(0, first)
-        except errors.NoPredecessor:
-            pass
+        while stack:
+            try:
+                first = stack.pop(0).expand()
+                stack.insert(0, first)
+            except errors.NoPredecessor:
+                pass
+            else:
+                break
 
         for node in stack:
             for child in node.get_iterable():
