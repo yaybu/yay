@@ -1518,8 +1518,8 @@ class TestInclude(TestCase):
 
     def test_magic_1(self):
         res = resolve("""
-            include foo
             include "magic_1_1"
+            include foo
             """,
             magic_1_1="""
             foo: magic_1_2
@@ -1544,6 +1544,7 @@ class TestInclude(TestCase):
             include foo
             include "magic_1_1"
             include "magic_1_2"
+            foo: lol_2
             """,
             magic_1_1="""
             foo: lol_1

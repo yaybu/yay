@@ -1685,8 +1685,17 @@ class Include(Proxy, AST):
             return False, self.predecessor
 
         self.expanding = True
+
+        # Greedy lazyness at its finest
+        # Parse predecessors first, otherwise their contributions to things like the search path won't be considered.
+        try:
+            self.predecessor.expand()
+        except errors.NoPredecessor:
+            pass
+
         expr = self.expr.resolve()
         expanded = self.root.parse(expr)
+
         self.expanding = False
 
         expanded.predecessor = UseMyPredecessorStandin(self)
