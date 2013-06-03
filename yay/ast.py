@@ -1615,8 +1615,11 @@ class StanzasIterator(Streamish, AST):
                 break
 
         for node in stack:
-            for child in node.get_iterable():
-                yield child
+            try:
+                for child in node.get_iterable():
+                    yield child
+            except errors.NoPredecessor:
+                pass
 
 
 class Directives(Proxy, AST):
@@ -1741,7 +1744,13 @@ class Set(Proxy, AST):
         return super(Set, self).get_context(key)
 
     def expand_once(self):
-        return self.predecessor.expand()
+        if self.predecessor.get_type() == "streamish":
+             node = YayList()
+             node.anchor = self.anchor
+        else:
+             node = self.predecessor.expand()
+        return node
+
 
 class If(Proxy, AST):
 
