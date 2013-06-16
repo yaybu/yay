@@ -199,6 +199,15 @@ class MemOpener(IOpener):
 
 class Gpg(object):
 
+    def get_gpg_binary(self):
+        # FIXME: Memoize me
+        for binary in ('gpg2', 'gpg'):
+            for path in os.environ.get('PATH', '/usr/bin').split(":"):
+                t = os.path.join(path, binary)
+                if os.path.exists(t):
+                    return t
+        raise NotFound("Unable to decrypt GPG encrypted resource as could not find 'gpg' or 'gpg2'")
+
     def filter(self, fp):
         data = fp.read()
 
@@ -210,7 +219,7 @@ class Gpg(object):
         if not "GPG_TTY" in env:
             env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
-        p = subprocess.Popen(["gpg", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
+        p = subprocess.Popen([self.get_gpg_binary(), "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate(data)
         if p.returncode != 0:
             msg = "Unable to decrypt resource '%s'" % fp.uri
