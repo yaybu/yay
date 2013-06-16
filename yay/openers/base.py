@@ -215,9 +215,11 @@ class Gpg(object):
         # In particular, if GPG_TTY is not set then gpg-agent will not prompt
         # for a passphrase even it is running and correctly configured.
         # GPG_TTY is not required if using seahorse-agent.
+        # This is not used on OSX as there is no /proc/self/fd/0
         env = os.environ.copy()
         if not "GPG_TTY" in env:
-            env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
+            if os.path.exists("/proc/self/fd/0"):
+                env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
         p = subprocess.Popen([self.get_gpg_binary(), "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate(data)
