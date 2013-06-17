@@ -200,7 +200,7 @@ class MemOpener(IOpener):
 class Gpg(object):
 
     def get_gpg_binary(self):
-        # FIXME: Memoize me
+        # FIXME: Memoize me
         for binary in ('gpg2', 'gpg'):
             for path in os.environ.get('PATH', '/usr/bin').split(":"):
                 t = os.path.join(path, binary)
