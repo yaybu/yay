@@ -26,6 +26,7 @@ setup(
     include_package_data=True,
     install_requires = [
         "ply",
+        # "gpglib",
     ],
     extras_require = dict(
         test = [
