@@ -65,6 +65,12 @@ class Config(ast.Root):
     def clear(self):
         self.node = None
 
+    def parse_expression(self, expression):
+        p = parser.ExpressionParser()
+        node = p.parse(expression)
+        node.parent = self
+        return ast.PythonicWrapper(node)
+
     def resolve(self):
         __context__ = "Performing full resolve"
         if not self.node:

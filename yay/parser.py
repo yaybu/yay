@@ -53,14 +53,17 @@ class Parser(object):
         self.lexer = lexer or Lexer
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self,
-            tabmodule='yay.parsetab',
+            tabmodule='yay.%stab' % self.__class__.__name__.lower(),
             outputdir=os.path.dirname(__file__))
+
+    def get_lexer(self, source):
+        return self.lexer(source=source)
 
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
         self.errors = 0
         self.source = source
         rv = self.parser.parse(value,
-                                 lexer=self.lexer(source=source),
+                                 lexer=self.get_lexer(source=source),
                                  tracking=tracking,
                                  debug=debug)
         if self.errors > 0:
@@ -1250,4 +1253,14 @@ class Parser(object):
                 raise ParseError("Unexpected end of line", Anchor(self.source, p.lineno))
             else:
                 raise ParseError("Unexpected %s symbol %r" % (p.type, p.value), Anchor(self.source, p.lineno))
+
+
+class ExpressionParser(Parser):
+
+    start = 'expression_list'
+
+    def get_lexer(self, source):
+        lexer = super(ExpressionParser, self).get_lexer(source)
+        lexer.lexer.push_state("TEMPLATE")
+        return lexer
 
