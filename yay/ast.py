@@ -1867,10 +1867,16 @@ class Case(AST):
         self.node = node
         node.parent = self
 
-class Prototype(Proxy, AST):
-    def __init__(self, target, node):
-        self.target = target
+
+class Prototype(AST):
+    def __init__(self, node):
         self.node = node
+
+    def construct(self, inner):
+        parent = inner.clone()
+        node = self.node.clone()
+        node.predecessor = parent
+        return node
 
 
 class New(Proxy, AST):
@@ -1884,7 +1890,14 @@ class New(Proxy, AST):
         node = self.target.construct(self.node.clone())
         node.parent = self
         node.anchor = self.anchor
-        node.predecessor = UseMyPredecessorStandin(self)
+
+        # Resepct predecessors, don't overwrite them
+        p = node
+        while p.predecessor and not isinstance(p.predecessor, (NoPredecessorStandin, LazyPredecessor)):
+            p = p.predecessor
+            p.parent = self
+        p.predecessor = UseMyPredecessorStandin(self)
+
         return True, node
 
 

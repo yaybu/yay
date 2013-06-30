@@ -707,11 +707,9 @@ class TestParser(unittest2.TestCase):
         prototype foo:
             x: y
         """)
-        self.assertEqual(res, Prototype(
-            Identifier('foo'),
+        self.assertEqual(res, Ephemeral(Identifier('foo'), Prototype(
             YayDict([('x', YayScalar('y'))]),
-            ))
-
+            )))
 
     def test_if(self):
         res = parse("""

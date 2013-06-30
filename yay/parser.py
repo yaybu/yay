@@ -975,7 +975,7 @@ class Parser(object):
 
     def p_new_as_directive(self, p):
         '''
-        yaydict : NEW expression_list AS identifier ":" NEWLINE INDENT stanzas DEDENT
+        new_directive : NEW expression_list AS identifier ":" NEWLINE INDENT stanzas DEDENT
         '''
         new = ast.New(p[2], p[8])
         p[0] = ast.YayDict([(p[4].identifier, new)])
@@ -993,7 +993,7 @@ class Parser(object):
         '''
         prototype_directive : PROTOTYPE expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
-        p[0] = ast.Prototype(p[2], p[6])
+        p[0] = ast.Ephemeral(p[2], ast.Prototype(p[6]))
         self.anchor(p, 1)
 
     def p_select_directive(self, p):

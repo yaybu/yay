@@ -1226,6 +1226,43 @@ class TestPythonClass(TestCase):
         self.assertEqual(res['foo']['hello'], 'world')
 
 
+class TestPrototype(unittest2.TestCase):
+
+    def test_prototype_not_in_output(self):
+        self.assertEqual(resolve("""
+            foo: bar
+            prototype NotInOutput:
+                hello: world
+            bar: foo
+            """), dict(foo="bar", bar="foo"))
+
+    def test_simple_prototype(self):
+        self.assertEqual(resolve("""
+            prototype Simple:
+                hello: world
+            example:
+                new Simple:
+                    param: foo
+            """), dict(example=dict(hello="world", param="foo")))
+
+    def test_simple_prototype_with_as(self):
+        self.assertEqual(resolve("""
+            prototype Simple:
+                hello: world
+            new Simple as example:
+                param: foo
+            """), dict(example=dict(hello="world", param="foo")))
+
+    def test_use_params(self):
+        self.assertEqual(resolve("""
+            prototype WithParams:
+                set self = here
+                hello: foo-{{ self.param }}-bar
+            new WithParams as example:
+                param: foo
+        """), dict(example=dict(hello="foo-foo-bar", param="foo")))
+
+
 class TestNew(TestCase):
 
     def test_new_on_scalar(self):
