@@ -1256,7 +1256,6 @@ class TestPrototype(unittest2.TestCase):
     def test_use_params(self):
         self.assertEqual(resolve("""
             prototype WithParams:
-                set self = here
                 hello: foo-{{ self.param }}-bar
             new WithParams as example:
                 param: foo

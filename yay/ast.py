@@ -1873,10 +1873,7 @@ class Prototype(AST):
         self.node = node
 
     def construct(self, inner):
-        parent = inner.clone()
-        node = self.node.clone()
-        node.predecessor = parent
-        return node
+        return Stanzas(Self(), inner.clone(), self.node.clone())
 
 
 class New(Proxy, AST):
@@ -1916,6 +1913,17 @@ class Ephemeral(Proxy, AST):
         return self.predecessor.expand()
 
 
+class Self(Proxy, AST):
+
+    def get_context(self, key):
+        if key == "self":
+            return self.head
+        raise errors.NoMatching("Could not find '%s'" % key)
+
+    def expand_once(self):
+        return self.predecessor.expand()
+
+
 class Macro(AST):
 
     def __init__(self, node):
@@ -1923,25 +1931,6 @@ class Macro(AST):
 
     def call(self, params):
         pass
-
-
-class YayClass(AST):
-    def __init__(self, target, node):
-        self.target = target
-        target.parent = self
-        self.node = node
-
-    def construct(self, inner):
-        base = self.node.clone()
-        # context = Context(base, {"self": base})
-
-        params = params.clone()
-        params.predecessor = base
-
-        context = Context(params, {"self": params})
-        base.parent = context
-
-        return context
 
 
 class CallDirective(Proxy, AST):
