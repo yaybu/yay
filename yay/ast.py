@@ -2119,24 +2119,32 @@ class PythonClass(Proxy, AST):
         # Object to exposed metadata exported by this class to yay
         self.class_provided = PythonDict(self.metadata)
         self.class_provided.parent = self
-        self.class_provided.predecessor = params
 
         # Node containing metadata provided by the user
         params.parent = self
         self.params = PythonicWrapper(params)
         self.params.parent = self
-
+        self.params.predecessor = self.class_provided
         self.stale = True
 
     def apply(self):
         raise NotImplementedError(self.apply)
+
+    def get_key(self, key):
+        try:
+            return self.params.get_key(key)
+        except KeyError:
+            if self.stale:
+                self.apply()
+                self.stale = False
+            return self.class_provided.get_key(key)
 
     def expand_once(self):
         if self.stale:
             self.apply()
             self.stale = False
 
-        return self.class_provided.expand()
+        return self.params.expand()
 
 
 class PythonIterable(Streamish, AST):
