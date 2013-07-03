@@ -69,9 +69,6 @@ class Parser(object):
             write_tables=write_tables,
             )
 
-    def get_lexer(self, source):
-        return self.lexer(source=source)
-
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
         self.errors = 0
         self.source = source
