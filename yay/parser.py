@@ -53,7 +53,7 @@ class Parser(object):
         self.lexer = lexer or Lexer
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self,
-            tabmodule='yay.%stab' % self.__class__.__name__.lower(),
+            tabmodule='yay.parsetab',
             outputdir=os.path.dirname(__file__))
 
     def get_lexer(self, source):
