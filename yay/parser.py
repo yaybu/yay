@@ -48,9 +48,10 @@ expressions = {
 class Parser(object):
 
     start = 'root'
+    Lexer = Lexer
 
     def __init__(self, lexer=None):
-        self.lexer = lexer or Lexer
+        self.lexer = lexer or self.Lexer
         self.tokens = self.lexer.tokens
         self.parser = yacc.yacc(module=self,
             tabmodule='yay.parsetab',
@@ -1269,5 +1270,5 @@ class Parser(object):
 
 
 class ExpressionParser(Parser):
-    lexer = ExpressionLexer
+    Lexer = ExpressionLexer
 

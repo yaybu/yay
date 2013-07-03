@@ -1969,6 +1969,27 @@ class TestSearchPath(TestCase):
         self.assertEqual(res['foo'], 'bar')
 
 
+class TestExpressionParsing(TestCase):
+
+    def test_simple_lookup(self):
+        g = self._parse("""
+            a: 1
+            b: 2
+            """)
+
+        self.assertEqual(g.parse_expression("a").resolve(), 1)
+        self.assertEqual(g.parse_expression("b").resolve(), 2)
+
+    def test_maths_in_expression(self):
+        g = self._parse("""
+            idx: 2
+            somelist:
+              - 1
+              - 2
+            """)
+        self.assertEqual(g.parse_expression("somelist[idx-1]").resolve(), 2)
+
+
 class TestRegression(TestCase):
 
     def test_foo(self):
