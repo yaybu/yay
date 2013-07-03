@@ -33,6 +33,8 @@ from yay.errors import WhitespaceError, Anchor
 
 class Lexer(object):
 
+    root_token = 'DOCUMENT_START'
+
     def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0, source="<unknown>"):
         self.lineno = 0
         self.lexpos = 0
@@ -122,6 +124,8 @@ class Lexer(object):
         'NEW',
         'PROTOTYPE',
         'COLON',      # not to be confused with ":" this is yamlish only
+        'DOCUMENT_START',
+        'EXPRESSION_START',
     )
 
     t_COMMAND_TEMPLATE_LSHIFT = '<<'
@@ -449,9 +453,20 @@ class Lexer(object):
                     yield self.DEDENT(token.lineno)
 
     def token_filter(self, add_endmarker = True):
+        yield self._new_token(self.root_token, 0)
+
         token = None
         tokens = iter(self.lexer.token, None)
         tokens = self.track_tokens_filter(tokens)
         for token in self.indentation_filter(tokens):
             yield token
+
+
+class ExpressionLexer(Lexer):
+
+    root_token = "EXPRESSION_START"
+
+    def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0, source="<unknown>"):
+        super(ExpressionLexer, self).__init__(debug, optimize, lextab, reflags, source)
+        self.lexer.push_state("TEMPLATE")
 
