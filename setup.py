@@ -1,14 +1,14 @@
 import os
 from setuptools import setup, find_packages
 from distutils.command.sdist import sdist
+from distutils.command.build_py import build_py
 
 version = '0.3.0.dev0'
 
 
-class sdist_with_ply(sdist):
-    '''Use ply to generate parsetab and lextab modules.'''
+class generate_ply_tabs:
 
-    def run(self, *args, **kwargs):
+    def build_ply_tabs(self):
         import ply
         import sys
 
@@ -37,7 +37,17 @@ class sdist_with_ply(sdist):
             os.remove("yay/lextab.py")
             sys.exit(1)
 
+
+class sdist_with_ply(generate_ply_tabs, sdist):
+    def run(self, *args, **kwargs):
+        self.build_ply_tabs()
         sdist.run(self, *args, **kwargs)
+
+
+class build_py_with_ply(generate_ply_tabs, build_py):
+    def run(self, *args, **kwargs):
+        self.build_ply_tabs()
+        build_py.run(self, *args, **kwargs)
 
 
 setup(
@@ -77,7 +87,8 @@ setup(
             ],
         },
     cmdclass = {
-        'sdist': sdist_with_ply
+        'sdist': sdist_with_ply,
+        'build_py': build_py_with_ply,
         },
     )
 
