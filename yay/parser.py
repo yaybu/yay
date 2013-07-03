@@ -15,7 +15,7 @@
 import os
 from ply import yacc
 
-from lexer import Lexer
+from lexer import Lexer, ExpressionLexer
 from . import ast
 from .errors import Anchor, ParseError
 
@@ -63,7 +63,7 @@ class Parser(object):
         self.errors = 0
         self.source = source
         rv = self.parser.parse(value,
-                                 lexer=self.get_lexer(source=source),
+                                 lexer=self.lexer(source=source),
                                  tracking=tracking,
                                  debug=debug)
         if self.errors > 0:
@@ -1051,8 +1051,21 @@ class Parser(object):
 
     def p_root(self, p):
         '''
-        root : stanzas
-             | empty
+        root : DOCUMENT_START document_root
+             | EXPRESSION_START expression_root
+        '''
+        p[0] = p[2]
+
+    def p_document_root(self, p):
+        '''
+        document_root : stanzas
+                      | empty
+        '''
+        p[0] = p[1]
+
+    def p_expression_root(self, p):
+        '''
+        expression_root : expression_list
         '''
         p[0] = p[1]
 
@@ -1256,11 +1269,5 @@ class Parser(object):
 
 
 class ExpressionParser(Parser):
-
-    start = 'expression_list'
-
-    def get_lexer(self, source):
-        lexer = super(ExpressionParser, self).get_lexer(source)
-        lexer.lexer.push_state("TEMPLATE")
-        return lexer
+    lexer = ExpressionLexer
 

@@ -83,6 +83,7 @@ class TestLexer(unittest2.TestCase):
         """ Compare two lists of ts """
         if type(x) == types.GeneratorType:
             x = list(x)
+        x.pop(0)
         if len(x) != len(y):
             raise self.failureException("Token lists are of different lengths:\n%s" % self.show_error(x, y))
         for a, b in zip(x,y):
@@ -314,7 +315,7 @@ class TestLexer(unittest2.TestCase):
             t('STRING', 'foo.yay'),
             newline,
             ])
-        
+
     def test_include_levels(self):
         result = self._lex("""
         a:
@@ -328,7 +329,7 @@ class TestLexer(unittest2.TestCase):
             newline,
             dedent,
             ])
-            
+
 
     def test_new(self):
         result = self._lex("""
@@ -346,7 +347,7 @@ class TestLexer(unittest2.TestCase):
         self.compare(result, [
             t('NEW', 'new'), identifier('Provisioner'), t('AS', 'as'), identifier('foo'), t(':', ':'), newline,
             ])
-            
+
     def test_if(self):
         result = self._lex("""
             if selector == "hey":
@@ -685,7 +686,7 @@ class TestLexer(unittest2.TestCase):
         self.compare(self._lex(r"""
         a: b: c
         """), [value('a'), colon, value('b'), colon, value('c'), newline])
-        
+
     def test_code_in_list(self):
         self.compare(self._lex(r"""
         a:
@@ -705,7 +706,7 @@ class TestLexer(unittest2.TestCase):
                hyphen, value('c'), newline,
                dedent
                ])
-               
+
     def test_for_in_list_in_for(self):
         self.compare(self._lex("""
         a:
@@ -727,7 +728,7 @@ class TestLexer(unittest2.TestCase):
                dedent,
                dedent,
                ])
-        
+
     def test_quote_corner_case(self):
         self.compare(self._lex("""
           a: - "{{x}}"
@@ -736,7 +737,7 @@ class TestLexer(unittest2.TestCase):
                 newline,
                 value('b'), colon, value('y'), newline,
                 ])
-        
-        
-        
-               
+
+
+
+
