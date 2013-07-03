@@ -53,9 +53,21 @@ class Parser(object):
     def __init__(self, lexer=None):
         self.lexer = lexer or self.Lexer
         self.tokens = self.lexer.tokens
+
+        outputdir = os.path.dirname(__file__)
+        parsetab = os.path.join(outputdir, "parsetab.py")
+        write_tables = 0
+        if os.path.exists(parsetab):
+            if os.access(parsetab, os.W_OK):
+                write_tables = 1
+        elif os.access(outputdir, os.W_OK):
+            write_tables = 1
+
         self.parser = yacc.yacc(module=self,
             tabmodule='yay.parsetab',
-            outputdir=os.path.dirname(__file__))
+            outputdir=os.path.dirname(__file__),
+            write_tables=write_tables,
+            )
 
     def get_lexer(self, source):
         return self.lexer(source=source)

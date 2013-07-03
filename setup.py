@@ -1,8 +1,45 @@
 import os
+from setuptools import setup, find_packages
+from distutils.command.sdist import sdist
 
 version = '0.3.0.dev0'
 
-from setuptools import setup, find_packages
+
+class sdist_with_ply(sdist):
+    '''Use ply to generate parsetab and lextab modules.'''
+
+    def run(self, *args, **kwargs):
+        import ply
+        import sys
+
+        sys.path.insert(0, os.path.dirname(os.path.abspath(".")))
+
+        for path in ("yay/lextab.py", "yay/lextab.pyc", "yay/parsetab.py", "yay/parsetab.pyc"):
+            if os.path.exists(path):
+                print "Deleting %s" % path
+                os.remove(path)
+
+        print "Creating lexer"
+        from yay.lexer import Lexer
+        Lexer()
+
+        print "Creating parser"
+        from yay.parser import Parser
+        Parser()
+
+        if not os.path.exists("yay/parsetab.py"):
+            print "FAILED: parsetab not created"
+            os.remove("yay/parsetab.py")
+            sys.exit(1)
+
+        if not os.path.exists("yay/lextab.py"):
+            print "FAILED: lextab not created"
+            os.remove("yay/lextab.py")
+            sys.exit(1)
+
+        sdist.run(self, *args, **kwargs)
+
+
 setup(
     name='yay',
     description='An extensible config file format',
@@ -39,4 +76,8 @@ setup(
             'yay = yay.transform:main',
             ],
         },
-)
+    cmdclass = {
+        'sdist': sdist_with_ply
+        },
+    )
+
