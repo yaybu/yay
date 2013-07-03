@@ -64,6 +64,7 @@ class Parser(object):
             write_tables = 1
 
         self.parser = yacc.yacc(module=self,
+            debug=0,
             tabmodule='yay.parsetab',
             outputdir=os.path.dirname(__file__),
             write_tables=write_tables,
