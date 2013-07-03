@@ -2122,9 +2122,11 @@ class PythonClass(Proxy, AST):
 
         # Node containing metadata provided by the user
         params.parent = self
+        params.predecessor = self.class_provided
+        params.parent = self
+
         self.params = PythonicWrapper(params)
         self.params.parent = self
-        self.params.predecessor = self.class_provided
         self.stale = True
 
     def apply(self):
