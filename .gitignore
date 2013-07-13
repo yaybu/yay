@@ -6,6 +6,7 @@ parts
 .installed.cfg
 *.pyc
 *.egg-info
+lextab.py
 parsetab.py
 parser.out
 yay.wpu
