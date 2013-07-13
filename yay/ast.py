@@ -42,6 +42,9 @@ class AST(object):
     _resolving = False
     _expanding = False
 
+    def __init__(self):
+        self.subscribers = []
+
     def as_bool(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError("Expected boolean", anchor=anchor or self.anchor)
 
@@ -206,6 +209,12 @@ class AST(object):
         """
         return self
 
+    def start_listening(self):
+        """
+        Subscribe to events from dependent nodes and any external monitoring sources
+        """
+        raise NotImplementedError(self.start_listening)
+
     def get_context(self, key):
         """
         Look up value of ``key`` and return it.
@@ -317,6 +326,13 @@ class AST(object):
         labels.update(root.get_local_labels())
         return labels
 
+    def subscribe(self, cbl):
+        self.subscribers.append(cbl)
+
+    def changed(self):
+        for subscriber in self.subscribers:
+            subscriber()
+
 
 class Scalarish(object):
 
@@ -394,6 +410,7 @@ class Streamish(object):
     """
 
     def __init__(self):
+        super(Streamish, self).__init__()
         self._buffer = []
         self._position = 0
         self._iterator = None
@@ -442,6 +459,10 @@ class Streamish(object):
     def resolve_once(self):
         return [x.resolve() for x in self.get_iterable()]
 
+    def start_listening(self):
+        for child in self.get_iterable():
+            child.start_listening()
+            child.subscribe(self.changed)
 
 class Dictish(object):
 
@@ -457,6 +478,12 @@ class Dictish(object):
 
     def resolve_once(self):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
+
+    def start_listening(self):
+        for key in self.keys():
+            c = self.get_key(key)
+            c.start_listening()
+            c.subscribe(self.changed)
 
 
 class Proxy(object):
@@ -576,10 +603,19 @@ class Proxy(object):
     def resolve_once(self):
         return self.expand().resolve()
 
+    def start_listening(self):
+        #FIXME: It is quite likely (certain, in fact) that we won't be able to
+        # rely on expand here - e.g. an expand on an if with a dynamic guard
+        # condition wouldn't work here!
+        expanded = self.expand()
+        expanded.start_listening()
+        expanded.subscribe(self.changed)
+
 
 class Subgraph(Proxy, AST):
 
     def __init__(self, inner):
+        super(Subgraph, self).__init__()
         self.inner = inner
         inner.parent = self
 
@@ -601,6 +637,7 @@ class Subgraph(Proxy, AST):
 class Tripwire(Proxy, AST):
 
     def __init__(self, node, expression, expected):
+        super(Tripwire, self).__init__()
         self.node = node
         self.expression = expression
         self.expected = expected
@@ -665,6 +702,7 @@ class Pythonic(object):
 
 class PythonicWrapper(Pythonic, Proxy, AST):
     def __init__(self, inner):
+        super(PythonicWrapper, self).__init__()
         self.inner = inner
 
     def expand_once(self):
@@ -673,12 +711,16 @@ class PythonicWrapper(Pythonic, Proxy, AST):
     def get_labels(self):
         return self.expand().get_labels()
 
+    def subscribe(self, cbl):
+        self.inner.subscribe(cbl)
+
 
 class Root(Pythonic, Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
     """
     def __init__(self, node=None):
+        super(Root, self).__init__()
         self.openers = Openers(searchpath=[])
         self.node = NoPredecessorStandin()
         if node:
@@ -724,6 +766,7 @@ class Root(Pythonic, Proxy, AST):
 
 class Identifier(Proxy, AST):
     def __init__(self, identifier):
+        super(Identifier, self).__init__()
         self.identifier = identifier
 
     def expand_once(self):
@@ -756,13 +799,17 @@ class Identifier(Proxy, AST):
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
+        super(Literal, self).__init__()
         self.literal = literal
     def resolve_once(self):
         return self.literal
+    def start_listening(self):
+        pass
 
 class ParentForm(Scalarish, AST):
     # FIXME: Understand this better...
     def __init__(self, expression_list=None):
+        super(ParentForm, self).__init__()
         self.expression_list = expression_list
         if expression_list:
             expression_list.parent = self
@@ -775,6 +822,7 @@ class ParentForm(Scalarish, AST):
 class UnaryExpr(Scalarish, AST):
 
     def __init__(self, inner):
+        super(UnaryExpr, self).__init__()
         self.inner = inner
         inner.parent = self
 
@@ -795,6 +843,10 @@ class UnaryExpr(Scalarish, AST):
         labels = super(UnaryEpr, self).get_local_labels()
         labels.update(self.inner.get_local_labels())
         return labels
+
+    def start_listening(self):
+        self.inner.start_listening()
+        self.inner.subscribe(self.changed)
 
 class UnaryMinus(UnaryExpr):
     """ The unary - (minus) operator yields the negation of its numeric
@@ -832,6 +884,7 @@ class Expr(Scalarish, AST):
     """
 
     def __init__(self, lhs, rhs):
+        super(Expr, self).__init__()
         self.lhs = lhs
         lhs.parent = self
         self.rhs = rhs
@@ -858,6 +911,12 @@ class Expr(Scalarish, AST):
         labels.update(self.lhs.get_local_labels())
         labels.update(self.rhs.get_local_labels())
         return labels
+
+    def start_listening(self):
+        self.lhs.start_listening()
+        self.lhs.subscribe(self.changed)
+        self.rhs.start_listening()
+        self.rhs.subscribe(self.changed)
 
 
 class Equal(Expr):
@@ -928,6 +987,7 @@ class Or(Expr):
 class Else(Proxy, AST):
 
     def __init__(self, lhs, rhs):
+        super(Else, self).__init__()
         self.lhs = lhs
         lhs.parent = self
         self.rhs = rhs
@@ -999,6 +1059,7 @@ class Power(Expr):
 
 class ConditionalExpression(Proxy, AST):
     def __init__(self, or_test, if_clause, else_clause):
+        super(ConditionalExpression, self).__init__()
         self.or_test = or_test
         or_test.parent = self
         self.if_clause = if_clause
@@ -1014,6 +1075,7 @@ class ConditionalExpression(Proxy, AST):
 
 class ListDisplay(Proxy, AST):
     def __init__(self, expression_list=None):
+        super(ListDisplay, self).__init__()
         self.expression_list = expression_list
         if expression_list:
             expression_list.parent = self
@@ -1029,6 +1091,7 @@ class ListDisplay(Proxy, AST):
 class DictDisplay(Dictish, AST):
 
     def __init__(self, key_datum_list=None):
+        super(DictDisplay, self).__init__()
         self.key_datum_list = key_datum_list
         self._dict = None
         self._ordered_keys = None
@@ -1057,6 +1120,7 @@ class DictDisplay(Dictish, AST):
 class KeyDatumList(AST):
 
     def __init__(self, *key_data):
+        super(KeyDatumList, self).__init__()
         self.key_data = list(key_data)
 
     def append(self, key_datum):
@@ -1065,11 +1129,13 @@ class KeyDatumList(AST):
 class KeyDatum(AST):
 
     def __init__(self, key, value):
+        super(KeyDatum, self).__init__()
         self.key = key
         self.value = value
 
 class AttributeRef(Proxy, AST):
     def __init__(self, primary, identifier):
+        super(AttributeRef, self).__init__()
         self.primary = primary
         primary.parent = self
         self.identifier = identifier
@@ -1084,6 +1150,7 @@ class AttributeRef(Proxy, AST):
 
 class LazyPredecessor(Proxy, AST):
     def __init__(self, node, identifier):
+        super(LazyPredecessor, self).__init__()
         # This is a sideways reference! No parenting...
         self.node = node
         self.identifier = identifier
@@ -1111,6 +1178,7 @@ class LazyPredecessor(Proxy, AST):
 
 class UseMyPredecessorStandin(Proxy, AST):
     def __init__(self, node):
+        super(UseMyPredecessorStandin, self).__init__()
         # This is a sideways reference! No parenting...
         self.node = node
 
@@ -1138,6 +1206,7 @@ class NoPredecessorStandin(Proxy, AST):
 
 class Subscription(Proxy, AST):
     def __init__(self, primary, *expression_list):
+        super(Subscription, self).__init__()
         self.primary = primary
         primary.parent = self
         self.expression_list = list(expression_list)
@@ -1212,6 +1281,7 @@ class ExtendedSlicing(Streamish, AST):
 
 class SliceList(AST):
     def __init__(self, slice_item):
+        super(SliceList, self).__init__()
         self.slice_list = [slice_item]
 
     def append(self, slice_item):
@@ -1219,6 +1289,7 @@ class SliceList(AST):
 
 class Slice(AST):
     def __init__(self, lower_bound=None, upper_bound=None, stride=None):
+        super(Slice, self).__init__()
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.stride = stride or YayScalar(1)
@@ -1229,6 +1300,7 @@ import re
 class Call(Proxy, AST):
 
     def __init__(self, primary, args=None, kwargs=None):
+        super(Call, self).__init__()
         self.primary = primary
         primary.parent = self
         self.args = args
@@ -1270,6 +1342,7 @@ class CallCallable(Proxy, AST):
     }
 
     def __init__(self, primary, args=None, kwargs=None):
+        super(CallCallable, self).__init__()
         self.primary = primary
         if not self.primary.identifier in self.allowed:
             raise errors.NoMatching("Could not find '%s'" % self.primary.identifier)
@@ -1292,11 +1365,13 @@ class CallCallable(Proxy, AST):
 
 class ArgumentList(AST):
     def __init__(self, args, kwargs=None):
+        super(ArgumentList, self).__init__()
         self.args = args
         self.kwargs = kwargs
 
 class PositionalArguments(AST):
     def __init__(self, *expressions):
+        super(PositionalArguments, self).__init__()
         self.args = list(expressions)
 
     def append(self, expression):
@@ -1304,6 +1379,7 @@ class PositionalArguments(AST):
 
 class KeywordArguments(AST):
     def __init__(self, *keyword_items):
+        super(KeywordArguments, self).__init__()
         self.kwargs = list(keyword_items)
 
     def append(self, keyword_item):
@@ -1311,11 +1387,13 @@ class KeywordArguments(AST):
 
 class Kwarg(AST):
     def __init__(self, identifier, expression):
+        super(Kwarg, self).__init__()
         self.identifier = identifier
         self.expression = expression
 
 class TargetList(AST):
     def __init__(self, *targets):
+        super(TargetList, self).__init__()
         self.v = list(targets)
 
     def append(self, target):
@@ -1323,6 +1401,7 @@ class TargetList(AST):
 
 class ParameterList(AST):
     def __init__(self, defparameter):
+        super(ParameterList, self).__init__()
         self.parameter_list = [defparameter]
 
     def append(self, defparameter):
@@ -1330,11 +1409,13 @@ class ParameterList(AST):
 
 class DefParameter(AST):
     def __init__(self, parameter, expression=None):
+        super(DefParameter, self).__init__()
         self.parameter = parameter
         self.expression = expression
 
 class Sublist(AST):
     def __init__(self, parameter):
+        super(Sublist, self).__init__()
         self.sublist = [parameter]
 
     def append(self, parameter):
@@ -1342,6 +1423,7 @@ class Sublist(AST):
 
 class YayList(Streamish, AST):
     def __init__(self, *items):
+        super(YayList, self).__init__()
         self.value = list(items)
         for x in self.value:
             x.parent = self
@@ -1377,6 +1459,7 @@ class YayDict(Dictish, AST):
     value is a list of 2-tuples """
 
     def __init__(self, value=None):
+        super(YayDict, self).__init__()
         self.values = {}
         self._ordered_keys = []
         if value:
@@ -1453,6 +1536,7 @@ class YayExtend(Streamish, AST):
 
 class YayScalar(Scalarish, AST):
     def __init__(self, value):
+        super(YayScalar, self).__init__()
         try:
             self.value = int(value)
         except ValueError:
@@ -1464,6 +1548,10 @@ class YayScalar(Scalarish, AST):
     def resolve_once(self):
         return self.value
 
+    def start_listening(self):
+        pass
+
+
 class YayMultilineScalar(Scalarish, AST):
 
     chompers = {
@@ -1474,6 +1562,7 @@ class YayMultilineScalar(Scalarish, AST):
     }
 
     def __init__(self, value, mtype):
+        super(YayMultilineScalar, self).__init__()
         self.__value = value
         self.mtype = mtype
         self.chomper = getattr(self, self.chompers[self.mtype])
@@ -1558,6 +1647,7 @@ class YayMultilineScalar(Scalarish, AST):
 
 class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
+        super(Stanzas, self).__init__()
         self.value = UseMyPredecessorStandin(self)
         for s in stanzas:
             self.append(s)
@@ -1624,6 +1714,7 @@ class StanzasIterator(Streamish, AST):
 
 class Directives(Proxy, AST):
     def __init__(self, *directives):
+        super(Directives, self).__init__()
         self.value = UseMyPredecessorStandin(self)
         for d in directives:
             self.append(d)
@@ -1649,6 +1740,7 @@ class Directives(Proxy, AST):
 class Include(Proxy, AST):
 
     def __init__(self, expr):
+        super(Include, self).__init__()
         self.expr = expr
         expr.parent = self
         self.detector = []
@@ -1717,6 +1809,7 @@ class Include(Proxy, AST):
 class Search(Proxy, AST):
 
     def __init__(self, expr):
+        super(Search, self).__init__()
         self.expr = expr
         expr.parent = self
 
@@ -1726,12 +1819,14 @@ class Search(Proxy, AST):
 class Configure(AST):
 
     def __init__(self, key, node):
+        super(Configure, self).__init__()
         self.key = key
         self.node = node
 
 class Set(Proxy, AST):
 
     def __init__(self, var, expr):
+        super(Set, self).__init__()
         self.var = var
         var.parent = self
 
@@ -1766,6 +1861,7 @@ class If(Proxy, AST):
     """
 
     def __init__(self, condition, on_true, on_false=None):
+        super(If, self).__init__()
         self.condition = condition
         self.condition.parent = self
 
@@ -1828,6 +1924,7 @@ class If(Proxy, AST):
 class Select(Proxy, AST):
 
     def __init__(self, expr, cases):
+        super(Select, self).__init__()
         self.expr = expr
         expr.parent = self
         self.cases = cases
@@ -1854,6 +1951,7 @@ class Select(Proxy, AST):
 
 class CaseList(AST):
     def __init__(self, *cases):
+        super(CaseList, self).__init__()
         self.cases = []
         [self.append(c) for c in cases]
 
@@ -1863,6 +1961,7 @@ class CaseList(AST):
 
 class Case(AST):
     def __init__(self, key, node):
+        super(Case, self).__init__()
         self.key = key
         self.node = node
         node.parent = self
@@ -1870,6 +1969,7 @@ class Case(AST):
 
 class Prototype(AST):
     def __init__(self, node):
+        super(Prototype, self).__init__()
         self.node = node
 
     def construct(self, inner):
@@ -1878,6 +1978,7 @@ class Prototype(AST):
 
 class New(Proxy, AST):
     def __init__(self, target, node):
+        super(New, self).__init__()
         self.target = target
         target.parent = self
         self.node = node
@@ -1901,6 +2002,7 @@ class New(Proxy, AST):
 class Ephemeral(Proxy, AST):
 
     def __init__(self, target, inner):
+        super(Ephemeral, self).__init__()
         self.target = target
         self.inner = inner
 
@@ -1927,6 +2029,7 @@ class Self(Proxy, AST):
 class Macro(AST):
 
     def __init__(self, node):
+        super(Macro, self).__init__()
         self.node = node
 
     def call(self, params):
@@ -1935,6 +2038,7 @@ class Macro(AST):
 
 class CallDirective(Proxy, AST):
     def __init__(self, target, node):
+        super(CallDirective, self).__init__()
         self.target = target
         target.parent = self
         self.node = node
@@ -1983,6 +2087,7 @@ class For(Streamish, AST):
 class Template(Proxy, AST):
 
     def __init__(self, value):
+        super(Template, self).__init__()
         self.value = value
         value.parent = self
 
@@ -1993,6 +2098,7 @@ class Template(Proxy, AST):
 class Context(Proxy, AST):
 
     def __init__(self, value, context):
+        super(Context, self).__init__()
         self.value = value
         self.value.parent = self
 
@@ -2041,46 +2147,55 @@ class ListFor(Streamish, AST):
 
 class ListIf(AST):
     def __init__(self, expression, iterator=None):
+        super(ListIf, self).__init__()
         self.expression = expression
         self.iterator = iterator
 
 class Comprehension(AST):
     def __init__(self, expression, comp_for):
+        super(Comprehension, self).__init__()
         self.expression = expression
         self.comp_for = comp_for
 
 class CompFor(AST):
     def __init__(self, targets, test, iterator=None):
+        super(CompFor, self).__init__()
         self.targets = targets
         self.test = test
         self.iterator = iterator
 
 class CompIf(AST):
     def __init__(self, expression, iterator=None):
+        super(CompIf, self).__init__()
         self.expression = expression
         self.iterator = iterator
 
 class GeneratorExpression(AST):
     def __init__(self, expression, comp_for):
+        super(GeneratorExpression, self).__init__()
         self.expression = expression
         self.comp_for = comp_for
 
 class DictComprehension(AST):
     def __init__(self, key, value, comp_for):
+        super(DictComprehension, self).__init__()
         self.key = key
         self.value = value
         self.comp_for = comp_for
 
 class SetDisplay(AST):
     def __init__(self, v):
+        super(SetDisplay, self).__init__()
         self.v = v
 
 class StringConversion(AST):
     def __init__(self, v):
+        super(StringConversion, self).__init__()
         self.v = v
 
 class LambdaForm(AST):
     def __init__(self, expression, params=None):
+        super(LambdaForm, self).__init__()
         self.expression = expression
         self.params = params
 
@@ -2088,6 +2203,7 @@ class LambdaForm(AST):
 class Comment(Proxy, AST):
 
     def __init__(self, v):
+        super(Comment, self).__init__()
         self.v = v
 
     def expand_once(self):
@@ -2097,6 +2213,7 @@ class Comment(Proxy, AST):
 class PythonClassFactory(AST):
 
     def __init__(self, inner):
+        super(PythonClassFactory, self).__init__()
         self.inner = inner
 
     def construct(self, inner):
@@ -2113,6 +2230,7 @@ class PythonClass(Proxy, AST):
     """
 
     def __init__(self, params):
+        super(PythonClass, self).__init__()
         # Dictionary to hold data created/fetched by this class
         self.metadata = {}
 
@@ -2169,6 +2287,7 @@ class PythonDict(Dictish, AST):
     anchor = None
 
     def __init__(self, dict):
+        super(PythonDict, self).__init__()
         self.dict = dict
         #FIXME: We should either have a fake anchor or generate one by inspecting the frame
         self.anchor = None
