@@ -21,6 +21,7 @@ from yay import ast
 class Config(ast.Root):
 
     def __init__(self, special_term='yay', searchpath=None, config=None):
+        super(Config, self).__init__()
         self.special_term = special_term
         self.builtins = {}
         self.node = ast.NoPredecessorStandin()

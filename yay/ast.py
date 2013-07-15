@@ -330,6 +330,7 @@ class AST(object):
         self.subscribers.append(cbl)
 
     def changed(self):
+        print type(self), id(self)
         for subscriber in self.subscribers:
             subscriber()
 
@@ -480,6 +481,12 @@ class Dictish(object):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
 
     def start_listening(self):
+        try:
+            self.predecessor.start_listening()
+            self.predecessor.subscribe(self.changed)
+        except errors.NoPredecessor:
+            pass
+
         for key in self.keys():
             c = self.get_key(key)
             c.start_listening()
@@ -710,6 +717,9 @@ class PythonicWrapper(Pythonic, Proxy, AST):
 
     def get_labels(self):
         return self.expand().get_labels()
+
+    def start_listening(self):
+        self.inner.start_listening()
 
     def subscribe(self, cbl):
         self.inner.subscribe(cbl)
@@ -1202,6 +1212,9 @@ class NoPredecessorStandin(Proxy, AST):
 
     def expand(self):
         raise errors.NoPredecessor("Node has no predecessor")
+
+    def start_listening(self):
+        pass
 
 
 class Subscription(Proxy, AST):
@@ -2223,6 +2236,31 @@ class PythonClassFactory(AST):
         return self.inner(inner)
 
 
+class PythonClassAttributes(Dictish, AST):
+
+    def __init__(self):
+        super(PythonClassAttributes, self).__init__()
+        self.attributes = {}
+
+    def set(self, key, value):
+        if not key in self.attributes:
+            attr = self.attributes[key] = YayScalar(value)
+            attr.parent = self
+            attr.changed()
+        else:
+            attr = self.attributes[key]
+            if attr.value != value:
+                attr.value = value
+                attr.changed()
+
+    def get_key(self, key):
+        return self.attributes[key]
+
+    def keys(self, anchor=None):
+        for key in self.attributes.keys():
+            yield key
+
+
 class PythonClass(Proxy, AST):
 
     """
@@ -2231,16 +2269,13 @@ class PythonClass(Proxy, AST):
 
     def __init__(self, params):
         super(PythonClass, self).__init__()
-        # Dictionary to hold data created/fetched by this class
-        self.metadata = {}
-
         # Object to exposed metadata exported by this class to yay
-        self.class_provided = PythonDict(self.metadata)
-        self.class_provided.parent = self
+        self.members = PythonClassAttributes()
+        self.members.parent = self
 
         # Node containing metadata provided by the user
         params.parent = self
-        params.predecessor = self.class_provided
+        params.predecessor = self.members
         params.parent = self
 
         self.params = PythonicWrapper(params)
@@ -2257,7 +2292,7 @@ class PythonClass(Proxy, AST):
             if self.stale:
                 self.apply()
                 self.stale = False
-            return self.class_provided.get_key(key)
+            return self.members.get_key(key)
 
     def expand_once(self):
         if self.stale:
@@ -2266,6 +2301,14 @@ class PythonClass(Proxy, AST):
 
         return self.params.expand()
 
+    def changed(self):
+        self.apply()
+        super(PythonClass, self).changed()
+
+    def start_listening(self):
+        super(PythonClass, self).start_listening()
+        self.members.start_listening()
+        self.members.subscribe(self.changed)
 
 class PythonIterable(Streamish, AST):
 
