@@ -330,7 +330,6 @@ class AST(object):
         self.subscribers.append(cbl)
 
     def changed(self):
-        print type(self), id(self)
         for subscriber in self.subscribers:
             subscriber()
 
