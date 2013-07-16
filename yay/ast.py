@@ -481,12 +481,6 @@ class Dictish(object):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
 
     def start_listening(self):
-        try:
-            self.predecessor.start_listening()
-            self.predecessor.subscribe(self.changed)
-        except errors.NoPredecessor:
-            pass
-
         for key in self.keys():
             c = self.get_key(key)
             c.start_listening()
