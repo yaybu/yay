@@ -1199,7 +1199,7 @@ class TestPythonClassMock(ast.PythonClass):
         assert self.params['foo'].as_string() == 'bar'
         assert self.params.foo.as_string() == 'bar'
 
-        self.metadata['hello'] = 'world'
+        self.members.set('hello', 'world')
 
 
 class TestPythonClass(TestCase):
