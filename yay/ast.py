@@ -387,7 +387,18 @@ class Scalarish(object):
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         """ Returns a string that might includes obfuscation where secrets are used """
-        return self.as_string(anchor)
+        parts = []
+        try:
+            for part in self.get_string_parts():
+                if "secret" in part.get_labels():
+                    parts.append("*****")
+                else:
+                    parts.append(part.as_string())
+        except errors.NoMatching:
+            if default != _DEFAULT:
+                return default
+            raise
+        return ''.join(parts)
 
     def as_string(self, default=_DEFAULT, anchor=None):
         resolved = self.resolve()
@@ -396,6 +407,9 @@ class Scalarish(object):
         if not isinstance(resolved, basestring):
             raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
         return resolved
+
+    def get_string_parts(self):
+        yield self
 
     def get_type(self):
         return "scalarish"
@@ -956,6 +970,12 @@ class YayMerged(Expr):
 
     def resolve_once(self):
         return self.lhs.as_string() + self.rhs.as_string()
+
+    def get_string_parts(self):
+        for part in self.lhs.get_string_parts():
+            yield part
+        for part in self.rhs.get_string_parts():
+            yield part
 
 class Subtract(Expr):
     op = operator.sub
