@@ -1,8 +1,16 @@
 language: python
+python:
+  - "2.6"
+  - "2.7"
 
 install:
-  - python bootstrap.py
-  - ./bin/buildout
+  - pip install unittest2 mock nose2
+  - python setup.py develop
 
-script: ./bin/test
+script: nose2
+
+notifications:
+    irc: "irc.oftc.net#yaybu"
+    on_success: change
+    on_failure: always
 

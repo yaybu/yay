@@ -1,5 +1,10 @@
+==============
 yay ain't YAML
 ==============
+
+.. image:: https://travis-ci.org/isotoma/yay.png
+   :target: https://travis-ci.org/#!/isotoma/yay
+
 
 Yay is a non-strict lazily evaluated configuration language. It combines
 YAML-like data declarations with lazy python expressions.
@@ -18,7 +23,7 @@ An example yay file for configuring a load balancer might be::
 
 
 Using yay
----------
+=========
 
 To load yay config from a string you can use the 'load' function::
 
