@@ -2001,6 +2001,18 @@ class TestRegression(TestCase):
             """)
 
 
+class TestLabels(TestCase):
+    def test_labels(self):
+        res = self._parse("""
+           resources:
+            - Link:
+                name: /etc/toremovelink
+                policy: remove
+            """)
+        name = res.get_key("resources").get_key(0).get_key("Link").get_key("name")
+        self.assertEqual(name.get_labels(), set([]))
+
+
 class TestOpeners(unittest2.TestCase):
     pass
 

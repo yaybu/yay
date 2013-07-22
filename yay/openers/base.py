@@ -77,6 +77,10 @@ class FileOpener(IOpener):
             def len(self):
                 return int(os.fstat(self.fp.fileno())[6])
 
+            @property
+            def labels(self):
+                return ()
+
         fp = open(uri, "rb")
         new_etag = etag_stream(fp)
 
@@ -145,6 +149,10 @@ class UrlOpener(IOpener):
             def len(self):
                 return int(self.fp.info()['content-length'])
 
+            @property
+            def labels(self):
+                return ()
+
             uri = uri
 
         return Resource(fp)
@@ -180,6 +188,7 @@ class MemOpener(IOpener):
 
         fp = StringIO.StringIO(data)
         fp.len = len(data)
+        fp.labels = ()
 
         new_etag = etag_stream(StringIO.StringIO(data))
         if etag and new_etag == etag:
