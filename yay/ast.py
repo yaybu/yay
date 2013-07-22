@@ -592,6 +592,9 @@ class Proxy(object):
     def keys(self, anchor=None):
         return self.expand().keys(anchor or self.anchor)
 
+    def get_string_parts(self):
+        return self.expand().get_string_parts()
+
     def get_iterable(self, anchor=None):
         return self.expand().get_iterable(anchor or self.anchor)
 
@@ -606,9 +609,12 @@ class Proxy(object):
 
     def get_local_labels(self):
         labels = super(Proxy, self).get_local_labels()
-        expanded = self.expand()
-        if expanded != self:
-            labels.update(expanded.get_local_labels())
+        try:
+            expanded = self.expand()
+            if expanded != self:
+                labels.update(expanded.get_local_labels())
+        except errors.NoPredecessor:
+            pass
         return labels
 
     def expand_once(self):
