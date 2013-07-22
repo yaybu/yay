@@ -388,9 +388,13 @@ class Scalarish(object):
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         """ Returns a string that might includes obfuscation where secrets are used """
         parts = []
+
+        if "secret" in self.parent.get_labels():
+            return "*****"
+
         try:
             for part in self.get_string_parts():
-                if "secret" in part.get_labels():
+                if "secret" in part.get_local_labels():
                     parts.append("*****")
                 else:
                     parts.append(part.as_string())
@@ -593,7 +597,7 @@ class Proxy(object):
         return self.expand().keys(anchor or self.anchor)
 
     def get_string_parts(self):
-        return self.expand().get_string_parts()
+        yield self
 
     def get_iterable(self, anchor=None):
         return self.expand().get_iterable(anchor or self.anchor)
@@ -781,6 +785,9 @@ class Root(Pythonic, Proxy, AST):
     def expand(self):
         return self.node.expand()
 
+    def get_local_labels(self):
+        return ()
+
     def parse(self, path):
         stream = self.openers.open(path)
         from yay import parser
@@ -819,6 +826,13 @@ class Identifier(Proxy, AST):
             pass
 
         raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
+
+    def get_local_labels(self):
+        return self.expand().get_labels()
+
+    def get_string_parts(self):
+        yield self
+
 
 class Literal(Scalarish, AST):
     def __init__(self, literal):
@@ -1175,6 +1189,12 @@ class AttributeRef(Proxy, AST):
             return self.primary.expand().get_key(self.identifier).expand()
         except KeyError:
             raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
+
+    def get_local_labels(self):
+        return self.expand().get_labels()
+
+    def get_string_parts(self):
+        yield self
 
 
 class LazyPredecessor(Proxy, AST):
@@ -2126,6 +2146,11 @@ class Template(Proxy, AST):
     def expand_once(self):
         return self.value.expand()
 
+    def get_local_labels(self):
+        return self.expand().get_labels()
+
+    def get_string_parts(self):
+        return self.value.get_string_parts()
 
 class Context(Proxy, AST):
 

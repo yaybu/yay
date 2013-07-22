@@ -16,6 +16,7 @@ from yay.openers import Openers
 from yay import errors
 from yay import parser
 from yay import ast
+import StringIO
 
 
 class Config(ast.Root):
@@ -34,6 +35,9 @@ class Config(ast.Root):
         __context__ = "Loading URI %s" % uri
         fp = self.openers.open(uri)
         return self.load(fp, uri, getattr(fp, "labels", ()))
+
+    def loads(self, data, name="<Unknown>", labels=()):
+        return self.load(StringIO.StringIO(data), name, labels)
 
     def load(self, stream, name="<Unknown>", labels=()):
         __context__ = "Loading stream %s. labels=%r." % (name, labels)

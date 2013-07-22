@@ -2023,6 +2023,28 @@ class TestLabels(TestCase):
         self.assertEqual(name.get_labels(), set(["secret"]))
         self.assertEqual(name.as_safe_string(), "*****")
 
+    def test_labels_secret_then_not_secret(self):
+        res = self._parse("""
+            name: tommy
+            """, labels=("secret", ))
+        res.loads("""
+            foo: hello, {{ name }}
+            """)
+        foo = res.get_key("foo")
+        self.assertEqual(foo.get_labels(), set(["secret"]))
+        self.assertEqual(foo.as_safe_string(), "hello, *****")
+
+    def test_labels_not_secret_then_secret(self):
+        res = self._parse("""
+            foo: hello, {{ name }}
+            """)
+        res.loads("""
+            name: tommy
+            """, labels=("secret", ))
+        foo = res.get_key("foo")
+        self.assertEqual(foo.get_labels(), set(["secret"]))
+        self.assertEqual(foo.as_safe_string(), "hello, *****")
+
 
 class TestOpeners(unittest2.TestCase):
     pass
