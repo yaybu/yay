@@ -2012,6 +2012,17 @@ class TestLabels(TestCase):
         name = res.get_key("resources").get_key(0).get_key("Link").get_key("name")
         self.assertEqual(name.get_labels(), set([]))
 
+    def test_labels_secret(self):
+        res = self._parse("""
+           resources:
+            - Link:
+                name: /etc/toremovelink
+                policy: remove
+            """, labels=("secret", ))
+        name = res.get_key("resources").get_key(0).get_key("Link").get_key("name")
+        self.assertEqual(name.get_labels(), set(["secret"]))
+        self.assertEqual(name.as_safe_string(), "*****")
+
 
 class TestOpeners(unittest2.TestCase):
     pass
