@@ -1215,6 +1215,7 @@ class LazyPredecessor(Proxy, AST):
             raise KeyError(key)
         return predecessor.get_key(key)
 
+    @cached
     def expand_once(self):
         if self.node.predecessor:
             parent_pred = self.node.predecessor.expand()
@@ -1222,7 +1223,7 @@ class LazyPredecessor(Proxy, AST):
                 pred = parent_pred.get_key(self.identifier)
             except KeyError:
                 raise errors.NoPredecessor
-            return pred.expand()
+            return True, pred.expand()
         raise errors.NoPredecessor
 
 class UseMyPredecessorStandin(Proxy, AST):
