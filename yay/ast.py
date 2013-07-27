@@ -1734,9 +1734,10 @@ class Stanzas(Proxy, AST):
 
 class StanzasIterator(Streamish, AST):
 
-    def __init__(self, inner):
+    def __init__(self, inner, follow_predecessor=True):
         super(StanzasIterator, self).__init__()
         self.inner = inner
+        self.follow_predecessor = follow_predecessor
 
     def _get_source_iterator(self, anchor=None):
         stack = []
@@ -1747,6 +1748,9 @@ class StanzasIterator(Streamish, AST):
         stack.insert(0, cur)
 
         assert isinstance(stack[0], UseMyPredecessorStandin)
+
+        if not self.follow_predecessor:
+            stack.pop(0)
 
         while stack:
             try:
@@ -1787,7 +1791,15 @@ class Directives(Proxy, AST):
             p = p.predecessor
         raise errors.NoMatching("Could not find '%s'" % key)
 
+    def get_type(self):
+        return self.value.get_type()
+
     def expand(self):
+        if self.get_type() == "streamish":
+            i = StanzasIterator(self, False).expand()
+            i.anchor = self.anchor
+            i.parent = self
+            return i
         return self.value.expand()
 
 class Include(Proxy, AST):

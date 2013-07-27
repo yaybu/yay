@@ -2046,6 +2046,21 @@ class TestLabels(TestCase):
         self.assertEqual(foo.as_safe_string(), "hello, *****")
 
 
+class TestStanzas(unittest2.TestCase):
+
+    def test_lots_of_fors(self):
+        res = resolve("""
+            resources:
+              - a
+              for i in range(1):
+                  - b
+              for j in range(1):
+                  - c
+              - d
+            """)
+        self.assertEqual(res['resources'], ['a', 'b', 'c', 'd'])
+
+
 class TestOpeners(unittest2.TestCase):
     pass
 
