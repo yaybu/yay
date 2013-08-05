@@ -669,11 +669,12 @@ class Tripwire(Proxy, AST):
 
     def get_context(self, key):
         p = self.node
-        while p and not isinstance(p, (NoPredecessorStandin, Include, Tripwire)):
+        while p and not isinstance(p, (NoPredecessorStandin, )):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                pass
+                if isinstance(p, (Include, Tripwire)):
+                    break
             p = p.predecessor
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
@@ -1829,11 +1830,12 @@ class Include(Proxy, AST):
             raise errors.NoMatching("Could not find '%s'" % key)
 
         p = expanded
-        while p and not isinstance(p, (NoPredecessorStandin, Include, Tripwire)):
+        while p and not isinstance(p, (NoPredecessorStandin, )):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                pass
+                if isinstance(p, (Include, Tripwire, )):
+                    break
             p = p.predecessor
 
         raise errors.NoMatching("Could not find '%s'" % key)

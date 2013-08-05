@@ -155,7 +155,6 @@ class TestResolveParadoxes(TestCase):
 
 class TestSearchPathParadoxes(TestCase):
 
-    @unittest2.expectedFailure
     def test_searchpath_cant_change(self):
         self._add("mem://foodir/example2.yay", """
             foo: bar
