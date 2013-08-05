@@ -707,8 +707,9 @@ class Pythonic(object):
     def __getattr__(self, key):
         ref = AttributeRef(self, key)
         ref.anchor = None
-        ref.parent = None
-        return PythonicWrapper(ref)
+        ref.parent = self
+        p = PythonicWrapper(ref)
+        return p
 
     def __getitem__(self, key):
         if isinstance(key, slice):
@@ -716,18 +717,28 @@ class Pythonic(object):
         else:
             ref = Subscription(self, YayScalar(key))
         ref.anchor = None
-        ref.parent = None
+        ref.parent = self
         return PythonicWrapper(ref)
 
     def __iter__(self):
         for val in self.get_iterable():
-            yield PythonicWrapper(val)
+            p = PythonicWrapper(val)
+            yield p
 
 
 class PythonicWrapper(Pythonic, Proxy, AST):
+
     def __init__(self, inner):
         super(PythonicWrapper, self).__init__()
         self.inner = inner
+
+    @property
+    def parent(self):
+        return self.inner.parent
+
+    @parent.setter
+    def parent(self, val):
+        pass
 
     def expand_once(self):
         return self.inner.expand()
