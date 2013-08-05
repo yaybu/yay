@@ -669,7 +669,7 @@ class Tripwire(Proxy, AST):
 
     def get_context(self, key):
         p = self.node
-        while p and not isinstance(p, NoPredecessorStandin):
+        while p and not isinstance(p, (NoPredecessorStandin, Include, Tripwire)):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
@@ -1818,7 +1818,7 @@ class Include(Proxy, AST):
             raise errors.NoMatching("Could not find '%s'" % key)
 
         p = expanded
-        while p and not isinstance(p, NoPredecessorStandin):
+        while p and not isinstance(p, (NoPredecessorStandin, Include, Tripwire)):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
