@@ -320,10 +320,17 @@ class SearchpathFromGraph(object):
     def __iter__(self):
         if not self._iterating:
             self._iterating = True
-            for val in self._iterate_over_expression():
-                yield val
+            gen = self._iterate_over_expression()
             self._iterating = False
-            return
+            try:
+                while True:
+                    self._iterating = True
+                    val = gen.next()
+                    self._iterating = False
+                    yield val
+            except StopIteration:
+                self._iterating = False
+                return
         for val in self._previous:
             yield val
 
