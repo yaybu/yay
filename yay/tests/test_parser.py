@@ -521,16 +521,6 @@ class TestParser(unittest2.TestCase):
                 ]),
         ))
 
-    def test_configure(self):
-        res = parse("""
-        configure x:
-            y: z
-        """)
-        self.assertEqual(res, Configure(
-            'x', YayDict([
-                ('y', YayScalar('z')),
-                ])))
-
     def test_extend_1(self):
         res = parse("""
         extend x:

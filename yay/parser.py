@@ -1085,7 +1085,6 @@ class Parser(object):
         stanza : yaydict
                | yaylist
                | extend
-               | configure
                | directives
                | directive
         '''
@@ -1125,15 +1124,6 @@ class Parser(object):
         p[0] = ast.YayDict([(p[2], extend)])
         self.anchor(p, 1)
         extend.anchor = p[0].anchor
-
-    def p_configure(self, p):
-        '''
-        configure : CONFIGURE yaydict
-        '''
-
-        assert len(p[2].values) == 1
-        key, value = p[2].values.items()[0]
-        p[0] = ast.Configure(key, value)
 
     def p_scalar_emptydict(self, p):
         '''

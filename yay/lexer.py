@@ -82,7 +82,6 @@ class Lexer(object):
         'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
-        'CONFIGURE',
         'DEDENT',
         'EMPTYDICT',
         'EMPTYLIST',
@@ -223,7 +222,6 @@ class Lexer(object):
         'search': 'SEARCH',
         'set': 'SET',
         'extend': 'EXTEND',
-        'configure': 'CONFIGURE',
         'select': 'SELECT',
         'new': 'NEW',
         'as': 'AS',
@@ -231,7 +229,6 @@ class Lexer(object):
     }
 
     t_INITIAL_EXTEND = "extend"
-    t_INITIAL_CONFIGURE = "configure"
 
     def t_INITIAL_HYPHEN(self, t):
         """-[ \t]*"""
@@ -242,7 +239,7 @@ class Lexer(object):
     def t_INITIAL_VALUE(self, t):
         """([^:\n ]|:(?!\s))+"""
         t.type = self.reserved.get(t.value, 'VALUE')
-        if t.value in ('configure', 'extend'):
+        if t.value in ('extend', ):
             self.lexer.begin("INITIAL")
         elif t.type == 'VALUE':
             self.lexer.begin('VALUE')
