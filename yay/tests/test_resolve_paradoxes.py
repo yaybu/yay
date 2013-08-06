@@ -172,7 +172,6 @@ class TestSearchPathParadoxes(TestCase):
             include "example2.yay"
             """)
 
-    @unittest2.expectedFailure
     def test_searchpath_cant_change_2(self):
         self._add("mem://foodir/example2.yay", """
             foo: bar
@@ -186,6 +185,6 @@ class TestSearchPathParadoxes(TestCase):
             yay:
                 searchpath:
                   - {{ 'mem://bardir/' }}
-            include "example2.yay"
             include "example.yay"
+            include "example2.yay"
             """)
