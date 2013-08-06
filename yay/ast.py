@@ -41,6 +41,7 @@ class AST(object):
     _predecessor = None
     _resolving = False
     _expanding = False
+    _get_context_checks_predecessors = False
 
     def __init__(self):
         self.subscribers = []
@@ -660,6 +661,8 @@ class Subgraph(Proxy, AST):
 
 class Tripwire(Proxy, AST):
 
+    _get_context_checks_predecessors = True
+
     def __init__(self, node, expression, expected):
         super(Tripwire, self).__init__()
         self.node = node
@@ -669,13 +672,15 @@ class Tripwire(Proxy, AST):
 
     def get_context(self, key):
         p = self.node
+
         while p and not isinstance(p, (NoPredecessorStandin, )):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                if isinstance(p, (Include, Tripwire)):
+                if p._get_context_checks_predecessors:
                     break
             p = p.predecessor
+
         raise errors.NoMatching("Could not find a macro called '%s'" % key)
 
     def expand(self):
@@ -758,6 +763,9 @@ class Root(Pythonic, Proxy, AST):
     """ The root of the document
     FIXME: This needs thinking about some more
     """
+
+    _get_context_checks_predecessors = True
+
     def __init__(self, node=None):
         super(Root, self).__init__()
         self.openers = Openers(searchpath=[])
@@ -787,8 +795,11 @@ class Root(Pythonic, Proxy, AST):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                pass
+                if p._get_context_checks_predecessors:
+                    break
+
             p = p.predecessor
+
         try:
             return self.node.get_key(key)
         except KeyError:
@@ -1711,6 +1722,9 @@ class YayMultilineScalar(Scalarish, AST):
 
 
 class Stanzas(Proxy, AST):
+
+    _get_context_checks_predecessors = True
+
     def __init__(self, *stanzas):
         super(Stanzas, self).__init__()
         self.value = UseMyPredecessorStandin(self)
@@ -1724,12 +1738,15 @@ class Stanzas(Proxy, AST):
 
     def get_context(self, key):
         p = self.value
-        while p and p != self.predecessor:
+        while p and not isinstance(p, (NoPredecessorStandin, )):
+        # while p and p != self.predecessor:
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                pass
+                if p._get_context_checks_predecessors:
+                    break
             p = p.predecessor
+
         raise errors.NoMatching("Could not find '%s'" % key)
 
     def get_type(self):
@@ -1782,6 +1799,9 @@ class StanzasIterator(Streamish, AST):
 
 
 class Directives(Proxy, AST):
+
+    _get_context_checks_predecessors = True
+
     def __init__(self, *directives):
         super(Directives, self).__init__()
         self.value = UseMyPredecessorStandin(self)
@@ -1799,8 +1819,10 @@ class Directives(Proxy, AST):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                pass
+                if p._get_context_checks_predecessors:
+                    break
             p = p.predecessor
+
         raise errors.NoMatching("Could not find '%s'" % key)
 
     def get_type(self):
@@ -1815,6 +1837,8 @@ class Directives(Proxy, AST):
         return self.value.expand()
 
 class Include(Proxy, AST):
+
+    _get_context_checks_predecessors = True
 
     def __init__(self, expr):
         super(Include, self).__init__()
@@ -1834,7 +1858,7 @@ class Include(Proxy, AST):
             try:
                 return p.get_context(key)
             except errors.NoMatching:
-                if isinstance(p, (Include, Tripwire, )):
+                if p._get_context_checks_predecessors:
                     break
             p = p.predecessor
 
