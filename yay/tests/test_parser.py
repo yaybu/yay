@@ -894,8 +894,8 @@ class TestParser(unittest2.TestCase):
                 For(Identifier('i'),
                     Identifier('j'),
                     YayList(
-                        Template(Identifier('i'))
-                    )
+                        Identifier('i')
+                        )
                 ),
                 YayList(
                     YayScalar('c'),
@@ -923,7 +923,7 @@ class TestParser(unittest2.TestCase):
                           For(Identifier('i'),
                               Identifier('j'),
                               YayList(
-                                  Template(Identifier('i'))
+                                  Identifier('i')
                               )
                           ),
                           YayList(
