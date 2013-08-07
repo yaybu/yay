@@ -760,6 +760,26 @@ class PythonicWrapper(Pythonic, Proxy, AST):
     def subscribe(self, cbl):
         self.inner.subscribe(cbl)
 
+    def get_path(self):
+        if not hasattr(self, "parent"):
+            return "<unparented>"
+        elif isinstance(self.parent, Root):
+            path = "<root>"
+        elif isinstance(self.parent, PythonicWrapper):
+            path = self.parent.get_path()
+        else:
+            path = "<unknown>"
+
+        if isinstance(self.inner, AttributeRef):
+            return path + "/" + self.inner.identifier
+        elif isinstance(self.inner, Subscription):
+            return path + "[%r]" % self.inner.expression_list[0].value
+
+        return "<unknown>"
+
+    def __repr__(self):
+        return self.get_path()
+
 
 class Root(Pythonic, Proxy, AST):
     """ The root of the document
