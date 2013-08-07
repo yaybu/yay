@@ -833,11 +833,27 @@ class Root(Pythonic, Proxy, AST):
     def get_local_labels(self):
         return ()
 
-    def parse(self, path):
-        stream = self.openers.open(path)
+    def load_uri(self, uri):
+        fp = self.openers.open(uri)
+        return self.load(fp, uri, getattr(fp, "labels", ()))
+
+    def loads(self, data, name="<Unknown>", labels=()):
+        return self.load(StringIO.StringIO(data), name, labels)
+
+    def load(self, stream, name="<Unknown>", labels=()):
+        __context__ = "Loading stream %s. labels=%r." % (name, labels)
         from yay import parser
         p = parser.Parser()
-        return p.parse(stream.read(), source=path)
+        node = p.parse(stream.read(), source=name)
+        node.parent = self
+        node.labels = labels
+        mda = node
+        while mda.predecessor and not isinstance(mda.predecessor, NoPredecessorStandin):
+            mda = mda.predecessor
+        mda.predecessor = self.node
+        self.node = node
+        return node
+
 
 class Identifier(Proxy, AST):
     def __init__(self, identifier):
@@ -1916,7 +1932,7 @@ class Include(Proxy, AST):
             pass
 
         expr = self.expr.resolve()
-        expanded = self.root.parse(expr)
+        expanded = self.root.load_uri(expr)
 
         self.expanding = False
 

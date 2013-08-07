@@ -31,26 +31,6 @@ class Config(ast.Root):
     def setup_openers(self, searchpath):
         self.openers = Openers(searchpath=searchpath)
 
-    def load_uri(self, uri):
-        __context__ = "Loading URI %s" % uri
-        fp = self.openers.open(uri)
-        return self.load(fp, uri, getattr(fp, "labels", ()))
-
-    def loads(self, data, name="<Unknown>", labels=()):
-        return self.load(StringIO.StringIO(data), name, labels)
-
-    def load(self, stream, name="<Unknown>", labels=()):
-        __context__ = "Loading stream %s. labels=%r." % (name, labels)
-        p = parser.Parser()
-        node = p.parse(stream.read(), source=name)
-        node.parent = self
-        node.labels = labels
-        mda = node
-        while mda.predecessor and not isinstance(mda.predecessor, ast.NoPredecessorStandin):
-            mda = mda.predecessor
-        mda.predecessor = self.node
-        self.node = node
-
     def add(self, data):
         if not isinstance(data, dict):
             raise errors.ProgrammingError("You must pass a dictionary to Config.add")
