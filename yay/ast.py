@@ -2261,22 +2261,6 @@ class For(Streamish, AST):
                 yield node
 
 
-class Template(Proxy, AST):
-
-    def __init__(self, value):
-        super(Template, self).__init__()
-        self.value = value
-        value.parent = self
-
-    def expand_once(self):
-        return self.value.expand()
-
-    def get_local_labels(self):
-        return self.expand().get_local_labels()
-
-    def get_string_parts(self):
-        return self.value.get_string_parts()
-
 class Context(Proxy, AST):
 
     def __init__(self, value, context):
