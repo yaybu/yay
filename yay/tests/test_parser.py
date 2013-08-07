@@ -386,7 +386,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', Template(Identifier('a'))),
+            ('c', Identifier('a')),
         ]))
 
     def test_template_2(self):
@@ -396,7 +396,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', YayMerged(YayScalar('hello '), Template(Identifier('a')))),
+            ('c', YayMerged(YayScalar('hello '), Identifier('a'))),
         ]))
 
     def test_template_3(self):
@@ -406,7 +406,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', YayMerged(Template(Identifier('a')), YayScalar(' hello'))),
+            ('c', YayMerged(Identifier('a'), YayScalar(' hello'))),
         ]))
 
     def test_template_4(self):
@@ -416,7 +416,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', YayMerged(YayScalar('woo '), YayMerged(Template(Identifier('a')), YayScalar(' hello')))),
+            ('c', YayMerged(YayScalar('woo '), YayMerged(Identifier('a'), YayScalar(' hello')))),
         ]))
 
     def test_template_5(self):
@@ -426,7 +426,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', Template(Add(Add(Literal('this '), Identifier('a')), Literal(" that"))))
+            ('c', Add(Add(Literal('this '), Identifier('a')), Literal(" that")))
         ]))
 
     def test_template_6(self):
@@ -436,7 +436,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', Template(Add(Literal(1.0), Literal(2))))
+            ('c', Add(Literal(1.0), Literal(2)))
         ]))
 
     def test_list_of_complex_dicts(self):
@@ -515,7 +515,7 @@ class TestParser(unittest2.TestCase):
                 ('bar', Directives(
                 Set(Identifier('a'), Literal(2)),
                 For(Identifier('x'), Call(Identifier('range'), [Identifier('a')])
-                              , YayList(Template(Identifier('x'))))
+                              , YayList(Identifier('x')))
                 )),
                 ('quux', YayList(YayScalar('a'), YayScalar('b')))
                 ]),
@@ -558,7 +558,7 @@ class TestParser(unittest2.TestCase):
         extend x: {{a}}
         """)
         self.assertEqual(res, YayDict([
-            ('x', YayExtend(Template(Identifier('a')))),
+            ('x', YayExtend(Identifier('a'))),
             ]))
 
     def test_list_comprehension_no_conditional(self):

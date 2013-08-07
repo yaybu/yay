@@ -32,7 +32,7 @@ class TestObservation(unittest2.TestCase):
             """)
         trap = mock.Mock()
         g.get_key("example").subscribe(trap)
-        g.get_key("example").value.lhs.changed()
+        g.get_key("example").lhs.changed()
         trap.assert_called_with()
 
     def test_identifier(self):
