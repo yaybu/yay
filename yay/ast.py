@@ -327,6 +327,12 @@ class AST(object):
         labels.update(root.get_local_labels())
         return labels
 
+    def is_secret(self):
+        return "secret" in self.get_labels()
+
+    def contains_secrets(self):
+        return self.is_secret()
+
     def subscribe(self, cbl):
         self.subscribers.append(cbl)
 
@@ -478,6 +484,12 @@ class Streamish(object):
     def resolve_once(self):
         return [x.resolve() for x in self.get_iterable()]
 
+    def contains_secrets(self):
+        for node in self.get_iterable():
+            if node.contains_secrets():
+                return True
+        return self.is_secret()
+
     def start_listening(self):
         for child in self.get_iterable():
             child.start_listening()
@@ -499,6 +511,12 @@ class Dictish(object):
 
     def resolve_once(self):
         return dict((key, self.get_key(key).resolve()) for key in self.keys())
+
+    def contains_secrets(self):
+        for key in self.keys():
+            if self.get_key(key).contains_secrets():
+                return True
+        return self.is_secret()
 
     def start_listening(self):
         for key in self.keys():
@@ -629,6 +647,12 @@ class Proxy(object):
 
     def resolve_once(self):
         return self.expand().resolve()
+
+    def contains_secrets(self):
+        return self.expand().contains_secrets()
+
+    def is_secret(self):
+        return self.expand().is_secret()
 
     def start_listening(self):
         #FIXME: It is quite likely (certain, in fact) that we won't be able to
@@ -838,6 +862,7 @@ class Root(Pythonic, Proxy, AST):
         return self.load(fp, uri, getattr(fp, "labels", ()))
 
     def loads(self, data, name="<Unknown>", labels=()):
+        import StringIO
         return self.load(StringIO.StringIO(data), name, labels)
 
     def load(self, stream, name="<Unknown>", labels=()):
@@ -1787,6 +1812,12 @@ class Stanzas(Proxy, AST):
 
         raise errors.NoMatching("Could not find '%s'" % key)
 
+    def get_local_labels(self):
+        labels = set()
+        if "labels" in self.__dict__:
+            labels.update(self.__dict__['labels'])
+        return labels
+
     def get_type(self):
         return self.value.get_type()
 
@@ -1862,6 +1893,12 @@ class Directives(Proxy, AST):
             p = p.predecessor
 
         raise errors.NoMatching("Could not find '%s'" % key)
+
+    def get_local_labels(self):
+        labels = set()
+        if "labels" in self.__dict__:
+            labels.update(self.__dict__['labels'])
+        return labels
 
     def get_type(self):
         return self.value.get_type()

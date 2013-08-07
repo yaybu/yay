@@ -1156,7 +1156,7 @@ class Parser(object):
         '''
         scalar : LDBRACE expression_list RDBRACE
         '''
-        p[0] = ast.Template(p[2])
+        p[0] = p[2]
         self.anchor(p, 1)
 
     def p_scalar_multiline(self, p):
