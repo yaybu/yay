@@ -2235,7 +2235,7 @@ class Template(Proxy, AST):
         return self.value.expand()
 
     def get_local_labels(self):
-        return self.expand().get_labels()
+        return self.expand().get_local_labels()
 
     def get_string_parts(self):
         return self.value.get_string_parts()
