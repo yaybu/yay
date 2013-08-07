@@ -487,7 +487,9 @@ class Dictish(object):
 
     def get_iterable(self, anchor=None):
         for key in self.keys(anchor or self.anchor):
-            yield YayScalar(key)
+            s = YayScalar(key)
+            s.parent = self
+            yield s
 
     def as_dict(self, default=_DEFAULT, anchor=None):
         return self.resolve()
