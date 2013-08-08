@@ -866,17 +866,24 @@ class Root(Pythonic, Proxy, AST):
         return self.load(StringIO.StringIO(data), name, labels)
 
     def load(self, stream, name="<Unknown>", labels=()):
-        __context__ = "Loading stream %s. labels=%r." % (name, labels)
-        from yay import parser
-        p = parser.Parser()
-        node = p.parse(stream.read(), source=name)
-        node.parent = self
-        node.labels = labels
+        node = self._parse(stream, name, labels)
         mda = node
         while mda.predecessor and not isinstance(mda.predecessor, NoPredecessorStandin):
             mda = mda.predecessor
         mda.predecessor = self.node
         self.node = node
+        return node
+
+    def _parse_uri(self, uri):
+        fp = self.openers.open(uri)
+        return self._parse(fp, uri, getattr(fp, "labels", ()))
+
+    def _parse(self, stream, name="<Unknown>", labels=()):
+        from yay import parser
+        p = parser.Parser()
+        node = p.parse(stream.read(), source=name)
+        node.parent = self
+        node.labels = labels
         return node
 
 
@@ -1969,7 +1976,7 @@ class Include(Proxy, AST):
             pass
 
         expr = self.expr.resolve()
-        expanded = self.root.load_uri(expr)
+        expanded = self.root._parse_uri(expr)
 
         self.expanding = False
 

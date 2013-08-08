@@ -27,7 +27,7 @@ class MockRoot(ast.Root):
     def add(self, key, value):
         self.data[key] = value
 
-    def load_uri(self, path):
+    def _parse_uri(self, path):
         p = parser.Parser()
         return p.parse(self.data[path], debug=0)
 
