@@ -2461,6 +2461,9 @@ class PythonClass(Proxy, AST):
 
         return self.params.expand()
 
+    def get_local_labels(self):
+        return AST.get_local_labels(self)
+
     def changed(self):
         self.apply()
         super(PythonClass, self).changed()
