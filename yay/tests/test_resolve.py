@@ -1618,6 +1618,27 @@ class TestInclude(TestCase):
             """)
         self.assertEqual(res['foo'], {"foo": "bar", "bar": "wibble", "baz": "quux"})
 
+    def test_include_based_on_var(self):
+        self._add("mem://example.yay", """
+           foo: bar
+           """)
+        res = self._resolve("""
+            test: example
+            include "mem://" + test + ".yay"
+            """)
+        self.assertEqual(res['foo'], 'bar')
+
+    def test_include_var(self):
+        self._add("mem://example.yay", """
+           foo: bar
+           """)
+        res = self._resolve("""
+            test: mem://example.yay
+            include test
+            """)
+        self.assertEqual(res['foo'], 'bar')
+
+
 
 class TestSelect(unittest2.TestCase):
 
