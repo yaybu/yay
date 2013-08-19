@@ -1953,8 +1953,8 @@ class Include(Proxy, AST):
             except errors.NoPredecessor:
                 raise KeyError("No such key '%s'" % key)
 
-        if key in self.detector:
-            raise KeyError("'%s' not found" % key)
+        #if key in self.detector:
+        #    raise KeyError("'%s' not found" % key)
         try:
             self.detector.append(key)
             return self.expand().get_key(key)

@@ -1628,6 +1628,21 @@ class TestInclude(TestCase):
             """)
         self.assertEqual(res['foo'], 'bar')
 
+    def test_include_based_on_var_twice(self):
+        self._add("mem://example.yay", """
+           foo: bar
+           """)
+        self._add("mem://example.2.yay", """
+            qux: quux
+            """)
+        res = self._resolve("""
+            test: example
+            include "mem://" + test + ".2.yay"
+            include "mem://" + test + ".yay"
+            """)
+        self.assertEqual(res['foo'], 'bar')
+        self.assertEqual(res['qux'], 'quux')
+
     def test_include_var(self):
         self._add("mem://example.yay", """
            foo: bar
