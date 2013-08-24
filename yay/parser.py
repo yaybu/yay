@@ -44,7 +44,7 @@ expressions = {
     "and": ast.And,
     "&": ast.BitwiseAnd,
     "not in": ast.NotIn,
-    }
+}
 
 
 class BaseParser(object):
@@ -66,27 +66,27 @@ class BaseParser(object):
             write_tables = 1
 
         self.parser = yacc.yacc(module=self,
-            debug=0,
-            tabmodule='yay.parsetab',
-            outputdir=os.path.dirname(__file__),
-            write_tables=write_tables,
-            )
+                                debug=0,
+                                tabmodule='yay.parsetab',
+                                outputdir=os.path.dirname(__file__),
+                                write_tables=write_tables,
+                                )
 
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
         self.errors = 0
         self.source = source
-	self.text = value
+        self.text = value
         rv = self.parser.parse(value,
-                                 lexer=self.lexer(source=source),
-                                 tracking=tracking,
-                                 debug=debug)
+                               lexer=self.lexer(source=source),
+                               tracking=tracking,
+                               debug=debug)
         if self.errors > 0:
             raise SyntaxError
         return rv
 
     def anchor(self, p, i):
         """ Set the position of p[0] from symbol i """
-	p[0].anchor = SpanAnchor(self, p, i)
+        p[0].anchor = SpanAnchor(self, p, i)
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html
@@ -1258,13 +1258,13 @@ class BaseParser(object):
 
     def p_error(self, p):
         if p is None:
-	    raise EOFParseError(Anchor(self))
+            raise EOFParseError(Anchor(self))
         else:
-	    anchor = ColumnAnchor(self, p)
+            anchor = ColumnAnchor(self, p)
             if p.type == 'NEWLINE':
-		raise EOLParseError(anchor)
+                raise EOLParseError(anchor)
             else:
-		raise UnexpectedSymbolError(p, anchor)
+                raise UnexpectedSymbolError(p, anchor)
 
 
 class Parser(BaseParser):
@@ -1274,4 +1274,3 @@ class Parser(BaseParser):
 
 class ExpressionParser(BaseParser):
     Lexer = ExpressionLexer
-
