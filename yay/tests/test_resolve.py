@@ -1,7 +1,7 @@
 import unittest2
 from .base import parse, resolve, TestCase
 from yay import errors, ast
-from yay.parser import ParseError
+from yay.errors import ParseError
 
 
 class TestYayDict(unittest2.TestCase):

@@ -1055,7 +1055,7 @@ class BaseParser(object):
         empty :
         '''
         p[0] = ast.YayDict()
-        p[0].anchor = Anchor(self.source, 0, 0)
+        p[0].anchor = Anchor(self)
 
     def p_root(self, p):
         '''

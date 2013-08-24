@@ -1,5 +1,6 @@
 import unittest2
 from yay import parser
+from yay.errors import ParseError
 from yay.ast import *
 
 from .base import bare_parse as parse
@@ -296,7 +297,7 @@ class TestParser(unittest2.TestCase):
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
     def test_simple_dict_colon_in_value(self):
-        self.assertRaises(parser.ParseError, parse,"""
+        self.assertRaises(ParseError, parse,"""
             a: b: c
         """)
 
