@@ -184,7 +184,7 @@ class EOLParseError(ParseError):
         short = "Unexpected end of line in %s" % self.anchor
         desc = self.anchor.long_description()
         if desc is not None:
-            return "\n".join(short, desc)
+            return "\n".join([short, desc])
         else:
             return short
 
@@ -195,10 +195,10 @@ class UnexpectedSymbolError(ParseError):
         self.anchor = anchor
 
     def __str__(self):
-        if self.token.value is not None:
-            short = "Unexpected %s (%r) in %s" % (self.token.type, self.token.value, self.anchor)
+        if self.token.value is not None and self.token.value.lower() != self.token.type.lower():
+            short = "Unexpected %s (%r) in %s" % (self.token.type.lower(), self.token.value, self.anchor)
         else:
-            short = "Unexpected %s in %s" % (self.token.type, self.anchor)
+            short = "Unexpected '%s' in %s" % (self.token.type.lower(), self.anchor)
         desc = self.anchor.long_description()
         if desc is not None:
             return "\n".join([short, desc])
