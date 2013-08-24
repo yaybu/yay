@@ -17,7 +17,9 @@ from ply import yacc
 
 from lexer import Lexer, ExpressionLexer
 from . import ast
-from .errors import Anchor, ParseError
+from .errors import (Anchor, ColumnAnchor, SpanAnchor,
+                     EOLParseError, EOFParseError,
+                     UnexpectedSymbolError)
 
 import warnings
 
@@ -73,6 +75,7 @@ class BaseParser(object):
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
         self.errors = 0
         self.source = source
+	self.text = value
         rv = self.parser.parse(value,
                                  lexer=self.lexer(source=source),
                                  tracking=tracking,
@@ -83,13 +86,7 @@ class BaseParser(object):
 
     def anchor(self, p, i):
         """ Set the position of p[0] from symbol i """
-        p[0].anchor = Anchor(
-            source = self.source,
-            lineno = p.lineno(i),
-            linespan = p.linespan(i),
-            lexpos = p.lexpos(i),
-            lexspan = p.lexspan(i),
-            )
+	p[0].anchor = SpanAnchor(self, p, i)
 
     ########## EXPRESSIONS
     ## http://docs.python.org/2/reference/expressions.html
@@ -1261,12 +1258,13 @@ class BaseParser(object):
 
     def p_error(self, p):
         if p is None:
-            raise ParseError("End of file reached unexpectedly", Anchor(self.source, 0))
+	    raise EOFParseError(Anchor(self))
         else:
+	    anchor = ColumnAnchor(self, p)
             if p.type == 'NEWLINE':
-                raise ParseError("Unexpected end of line", Anchor(self.source, p.lineno))
+		raise EOLParseError(anchor)
             else:
-                raise ParseError("Unexpected %s symbol %r" % (p.type, p.value), Anchor(self.source, p.lineno))
+		raise UnexpectedSymbolError(p, anchor)
 
 
 class Parser(BaseParser):
