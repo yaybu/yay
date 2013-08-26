@@ -71,6 +71,7 @@ class Parser(object):
             )
 
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
+        value = '\n'.join(value.splitlines(False)) + '\n'
         self.errors = 0
         self.source = source
         rv = self.parser.parse(value,
