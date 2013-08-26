@@ -45,7 +45,7 @@ expressions = {
     }
 
 
-class Parser(object):
+class BaseParser(object):
 
     start = 'root'
     Lexer = Lexer
@@ -71,7 +71,6 @@ class Parser(object):
             )
 
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
-        value = '\n'.join(value.splitlines(False)) + '\n'
         self.errors = 0
         self.source = source
         rv = self.parser.parse(value,
@@ -1270,6 +1269,11 @@ class Parser(object):
                 raise ParseError("Unexpected %s symbol %r" % (p.type, p.value), Anchor(self.source, p.lineno))
 
 
-class ExpressionParser(Parser):
+class Parser(BaseParser):
+    def parse(self, value, source="<unknown>", tracking=True, debug=False):
+        value = '\n'.join(value.splitlines(False)) + '\n'
+        return super(Parser, self).parse(value, source, tracking, debug)
+
+class ExpressionParser(BaseParser):
     Lexer = ExpressionLexer
 
