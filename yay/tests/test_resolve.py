@@ -662,7 +662,16 @@ class TestDivide(unittest2.TestCase):
         t = parse("""
             foo: {{ 5 / 0 }}
             """)
-        self.assertRaises(errors.ZeroDivideError, t.get_key("foo").resolve)
+        self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
+
+    def test_divide_by_zero_via_vars(self):
+        t = parse("""
+            bar: 5
+            baz: 0
+            foo: {{ bar / baz }}
+            """)
+        self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
+
 
 
 class TestFloorDivide(unittest2.TestCase):
@@ -683,7 +692,16 @@ class TestFloorDivide(unittest2.TestCase):
         t = parse("""
             foo: {{ 5 // 0 }}
             """)
-        self.assertRaises(errors.ZeroDivideError, t.get_key("foo").resolve)
+        self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
+
+    def test_divide_by_zero_via_vars(self):
+        t = parse("""
+            bar: 5
+            baz: 0
+            foo: {{ bar // baz }}
+            """)
+        self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
+
 
 
 class TestMod(unittest2.TestCase):

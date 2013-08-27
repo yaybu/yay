@@ -1101,7 +1101,7 @@ class Divide(Expr):
         try:
             return operator.truediv(lhs, rhs)
         except ZeroDivisionError:
-            raise errors.ZeroDivideError("%s / %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
+            raise errors.ZeroDivisionError("%s / %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
 
 class FloorDivide(Expr):
 
@@ -1109,7 +1109,7 @@ class FloorDivide(Expr):
         try:
             return operator.floordiv(lhs, rhs)
         except ZeroDivisionError:
-            raise errors.ZeroDivideError("%s // %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
+            raise errors.ZeroDivisionError("%s // %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
 
 class Mod(Expr):
     op = operator.mod
