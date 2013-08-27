@@ -1097,10 +1097,19 @@ class Multiply(Expr):
     op = operator.mul
 
 class Divide(Expr):
-    op = operator.truediv
+    def op(self, lhs, rhs):
+        try:
+            return operator.truediv(lhs, rhs)
+        except ZeroDivisionError:
+            raise errors.ZeroDivideError("%s / %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
 
 class FloorDivide(Expr):
-    op = operator.floordiv
+
+    def op(self, lhs, rhs):
+        try:
+            return operator.floordiv(lhs, rhs)
+        except ZeroDivisionError:
+            raise errors.ZeroDivideError("%s // %s - divide by zero is invalid" % (lhs, rhs), anchor=self.anchor)
 
 class Mod(Expr):
     op = operator.mod

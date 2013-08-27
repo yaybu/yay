@@ -90,6 +90,9 @@ class ParseError(LanguageError):
 class EvaluationError(LanguageError):
     pass
 
+class ZeroDivideError(EvaluationError):
+    pass
+
 class TypeError(LanguageError):
     pass
 
