@@ -105,8 +105,8 @@ class SpanAnchor(ColumnAnchor):
     def long_description(self):
         if self.linespan[0] == self.linespan[1]:
             line = self.text_line()
-            pointer = "%s%s" % (" "*(self.column-2), "^"*(self.lexspan[1]-self.lexspan[0]))
-            return "\n".join(line, pointer)
+            pointer = "%s%s" % (" "*(self.column-1), "^"*(self.lexspan[1]-self.lexspan[0]+1))
+            return "\n".join([line, pointer])
         else:
             out = []
             for i, l in enumerate(self.text_lines(), start=self.linespan[0]):
@@ -151,9 +151,10 @@ class LanguageError(Error):
     def __str__(self):
         error = self.description
         if self.anchor:
-            error += "\nFile %s, line %s, column %s" % (self.anchor.source, self.anchor.lineno, self.anchor.colno)
-        #if self.snippet:
-        #    error += "\n%s" % self.snippet
+            error += " in " + str(self.anchor)
+        longdesc = self.anchor.long_description()
+        if longdesc:
+            print longdesc
         return error
     get_string = __str__
 
