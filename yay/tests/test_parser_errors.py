@@ -70,4 +70,11 @@ class TestParserErrors(unittest2.TestCase):
             y: z
         """)
 
-
+    def test_multiline_if(self):
+        self._r("Unexpected ':'.*line 4", """
+        x: 1
+        
+        if x == \
+            :
+            - a
+        """)
