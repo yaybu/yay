@@ -93,8 +93,7 @@ def main():
     try:
         root.load(instream, name=source)
     except errors.Error as e:
-        print >>sys.stderr, "An error occured parsing the first file"
-        print >>sys.stderr, str(e)
+        print e.get_string()
         sys.exit(1)
 
     print converters[opts.format](opts, root)

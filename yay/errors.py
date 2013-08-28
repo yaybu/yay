@@ -205,6 +205,7 @@ class UnexpectedSymbolError(ParseError):
             return "\n".join([short, desc])
         else:
             return short
+    get_string = __str__
 
 
 class EvaluationError(LanguageError):
