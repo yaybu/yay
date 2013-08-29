@@ -1,9 +1,12 @@
 import operator
-from . import errors
-from .openers import Openers
 import re
 import functools
 import inspect
+
+from yay import errors
+from yay.openers import Openers
+from yay.errors import merge_anchors as ma
+
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
@@ -47,37 +50,37 @@ class AST(object):
         self.subscribers = []
 
     def as_bool(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected boolean", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected boolean", anchor=ma(anchor, self.anchor))
 
     def as_int(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected integer", anchor=ma(anchor, self.anchor))
 
     def as_float(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected float", anchor=ma(anchor, self.anchor))
 
     def as_number(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected integer or float", anchor=ma(anchor, self.anchor))
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
 
     def as_string(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
 
     def as_list(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting list", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting list", anchor=ma(anchor, self.anchor))
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting iterable", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting iterable", anchor=ma(anchor, self.anchor))
 
     def as_dict(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting dictionary", anchor=ma(anchor, self.anchor))
 
     def get_key(self, key, anchor=None):
-        raise errors.TypeError("Expecting dictionary or list", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting dictionary or list", anchor=ma(anchor, self.anchor))
 
     def keys(self, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=anchor or self.anchor)
+        raise errors.TypeError("Expecting dictionary", anchor=ma(anchor, self.anchor))
 
     def get_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
@@ -364,19 +367,19 @@ class Scalarish(object):
         try:
             return bool(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected bool", anchor=anchor or self.anchor)
+            raise errors.TypeError("Expected bool", anchor=ma(anchor, self.anchor))
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
             return int(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected integer", anchor=anchor or self.anchor)
+            raise errors.TypeError("Expected integer", anchor=ma(anchor, self.anchor))
 
     def as_float(self, default=_DEFAULT, anchor=None):
         try:
             return float(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected float", anchor=anchor or self.anchor)
+            raise errors.TypeError("Expected float", anchor=ma(anchor, self.anchor))
 
     def as_number(self, default=_DEFAULT, anchor=None):
         """
@@ -390,7 +393,7 @@ class Scalarish(object):
             try:
                 return float(resolved)
             except ValueError:
-                raise errors.TypeError("Expected integer or float", anchor=anchor or self.anchor)
+                raise errors.TypeError("Expected integer or float", anchor=ma(anchor, self.anchor))
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         """ Returns a string that might includes obfuscation where secrets are used """
@@ -416,7 +419,7 @@ class Scalarish(object):
         if isinstance(resolved, (int, float, bool)):
             resolved = str(resolved)
         if not isinstance(resolved, basestring):
-            raise errors.TypeError("Expected string", anchor=anchor or self.anchor)
+            raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
         return resolved
 
     def get_string_parts(self):
@@ -451,7 +454,7 @@ class Streamish(object):
         return list(self.as_iterable(default, anchor))
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        generator = self.get_iterable(anchor=anchor or self.anchor)
+        generator = self.get_iterable(anchor=ma(anchor, self.anchor))
         for val in generator:
             yield val.resolve()
 
@@ -498,7 +501,7 @@ class Streamish(object):
 class Dictish(object):
 
     def get_iterable(self, anchor=None):
-        for key in self.keys(anchor or self.anchor):
+        for key in self.keys(ma(anchor, self.anchor)):
             s = YayScalar(key)
             s.parent = self
             yield s
@@ -544,7 +547,7 @@ class Proxy(object):
 
     def as_bool(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_bool(default, anchor=anchor or self.anchor)
+            return self.expand().as_bool(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -552,7 +555,7 @@ class Proxy(object):
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_int(default, anchor=anchor or self.anchor)
+            return self.expand().as_int(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -560,7 +563,7 @@ class Proxy(object):
 
     def as_float(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_float(default, anchor=anchor or self.anchor)
+            return self.expand().as_float(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -568,7 +571,7 @@ class Proxy(object):
 
     def as_number(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_number(default, anchor=anchor or self.anchor)
+            return self.expand().as_number(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -576,7 +579,7 @@ class Proxy(object):
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_safe_string(default, anchor=anchor or self.anchor)
+            return self.expand().as_safe_string(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -584,7 +587,7 @@ class Proxy(object):
 
     def as_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_string(default, anchor=anchor or self.anchor)
+            return self.expand().as_string(default, anchor=ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -592,7 +595,7 @@ class Proxy(object):
 
     def as_list(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_list(default, anchor or self.anchor)
+            return self.expand().as_list(default, ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -600,7 +603,7 @@ class Proxy(object):
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_iterable(default, anchor or self.anchor)
+            return self.expand().as_iterable(default, ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -608,20 +611,20 @@ class Proxy(object):
 
     def as_dict(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_dict(anchor or self.anchor)
+            return self.expand().as_dict(ma(anchor, self.anchor))
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
             raise
 
     def keys(self, anchor=None):
-        return self.expand().keys(anchor or self.anchor)
+        return self.expand().keys(ma(anchor, self.anchor))
 
     def get_string_parts(self):
         yield self
 
     def get_iterable(self, anchor=None):
-        return self.expand().get_iterable(anchor or self.anchor)
+        return self.expand().get_iterable(ma(anchor, self.anchor))
 
     def get_key(self, key):
         return self.expand().get_key(key)
@@ -1329,6 +1332,8 @@ class LazyPredecessor(Proxy, AST):
         raise errors.NoPredecessor
 
 class UseMyPredecessorStandin(Proxy, AST):
+    anchor = None
+
     def __init__(self, node):
         super(UseMyPredecessorStandin, self).__init__()
         # This is a sideways reference! No parenting...
@@ -1479,6 +1484,7 @@ class Call(Proxy, AST):
             macro = self.primary.expand()
             call = CallDirective(self.primary, None)
             node = Context(call, kwargs)
+            node.anchor = self.anchor
         except errors.NoMatching:
             call = node = CallCallable(self.primary, args, kwargs)
 
@@ -1648,7 +1654,7 @@ class YayDict(Dictish, AST):
     def keys(self, anchor=None):
         seen = set()
         try:
-            for key in self.predecessor.keys(anchor=anchor or self.anchor):
+            for key in self.predecessor.keys(anchor=ma(anchor, self.anchor)):
                 seen.add(key)
                 yield key
         except errors.NoPredecessor:
@@ -1680,12 +1686,12 @@ class YayExtend(Streamish, AST):
 
     def _get_source_iterator(self, anchor=None):
         try:
-            for node in self.predecessor.get_iterable(anchor or self.anchor):
+            for node in self.predecessor.get_iterable(ma(anchor, self.anchor)):
                 yield node
         except errors.NoPredecessor:
             pass
 
-        for node in self.value.get_iterable(anchor or self.anchor):
+        for node in self.value.get_iterable(ma(anchor, self.anchor)):
             yield node
 
 
@@ -2244,6 +2250,7 @@ class CallDirective(Proxy, AST):
             return clone.expand()
         context = Context(clone, self.node.expand().values)
         context.parent = self
+        context.anchor = self.anchor
         return context.expand()
 
 class For(Streamish, AST):
@@ -2262,10 +2269,11 @@ class For(Streamish, AST):
         node.parent = self
 
     def _get_source_iterator(self, anchor=None):
-        for item in self.in_clause.get_iterable(anchor or self.anchor):
+        for item in self.in_clause.get_iterable(ma(anchor, self.anchor)):
             # self.target.identifier: This probably shouldn't be an identifier
             c = Context(self.node.clone(), {self.target.identifier: item})
             c.parent = self.parent
+            c.anchor = self.anchor
 
             if self.if_clause:
                 f = self.if_clause.clone()
@@ -2273,7 +2281,7 @@ class For(Streamish, AST):
                 if not f.resolve():
                     continue
 
-            for node in c.get_iterable(anchor or self.anchor):
+            for node in c.get_iterable(ma(anchor, self.anchor)):
                 yield node
 
 
@@ -2310,7 +2318,7 @@ class ListComprehension(Streamish, AST):
         list_for.parent = self
 
     def _get_source_iterator(self, anchor=None):
-        for node in self.list_for.expressions.get_iterable(anchor or self.anchor):
+        for node in self.list_for.expressions.get_iterable(ma(anchor, self.anchor)):
             ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
             ctx.anchor = self.anchor
             ctx.parent = self
@@ -2526,7 +2534,7 @@ class PythonDict(Dictish, AST):
     def keys(self, anchor=None):
         seen = set()
         try:
-            for key in self.predecessor.keys(anchor or self.anchor):
+            for key in self.predecessor.keys(ma(anchor, self.anchor)):
                 seen.add(key)
                 yield key
         except errors.NoPredecessor:

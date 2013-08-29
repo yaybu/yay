@@ -46,7 +46,7 @@ class Anchor(object):
             return repr(self.source)
 
     def long_description(self):
-        return ""
+        return "\n".join(self.long_description_lines())
 
 class LineAnchor(Anchor):
 
@@ -79,10 +79,10 @@ class ColumnAnchor(LineAnchor):
             filename = repr(self.source)
         return "%s at line %d, column %d" % (filename, self.lineno, self.column)
 
-    def long_description(self):
+    def long_description_lines(self):
         line = "%4d %s" % (self.lineno, self.text_line())
         pointer = "     %s^" % (" "*(self.column-2),)
-        return  "\n".join([line, pointer])
+        return (line, pointer)
 
 class SpanAnchor(ColumnAnchor):
 
@@ -102,11 +102,11 @@ class SpanAnchor(ColumnAnchor):
         lines = self.text.split("\n")
         return lines[self.linespan[0]-1:self.linespan[1]-1]
 
-    def long_description(self):
+    def long_description_lines(self):
         if self.linespan[0] == self.linespan[1]:
             line = self.text_line()
             pointer = "%s%s" % (" "*(self.column-1), "^"*(self.lexspan[1]-self.lexspan[0]+1))
-            return "\n".join([line, pointer])
+            return (line, pointer)
         else:
             out = []
             for i, l in enumerate(self.text_lines(), start=self.linespan[0]):
@@ -118,7 +118,32 @@ class SpanAnchor(ColumnAnchor):
                 if l == self.lineno:
                     pointer = "%s%s" % (" "*(self.column-1), "^"*(self.lexspan[1]-self.lexspan[0]))
                     out.append(pointer)
-            return "\n".join(out)
+            return out
+
+
+class AnchorCollection(object):
+
+    def __init__(self, collection=None):
+        self.collection = collection or []
+
+    def long_description(self):
+        descriptions = []
+        for anchor in self.collection:
+            descriptions.append("  " + str(anchor))
+            for line in anchor.long_description_lines():
+                descriptions.append("    " + line)
+        return '\n'.join(descriptions)
+
+
+def merge_anchors(existing, incoming):
+    if not existing:
+        existing = AnchorCollection()
+    if not isinstance(existing, AnchorCollection):
+        existing = AnchorCollection([existing])
+    if incoming:
+        existing.collection.insert(0, incoming)
+    return existing
+
 
 class Error(Exception):
 
@@ -150,12 +175,7 @@ class LanguageError(Error):
 
     def __str__(self):
         error = self.description
-        if self.anchor:
-            error += " in " + str(self.anchor)
-        longdesc = self.anchor.long_description()
-        if longdesc:
-            print longdesc
-        return error
+        return "\n".join((self.description, self.anchor.long_description()))
     get_string = __str__
 
 
