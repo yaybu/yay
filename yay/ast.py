@@ -544,7 +544,7 @@ class Proxy(object):
 
     def as_bool(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_bool(anchor or self.anchor)
+            return self.expand().as_bool(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -552,7 +552,7 @@ class Proxy(object):
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_int(anchor or self.anchor)
+            return self.expand().as_int(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -560,7 +560,7 @@ class Proxy(object):
 
     def as_float(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_float(anchor or self.anchor)
+            return self.expand().as_float(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -568,7 +568,7 @@ class Proxy(object):
 
     def as_number(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_number(anchor or self.anchor)
+            return self.expand().as_number(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -576,7 +576,7 @@ class Proxy(object):
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_safe_string(anchor or self.anchor)
+            return self.expand().as_safe_string(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -584,7 +584,7 @@ class Proxy(object):
 
     def as_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_string(anchor or self.anchor)
+            return self.expand().as_string(default, anchor=anchor or self.anchor)
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
