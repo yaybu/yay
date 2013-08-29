@@ -2,8 +2,8 @@
 yay ain't YAML
 ==============
 
-.. image:: https://travis-ci.org/isotoma/yay.png
-   :target: https://travis-ci.org/#!/isotoma/yay
+.. image:: https://travis-ci.org/yaybu/yay.png
+   :target: https://travis-ci.org/#!/yaybu/yay
 
 
 Yay is a non-strict lazily evaluated configuration language. It combines
