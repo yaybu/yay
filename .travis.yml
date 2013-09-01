@@ -2,11 +2,9 @@ language: python
 python:
   - "2.6"
   - "2.7"
+  - "pypy"
 
-install:
-  - pip install unittest2 mock nose2
-  - python setup.py develop
-
+install: pip install -r requirements.txt
 script: nose2
 
 notifications:

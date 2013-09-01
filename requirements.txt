@@ -1,0 +1,7 @@
+nose2
+unittest2
+mock
+
+PyYAML
+
+-e .

@@ -1,9 +1,3 @@
-bin
-eggs
-develop-eggs
-dist
-parts
-.installed.cfg
 *.pyc
 *.egg-info
 lextab.py
