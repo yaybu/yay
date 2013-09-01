@@ -174,8 +174,12 @@ class LanguageError(Error):
         self.anchor = anchor
 
     def __str__(self):
-        error = self.description
-        return "\n".join((self.description, self.anchor.long_description()))
+        error = [self.description]
+        if self.anchor:
+            error.append(self.anchor.long_description())
+        #else:
+        #    error.append("No anchor is available for this error - please file a bug!")
+        return "\n".join(error)
     get_string = __str__
 
 
