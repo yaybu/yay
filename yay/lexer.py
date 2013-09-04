@@ -148,7 +148,7 @@ class Lexer(object):
 
 
     def t_TEMPLATE_RDBRACE(self, t):
-        """}}"""
+        r"""}}"""
         #t.lexer.begin('VALUE')
         #t.lexer.begin('BLOCK')
         t.lexer.pop_state()
@@ -237,7 +237,7 @@ class Lexer(object):
         return t
 
     def t_INITIAL_VALUE(self, t):
-        """([^:\n ]|:(?!\s))+"""
+        r"""([^:\n ]|:(?!\s))+"""
         t.type = self.reserved.get(t.value, 'VALUE')
         if t.value in ('extend', ):
             self.lexer.begin("INITIAL")
@@ -304,7 +304,7 @@ class Lexer(object):
             return t
 
     def t_BLOCK_VALUE(self, t):
-        """[^:\{\n]+"""
+        r"""[^:\{\n]+"""
         return t
 
     def t_COMMAND_TEMPLATE_IDENTIFIER(self, t):
