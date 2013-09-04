@@ -1,10 +1,10 @@
 Changelog for yay
 =================
 
-0.3.0 (unreleased)
--------------------
+3.0 (unreleased)
+----------------
 
-- This is pretty much a full rewrite on top of the ply parsing framework.
+- This is a full rewrite on top of the ply parsing framework.
 
 
 0.0.62 (2012-09-27)
@@ -317,7 +317,7 @@ Changelog for yay
 - Move more code away from direct use of ``Boxed`` to ``BoxingFactory.box``
 
 - Wrap any dictionary objects in a Mapping object so they can be merged with
-  other mappings that come from within Yay. 
+  other mappings that come from within Yay.
 
 
 0.0.37 (2011-11-20)

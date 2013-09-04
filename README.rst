@@ -5,39 +5,17 @@ yay ain't YAML
 .. image:: https://travis-ci.org/yaybu/yay.png
    :target: https://travis-ci.org/#!/yaybu/yay
 
-
 Yay is a non-strict lazily evaluated configuration language. It combines
-YAML-like data declarations with lazy python expressions.
+YAML-like data declarations with lazy python expressions. We really hope you
+like this, please let us know if it's useful.
 
-An example yay file for configuring a load balancer might be::
+Yay is very new software, and although we have tested it a lot it is
+certainly full of bugs. Please subscribe to the yaybu-dev mailing list, which
+you can find on http://lists.yaybu.com.
 
-    lb1:
-      backends:
-        % for name in ['apple', 'pear']
-          - name: {{ name }}
-            role: web
+All documentation can be found at http://yay.readthedocs.org/en/latest/ which
+includes a tour of the language and an explanation of the grammar.
 
-      # If we are on in prod, turn on SSL on the LB
-      % if environ == 'prod':
-          protocol: https
-
-
-Using yay
-=========
-
-To load yay config from a string you can use the 'load' function::
-
-    >>> from yay import load
-    >>> load("""
-    ... foo:
-    ...     bar: 1
-    ... """)
-    {"foo": {"bar": 1}}
-
-If you want to load from a URI (file:// and http:// are supported) then use 'load_uri'::
-
-    >>> from yay import load_uri
-    >>> load_uri("/etc/someconfig.yay")
-    {"foo": {"bar": 1}}
-
-The return value in both cases is a standard python dictionary.
+If you are interested in this project, you should probably check out Yaybu,
+which uses Yay to drive a complete system deployment and management system.
+You can find Yaybu at http://yaybu.com.

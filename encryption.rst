@@ -22,15 +22,6 @@ You can reference this as though it is an ordinary .yay file::
     .includes:
       - s00persekrit.yay.gpg
 
-    myothervariable: The password is ${sekrit.password}.
+    myothervariable: The password is {{sekrit.password}}.
 
-
-When you load this into your application any strings that use the secret are automatically
-wrapped in a special ``ProtectedString`` object. This provides 2 views of the value::
-
-    import yay
-    cfg = yay.load_uri('ordinary.yay')
-
-    cfg['myothervariable'].protected == 'This password is *****'
-    cfg['myothervariable'].unprotected == 'This password is password55'
 

@@ -318,7 +318,7 @@ implemented in python.
 Macros
 ~~~~~~
 
-Macros provided parameterised blocks that can be reused.
+Macros provided parameterised blocks that can be reused, rather like a function.
 
 you can define a macro with::
 
@@ -336,16 +336,15 @@ You can then call it later::
 Prototypes
 ~~~~~~~~~~
 
-Prototypes contain a default mapping which you can then override. They
-are different from macros in that a prototype is not parameterised, but
-can instead be extended.
+Prototypes contain a default mapping which you can then override. You can
+think of a prototype as a class that you can then extend.
 
 In their final form, they behave exactly like mappings::
 
     prototype DjangoSite:
         set self = here
 
-        name: www.example-site.com
+        name: www.example.com
 
         sitedir: /var/local/sites/{{ self.name }}
         rundir: /var/run/{{ self.name }}
@@ -361,7 +360,7 @@ In their final form, they behave exactly like mappings::
 
     some_key:
         new DjangoSite:
-            sitename: www.example.com
+            name: www.mysite.com
 
 Here
 ~~~~
