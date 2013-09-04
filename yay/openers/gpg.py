@@ -62,7 +62,7 @@ except ImportError:
                 if os.path.exists("/proc/self/fd/0"):
                     env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
-            p = subprocess.Popen([self.get_gpg_binary(), "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
+            p = subprocess.Popen([self.get_gpg_binary(), "--use-agent", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
             stdout, stderr = p.communicate(data)
             if p.returncode != 0:
                 msg = "Unable to decrypt resource '%s'" % fp.uri
