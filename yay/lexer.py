@@ -231,7 +231,7 @@ class Lexer(object):
     t_INITIAL_EXTEND = "extend"
 
     def t_INITIAL_HYPHEN(self, t):
-        """-[ \t]*"""
+        r"""-[ \t]*"""
         t.value = '-'
         t.lexer.begin('LISTVALUE')
         return t
@@ -265,18 +265,18 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_EMPTYLIST(self, t):
-        """[ ]*\[\]"""
+        r"""\ *\[\]"""
         t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
     def t_VALUE_LISTVALUE_BLOCK_LDBRACE(self, t):
-        """{{"""
+        r"""{{"""
         t.lexer.push_state("TEMPLATE")
         return t
 
     def t_VALUE_LISTVALUE_MULTILINE(self, t):
-        """(>|\|[+-]?)[ ]*[\n]+"""
+        r"""(>|\|[+-]?)[ ]*[\n]+"""
         self.lexer.begin('BLOCK')
         self.lexer.lineno += len(t.value)
         self.lexer.block_substate = t.value = t.value.strip()
