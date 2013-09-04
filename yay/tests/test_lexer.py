@@ -695,7 +695,7 @@ class TestLexer(unittest2.TestCase):
         a: b:c
         """), [value('a'), colon, value('b:c'), newline])
 
-    def test_colon_value_nospace(self):
+    def test_colon_value_nospace2(self):
         self.compare(self._lex(r"""
         a: b: c
         """), [value('a'), colon, value('b'), colon, value('c'), newline])
@@ -751,6 +751,10 @@ class TestLexer(unittest2.TestCase):
                 value('b'), colon, value('y'), newline,
                 ])
 
-
-
-
+    def test_trailing_whitespace(self):
+        self.compare(self._lex("a: b \n"""), [value('a'), colon, value('b'), newline])
+        
+    def test_trailing_whitespace_before_template(self):
+        self.compare(self._lex("a: b {{c}}"), [
+            value('a'), colon, value('b '),
+            ldbrace, identifier('c'), rdbrace])

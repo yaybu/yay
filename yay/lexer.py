@@ -248,7 +248,7 @@ class Lexer(object):
         return t
 
     def t_VALUE_LISTVALUE_COLON(self, t):
-        """[ ]*:[ ]*((?:\n)| )"""
+        """\ *:\ *((?:\n)| )"""
         t.value = ':'
         return t
 
@@ -287,13 +287,19 @@ class Lexer(object):
         t.type = "VALUE"
         t.value = t.value[1:-1]
         return t
+    
+    def t_VALUE_LISTVALUE_WSVALUE(self, t):
+        r"""([^:\{\n]|{(?!{)|:(?!\s))+(?=\n)"""
+        t.type = "VALUE"
+        t.value = t.value.rstrip()
+        return t
 
     def t_VALUE_LISTVALUE_VALUE(self, t):
-        """([^:\{\n]|{(?!{)|:(?!\s))+"""
+        r"""([^:\{\n]|{(?!{)|:(?!\s))+"""
         return t
 
     def t_ANY_WS(self, t):
-        r'[ ]+'
+        r'\ +'
         if self.at_line_start:
             return t
 

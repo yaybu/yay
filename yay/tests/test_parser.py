@@ -309,6 +309,10 @@ class TestParser(unittest2.TestCase):
             a: b
         """)
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
+        
+    def NOtest_simple_dict_trailing_whitespace(self):
+        res = parse("a: b ")
+        self.assertEqual(res, YayDict([('a', YayScalar('b'))]))        
 
     def test_simple_dict_colon_in_value(self):
         self.assertRaises(ParseError, parse,"""
