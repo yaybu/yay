@@ -12,11 +12,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   background
    language
+   grammar
    advanced/index
-   examples
-   patterns
    python
    hacking
    debugging
@@ -28,7 +26,6 @@ Internals
 .. toctree::
    :maxdepth: 2
 
-   language-internals
    parser
    resolver
    ast
