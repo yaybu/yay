@@ -13,6 +13,8 @@ Changelog for yay
 
 - Remove unnecessary support for Extended Slices
 
+- command line output is prettier
+
 3.0.1 (2013-09-04)
 ------------------
 

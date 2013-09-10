@@ -38,7 +38,8 @@ def graph_to_yaml(opts, graph):
         sys.exit(1)
 
     # Dump as YAML
-    return yaml.dump(resolved, default_flow_style=False)
+    return yaml.safe_dump(resolved, 
+                     default_flow_style=False)
 
 def graph_to_dot(opts, graph):
     if opts.phase == "normalized":
