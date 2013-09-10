@@ -721,6 +721,16 @@ b: c
                value('a'), colon, value('b: c d'), newline,
                ])
 
+    def test_templates_in_quotes(self):
+        self.compare(self._lex(r"""
+        a: "{{foo}}:{{bar}}"
+        """), [
+               value('a'), colon,
+               ldbrace, identifier('foo'), rdbrace, value(':'),
+               ldbrace, identifier('bar'), rdbrace,
+               newline
+               ])
+
     def test_colon_key_nospace(self):
         self.compare(self._lex(r"""
         a:b

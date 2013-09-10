@@ -60,10 +60,11 @@ class Lexer(object):
 
     states = (
         ('VALUE', 'exclusive'),
-        ('LISTVALUE', 'exclusive'),
         ('TEMPLATE', 'exclusive'),
         ('COMMAND', 'exclusive'),
         ('BLOCK', 'exclusive'),
+        ('QVALUE', 'exclusive'),
+        ('CVALUE', 'exclusive'),
     )
 
     # literals are checked last, after all of the other rules
@@ -140,16 +141,16 @@ class Lexer(object):
         r"""\\\n"""
         pass
 
-    def t_INITIAL_VALUE_LISTVALUE_TEMPLATE_COMMAND_COMMENT(self, t):
+    def t_INITIAL_VALUE_TEMPLATE_COMMAND_COMMENT(self, t):
         r"""\#[^\n]*"""
         pass
 
 
     def t_TEMPLATE_RDBRACE(self, t):
         r"""}}"""
-        #t.lexer.begin('VALUE')
-        #t.lexer.begin('BLOCK')
         t.lexer.pop_state()
+        if t.lexer.lexstate == 'VALUE':
+            t.lexer.begin("CVALUE")
         return t
 
     # Literals
@@ -231,7 +232,7 @@ class Lexer(object):
     def t_INITIAL_HYPHEN(self, t):
         r"""-[ \t]*"""
         t.value = '-'
-        t.lexer.begin('LISTVALUE')
+        t.lexer.begin('VALUE')
         return t
 
     def t_INITIAL_VALUE(self, t):
@@ -245,52 +246,61 @@ class Lexer(object):
             self.lexer.begin('COMMAND')
         return t
 
-    def t_VALUE_LISTVALUE_COLON(self, t):
+    def t_VALUE_COLON(self, t):
         """\ *:\ *((?:\n)| )"""
         t.value = ':'
         return t
 
-    def t_VALUE_LISTVALUE_EMPTYDICT(self, t):
+    def t_VALUE_EMPTYDICT(self, t):
         """[ ]*{}"""
         t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
-    def t_VALUE_LISTVALUE_EMPTYLIST(self, t):
+    def t_VALUE_EMPTYLIST(self, t):
         r"""\ *\[\]"""
         t.value = t.value.strip()
         t.lexer.begin("INITIAL")
         return t
 
-    def t_VALUE_LISTVALUE_BLOCK_LDBRACE(self, t):
+    def t_VALUE_QVALUE_CVALUE_BLOCK_LDBRACE(self, t):
         r"""{{"""
         t.lexer.push_state("TEMPLATE")
         return t
 
-    def t_VALUE_LISTVALUE_MULTILINE(self, t):
+    def t_VALUE_MULTILINE(self, t):
         r"""(>|\|[+-]?)[ ]*[\n]+"""
         self.lexer.begin('BLOCK')
         self.lexer.lineno += len(t.value)
         self.lexer.block_substate = t.value = t.value.strip()
         return t
 
-    def t_VALUE_LISTVALUE_QVALUE(self, t):
-        """\"[^"\n]*\""""
+    def t_VALUE_QUOTE(self, t):
+        r"""\""""
+        self.lexer.push_state('QVALUE')
+        return None
+
+    def t_QVALUE_QUOTE(self, t):
+        r"""\""""
+        self.lexer.pop_state()
+        return None
+
+    def t_QVALUE_VALUE(self, t):
+        r"""([^\{\n\"]|{(?!{))+"""
         t.type = "VALUE"
-        t.value = t.value[1:-1]
         return t
 
-    def t_VALUE_LISTVALUE_WSVALUE(self, t):
+    def t_VALUE_WSVALUE(self, t):
         r"""([^:\{\n]|{(?!{)|:(?!\s))+(?=\n)"""
         t.type = "VALUE"
         t.value = t.value.rstrip()
         return t
 
-    def t_VALUE_LISTVALUE_VALUE(self, t):
+    def t_VALUE_CVALUE_VALUE(self, t):
         r"""([^:\{\n]|{(?!{)|:(?!\s))+"""
         return t
 
-    def t_INITIAL_VALUE_LISTVALUE_TEMPLATE_COMMAND_WS(self, t):
+    def t_INITIAL_VALUE_TEMPLATE_COMMAND_WS(self, t):
         r'\ +'
         if self.at_line_start:
             return t
