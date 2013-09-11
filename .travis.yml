@@ -5,7 +5,7 @@ python:
   - "pypy"
 
 install: pip install -r requirements.txt
-script: nose2 --plugin nose2_cov yay
+script: coverage run $(which nose2)
 
 after_success:
   - coveralls

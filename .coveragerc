@@ -1,5 +1,5 @@
 [run]
-source = yaybu
+source = yay
 omit =
     yay/tests/*
     *site-packages/*

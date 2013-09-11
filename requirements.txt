@@ -1,5 +1,5 @@
 nose2
-nose2-cov
+coverage
 python-coveralls
 unittest2
 mock
