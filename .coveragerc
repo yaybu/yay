@@ -1,0 +1,9 @@
+[run]
+source = yaybu
+omit =
+    yay/tests/*
+    *site-packages/*
+    src/*
+    setup.py
+    *parsetab.py
+    *lextab.py
