@@ -79,7 +79,7 @@ def line(x):
 class TestLexer(unittest2.TestCase):
 
     def _lex(self, value):
-        l = Lexer(debug=0)
+        l = Lexer(debug=1)
         l.input(value)
         return list(l)
 
@@ -502,20 +502,59 @@ class TestLexer(unittest2.TestCase):
         ])
 
     def test_multiline_fold_simple(self):
+        # indentation here is intentional
+        self.compare(self._lex("""
+a: >
+  foo bar baz
+  quux quuux
+
+b: c
+"""), [
+           value('a'), colon,
+           t('MULTILINE', '>'),
+           value('foo bar baz'),
+           newline,
+           value('quux quuux'),
+           t('NEWLINE', '\n\n'),
+           t('MULTILINE_END'),
+           newline,
+           value('b'), colon, value('c'), newline,
+           ])
+
+    def test_multiline_inplace(self):
         self.compare(self._lex("""
         a: >
           foo bar baz
           quux quuux
+
+        b: c
         """), [
            value('a'), colon,
            t('MULTILINE', '>'),
            value('foo bar baz'),
            newline,
            value('quux quuux'),
-           newline,
+           t('NEWLINE', '\n\n'),
            t('MULTILINE_END'),
            newline,
+           value('b'), colon, value('c'), newline
            ])
+
+    def test_multiline_fold_template(self):
+        self.compare(self._lex("""
+        a: >
+          foo {{bar}} baz
+          {{quux}} quuux
+        """), [
+               value('a'), colon,
+               t('MULTILINE', '>'),
+               value('foo '), ldbrace, t('IDENTIFIER', 'bar'), rdbrace, value('baz'),
+               newline,
+               ldbrace, t('IDENTIFIER', 'quux'), rdbrace, value('quuux'),
+               newline,
+               t('MULTILINE_END'),
+               newline,
+               ])
 
     def test_multiline_fold(self):
         self.compare(self._lex("""
@@ -753,7 +792,7 @@ class TestLexer(unittest2.TestCase):
 
     def test_trailing_whitespace(self):
         self.compare(self._lex("a: b \n"""), [value('a'), colon, value('b'), newline])
-        
+
     def test_trailing_whitespace_before_template(self):
         self.compare(self._lex("a: b {{c}}"), [
             value('a'), colon, value('b '),

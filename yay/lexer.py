@@ -287,7 +287,7 @@ class Lexer(object):
         t.type = "VALUE"
         t.value = t.value[1:-1]
         return t
-    
+
     def t_VALUE_LISTVALUE_WSVALUE(self, t):
         r"""([^:\{\n]|{(?!{)|:(?!\s))+(?=\n)"""
         t.type = "VALUE"
@@ -316,8 +316,7 @@ class Lexer(object):
     def t_ANY_NEWLINE(self, t):
         r'\n+'
         self.lexer.lineno += len(t.value)
-        if self.lexer.lexstate != 'BLOCK':
-            self.lexer.begin("INITIAL")
+        self.lexer.begin("INITIAL")
         return t
 
     def t_ANY_error(self, t):
@@ -388,6 +387,7 @@ class Lexer(object):
         token = None
         depth = None
         prev_was_ws = False
+        prev_was_block = False
         for token in tokens:
             if depth is None:
                 # first ever token other than newline
@@ -403,7 +403,7 @@ class Lexer(object):
 #                assert depth == levels[0]
                 depth = len(token.value)
                 prev_was_ws = True
-                if self.lexer.lexstate == 'BLOCK':
+                if prev_was_block:
                     if depth < levels[-1]:
                         # here endeth the block
                         # switch back into initial mode, with the same
@@ -413,8 +413,13 @@ class Lexer(object):
                         levels.pop()
                         yield self.MULTILINE_END(token.lineno)
                         yield self.NEWLINE(token.lineno)
+                        prev_was_block = False
+                    else:
+                        self.lexer.begin("BLOCK")
                 continue
             elif token.type in ('NEWLINE', 'MULTILINE'):
+                if self.lexer.lexstate == 'BLOCK':
+                    prev_was_block = True
                 if depth is not None:
                     depth = levels[0]
                 if prev_was_ws or token.at_line_start:
@@ -433,6 +438,11 @@ class Lexer(object):
                         yield self.INDENT(token.lineno)
                 else:
                     # back up, but only if it matches a previous level
+                    if prev_was_block:
+                        levels.pop()
+                        yield self.MULTILINE_END(token.lineno)
+                        yield self.NEWLINE(token.lineno)
+                        prev_was_block = False
                     try:
                         i = levels.index(depth)
                     except ValueError:
