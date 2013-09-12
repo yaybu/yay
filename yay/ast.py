@@ -318,7 +318,8 @@ class AST(object):
 
     def __repr_vars(self):
         d = self.__dict__.copy()
-        for var in ('anchor', 'parent', '_predecessor', 'successor'):
+        for var in ('anchor', 'parent', '_predecessor',
+                    'successor', 'subscribers', '_ordered_keys'):
             if var in d:
                 del d[var]
         return d
@@ -1742,9 +1743,38 @@ class YayMultilineScalar(Scalarish, AST):
         self.mtype = mtype
         self.chomper = getattr(self, self.chompers[self.mtype])
 
+    def append(self, value):
+        import types
+        if isinstance(value, types.StringTypes):
+            value = YayScalar(value)
+        if isinstance(value, YayScalar) and isinstance(self.__value, YayScalar):
+            self.__value = YayScalar(self.__value.value + value.value)
+        else:
+            self.__value = YayMerged(self.__value, value)
+
     @property
     def value(self):
-        return self.chomper(self.__value)
+        return self.to_scalar()
+
+    def to_scalar(self):
+        """ Return an appropriate representation with newlines handled. """
+        return self.chomp_ast(self.chomper, self.__value)
+
+    @classmethod
+    def chomp_ast(klass, method, item):
+        import types
+        if isinstance(item, types.StringTypes):
+            return method(item)
+        elif isinstance(item, YayMerged):
+            return YayMerged(
+                klass.chomp_ast(method, item.lhs),
+                klass.chomp_ast(method, item.rhs),
+                )
+        elif isinstance(item, YayScalar):
+            return YayScalar(method(item.value))
+        else:
+            # don't chomp this
+            return item
 
     @staticmethod
     def chomp_fold(value):
@@ -1815,9 +1845,6 @@ class YayMultilineScalar(Scalarish, AST):
         """
 
         return value.rstrip("\n")
-
-    def append(self, value):
-        self.__value = self.__value + value
 
 
 class Stanzas(Proxy, AST):
