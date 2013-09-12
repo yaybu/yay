@@ -872,6 +872,20 @@ class TestParser(TestCase):
             ('a', YayScalar("foo bar baz\n\nquux quuux\n\n\n")),
             ]))
 
+    def test_multiline_template(self):
+        res = parse("""
+        a: >
+          foo {{bar}} baz
+        """)
+        self.assertEqual(res, YayDict([
+            ('a', YayMerged(
+                YayMerged(
+                    YayScalar('foo  '),
+                    YayMerged(Identifier('bar'),YayScalar('baz ')),
+                ),
+                YayScalar('')))]))
+
+
     def test_python_line_continuation(self):
         res = parse(r"""
         if x == y and \
