@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
 from yay.ast import Expr, Equal, Literal
 from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
+from yay.tests.base import TestCase
 
 
-class TestEqSimplification(unittest.TestCase):
+class TestEqSimplification(TestCase):
 
     def test_both_dynamic(self):
         n = Equal(DynamicLiteral('left'), DynamicLiteral('right'))
@@ -62,7 +62,7 @@ class TestEqSimplification(unittest.TestCase):
         self.assertEqual(res.literal, False)
 
 
-class TestEqResolve(unittest.TestCase):
+class TestEqResolve(TestCase):
 
     def test_cond_true(self):
         n = Equal(Literal(4), Literal(4))

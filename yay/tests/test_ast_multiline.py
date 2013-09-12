@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from yay.ast import YayMultilineScalar
+from yay.tests.base import TestCase
 from mock import Mock
+
 
 v = "foo bar baz\nquux blor\n"
 w = "foo bar baz\n\nquux blorp\n\n"
 
-class TestASTMultiline(unittest2.TestCase):
+
+class TestASTMultiline(TestCase):
 
     def _m(self, c):
         return (

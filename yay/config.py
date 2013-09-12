@@ -16,7 +16,6 @@ from yay.openers import Openers
 from yay import errors
 from yay import parser
 from yay import ast
-import StringIO
 
 
 class Config(ast.Root):

@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from yay import parser
 from yay.errors import ParseError
 from yay.ast import *
 
 from .base import bare_parse as parse
+from .base import TestCase
 
 import os
 
-class TestParser(unittest2.TestCase):
+
+class TestParser(TestCase):
 
     def test_include(self):
         res = parse("""
@@ -309,10 +310,10 @@ class TestParser(unittest2.TestCase):
             a: b
         """)
         self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
-        
+
     def NOtest_simple_dict_trailing_whitespace(self):
         res = parse("a: b ")
-        self.assertEqual(res, YayDict([('a', YayScalar('b'))]))        
+        self.assertEqual(res, YayDict([('a', YayScalar('b'))]))
 
     def test_simple_dict_colon_in_value(self):
         self.assertRaises(ParseError, parse,"""

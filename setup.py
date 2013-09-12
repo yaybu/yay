@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 from setuptools import setup, find_packages
 from distutils.command.sdist import sdist
@@ -16,24 +18,24 @@ class generate_ply_tabs:
 
         for path in ("yay/lextab.py", "yay/lextab.pyc", "yay/parsetab.py", "yay/parsetab.pyc"):
             if os.path.exists(path):
-                print "Deleting %s" % path
+                print("Deleting %s" % path)
                 os.remove(path)
 
-        print "Creating lexer"
+        print("Creating lexer")
         from yay.lexer import Lexer
         Lexer()
 
-        print "Creating parser"
+        print("Creating parser")
         from yay.parser import Parser
         Parser()
 
         if not os.path.exists("yay/parsetab.py"):
-            print "FAILED: parsetab not created"
+            print("FAILED: parsetab not created")
             os.remove("yay/parsetab.py")
             sys.exit(1)
 
         if not os.path.exists("yay/lextab.py"):
-            print "FAILED: lextab not created"
+            print("FAILED: lextab not created")
             os.remove("yay/lextab.py")
             sys.exit(1)
 
@@ -58,11 +60,17 @@ setup(
     version=version,
     url='http://pypi.python.org/pypi/yay',
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: System :: Systems Administration",
     ],
     author='John Carr',
@@ -76,12 +84,6 @@ setup(
         "ply",
         # "gpglib",
     ],
-    extras_require = dict(
-        test = [
-            "mock",
-            "unittest2",
-            ],
-        ),
     entry_points = {
         'console_scripts': [
             'yay = yay.transform:main',

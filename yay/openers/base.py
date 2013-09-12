@@ -12,15 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import urllib2
-import urlparse
-import StringIO
 import os
 import sys
 import hashlib
 import base64
 import itertools
 
+from yay.compat import io, request, parse, zip_longest
 from yay.errors import NotFound, NotModified, ParadoxError
 from .gpg import Gpg
 
@@ -31,6 +29,9 @@ def etag_stream(fp):
         block = fp.read(8192)
         if not block:
             break
+        #FIXME: should unicode even get here?
+        if isinstance(block, str):
+            block = block.encode("utf-8")
         s.update(block)
     return s.hexdigest()
 
@@ -111,13 +112,13 @@ class UrlOpener(IOpener):
     schemes = ("http://", "https://")
 
     def open(self, uri, etag=None):
-        p = urlparse.urlparse(uri)
+        p = parse.urlparse(uri)
         netloc = p.hostname
         if p.port:
             netloc += ":" + p.port
-        uri = urlparse.urlunparse((p.scheme, netloc, p[2], p[3], p[4], p[5]))
+        uri = parse.urlunparse((p.scheme, netloc, p[2], p[3], p[4], p[5]))
 
-        req = urllib2.Request(uri)
+        req = request.Request(uri)
 
         if p.username and p.password:
             header = base64.encodestring("%s:%s" % (p.username, p.password))
@@ -127,12 +128,12 @@ class UrlOpener(IOpener):
             req.add_header("If-None-Match", etag)
 
         try:
-            fp = urllib2.urlopen(req)
+            fp = request.urlopen(req)
 
-        except urllib2.URLError as exc:
+        except request.URLError as exc:
             raise NotFound("URL '%s' not found (URLError)" % uri)
 
-        except urllib2.HTTPError as exc:
+        except request.HTTPError as exc:
             if exc.code == 304:
                 raise NotModified("URL '%s' has not been modified" % uri)
             raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, exc.code))
@@ -186,11 +187,11 @@ class MemOpener(IOpener):
         except KeyError:
             raise NotFound("Memory cell '%s' does not exist" % uri)
 
-        fp = StringIO.StringIO(data)
+        fp = io.StringIO(data)
         fp.len = len(data)
         fp.labels = ()
 
-        new_etag = etag_stream(StringIO.StringIO(data))
+        new_etag = etag_stream(io.StringIO(data))
         if etag and new_etag == etag:
             raise NotModified("Memory cell '%s' hasn't changed" % uri)
         fp.etag = new_etag
@@ -230,7 +231,7 @@ class Openers(object):
         self.config = _merge(self.config, config)
 
     def _scheme(self, uri):
-        parsed = urlparse.urlparse(uri)
+        parsed = parse.urlparse(uri)
         return parsed.scheme
 
     def _absolute(self, uri):
@@ -309,7 +310,7 @@ class SearchpathFromGraph(object):
         previous = list(self._previous)
         current = self.expression.as_iterable()
 
-        for p, c in itertools.izip_longest(previous, current, fillvalue=marker):
+        for p, c in zip_longest(previous, current, fillvalue=marker):
             if p != marker:
                 if p != c:
                     raise ParadoxError("Searchpath changed after we started depending on it")
@@ -325,7 +326,7 @@ class SearchpathFromGraph(object):
             try:
                 while True:
                     self._iterating = True
-                    val = gen.next()
+                    val = next(gen)
                     self._iterating = False
                     yield val
             except StopIteration:

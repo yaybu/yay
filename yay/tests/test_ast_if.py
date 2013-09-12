@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
 from yay.ast import If, Literal
 from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
+from yay.tests.base import TestCase
+
 import mock
 
 """
-class TestIfDymnamic(unittest.TestCase):
+class TestIfDymnamic(TestCase):
 
     def test_if_dynamic_guard_true(self):
         n = If(Literal(True), Literal("dog"), else_=Literal("cat"))
@@ -33,7 +34,7 @@ class TestIfDymnamic(unittest.TestCase):
         self.assertEqual(n.dynamic(), True)
 
 
-class TestIfSimplification(unittest.TestCase):
+class TestIfSimplification(TestCase):
 
     def test_if_simplify_guard_true(self):
         n = If(Literal(True), ComplexLiteral("dog"), else_=Literal("cat"))
@@ -67,7 +68,7 @@ class TestIfSimplification(unittest.TestCase):
         self.assertEqual(res.else_.literal, "cat")
 """
 
-class TestIfResolve(unittest.TestCase):
+class TestIfResolve(TestCase):
 
     def test_if_resolve_true(self):
         n = If(Literal(True), Literal("dog"), Literal("cat"))

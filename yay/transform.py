@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
+
 from yay import parser, config, errors
 import sys
 import os
@@ -25,15 +27,14 @@ except ImportError:
 
 def graph_to_yaml(opts, graph):
     if not yaml:
-        print >>sys.stderr, "Please install PyYAML to use this tool"
+        print("Please install PyYAML to use this tool", file=sys.stderr)
         sys.exit(1)
 
     # Resolve
     try:
         resolved = graph.resolve()
     except errors.Error as e:
-        print >>sys.stderr, "A runtime error was captured"
-        print >>sys.stderr, str(e)
+        print(str(e), file=sys.stderr)
         sys.exit(1)
 
     # Dump as YAML
@@ -51,8 +52,7 @@ def graph_to_py(opts, graph):
     try:
         resolved = graph.resolve()
     except errors.Error as e:
-        print >>sys.stderr, "A runtime error was captured"
-        print >>sys.stderr, str(e)
+        print(str(e), file=sys.stderr)
         sys.exit(1)
 
     return pprint.pformat(resolved)
@@ -83,7 +83,7 @@ def main():
         searchpath = []
     elif len(args) == 1:
         if not os.path.exists(args[0]):
-            print >>sys.stderr, "Path '%s' does not exist" % args[0]
+            print("Path '%s' does not exist" % args[0], file=sys.stderr)
             sys.exit(1)
         instream = open(args[0])
         source = args[0]
@@ -93,11 +93,11 @@ def main():
         sys.exit(1)
 
     if not opts.format in converters:
-        print >>sys.stderr, "Output format must be one of: %r" % converters.keys()
+        print("Output format must be one of: %r" % converters.keys(), file=sys.stderr)
         sys.exit(1)
 
     if not opts.phase in phases:
-        print >>sys.stderr, "Phase must be one of: %r" % opts.phase
+        print("Phase must be one of: %r" % opts.phase, file=sys.stderr)
         sys.exit(1)
 
     p = parser.Parser()
@@ -107,8 +107,8 @@ def main():
     try:
         root.load(instream, name=source)
     except errors.Error as e:
-        print e.get_string()
+        print(str(e))
         sys.exit(1)
 
-    print converters[opts.format](opts, root)
+    print(converters[opts.format](opts, root))
 

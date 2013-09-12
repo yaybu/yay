@@ -4,7 +4,8 @@ Changelog for yay
 3.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Now supported on python 3.2 and python 3.3 (in addition to 2.6, 2.7 and
+  pypy).
 
 
 3.0.1 (2013-09-04)

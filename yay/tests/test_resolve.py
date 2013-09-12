@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from .base import parse, resolve, TestCase
 from yay import errors, ast
 from yay.errors import ParseError
 
 
-class TestYayDict(unittest2.TestCase):
+class TestYayDict(TestCase):
 
     def test_very_lazy(self):
         res = resolve("""
@@ -170,7 +169,7 @@ class TestYayDict(unittest2.TestCase):
         self.assertEqual(res['foo']['sitedir'], '/var/www/www.example.org')
 
 
-class TestEmptyDocument(unittest2.TestCase):
+class TestEmptyDocument(TestCase):
 
     def test_empty_document(self):
         res = resolve("")
@@ -182,7 +181,7 @@ class TestEmptyDocument(unittest2.TestCase):
             foo="",
         )
 
-class TestYayList(unittest2.TestCase):
+class TestYayList(TestCase):
 
     def test_list_of_dicts(self):
         res = resolve("""
@@ -272,7 +271,7 @@ class TestYayList(unittest2.TestCase):
             """)
         self.assertEqual(list(res.foo.as_iterable()), [1, 2])
 
-class TestTemplate(unittest2.TestCase):
+class TestTemplate(TestCase):
 
     def test_escaping(self):
         res = resolve("""
@@ -302,7 +301,7 @@ class TestTemplate(unittest2.TestCase):
         self.assertEqual(t.get_key("log_location").get_type(), "scalarish")
 
 
-class TestIdentifier(unittest2.TestCase):
+class TestIdentifier(TestCase):
 
     def test_syntax_error(self):
         self.assertRaises(ParseError, parse, """
@@ -347,7 +346,7 @@ class TestIdentifier(unittest2.TestCase):
         self.assertEqual(t.foo.as_dict({}), {})
 
 
-class TestLiteral(unittest2.TestCase):
+class TestLiteral(TestCase):
 
     def test_syntax_error(self):
         # FIXME: I would be happier if this was a errors.ParseError
@@ -379,14 +378,14 @@ class TestLiteral(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.foo.as_iterable)
 
 
-class TestParentForm(unittest2.TestCase):
+class TestParentForm(TestCase):
 
     def test_empty_parent(self):
         t = parse("foo: {{ () }}\n")
         self.assertEqual(t.get_key("foo").resolve(), [])
 
 
-class TestUnaryMinus(unittest2.TestCase):
+class TestUnaryMinus(TestCase):
 
     def test_simple_case(self):
         t = parse("""
@@ -412,7 +411,7 @@ class TestUnaryMinus(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("bar").as_int)
 
 
-class TestInvert(unittest2.TestCase):
+class TestInvert(TestCase):
 
     def test_simple_case(self):
         t = parse("""
@@ -421,7 +420,7 @@ class TestInvert(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), -6)
 
 
-class TestEqual(unittest2.TestCase):
+class TestEqual(TestCase):
 
     def test_equals(self):
         res = resolve("bar: {{ 1 == 2 }}\n")
@@ -442,7 +441,7 @@ class TestEqual(unittest2.TestCase):
         self.assertEqual(res['bar'], False)
 
 
-class TestNotEqual(unittest2.TestCase):
+class TestNotEqual(TestCase):
 
     def test_not_equals(self):
         res = resolve("bar: {{ 1 != 2}}\n")
@@ -455,7 +454,7 @@ class TestNotEqual(unittest2.TestCase):
         self.assertEqual(res['bar'], True)
 
 
-class TestGreaterThan(unittest2.TestCase):
+class TestGreaterThan(TestCase):
     def test_gt(self):
         res = resolve("""
             bar: {{ 2 > 1 }}
@@ -487,7 +486,7 @@ class TestGreaterThan(unittest2.TestCase):
         self.assertEqual(res['bar'], True)
 
 
-class TestLessThan(unittest2.TestCase):
+class TestLessThan(TestCase):
 
     def test_gt(self):
         res = resolve("""
@@ -520,7 +519,7 @@ class TestLessThan(unittest2.TestCase):
         self.assertEqual(res['bar'], False)
 
 
-class TestGreaterThanEqual(unittest2.TestCase):
+class TestGreaterThanEqual(TestCase):
     def test_gt(self):
         res = resolve("""
             bar: {{ 2 >= 1 }}
@@ -552,7 +551,7 @@ class TestGreaterThanEqual(unittest2.TestCase):
         self.assertEqual(res['bar'], True)
 
 
-class TestLessThanEqual(unittest2.TestCase):
+class TestLessThanEqual(TestCase):
 
     def test_gt(self):
         res = resolve("""
@@ -585,7 +584,7 @@ class TestLessThanEqual(unittest2.TestCase):
         self.assertEqual(res['bar'], False)
 
 
-class TestAdd(unittest2.TestCase):
+class TestAdd(TestCase):
 
     def test_plus(self):
         t = parse("""
@@ -606,7 +605,7 @@ class TestAdd(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
 
 
-class TestSubtract(unittest2.TestCase):
+class TestSubtract(TestCase):
     def test_minus(self):
         t = parse("""
             foo: {{ 1 - 1 }}
@@ -632,7 +631,7 @@ class TestSubtract(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
 
 
-class TestMultiply(unittest2.TestCase):
+class TestMultiply(TestCase):
     def test_multiply(self):
         t = parse("""
             foo: {{ 2 * 3 }}
@@ -652,7 +651,7 @@ class TestMultiply(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
 
 
-class TestDivide(unittest2.TestCase):
+class TestDivide(TestCase):
     def test_divide(self):
         t = parse("""
             foo: {{ 8 / 2 }}
@@ -688,7 +687,7 @@ class TestDivide(unittest2.TestCase):
 
 
 
-class TestFloorDivide(unittest2.TestCase):
+class TestFloorDivide(TestCase):
 
     def test_divide(self):
         t = parse("""
@@ -718,7 +717,7 @@ class TestFloorDivide(unittest2.TestCase):
 
 
 
-class TestMod(unittest2.TestCase):
+class TestMod(TestCase):
 
     def test_no_remainder(self):
         t = parse("""
@@ -751,7 +750,7 @@ class TestMod(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("foo").resolve)
 
 
-class TestRshift(unittest2.TestCase):
+class TestRshift(TestCase):
 
     def test_rshift(self):
         t = parse("""
@@ -760,7 +759,7 @@ class TestRshift(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 1)
 
 
-class TestLshift(unittest2.TestCase):
+class TestLshift(TestCase):
 
     def test_lshift(self):
         t = parse("""
@@ -769,7 +768,7 @@ class TestLshift(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 24)
 
 
-class TestXor(unittest2.TestCase):
+class TestXor(TestCase):
     def test_xor(self):
         t = parse("""
             foo: {{ 6 ^ 2 }}
@@ -777,7 +776,7 @@ class TestXor(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 6 ^ 2)
 
 
-class TestBitwiseAnd(unittest2.TestCase):
+class TestBitwiseAnd(TestCase):
 
     def test_bitwise_and_0(self):
         t = parse("""
@@ -792,7 +791,7 @@ class TestBitwiseAnd(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 8)
 
 
-class TestAnd(unittest2.TestCase):
+class TestAnd(TestCase):
     def test_and_true_true(self):
         t = parse("""
             foo: {{ 1 and 1 }}
@@ -818,7 +817,7 @@ class TestAnd(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 0)
 
 
-class TestBitwiseOr(unittest2.TestCase):
+class TestBitwiseOr(TestCase):
 
     def test_bitwise_or(self):
         t = parse("""
@@ -827,7 +826,7 @@ class TestBitwiseOr(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 10)
 
 
-class TestElse(unittest2.TestCase):
+class TestElse(TestCase):
 
     def test_else(self):
         res = resolve("""
@@ -867,7 +866,7 @@ class TestElse(unittest2.TestCase):
             foo_inc="hello: world\n")
         self.assertEqual(res['hello'], 'world')
 
-class TestNotIn(unittest2.TestCase):
+class TestNotIn(TestCase):
 
     def test_not_in(self):
         t = parse("""
@@ -879,7 +878,7 @@ class TestNotIn(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 1)
 
 
-class TestPower(unittest2.TestCase):
+class TestPower(TestCase):
 
     def test_power_literals(self):
         t = parse("""
@@ -912,7 +911,7 @@ class TestPower(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key("foo").as_int)
 
 
-class TestNot(unittest2.TestCase):
+class TestNot(TestCase):
     def test_not_true(self):
         t = parse("""
             foo: {{ not 0 }}
@@ -926,7 +925,7 @@ class TestNot(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").as_int(), 0)
 
 
-class TestConditionalExpression(unittest2.TestCase):
+class TestConditionalExpression(TestCase):
 
     def test_eval_true(self):
         t = parse("""
@@ -941,7 +940,7 @@ class TestConditionalExpression(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").resolve(), "bar")
 
 
-class TestListDisplay(unittest2.TestCase):
+class TestListDisplay(TestCase):
 
     def test_empty(self):
         t = parse("""
@@ -956,7 +955,7 @@ class TestListDisplay(unittest2.TestCase):
         self.assertEqual(res['foo'], [1, 2, 3, 4, 5])
 
 
-class TestDictDisplay(unittest2.TestCase):
+class TestDictDisplay(TestCase):
 
     def test_empty(self):
         t = parse("""
@@ -972,7 +971,7 @@ class TestDictDisplay(unittest2.TestCase):
         self.assertEqual(t.get_key("foo").resolve(), "")
 
 
-class TestAttributeRef(unittest2.TestCase):
+class TestAttributeRef(TestCase):
 
     def test_attributeref(self):
         res = resolve("""
@@ -983,7 +982,7 @@ class TestAttributeRef(unittest2.TestCase):
         self.assertEqual(res['bar'], 'hello')
 
 
-class TestSubscription(unittest2.TestCase):
+class TestSubscription(TestCase):
 
     def test_subscription_string(self):
         res = resolve("""
@@ -1047,7 +1046,7 @@ class TestSubscription(unittest2.TestCase):
         self.assertEqual(t.get_key("bar").as_int(), 2)
 
 
-class TestFor(unittest2.TestCase):
+class TestFor(TestCase):
 
     def test_for_emit_dict(self):
         res = resolve("""
@@ -1183,7 +1182,7 @@ class TestFor(unittest2.TestCase):
             """)
 
 
-class TestSlicing(unittest2.TestCase):
+class TestSlicing(TestCase):
 
     def test_simple_slicing(self):
         t = parse("""
@@ -1271,7 +1270,7 @@ class TestPythonClass(TestCase):
         self.assertEqual(res['foo']['hello'], 'world')
 
 
-class TestPrototype(unittest2.TestCase):
+class TestPrototype(TestCase):
 
     def test_prototype_not_in_output(self):
         self.assertEqual(resolve("""
@@ -1337,7 +1336,7 @@ class TestNew(TestCase):
             """)
 
 
-class TestPythonCall(unittest2.TestCase):
+class TestPythonCall(TestCase):
 
     def test_range(self):
         res = resolve("""
@@ -1365,7 +1364,7 @@ class TestPythonCall(unittest2.TestCase):
         self.assertEqual(res['replacedstring'], 'foo-bar-baz')
 
 
-class TestMacroCall(unittest2.TestCase):
+class TestMacroCall(TestCase):
 
     def test_macro(self):
         res = resolve("""
@@ -1492,7 +1491,7 @@ class TestMacroCall(unittest2.TestCase):
 
         self.assertEqual(res["SomeKey"], "foo")
 
-class TestExtend(unittest2.TestCase):
+class TestExtend(TestCase):
 
     def test_simple_extend(self):
         t = parse("""
@@ -1700,7 +1699,7 @@ class TestInclude(TestCase):
 
 
 
-class TestSelect(unittest2.TestCase):
+class TestSelect(TestCase):
 
     def test_select(self):
         res = resolve("""
@@ -1767,7 +1766,7 @@ class TestSelect(unittest2.TestCase):
         self.assertEqual(res['b'], 'bar')
 
 
-class TestIf(unittest2.TestCase):
+class TestIf(TestCase):
 
     def test_if(self):
         res = resolve("""
@@ -1873,7 +1872,7 @@ class TestIf(unittest2.TestCase):
 
         self.assertEqual(res['lol'], {'foo': 'bar', 'baz': 'qux', 'quux': 'zap'})
 
-class TestYayScalar(unittest2.TestCase):
+class TestYayScalar(TestCase):
 
     def test_int(self):
         res = resolve("""
@@ -1888,7 +1887,7 @@ class TestYayScalar(unittest2.TestCase):
         self.assertRaises(errors.TypeError, t.get_key('foo').as_int)
 
 
-class TestSet(unittest2.TestCase):
+class TestSet(TestCase):
 
     def test_set(self):
         res = resolve("""
@@ -1955,7 +1954,7 @@ class TestSet(unittest2.TestCase):
         self.assertEqual(res['foo'], [1, 2])
 
 
-class TestPythonicWrapper(unittest2.TestCase):
+class TestPythonicWrapper(TestCase):
 
     def setUp(self):
         self.graph = parse("""
@@ -2004,8 +2003,8 @@ class TestPythonicWrapper(unittest2.TestCase):
 
     def test_iter(self):
         it = iter(self.graph.quux)
-        self.assertEqual(str(it.next().fruit), "apple")
-        self.assertEqual(str(it.next().fruit), "pear")
+        self.assertEqual(str(next(it).fruit), "apple")
+        self.assertEqual(str(next(it).fruit), "pear")
 
 
 class TestSearchPath(TestCase):
@@ -2127,7 +2126,7 @@ class TestLabels(TestCase):
         self.assertEqual(foo.as_safe_string(), "hello, *****")
 
 
-class TestStanzas(unittest2.TestCase):
+class TestStanzas(TestCase):
 
     def test_lots_of_fors(self):
         res = resolve("""
@@ -2142,7 +2141,7 @@ class TestStanzas(unittest2.TestCase):
         self.assertEqual(res['resources'], ['a', 'b', 'c', 'd'])
 
 
-class TestOpeners(unittest2.TestCase):
+class TestOpeners(TestCase):
     pass
 
     #def test_openers_package_compat(self):

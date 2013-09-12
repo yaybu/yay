@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from yay.ast import And, Literal
+from yay.tests.base import TestCase
 from yay.tests.test_ast_common import DynamicLiteral
 
 
-class TestAndSimplification(unittest2.TestCase):
+class TestAndSimplification(TestCase):
 
     def test_both_dynamic(self):
         n = And(DynamicLiteral('lhs'), DynamicLiteral('rhs'))
         res = n.simplify()
 
         self.assertTrue(isinstance(res, And))
-        self.assertNotEqual(res, n)
+        self.assertNotEqual(id(res), id(n))
         self.assertEqual(n.lhs.literal, 'lhs')
         self.assertEqual(n.rhs.literal, 'rhs')
 
@@ -64,7 +64,7 @@ class TestAndSimplification(unittest2.TestCase):
         self.assertEqual(res.literal, False)
 
 
-class TestAndResolve(unittest2.TestCase):
+class TestAndResolve(TestCase):
 
     def test_if_true_true(self):
         n = And(Literal(True), Literal(True))

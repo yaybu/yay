@@ -50,13 +50,13 @@ class Lexer(object):
 
     def token(self):
         try:
-            return self.token_stream.next()
+            return next(self.token_stream)
         except StopIteration:
             return None
 
     def __iter__(self):
         while True:
-            yield self.token_stream.next()
+            yield next(self.token_stream)
 
     states = (
         ('VALUE', 'exclusive'),

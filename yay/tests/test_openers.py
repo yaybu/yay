@@ -13,20 +13,19 @@
 # limitations under the License.
 
 
-import unittest
 from yay.openers import *
 from yay.errors import NotModified, NotFound, ParadoxError
-
+from yay.tests.base import TestCase
 
 if __file__.endswith(".pyc"):
     __file__ = __file__[:-1]
 
 
-class TestFileOpener(unittest.TestCase):
+class TestFileOpener(TestCase):
 
     def test_read(self):
         fp = FileOpener().open(__file__)
-        data = fp.read().split("\n")
+        data = fp.read().decode("utf-8").split("\n")
         self.failUnlessEqual(data[0], "# Copyright 2010-2013 Isotoma Limited")
 
     def test_notfound(self):
@@ -46,14 +45,14 @@ class TestFileOpener(unittest.TestCase):
         self.failUnlessEqual(len(fp.read()), fp.len)
 
 
-class TestHttpOpener(unittest.TestCase):
+class TestHttpOpener(TestCase):
     pass
     #def test_notfound(self):
     #    uo = UrlOpener()
     #    self.failUnlessRaises(NotFound, uo.open, "http://yay-test-url-that-doesnt-exist.isotoma.com/hello_world")
 
 
-class TestLazySearchpath(unittest.TestCase):
+class TestLazySearchpath(TestCase):
 
     def setUpMock(self, iterable):
         class Mock(object):

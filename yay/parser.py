@@ -15,7 +15,17 @@
 import os
 from ply import yacc
 
-from lexer import Lexer, ExpressionLexer
+# Support python 3
+OldYaccProduction = yacc.YaccProduction
+class YaccProduction(OldYaccProduction):
+    def __getitem__(self,n):
+        if isinstance(n, slice):
+            return [s.value for s in self.slice[n]]
+        return OldYaccProduction.__getitem__(self, n)
+yacc.YaccProduction = YaccProduction
+
+
+from .lexer import Lexer, ExpressionLexer
 from . import ast
 from .errors import (Anchor, ColumnAnchor, SpanAnchor,
                      EOLParseError, EOFParseError,

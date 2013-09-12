@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-from .base import parse, resolve
+from .base import TestCase, parse, resolve
 from yay import errors
 
 
-class TestResolveCycles(unittest.TestCase):
+class TestResolveCycles(TestCase):
 
     def test_self_recursion(self):
         res = parse("""

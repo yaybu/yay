@@ -19,13 +19,13 @@ import pkg_resources
 from setuptools.package_index import PackageIndex
 from itertools import chain
 
+from yay.compat import request, parse
 from yay.errors import NotFound
 from .base import IOpener, FileOpener
 
 from tempfile import mkdtemp
 import shutil
-import urllib2
-import urlparse
+
 
 class TemporaryDirectory(object):
 
@@ -88,14 +88,14 @@ class PackageOpener(IOpener):
         ws.add_entry(eggdir)
 
         if not self._password_mgr and self.get_setting("index"):
-            mgr = self._password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            parsed = urlparse.urlparse(self.get_setting("index"))
-            top_level_url = urlparse.urlunparse((parsed.scheme, parsed.netloc, '', '', '', ''))
+            mgr = self._password_mgr = request.HTTPPasswordMgrWithDefaultRealm()
+            parsed = parse.urlparse(self.get_setting("index"))
+            top_level_url = parse.urlunparse((parsed.scheme, parsed.netloc, '', '', '', ''))
             mgr.add_password(self.get_setting("realm"), top_level_url, self.get_setting("username"), self.get_setting("password"))
 
-            handler = urllib2.HTTPBasicAuthHandler(mgr)
-            opener = urllib2.build_opener(handler)
-            urllib2.install_opener(opener)
+            handler = request.HTTPBasicAuthHandler(mgr)
+            opener = request.build_opener(handler)
+            request.install_opener(opener)
 
         def _installer(req):
             if not os.path.exists(eggdir):
@@ -121,7 +121,7 @@ class PackageOpener(IOpener):
         while 1:
             try:
                 ws.resolve(parsed)
-            except pkg_resources.DistributionNotFound, err:
+            except pkg_resources.DistributionNotFound as err:
                 [req] = err
                 _installer(req)
             else:

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import StringIO
 import os
 import subprocess
 
+from yay.compat import io
 from yay.errors import NotFound, NotModified, ParadoxError
 
 try:
@@ -30,7 +30,7 @@ try:
             decryptor = EncryptedMessage(key.key_dict())
             decryptor.decrypt(fp.read())
 
-            stream = StringIO.StringIO(decryptor.plaintext)
+            stream = io.StringIO(decryptor.plaintext)
             stream.etag = fp.etag
             stream.len = len(decryptor.plaintext)
             stream.uri = fp.uri
@@ -70,7 +70,7 @@ except ImportError:
                     msg += "\nGPG Agent not running so your GPG key may not be available"
                 raise NotFound(msg)
 
-            stream = StringIO.StringIO(stdout)
+            stream = io.StringIO(stdout)
             stream.etag = fp.etag
             stream.len = len(stdout)
             stream.uri = fp.uri

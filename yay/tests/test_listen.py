@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from .base import parse, resolve, TestCase
 from yay import errors, ast
 from yay.errors import ParseError
@@ -25,7 +24,7 @@ def parse_and_listen(data):
     return g
 
 
-class TestObservation(unittest2.TestCase):
+class TestObservation(TestCase):
 
     def test_dict_parent(self):
         g = parse_and_listen("""

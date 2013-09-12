@@ -1,7 +1,6 @@
 nose2
 coverage
 python-coveralls
-unittest2
 mock
 
 PyYAML

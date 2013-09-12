@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 import types
 from yay.lexer import Lexer
+from yay.tests.base import TestCase
 from ply import lex
 
 
@@ -76,7 +76,7 @@ def identifier(x):
 def line(x):
     return t('LINE', x)
 
-class TestLexer(unittest2.TestCase):
+class TestLexer(TestCase):
 
     def _lex(self, value):
         l = Lexer(debug=1)
@@ -85,7 +85,7 @@ class TestLexer(unittest2.TestCase):
 
     def show_error(self, x, y):
         compar = []
-        for a, b in map(None, x, y):
+        for a, b in map(lambda *z: z, x, y):
             if a == b:
                 compar.append("     %-20r %-20r" % (a, b))
             else:

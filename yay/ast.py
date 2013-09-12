@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 import operator
 import re
 import functools
 import inspect
 
 from yay import errors
+from yay.compat import io
 from yay.openers import Openers
 from yay.errors import merge_anchors as ma
-
+from yay.compat import basestring
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
@@ -484,7 +486,7 @@ class Streamish(object):
             self._iterator = self._get_source_iterator()
 
         while len(self._buffer) < index+1:
-            self._buffer.append(self._iterator.next())
+            self._buffer.append(next(self._iterator))
 
     def get_key(self, index):
         try:
@@ -879,8 +881,7 @@ class Root(Pythonic, Proxy, AST):
         return self.load(fp, uri, getattr(fp, "labels", ()))
 
     def loads(self, data, name="<Unknown>", labels=()):
-        import StringIO
-        return self.load(StringIO.StringIO(data), name, labels)
+        return self.load(io.StringIO(data), name, labels)
 
     def load(self, stream, name="<Unknown>", labels=()):
         node = self._parse(stream, name, labels)
@@ -2567,11 +2568,15 @@ bindings = [
     (lambda v: isinstance(v, (int, float, basestring, bool)),    YayScalar),
 ]
 
+if inspect.isclass(range):
+    bindings.append((lambda v: isinstance(v, range), PythonIterable))
+
+
 def bind(v):
     for detector, wrapper in bindings:
         if detector(v):
             return wrapper(v)
-    raise error.TypeError("Encountered unbindable object")
+    raise errors.TypeError("Encountered unbindable object (type = %r)" % repr(v))
 
 
 AST._predecessor = NoPredecessorStandin()

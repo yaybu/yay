@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
 from yay import parser
 from yay.errors import UnexpectedSymbolError, EOLParseError, EOFParseError
 from .base import bare_parse as parse
+from .base import TestCase
 
-class TestParserErrors(unittest2.TestCase):
+
+class TestParserErrors(TestCase):
 
     def _r(self, re, src):
         self.assertRaisesRegexp(UnexpectedSymbolError, re, parse, src)

@@ -12,10 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest2
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+try:
+    from imp import reload
+except:
+    pass
+
+from yay.compat import io
 from yay import parser, ast, config
 from yay.openers.base import MemOpener
-import StringIO
 
 
 class MockRoot(ast.Root):
@@ -51,7 +60,7 @@ def resolve(value, root=MockRoot, **kwargs):
     return r.resolve()
 
 
-class TestCase(unittest2.TestCase):
+class TestCase(unittest.TestCase):
 
     builtins = None
 
@@ -69,7 +78,7 @@ class TestCase(unittest2.TestCase):
                 self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
         c = Config()
         c.builtins = self.builtins or {}
-        c.load(StringIO.StringIO(source), labels=labels)
+        c.load(io.StringIO(source), labels=labels)
         return c
 
     def _resolve(self, source):
