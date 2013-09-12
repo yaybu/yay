@@ -204,14 +204,15 @@ class EOLParseError(ParseError):
 
     def __init__(self, anchor):
         self.anchor = anchor
+        self.description = "Unexpected end of line in %s" % self.anchor
+
 
     def __str__(self):
-        short = "Unexpected end of line in %s" % self.anchor
         desc = self.anchor.long_description()
         if desc is not None:
-            return "\n".join([short, desc])
+            return "\n".join([self.description, desc])
         else:
-            return short
+            return self.description
 
 class UnexpectedSymbolError(ParseError):
 
