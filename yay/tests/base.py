@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
 
     def _config(self, source):
         fd, path = tempfile.mkstemp()
-        os.write(fd, source)
+        os.write(fd, source.encode("utf-8"))
         os.close(fd)
         self.addCleanup(os.unlink, path)
         return path
