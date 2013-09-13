@@ -900,7 +900,8 @@ class Root(Pythonic, Proxy, AST):
         from yay import parser
         p = parser.Parser()
         data = stream.read()
-        data = data.decode("utf-8")
+        if hasattr(data, "decode"):
+            data = data.decode("utf-8")
         node = p.parse(data, source=name)
         node.parent = self
         node.labels = labels
