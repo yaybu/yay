@@ -899,7 +899,9 @@ class Root(Pythonic, Proxy, AST):
     def _parse(self, stream, name="<Unknown>", labels=()):
         from yay import parser
         p = parser.Parser()
-        node = p.parse(stream.read(), source=name)
+        data = stream.read()
+        data = data.decode("utf-8")
+        node = p.parse(data, source=name)
         node.parent = self
         node.labels = labels
         return node
