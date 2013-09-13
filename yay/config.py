@@ -63,16 +63,6 @@ class Config(ast.Root):
 
     get = resolve
 
-    def lookup(self, key):
-        """
-        Returns an object which can be resolved to a key on the current
-        document
-        """
-        l = ast.Identifier(key)
-        l.parent = self
-        l.anchor = None
-        return l
-
 
 def load_uri(uri, special_term='yay'):
     c = Config(special_term)
