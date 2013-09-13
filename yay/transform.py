@@ -64,7 +64,7 @@ usage: %prog [options] [filename]
 Where output is one of "dot", "yaml" or "py"\
 """
 
-def main():
+def main(argv=sys.argv, stdin=sys.stdin):
     converters = {
         "dot": graph_to_dot,
         "yaml": graph_to_yaml,
@@ -75,10 +75,10 @@ def main():
     p = optparse.OptionParser(usage=usage)
     p.add_option('-p', '--phase', action="store", default="initial", help="phase, one of %s" % ",".join(phases))
     p.add_option('-f', '--format', action="store", default="yaml", help="output format, one of: %s. defaults to 'yaml'" % ", ".join(converters.keys()))
-    opts, args = p.parse_args()
+    opts, args = p.parse_args(argv)
 
     if len(args) == 0:
-        instream = sys.stdin
+        instream = stdin
         source = "<stdin>"
         searchpath = []
     elif len(args) == 1:

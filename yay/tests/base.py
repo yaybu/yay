@@ -21,6 +21,8 @@ try:
     from imp import reload
 except:
     pass
+import os
+import tempfile
 
 from yay.compat import io
 from yay import parser, ast, config
@@ -73,8 +75,8 @@ class TestCase(unittest.TestCase):
     def _parse(self, source, labels=()):
         from yay.openers.base import Openers, SearchpathFromGraph
         class Config(config.Config):
-            def setup_openers(self, searchpath):
-                self.add({"yay": {"searchpath": searchpath or []}})
+            def setup_openers(self):
+                self.add({"yay": {"searchpath": self.searchpath or []}})
                 self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
         c = Config()
         c.builtins = self.builtins or {}
@@ -83,6 +85,13 @@ class TestCase(unittest.TestCase):
 
     def _resolve(self, source):
         return self._parse(source).resolve()
+
+    def _config(self, source):
+        fd, path = tempfile.mkstemp()
+        os.write(fd, source)
+        os.close(fd)
+        self.addCleanup(os.unlink, path)
+        return path
 
     def assertResolves(self, source, expected):
         self.assertEqual(self._resolve(source), expected)

@@ -23,12 +23,17 @@ class Config(ast.Root):
     def __init__(self, special_term='yay', searchpath=None, config=None):
         super(Config, self).__init__()
         self.special_term = special_term
+        self.searchpath = searchpath
+        self.clear()
+
+    def clear(self):
+        self.node = None
         self.builtins = {}
         self.node = ast.NoPredecessorStandin()
-        self.setup_openers(searchpath)
+        self.setup_openers()
 
-    def setup_openers(self, searchpath):
-        self.openers = Openers(searchpath=searchpath)
+    def setup_openers(self):
+        self.openers = Openers(searchpath=self.searchpath)
 
     def add(self, data):
         if not isinstance(data, dict):
@@ -39,15 +44,14 @@ class Config(ast.Root):
         self.node = bound
 
     def get_context(self, key):
-        try:
-            return super(Config, self).get_context(key)
-        except errors.NoMatching:
-            if not key in self.builtins:
-                raise
-            return self.builtins[key]
-
-    def clear(self):
-        self.node = None
+        if not isinstance(self.node, ast.NoPredecessorStandin):
+            try:
+                return super(Config, self).get_context(key)
+            except errors.NoMatching:
+                pass
+        if not key in self.builtins:
+            raise errors.NoMatching(key)
+        return self.builtins[key]
 
     def parse_expression(self, expression):
         p = parser.ExpressionParser()
@@ -57,7 +61,7 @@ class Config(ast.Root):
 
     def resolve(self):
         __context__ = "Performing full resolve"
-        if not self.node:
+        if isinstance(self.node, ast.NoPredecessorStandin):
             return {}
         return self.node.resolve()
 
