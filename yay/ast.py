@@ -1805,7 +1805,13 @@ class YayMultilineScalar(Scalarish, AST):
 
     def to_scalar(self):
         """ Return an appropriate representation with newlines handled. """
-        return self.chomp_ast(self.chomper, self.__value)
+        s = self.chomp_ast(self.chomper, self.__value)
+        if isinstance(s, YayScalar):
+            s.value = s.value.rstrip(" ")
+        if isinstance(s, YayMerged):
+            if isinstance(s.rhs, YayScalar):
+                s.rhs.value = s.rhs.value.rstrip(" ")
+        return s
 
     @classmethod
     def chomp_ast(klass, method, item):
@@ -1837,6 +1843,8 @@ class YayMultilineScalar(Scalarish, AST):
         for line in value.split("\n"):
             if line:
                 v.append(line)
+            else:
+                v.append("")
         rv = " ".join(v)
         return rv
 

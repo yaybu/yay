@@ -56,7 +56,7 @@ class TestASTMultiline(TestCase):
     fold = ("Mark McGwire's\n"
             "year was crippled\n"
             "by a knee injury.\n")
-    fold_out = "Mark McGwire's year was crippled by a knee injury."
+    fold_out = "Mark McGwire's year was crippled by a knee injury. "
 
     def test_chomp_fold(self):
         """ In folded scalars, newlines become spaces """
@@ -65,4 +65,4 @@ class TestASTMultiline(TestCase):
 
     def test_chomp_fold_value(self):
         r = YayMultilineScalar(YayScalar(self.fold), ">")
-        self.assertEqual(r.value, YayScalar(self.fold_out))
+        self.assertEqual(r.value, YayScalar(self.fold_out.rstrip()))
