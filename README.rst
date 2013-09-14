@@ -1,6 +1,6 @@
 ===
 Yay
-====
+===
 
 .. image:: https://travis-ci.org/yaybu/yay.png
    :target: https://travis-ci.org/#!/yaybu/yay
