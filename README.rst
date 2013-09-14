@@ -1,13 +1,21 @@
-==============
-yay ain't YAML
-==============
+===
+Yay
+====
 
 .. image:: https://travis-ci.org/yaybu/yay.png
    :target: https://travis-ci.org/#!/yaybu/yay
 
+.. image:: https://coveralls.io/repos/yaybu/yay/badge.png?branch=master
+    :target: https://coveralls.io/r/yaybu/yay
+
+.. image:: https://pypip.in/v/yay/badge.png
+    :target: https://crate.io/packages/yay/
+
 Yay is a non-strict lazily evaluated configuration language. It combines
 YAML-like data declarations with lazy python expressions. We really hope you
 like this, please let us know if it's useful.
+
+It works with python 2.6+, 3.2+ and pypy 1.9.
 
 Yay is very new software, and although we have tested it a lot it is
 certainly full of bugs. Please subscribe to the yaybu-dev mailing list, which
