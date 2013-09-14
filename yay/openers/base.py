@@ -22,6 +22,11 @@ from yay.compat import io, request, parse, zip_longest
 from yay.errors import NotFound, NotModified, ParadoxError
 from .gpg import Gpg
 
+try:
+    unicode = unicode
+except NameError:
+    unicode = str
+
 
 def etag_stream(fp):
     s = hashlib.sha1()
@@ -30,7 +35,7 @@ def etag_stream(fp):
         if not block:
             break
         #FIXME: should unicode even get here?
-        if isinstance(block, str):
+        if isinstance(block, unicode):
             block = block.encode("utf-8")
         s.update(block)
     return s.hexdigest()
