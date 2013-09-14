@@ -435,7 +435,7 @@ class TestParser(unittest2.TestCase):
         """)
         self.assertEqual(res, YayDict([
             ('a', YayScalar('b')),
-            ('c', YayMerged(YayScalar('woo '), YayMerged(Identifier('a'), YayScalar(' hello')))),
+            ('c', YayMerged(YayMerged(YayScalar("woo "), Identifier("a")), YayScalar(" hello")))
         ]))
 
     def test_template_5(self):
@@ -812,7 +812,7 @@ class TestParser(unittest2.TestCase):
           quux quuux
         """)
         self.assertEqual(res, YayDict([
-            ('a', YayScalar("foo bar baz quux quuux")),
+            ('a', YayScalar("foo bar baz  quux quuux")),
             ]))
 
     def test_multiline_literal(self):
@@ -889,7 +889,7 @@ class TestParser(unittest2.TestCase):
         a: >
           foo {{bar}}
           quux
-        """, True)
+        """)
         self.assertEqual(res, YayDict([
             ('a', YayMerged(
                 YayMerged(
