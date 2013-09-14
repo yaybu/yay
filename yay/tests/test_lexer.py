@@ -548,9 +548,10 @@ b: c
         """), [
                value('a'), colon,
                t('MULTILINE', '>'),
-               value('foo '), ldbrace, t('IDENTIFIER', 'bar'), rdbrace, value('baz'),
+               value('foo '), ldbrace, t('IDENTIFIER', 'bar'), rdbrace,
+               value(' '), value('baz'),
                newline,
-               ldbrace, t('IDENTIFIER', 'quux'), rdbrace, value('quuux'),
+               ldbrace, t('IDENTIFIER', 'quux'), rdbrace, value(' '), value('quuux'),
                newline,
                t('MULTILINE_END'),
                newline,

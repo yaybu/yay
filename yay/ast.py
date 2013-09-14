@@ -21,6 +21,8 @@ from yay import errors
 from yay.openers import Openers
 from yay.errors import merge_anchors as ma
 
+import types
+from itertools import chain
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
@@ -1099,6 +1101,40 @@ class Add(Expr):
 class YayMerged(Expr):
     """ Combined scalars and templates """
 
+    @classmethod
+    def merge(klass, *items):
+        """ This will return an AST node of the appropriate
+        simplest type. We flatten our tree of merges, if we have one, then
+        remerge everything, carefully appending strings in scalars whenever
+        we can. This helps ensure that multiline blocks get wrapped properly.
+        """
+        def unwrap(v):
+            if isinstance(v, YayMerged):
+                for i in unwrap(v.lhs):
+                    yield i
+                for i in unwrap(v.rhs):
+                    yield i
+            elif isinstance(v, types.StringTypes):
+                yield YayScalar(v)
+            else:
+                yield v
+
+        m = []
+        for i in items:
+            for j in unwrap(i):
+                if len(m) > 0 and isinstance(j, YayScalar) \
+                   and isinstance(m[-1], YayScalar):
+                    m[-1].value = m[-1].value + j.value
+                else:
+                    m.append(j)
+        if len(m) == 1:
+            v= m[0]
+        else:
+            v = YayMerged(m[0], m[1])
+            for i in m[2:]:
+                v = YayMerged(v, i)
+        return v
+
     def resolve_once(self):
         return self.lhs.as_string() + self.rhs.as_string()
 
@@ -1738,19 +1774,25 @@ class YayMultilineScalar(Scalarish, AST):
     }
 
     def __init__(self, value, mtype):
+        """ mtype is one of the chomper keys """
+
         super(YayMultilineScalar, self).__init__()
         self.__value = value
         self.mtype = mtype
         self.chomper = getattr(self, self.chompers[self.mtype])
 
     def append(self, value):
+        if not value:
+            return
+        if isinstance(value, YayScalar) and not value.value:
+            return
         import types
         if isinstance(value, types.StringTypes):
             value = YayScalar(value)
         if isinstance(value, YayScalar) and isinstance(self.__value, YayScalar):
             self.__value = YayScalar(self.__value.value + value.value)
         else:
-            self.__value = YayMerged(self.__value, value)
+            self.__value = YayMerged.merge(self.__value, value)
 
     @property
     def value(self):
@@ -1784,33 +1826,13 @@ class YayMultilineScalar(Scalarish, AST):
         Folding allows long lines to be broken anywhere a single space
         character separates two non-space characters.
         """
-        # This is what pyYAML does
-        #
-        # Unfortunately, folding rules are ambiguous.
-        #
-        # This is the folding according to the specification:
-        #
-        #if folded and line_break == u'\n'   \
-        #        and leading_non_space and self.peek() not in u' \t':
-        #    if not breaks:
-        #        chunks.append(u' ')
-        #else:
-        #    chunks.append(line_break)
-
+        # Our implementation, and specification, is much simpler than YAMLs
+        # which is uselessly complex. \n's are replaced with spaces, and collapsed
         v = []
-        lines = value.split('\n')
-        for i, l in enumerate(lines):
-            if l:
-                v.append(l)
-                try:
-                    peek = not lines[i+1] or lines[i+1][0] in ' \t'
-                except IndexError:
-                    peek = False
-                if not re.match('^\s', l)  and not peek:
-                    v.append(' ')
-                else:
-                    v.append('\n')
-        rv = "".join(v)
+        for line in value.split("\n"):
+            if line:
+                v.append(line)
+        rv = " ".join(v)
         return rv
 
     @staticmethod

@@ -179,4 +179,3 @@ class TestContext(unittest2.TestCase):
         c = Context(Mock(), {"x": Mock()})
         x = c.get_context("x")
         self.assertEqual(x, c.context["x"])
-

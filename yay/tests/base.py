@@ -31,14 +31,14 @@ class MockRoot(ast.Root):
         p = parser.Parser()
         return p.parse(self.data[path], debug=0)
 
-def bare_parse(value):
+def bare_parse(value, debug=False):
     try:
         import yay.parsetab
         reload(yay.parsetab)
     except ImportError:
         pass
     p = parser.Parser()
-    return p.parse(value, debug=False)
+    return p.parse(value, debug)
 
 def parse(value, root=MockRoot, **kwargs):
     r = root(bare_parse(value))
