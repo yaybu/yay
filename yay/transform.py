@@ -75,7 +75,7 @@ def main(argv=sys.argv, stdin=sys.stdin):
     p = optparse.OptionParser(usage=usage)
     p.add_option('-p', '--phase', action="store", default="initial", help="phase, one of %s" % ",".join(phases))
     p.add_option('-f', '--format', action="store", default="yaml", help="output format, one of: %s. defaults to 'yaml'" % ", ".join(converters.keys()))
-    opts, args = p.parse_args(argv)
+    opts, args = p.parse_args(argv[1:])
 
     if len(args) == 0:
         instream = stdin
