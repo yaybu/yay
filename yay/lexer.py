@@ -298,10 +298,16 @@ class Lexer(object):
         r"""([^:\{\n]|{(?!{)|:(?!\s))+"""
         return t
 
-    def t_ANY_WS(self, t):
+    def t_INITIAL_VALUE_LISTVALUE_TEMPLATE_COMMAND_WS(self, t):
         r'\ +'
         if self.at_line_start:
             return t
+
+    def t_BLOCK_WS(self, t):
+        r'\ +'
+        if not self.at_line_start:
+            t.type = "VALUE"
+        return t
 
     def t_BLOCK_VALUE(self, t):
         r"""[^:\{\n]+"""

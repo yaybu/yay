@@ -89,7 +89,8 @@ class BaseParser(object):
         rv = self.parser.parse(value,
                                lexer=self.lexer(source=source),
                                tracking=tracking,
-                               debug=debug)
+                               debug=debug
+                               )
         if self.errors > 0:
             raise SyntaxError
         return rv
@@ -1169,7 +1170,7 @@ class BaseParser(object):
         '''
         scalar : scalar scalar
         '''
-        p[0] = ast.YayMerged(p[1], p[2])
+        p[0] = ast.YayMerged.merge(p[1], p[2])
         p[0].anchor = p[1].anchor
 
     def p_yaydict_keyscalar(self, p):

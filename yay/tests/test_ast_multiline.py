@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.ast import YayMultilineScalar
 from yay.tests.base import TestCase
+from yay.ast import YayMultilineScalar, YayScalar
+import unittest2
 from mock import Mock
 
 
@@ -28,12 +29,6 @@ class TestASTMultiline(TestCase):
             YayMultilineScalar(v, c).value,
             YayMultilineScalar(w, c).value,
             )
-
-    def test_chomp_fold(self):
-        self.assertEqual(self._m(">"), (
-            'foo bar baz quux blor\n',
-            'foo bar baz\nquux blorp\n',
-            ))
 
     def test_chomp_literal(self):
         self.assertEqual(self._m("|"), (
@@ -56,3 +51,18 @@ class TestASTMultiline(TestCase):
             'foo bar baz\nquux blor',
             'foo bar baz\n\nquux blorp',
         ))
+
+
+    fold = ("Mark McGwire's\n"
+            "year was crippled\n"
+            "by a knee injury.\n")
+    fold_out = "Mark McGwire's year was crippled by a knee injury."
+
+    def test_chomp_fold(self):
+        """ In folded scalars, newlines become spaces """
+        r = YayMultilineScalar.chomp_fold(self.fold)
+        self.assertEqual(r, self.fold_out)
+
+    def test_chomp_fold_value(self):
+        r = YayMultilineScalar(YayScalar(self.fold), ">")
+        self.assertEqual(r.value, YayScalar(self.fold_out))

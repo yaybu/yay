@@ -802,7 +802,7 @@ class TestParser(TestCase):
           quux quuux
         """)
         self.assertEqual(res, YayDict([
-            ('a', YayScalar("foo bar baz quux quuux\n")),
+            ('a', YayScalar("foo bar baz quux quuux")),
             ]))
 
     def test_multiline_fold(self):
@@ -813,7 +813,7 @@ class TestParser(TestCase):
           quux quuux
         """)
         self.assertEqual(res, YayDict([
-            ('a', YayScalar("foo bar baz\nquux quuux\n")),
+            ('a', YayScalar("foo bar baz quux quuux")),
             ]))
 
     def test_multiline_literal(self):
@@ -876,15 +876,27 @@ class TestParser(TestCase):
         res = parse("""
         a: >
           foo {{bar}} baz
+          quux
         """)
         self.assertEqual(res, YayDict([
             ('a', YayMerged(
                 YayMerged(
-                    YayScalar('foo  '),
-                    YayMerged(Identifier('bar'),YayScalar('baz ')),
-                ),
-                YayScalar('')))]))
+                    YayScalar('foo '),
+                    Identifier('bar')),
+                YayScalar(' baz quux')))]))
 
+    def test_multiline_template_ateol(self):
+        res = parse("""
+        a: >
+          foo {{bar}}
+          quux
+        """, True)
+        self.assertEqual(res, YayDict([
+            ('a', YayMerged(
+                YayMerged(
+                    YayScalar('foo '),
+                    Identifier('bar')),
+                YayScalar(' quux')))]))
 
     def test_python_line_continuation(self):
         res = parse(r"""
