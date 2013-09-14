@@ -14,7 +14,6 @@
 
 from yay.tests.base import TestCase
 from yay.ast import YayMultilineScalar, YayScalar
-import unittest2
 from mock import Mock
 
 

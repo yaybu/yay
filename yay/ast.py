@@ -24,7 +24,6 @@ from yay.openers import Openers
 from yay.errors import merge_anchors as ma
 from yay.compat import basestring
 
-import types
 from itertools import chain
 
 """
@@ -1119,7 +1118,7 @@ class YayMerged(Expr):
                     yield i
                 for i in unwrap(v.rhs):
                     yield i
-            elif isinstance(v, types.StringTypes):
+            elif isinstance(v, basestring):
                 yield YayScalar(v)
             else:
                 yield v
@@ -1791,8 +1790,7 @@ class YayMultilineScalar(Scalarish, AST):
             return
         if isinstance(value, YayScalar) and not value.value:
             return
-        import types
-        if isinstance(value, types.StringTypes):
+        if isinstance(value, basestring):
             value = YayScalar(value)
         if isinstance(value, YayScalar) and isinstance(self.__value, YayScalar):
             self.__value = YayScalar(self.__value.value + value.value)
@@ -1815,8 +1813,7 @@ class YayMultilineScalar(Scalarish, AST):
 
     @classmethod
     def chomp_ast(klass, method, item):
-        import types
-        if isinstance(item, types.StringTypes):
+        if isinstance(item, basestring):
             return method(item)
         elif isinstance(item, YayMerged):
             return YayMerged(
