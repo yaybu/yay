@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import
 
 import operator
 import re
@@ -407,6 +408,10 @@ class Scalarish(object):
         will return a float. Otherwise it will fail with a TypeError.
         """
         resolved = self.resolve()
+
+        if isinstance(resolved, (int, float)):
+            return resolved
+
         try:
             return int(resolved)
         except ValueError:
@@ -684,28 +689,6 @@ class Proxy(object):
         expanded = self.expand()
         expanded.start_listening()
         expanded.subscribe(self.changed)
-
-
-class Subgraph(Proxy, AST):
-
-    def __init__(self, inner):
-        super(Subgraph, self).__init__()
-        self.inner = inner
-        inner.parent = self
-
-    def get_context(self, key):
-        try:
-            return self.parent.get_key(key)
-        except KeyError:
-            pass
-
-        try:
-            return self.inner.get_context(key)
-        except errors.NoMatching:
-            raise errors.NoMoreContext("'%s' not found in root of subgraph" % key)
-
-    def expand(self):
-        return self.inner
 
 
 class Tripwire(Proxy, AST):
@@ -1752,13 +1735,18 @@ class YayExtend(Streamish, AST):
 class YayScalar(Scalarish, AST):
     def __init__(self, value):
         super(YayScalar, self).__init__()
+
+        if isinstance(value, (int, float)):
+            self.value = value
+            return
+
         try:
-            self.value = int(value)
+             self.value = int(value)
         except ValueError:
-            try:
-                self.value = float(value)
-            except ValueError:
-                self.value = value
+             try:
+                 self.value = float(value)
+             except ValueError:
+                 self.value = value
 
     def resolve_once(self):
         return self.value

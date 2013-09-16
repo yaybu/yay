@@ -67,6 +67,15 @@ class TestASTTypeErrors(TestCase):
         self.assertRaises(errors.TypeError, self.node.get_type)
 
 
+class TestASTNotImplemented(TestCase):
+
+    def test_resolve_oncce(self):
+        self.assertRaises(NotImplementedError, AST().resolve_once)
+
+    def test_start_listening(self):
+        self.assertRaises(NotImplementedError, AST().start_listening)
+
+
 class TestAST(TestCase):
 
     def test_dynamic(self):
@@ -115,6 +124,9 @@ class TestAST(TestCase):
         self.assertNotEqual(id(clone.values['e2']), id(e2))
         self.assertNotEqual(id(clone.values['e3']), id(e3))
 
+    def test_repr(self):
+        self.assertTrue(repr(AST()).startswith("<AST "))
+
     def test_equality(self):
         e1, e2 = AST(), AST()
         e1.value = "hello"
@@ -122,6 +134,16 @@ class TestAST(TestCase):
         self.assertEqual(e1, e2)
         e2.value = "goodbye"
         self.assertNotEqual(id(e1), id(e2))
+
+    def test_inequality(self):
+        e1 = AST()
+        self.assertEqual(AST().__eq__(object()), False)
+
+    def test_is_secret(self):
+        class L(AST):
+             def get_labels(self):
+                 return ["secret"]
+        self.assertEqual(L().is_secret(), True)
 
 
 class TestRoot(TestCase):

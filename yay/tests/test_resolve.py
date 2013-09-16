@@ -309,6 +309,26 @@ class TestIdentifier(TestCase):
             bar: {{ @foo }}
             """)
 
+    def test_get_bool(self):
+        t = parse("""
+            foo: 5
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_int(), 5)
+        self.assertEqual(t.get_key("bar").get_type(), "scalarish")
+
+    def test_get_bool_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_bool)
+
+    def test_get_bool_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_bool(default=True), True)
+
     def test_get_integer(self):
         t = parse("""
             foo: 5
@@ -323,6 +343,155 @@ class TestIdentifier(TestCase):
             bar: {{ foo}}
             """)
         self.assertRaises(errors.TypeError, t.get_key("bar").as_int)
+
+    def test_get_integer_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_int)
+
+    def test_get_integer_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_int(default=5), 5)
+
+    def test_get_float(self):
+        t = parse("""
+            foo: 5.5
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_float(), 5.5)
+
+    def test_get_float_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_float)
+
+    def test_get_float_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_float(default=5.5), 5.5)
+
+    def test_get_number(self):
+        t = parse("""
+            foo: 5.5
+            baz: 5
+            bar: {{ foo }}
+            qux: {{ baz }}
+            """)
+        self.assertEqual(t.get_key("bar").as_number(), 5.5)
+        self.assertEqual(t.get_key("qux").as_number(), 5)
+
+    def test_get_number_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_number)
+
+    def test_get_number_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_number(default=5.5), 5.5)
+        self.assertEqual(t.get_key("bar").as_number(default=5), 5)
+
+    def test_get_safe_string(self):
+        t = parse("""
+            foo: hello
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_safe_string(), "hello")
+
+    def test_get_safe_string_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_safe_string)
+
+    def test_get_safe_string_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_safe_string(default="default"), "default")
+
+    def test_get_string(self):
+        t = parse("""
+            foo: hello
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_string(), "hello")
+
+    def test_get_string_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_string)
+
+    def test_get_string_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_string(default="default"), "default")
+
+    def test_get_list(self):
+        t = parse("""
+            foo: []
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_list(), [])
+
+    def test_get_list_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_list)
+
+    def test_get_list_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_list(default=[]), [])
+
+    def test_get_iterable(self):
+        t = parse("""
+            foo: []
+            bar: {{ foo }}
+            """)
+        self.assertEqual(list(t.get_key("bar").as_iterable()), [])
+
+    def test_get_iterable_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_iterable)
+
+    def test_get_iterable_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_iterable(default=[]), [])
+
+    def test_get_dict(self):
+        t = parse("""
+            foo: {}
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_dict(), {})
+
+    def test_get_dict_nomatching(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertRaises(errors.NoMatching, t.get_key("bar").as_dict)
+
+    def test_get_iterable_default(self):
+        t = parse("""
+            bar: {{ foo }}
+            """)
+        self.assertEqual(t.get_key("bar").as_dict(default={}), {})
 
     def test_forloop(self):
         t = parse("""
@@ -344,6 +513,18 @@ class TestIdentifier(TestCase):
             """)
         self.assertEqual(t.get_key("foo").as_dict({}), {})
         self.assertEqual(t.foo.as_dict({}), {})
+
+
+class TestSequence(TestCase):
+
+    def test_get_key(self):
+        g = self._parse("""
+            foo:
+              - 1
+              - 2
+              - 3
+            """)
+        self.assertEqual(g.get_key("foo").get_key(2).resolve(), 3)
 
 
 class TestLiteral(TestCase):
@@ -969,6 +1150,16 @@ class TestDictDisplay(TestCase):
             bar: baz
             """)
         self.assertEqual(t.get_key("foo").resolve(), "")
+
+
+class TestDict(TestCase):
+
+    def test_as_dict(self):
+        g = parse("""
+            foo:
+                bar: baz
+            """)
+        self.assertEqual(g.foo.as_dict(), {"bar": "baz"})
 
 
 class TestAttributeRef(TestCase):
@@ -2113,6 +2304,7 @@ class TestRegression(TestCase):
 
 
 class TestLabels(TestCase):
+
     def test_labels(self):
         res = self._parse("""
            resources:
@@ -2155,6 +2347,18 @@ class TestLabels(TestCase):
         foo = res.get_key("foo")
         self.assertEqual(foo.get_labels(), set(["secret"]))
         self.assertEqual(foo.as_safe_string(), "hello, *****")
+
+    def test_as_safe_string_default(self):
+        g = self._parse("""
+            foo: 1
+            """)
+        self.assertEqual(g.bar.as_safe_string(default="foo"), "foo")
+
+    def test_as_safe_string_no_matching(self):
+        g = self._parse("""
+            foo: 1
+            """)
+        self.assertRaises(errors.NoMatching, g.bar.as_safe_string)
 
 
 class TestStanzas(TestCase):
