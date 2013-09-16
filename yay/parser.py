@@ -1089,10 +1089,7 @@ class BaseParser(object):
                | directives
                | directive
         '''
-        if len(p) == 2:
-            p[0] = p[1]
-        else:
-            p[0] = p[2]
+        p[0] = p[1]
 
     def p_stanzas(self, p):
         '''
