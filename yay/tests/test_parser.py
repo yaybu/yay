@@ -816,11 +816,15 @@ class TestParser(TestCase):
                 - a
             baz:
                 - b
+            quux:
+            froo:
         """)
         self.assertEqual(res, Select(Identifier("foo"),
                                      CaseList(
                                      Case("bar", YayList(YayScalar("a"))),
                                      Case("baz", YayList(YayScalar("b"))),
+                                     Case('quux', YayScalar("")),
+                                     Case('froo', YayScalar("")),
                                      )))
 
     def test_multiline_fold_simple(self):
