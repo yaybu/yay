@@ -252,12 +252,6 @@ class Lexer(object):
         t.value = ':'
         return t
 
-    def t_INITIAL_PERCENT(self, t):
-        """%[ \t]*"""
-        t.value = '%'
-        t.lexer.begin("COMMAND")
-        return t
-
     def t_VALUE_LISTVALUE_EMPTYDICT(self, t):
         """[ ]*{}"""
         t.value = t.value.strip()
