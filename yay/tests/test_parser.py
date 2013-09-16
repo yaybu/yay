@@ -228,6 +228,14 @@ class TestParser(TestCase):
             TargetList(Identifier('a'), Identifier('b')),
             ExpressionList(Identifier('c'), Identifier('d'))))
 
+    def test_set_multiple_more(self):
+        res = parse("""
+        set a,b,c,d = c,d,b,a
+        """)
+        self.assertEqual(res, Set(
+            TargetList(Identifier('a'), Identifier('b'), Identifier('c'), Identifier('d')),
+            ExpressionList(Identifier('c'), Identifier('d'), Identifier('b'), Identifier('a'))))
+
     def test_for(self):
         res = parse("""
         for a in b:
