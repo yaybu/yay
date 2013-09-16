@@ -228,6 +228,14 @@ class TestParser(TestCase):
             TargetList(Identifier('a'), Identifier('b')),
             ExpressionList(Identifier('c'), Identifier('d'))))
 
+    def test_set_multiple_trailing(self):
+        res = parse("""
+        set a,b, = c,d,
+        """)
+        self.assertEqual(res, Set(
+            TargetList(Identifier('a'), Identifier('b')),
+            ExpressionList(Identifier('c'), Identifier('d'))))
+
     def test_set_multiple_more(self):
         res = parse("""
         set a,b,c,d = c,d,b,a
