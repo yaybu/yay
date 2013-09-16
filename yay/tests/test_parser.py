@@ -757,6 +757,19 @@ class TestParser(TestCase):
                        expression=Identifier('x'))))
 
 
+    def test_lambda_with_param_sublists_trailing(self):
+        res = parse("""
+        set a = lambda b, (c,d,) : x
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            LambdaForm(params=ParameterList(
+                DefParameter(Identifier('b')),
+                DefParameter(Sublist(Identifier('c'),
+                                     Identifier('d')))
+                ),
+                       expression=Identifier('x'))))
+
     def test_new(self):
         res = parse("""
         new foo:
