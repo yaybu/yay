@@ -147,6 +147,32 @@ class TestParser(TestCase):
                                           Literal(2),
                                           ))))
 
+
+    def test_set_slice_lower_only(self):
+        res = parse("""
+        set a = b[1:]
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  SimpleSlicing(
+                                      Identifier('b'),
+                                      Slice(
+                                          Literal(1),
+                                          None,
+                                          ))))
+
+    def test_set_slice_lower_only(self):
+        res = parse("""
+        set a = b[:2]
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  SimpleSlicing(
+                                      Identifier('b'),
+                                      Slice(
+                                          None,
+                                          Literal(2),
+                                          ))))
+
+
     def test_set_extended_slice(self):
         res = parse("""
         set a = b[1:2:3]
