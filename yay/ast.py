@@ -324,7 +324,7 @@ class AST(object):
         d = self.__dict__.copy()
         for var in ('anchor', 'parent', '_predecessor',
                     'successor', 'subscribers', '_ordered_keys',
-                    '_iterator', '_position', '_buffer'):
+                    '_iterator', '_position', '_buffer', '_dict'):
             if var in d:
                 del d[var]
         return d

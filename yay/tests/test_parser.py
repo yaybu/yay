@@ -666,6 +666,20 @@ class TestParser(TestCase):
                                           Identifier('y'),
                                           CompIf(Identifier('z')))))))
 
+    def test_dict_comprehension_with_conditional2(self):
+        res = parse("""
+        set a = { x : x for x in y if z if b }
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            DictDisplay(
+                DictComprehension(Identifier('x'),
+                                  Identifier('x'),
+                                  CompFor(Identifier('x'),
+                                          Identifier('y'),
+                                          CompIf(Identifier('z'),
+                                                 CompIf(Identifier('b'))))))))
+
     def test_generator_expression_no_conditional(self):
         res = parse("""
         set a = ( x for x in y )
