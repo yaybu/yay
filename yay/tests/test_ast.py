@@ -13,8 +13,58 @@
 # limitations under the License.
 
 from yay.ast import *
+from yay import errors
 from yay.tests.base import TestCase
 from mock import Mock
+
+
+class TestASTTypeErrors(TestCase):
+
+    def setUp(self):
+        self.node = AST()
+        self.node.anchor = None
+
+    def test_as_bool(self):
+        self.assertRaises(errors.TypeError, self.node.as_bool)
+
+    def test_as_int(self):
+        self.assertRaises(errors.TypeError, self.node.as_int)
+
+    def test_as_float(self):
+        self.assertRaises(errors.TypeError, self.node.as_float)
+
+    def test_as_number(self):
+        self.assertRaises(errors.TypeError, self.node.as_number)
+
+    def test_as_safe_string(self):
+        self.assertRaises(errors.TypeError, self.node.as_safe_string)
+
+    def test_as_string(self):
+        self.assertRaises(errors.TypeError, self.node.as_string)
+
+    def test_as_list(self):
+        self.assertRaises(errors.TypeError, self.node.as_list)
+
+    def test_as_iterable(self):
+        self.assertRaises(errors.TypeError, self.node.as_iterable)
+
+    def test_as_dict(self):
+        self.assertRaises(errors.TypeError, self.node.as_dict)
+
+    def test_get_key(self):
+        self.assertRaises(errors.TypeError, self.node.get_key, "foo")
+
+    def test_keys(self):
+        self.assertRaises(errors.TypeError, self.node.keys)
+
+    def test_get_iterable(self):
+        self.assertRaises(errors.TypeError, self.node.get_iterable)
+
+    def test_construct(self):
+        self.assertRaises(errors.TypeError, self.node.construct, None)
+
+    def test_get_type(self):
+        self.assertRaises(errors.TypeError, self.node.get_type)
 
 
 class TestAST(TestCase):
