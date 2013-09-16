@@ -1617,9 +1617,9 @@ class TargetList(AST):
         self.v.append(target)
 
 class ParameterList(AST):
-    def __init__(self, defparameter):
+    def __init__(self, *defparameters):
         super(ParameterList, self).__init__()
-        self.parameter_list = [defparameter]
+        self.parameter_list = list(defparameters)
 
     def append(self, defparameter):
         self.parameter_list.append(defparameter)
@@ -1631,9 +1631,9 @@ class DefParameter(AST):
         self.expression = expression
 
 class Sublist(AST):
-    def __init__(self, parameter):
+    def __init__(self, *parameters):
         super(Sublist, self).__init__()
-        self.sublist = [parameter]
+        self.sublist = list(parameters)
 
     def append(self, parameter):
         self.sublist.append(parameter)
