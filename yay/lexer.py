@@ -448,10 +448,7 @@ class Lexer(object):
                     except ValueError:
                         raise WhitespaceError("inconsistent indentation", anchor=Anchor(source=self.source, lineno=token.lineno))
                     for _ in range(i+1, len(levels)):
-                        if self.lexer.lexstate == 'BLOCK':
-                            yield self.NEWLINE(token.lineno)
-                        else:
-                            yield self.DEDENT(token.lineno)
+                        yield self.DEDENT(token.lineno)
                         levels.pop()
             yield token
 
