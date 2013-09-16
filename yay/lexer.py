@@ -446,7 +446,7 @@ class Lexer(object):
                     try:
                         i = levels.index(depth)
                     except ValueError:
-                        raise WhitespaceError("inconsistent indentation", anchor=Anchor(source=self.source, lineno=token.lineno))
+                        raise WhitespaceError("inconsistent indentation")
                     for _ in range(i+1, len(levels)):
                         yield self.DEDENT(token.lineno)
                         levels.pop()

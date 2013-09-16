@@ -16,6 +16,7 @@ import types
 from yay.lexer import Lexer
 from yay.tests.base import TestCase
 from ply import lex
+from yay.errors import WhitespaceError
 
 
 # ply works great but the implementation is a bit fugly
@@ -798,3 +799,12 @@ b: c
         self.compare(self._lex("a: b {{c}}"), [
             value('a'), colon, value('b '),
             ldbrace, identifier('c'), rdbrace])
+
+    def test_inconsistent_indentation(self):
+        self.assertRaises(WhitespaceError, self._lex, """
+        a:
+            b:
+                c: d
+              e: f
+        """)
+
