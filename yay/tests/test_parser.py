@@ -279,6 +279,13 @@ class TestParser(TestCase):
         self.assertEqual(res, Set(Identifier('a'),
                                   UnaryMinus(Identifier('b'))))
 
+    def test_set_unary_plus(self):
+        res = parse("""
+        set a = +b
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+                                  Identifier('b')))
+
     def test_set_precedence_1(self):
         res = parse("""
         set a = b * c + d

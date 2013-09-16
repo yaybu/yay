@@ -569,7 +569,7 @@ class BaseParser(object):
                 p[0] = ast.UnaryMinus(p[2])
                 self.anchor(p, 1)
             elif p[1] == '+':
-                p[0] == p[2]
+                p[0] = p[2]
             elif p[1] == '~':
                 p[0] = ast.Invert(p[2])
                 self.anchor(p, 1)
