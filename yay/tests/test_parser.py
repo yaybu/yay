@@ -1006,3 +1006,10 @@ class TestParser(TestCase):
                       )))
             ]))
 
+    def test_string_conversion(self):
+        res = parse("""
+        set a = `foo`
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'), StringConversion(Identifier('foo'))))
+
