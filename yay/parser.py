@@ -1048,12 +1048,6 @@ class BaseParser(object):
             p[0] = ast.Case(p[1], p[2])
         self.anchor(p, 1)
 
-    def p_stanza_COMMENT(self, p):
-        '''
-        stanza : COMMENT NEWLINE
-        '''
-        p[0] = ast.Comment(p[1])
-
     def p_empty(self, p):
         '''
         empty :
