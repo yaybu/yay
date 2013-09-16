@@ -604,6 +604,20 @@ class TestParser(TestCase):
                                           Identifier('y'),
                                           ListIf(Identifier('z')))))))
 
+    def test_list_comprehension_with_conditional_repeated(self):
+        res = parse("""
+        set a = [ x for x in y if z if b ]
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            ListDisplay(
+                ListComprehension(Identifier('x'),
+                                  ListFor(Identifier('x'),
+                                          Identifier('y'),
+                                          ListIf(Identifier('z'),
+                                                 iterator=ListIf(Identifier('b'))
+                                                 ))))))
+
     def test_set_comprehension_no_conditional(self):
         res = parse("""
         set a = { x for x in y }

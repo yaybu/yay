@@ -323,7 +323,8 @@ class AST(object):
     def __repr_vars(self):
         d = self.__dict__.copy()
         for var in ('anchor', 'parent', '_predecessor',
-                    'successor', 'subscribers', '_ordered_keys'):
+                    'successor', 'subscribers', '_ordered_keys',
+                    '_iterator', '_position', '_buffer'):
             if var in d:
                 del d[var]
         return d
