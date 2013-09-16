@@ -1872,19 +1872,50 @@ class TestIf(TestCase):
 
         self.assertEqual(res['lol'], {'foo': 'bar', 'baz': 'qux', 'quux': 'zap'})
 
+
 class TestYayScalar(TestCase):
 
-    def test_int(self):
+    def test_resolve(self):
         res = resolve("""
             foo: 1
             """)
         self.assertEqual(res['foo'], 1)
+
+    def test_bool(self):
+        t = parse("""
+            foo: 1
+            """)
+        self.assertEqual(t.get_key('foo').as_bool(), True)
+
+    #def test_bool_type_error(self):
+    #    t = parse("""
+    #        foo: bar
+    #        """)
+    #    self.assertRaises(errors.TypeError, t.get_key('foo').as_bool)
+
+    def test_int(self):
+        res = parse("""
+            foo: 1
+            """)
+        self.assertEqual(res.get_key('foo').as_int(), 1)
 
     def test_int_type_error(self):
         t = parse("""
             foo: bar
             """)
         self.assertRaises(errors.TypeError, t.get_key('foo').as_int)
+
+    def test_float(self):
+        res = parse("""
+            foo: 1.5
+            """)
+        self.assertEqual(res.get_key('foo').as_float(), 1.5)
+
+    def test_float_type_error(self):
+        t = parse("""
+            foo: bar
+            """)
+        self.assertRaises(errors.TypeError, t.get_key('foo').as_float)
 
 
 class TestSet(TestCase):

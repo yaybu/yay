@@ -1119,8 +1119,6 @@ class YayMerged(Expr):
                     yield i
                 for i in unwrap(v.rhs):
                     yield i
-            elif isinstance(v, basestring):
-                yield YayScalar(v)
             else:
                 yield v
 
@@ -2089,12 +2087,6 @@ class Search(Proxy, AST):
     def expand_once(self):
         return self.predecessor.expand()
 
-class Configure(AST):
-
-    def __init__(self, key, node):
-        super(Configure, self).__init__()
-        self.key = key
-        self.node = node
 
 class Set(Proxy, AST):
 
@@ -2462,16 +2454,6 @@ class LambdaForm(AST):
         super(LambdaForm, self).__init__()
         self.expression = expression
         self.params = params
-
-
-class Comment(Proxy, AST):
-
-    def __init__(self, v):
-        super(Comment, self).__init__()
-        self.v = v
-
-    def expand_once(self):
-        return self.predecessor.expand()
 
 
 class PythonClassFactory(AST):
