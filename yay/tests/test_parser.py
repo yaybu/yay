@@ -207,6 +207,13 @@ class TestParser(TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), [Literal(1)])))
 
+    def test_set_call_args_2_trailing(self):
+        res = parse("""
+        set a = func(1,2,)
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+            Call(Identifier('func'), [Literal(1), Literal(2)])))
+
     def test_set_call_kwargs(self):
         res = parse("""
         set a = func(arg1=True, arg2=identifier)
@@ -794,6 +801,15 @@ class TestParser(TestCase):
     def test_lambda_with_params(self):
         res = parse("""
         set a = lambda b, c : x
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            LambdaForm(params=ParameterList(DefParameter(Identifier('b')), DefParameter(Identifier('c'))),
+                       expression=Identifier('x'))))
+
+    def test_lambda_with_params_trailing(self):
+        res = parse("""
+        set a = lambda b, c, : x
         """)
         self.assertEqual(res, Set(
             Identifier('a'),
