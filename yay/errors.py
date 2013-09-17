@@ -15,21 +15,6 @@
 import sys
 
 
-def get_exception_context():
-    tb = sys.exc_info()[2]
-    context = []
-
-    while tb is not None:
-        d = tb.tb_frame.f_locals.get('__context__')
-        if d:
-            context.append("  %s" % d)
-        tb = tb.tb_next
-
-    if not context:
-        return ""
-
-    return "While:\n" + "\n".join(context)
-
 class Anchor(object):
 
     """ A very basic anchor that knows only about an error in a file. This is
