@@ -1445,52 +1445,12 @@ class SimpleSlicing(Streamish, AST):
         for i in range(lower_bound, upper_bound, stride):
             yield self.primary.expand().get_key(i)
 
-class ExtendedSlicing(Streamish, AST):
-
-    """
-    Implements extended slices of any ``AST`` type that implements the
-    ``Streamish`` interface.
-
-    Because of the default methods provided by the ``Streamish`` mixin this
-    class only needs to implement ``_get_source_iterator``. This yields objects that
-    match the specified strides.
-    """
-
-    def __init__(self, primary, slice_list):
-        super(ExtendedSlicing, self).__init__()
-        self.primary = primary
-        primary.parent = self
-        self.slice_list = slice_list
-        slice_list.parent = self
-
-        if len (self.slice_list.slice_list) > 1:
-            raise errors.SyntaxError("Only a single slice at a time is supported", anchor=self.anchor)
-
-    def _get_source_iterator(self, anchor=None):
-        short_slice = self.slice_list.slice_list[0]
-
-        lower_bound = short_slice.lower_bound.resolve()
-        upper_bound = short_slice.upper_bound.resolve()
-        stride = short_slice.stride.resolve()
-
-        for i in range(lower_bound, upper_bound, stride):
-            yield self.primary.expand().get_key(i)
-
-class SliceList(AST):
-    def __init__(self, slice_item):
-        super(SliceList, self).__init__()
-        self.slice_list = [slice_item]
-
-    def append(self, slice_item):
-        self.slice_list.append(slice_item)
-
 class Slice(AST):
     def __init__(self, lower_bound=None, upper_bound=None, stride=None):
         super(Slice, self).__init__()
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.stride = stride or YayScalar(1)
-
 
 import re
 

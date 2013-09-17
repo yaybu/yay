@@ -173,19 +173,18 @@ class TestParser(TestCase):
                                           ))))
 
 
-    def test_set_extended_slice(self):
+    def test_set_slice_stride(self):
         res = parse("""
         set a = b[1:2:3]
         """)
         self.assertEqual(res, Set(Identifier('a'),
-                                  ExtendedSlicing(
+                                  SimpleSlicing(
                                       Identifier('b'),
-                                      SliceList(
                                       Slice(
                                           Literal(1),
                                           Literal(2),
                                           Literal(3),
-                                          )))))
+                                          ))))
 
     def test_set_call(self):
         res = parse("""

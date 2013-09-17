@@ -347,7 +347,7 @@ class BaseParser(object):
         primary : atom
                 | attributeref
                 | subscription
-                | slicing
+                | slice
                 | call
         '''
         p[0] = p[1]
@@ -366,50 +366,12 @@ class BaseParser(object):
         p[0] = ast.Subscription(p[1], p[3])
         p[0].anchor = p[1].anchor
 
-    def p_slicing(self, p):
+    def p_slice(self, p):
         '''
-        slicing : simple_slicing
-                | extended_slicing
-        '''
-        p[0] = p[1]
-
-    def p_simple_slicing(self, p):
-        '''
-        simple_slicing : primary "[" short_slice "]"
+        slice : primary "[" proper_slice "]"
         '''
         p[0] = ast.SimpleSlicing(p[1], p[3])
         self.anchor(p, 2)
-
-    def p_extended_slicing(self, p):
-        '''
-        extended_slicing : primary "[" slice_list "]"
-        '''
-        p[0] = ast.ExtendedSlicing(p[1], p[3])
-        self.anchor(p, 2)
-
-    def p_slice_list(self, p):
-        '''
-        slice_list : slice_item
-                   | slice_list "," slice_item
-                   | slice_list ","
-        '''
-        if len(p) == 2:
-            p[0] = ast.SliceList(p[1])
-        elif len(p) == 3:
-            p[0] = p[1]
-        else:
-            p[0] = p[1]
-            p[0].append(p[3])
-        p[0].anchor = p[1].anchor
-
-    def p_slice_item(self, p):
-        '''
-        slice_item : proper_slice
-                   | ELLIPSIS
-        '''
-        # removed expression as a production due to reduce/reduce conflict
-        # subscription wins over slicing in the docs, so i think this is correct
-        p[0] = p[1]
 
     def p_proper_slice(self, p):
         '''
@@ -802,7 +764,7 @@ class BaseParser(object):
         target : identifier
                | attributeref
                | subscription
-               | slicing
+               | slice
         '''
         p[0] = p[1]
 
