@@ -24,7 +24,7 @@ from .gpg import Gpg
 
 try:
     unicode = unicode
-except NameError:
+except NameError: # pragma: no cover
     unicode = str
 
 
@@ -45,12 +45,6 @@ class IOpener(object):
 
     def __init__(self, factory=None):
         self.factory = factory
-
-    def get_setting(self, key, default=None):
-        if self.factory:
-            self.factory.config.setdefault(self.name, {})
-            return self.factory.config[self.name].get(key, default)
-        return default
 
     def open(self, uri, etag=None):
         """ Given a uri, return a YAML compatible stream """
@@ -215,25 +209,12 @@ class MemOpener(IOpener):
 
 class Openers(object):
 
-    def __init__(self, searchpath=None, config=None):
+    def __init__(self, searchpath=None):
         self.searchpath = searchpath or []
-        self.config = config or {}
 
         self.openers = []
         for cls in IOpener.__subclasses__():
             self.openers.append(cls(self))
-
-    def update(self, config):
-        def _merge(self, a, b):
-            out = {}
-            for k, v in b.items():
-                if k in a:
-                    if isinstance(a[k], dict) and isinstance(v, dict):
-                        out[k] = _merge(a[k], v)
-                        continue
-                out[k] = v
-            return out
-        self.config = _merge(self.config, config)
 
     def _scheme(self, uri):
         parsed = parse.urlparse(uri)
