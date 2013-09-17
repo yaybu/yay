@@ -160,7 +160,7 @@ class TestParser(TestCase):
                                           None,
                                           ))))
 
-    def test_set_slice_lower_only(self):
+    def test_set_slice_upper_only(self):
         res = parse("""
         set a = b[:2]
         """)
