@@ -14,26 +14,26 @@
 
 try:
     import StringIO as io
-except ImportError:
+except ImportError: # pragma: no cover
     import io
 
 try:
     from urllib import request
-except ImportError:
+except ImportError: # pragma: no cover
     import urllib2 as request
 
 try:
     from urllib import parse
-except ImportError:
+except ImportError: # pragma: no cover
     import urlparse as parse
 
 try:
     from itertools import zip_longest
-except ImportError:
+except ImportError: # pragma: no cover
     from itertools import izip_longest as zip_longest
 
 try:
     basestring = basestring
-except NameError:
+except NameError: # pragma: no cover
     basestring = str
 
