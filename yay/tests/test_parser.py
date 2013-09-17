@@ -756,6 +756,24 @@ class TestParser(TestCase):
                                           Identifier('y'),
                                           CompIf(Identifier('z'))))))
 
+    def  test_old_lambda(self):
+        res = parse("""
+        set a = [x for x in y if lambda x: True]
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            ListDisplay(
+            ListComprehension(Identifier('x'),
+                              ListFor(Identifier('x'),
+                                      Identifier('y'),
+                                      ListIf(LambdaForm(
+                                          Identifier('True'),
+                                          ParameterList(
+                                              DefParameter(
+                                                  Identifier('x')
+                                                  )))))))))
+
+
     def test_lambda_no_params(self):
         res = parse("""
         set a = lambda : x
