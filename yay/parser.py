@@ -19,7 +19,7 @@ from ply import yacc
 OldYaccProduction = yacc.YaccProduction
 class YaccProduction(OldYaccProduction):
     def __getitem__(self,n):
-        if isinstance(n, slice):
+        if isinstance(n, slice): # pragma: no cover
             return [s.value for s in self.slice[n]]
         return OldYaccProduction.__getitem__(self, n)
 yacc.YaccProduction = YaccProduction
