@@ -200,6 +200,13 @@ class TestParser(TestCase):
         self.assertEqual(res, Set(Identifier('a'),
             Call(Identifier('func'), [Literal(1)])))
 
+    def test_set_call_args_1_trailing(self):
+        res = parse("""
+        set a = func(1,)
+        """)
+        self.assertEqual(res, Set(Identifier('a'),
+            Call(Identifier('func'), [Literal(1)])))
+
     def test_set_call_kwargs(self):
         res = parse("""
         set a = func(arg1=True, arg2=identifier)

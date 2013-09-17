@@ -443,9 +443,11 @@ class BaseParser(object):
     def p_argument_list_with_positional(self, p):
         '''
         argument_list : positional_arguments
+                      | positional_arguments ","
                       | positional_arguments "," keyword_arguments
+                      | positional_arguments "," keyword_arguments ","
         '''
-        if len(p) == 2:
+        if len(p) in (2, 3):
             p[0] = ast.ArgumentList(p[1].args)
         else:
             p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
@@ -454,15 +456,10 @@ class BaseParser(object):
     def p_argument_list_no_positional(self, p):
         '''
         argument_list : keyword_arguments
+                      | keyword_arguments ","
         '''
         p[0] = ast.ArgumentList(None, p[1])
         p[0].anchor = p[1].anchor
-
-    def p_argument_list_trailing_comma(self, p):
-        '''
-        argument_list : argument_list ","
-        '''
-        p[0] = p[1]
 
     def p_positional_arguments(self, p):
         '''
