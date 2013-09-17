@@ -78,3 +78,17 @@ class TestTransformParseErrors(TestCase):
     def test_dot_with_phase(self):
         self.assertRaises(SystemExit, main, argv=["-f", "dot", "-p", "normalized"], stdin=self.stream)
 
+
+class TestTransformResolveErrors(TestCase):
+
+    def setUp(self):
+        self.stream = io.StringIO("""
+            hello: {{ 5 / 0 }}
+            """)
+
+    def test_py(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "py"], stdin=self.stream)
+
+    def test_yaml(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)
+
