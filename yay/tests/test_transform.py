@@ -31,6 +31,9 @@ class TestTransform(TestCase):
               - 2
             """)
 
+    def test_trigger_usage(self):
+        self.assertRaises(SystemExit, main, argv=["a", "b", "c"])
+
     def test_format_validation(self):
         self.assertRaises(SystemExit, main, argv=["-f", "pyx"], stdin=self.stream)
 
@@ -48,4 +51,30 @@ class TestTransform(TestCase):
 
     #def test_successful_dot_with_phase(self):
     #    main(argv=["-f", "dot", "-p", "normalized"], stdin=self.stream)
+
+
+class TestTransformParseErrors(TestCase):
+
+    def setUp(self):
+        self.stream = io.StringIO("""
+            hello: world
+            foo:
+                bar: 1
+                baz: {{ hello
+            qux:
+              - 1
+              - 2
+            """)
+
+    def test_py(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "py"], stdin=self.stream)
+
+    def test_yaml(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)
+
+    def test_dot(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "dot"], stdin=self.stream)
+
+    def test_dot_with_phase(self):
+        self.assertRaises(SystemExit, main, argv=["-f", "dot", "-p", "normalized"], stdin=self.stream)
 
