@@ -798,6 +798,16 @@ class TestParser(TestCase):
             LambdaForm(params=ParameterList(DefParameter(Identifier('b'))),
                        expression=Identifier('x'))))
 
+    def test_lambda_with_param_default(self):
+        res = parse("""
+        set a = lambda b=4 : x
+        """)
+        self.assertEqual(res, Set(
+            Identifier('a'),
+            LambdaForm(params=ParameterList(DefParameter(Identifier('b'), Literal(4))),
+                       expression=Identifier('x'))))
+
+
     def test_lambda_with_params(self):
         res = parse("""
         set a = lambda b, c : x
