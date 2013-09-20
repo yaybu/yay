@@ -24,6 +24,9 @@ class YaccProduction(OldYaccProduction):
         return OldYaccProduction.__getitem__(self, n)
 yacc.YaccProduction = YaccProduction
 
+# don't bleat about unused terminals
+# be nice to only turn this on if we're in debug mode
+yacc.Grammar.unused_terminals = lambda self: ()
 
 from .lexer import Lexer, ExpressionLexer
 from . import ast
@@ -55,7 +58,6 @@ expressions = {
     "&": ast.BitwiseAnd,
     "not in": ast.NotIn,
 }
-
 
 class BaseParser(object):
 
