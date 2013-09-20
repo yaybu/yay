@@ -115,7 +115,6 @@ class Lexer(object):
         'EQ',
         'NE',
         'GTLT',
-        'ELLIPSIS',
         'POW',
         'FLOOR_DIVIDE',
         'WS',
@@ -134,7 +133,6 @@ class Lexer(object):
     t_COMMAND_TEMPLATE_EQ = '=='
     t_COMMAND_TEMPLATE_NE = '!='
     t_COMMAND_TEMPLATE_GTLT = '<>'
-    t_COMMAND_TEMPLATE_ELLIPSIS = r'\.\.\.'
     t_COMMAND_TEMPLATE_POW = '\*\*'
     t_COMMAND_TEMPLATE_FLOOR_DIVIDE = '//'
 
