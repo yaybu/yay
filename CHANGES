@@ -7,6 +7,11 @@ Changelog for yay
 - Now supported on python 3.2 and python 3.3 (in addition to 2.6, 2.7 and
   pypy).
 
+- Many fixes to YAML multiline block mode
+
+- Lots of test coverage improvements
+
+- Remove unnecessary support for Extended Slices
 
 3.0.1 (2013-09-04)
 ------------------
