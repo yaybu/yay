@@ -25,7 +25,7 @@ class TestFileOpener(TestCase):
 
     def test_read(self):
         fp = FileOpener().open(__file__)
-        data = fp.read().decode("utf-8").split("\n")
+        data = fp.read().decode("utf-8").splitlines()
         self.failUnlessEqual(data[0], "# Copyright 2010-2013 Isotoma Limited")
 
     def test_notfound(self):
