@@ -37,7 +37,7 @@ class TestYayDict(TestCase):
         """)
         self.assertEqual(res, {
             "foo": {"a": "b", "c": "d"},
-            })
+        })
 
     def test_mix(self):
         res = resolve("""
@@ -58,7 +58,7 @@ class TestYayDict(TestCase):
             "range": [1, 2],
             "bar": [1, 2],
             "quux": ['a', 'b'],
-            })
+        })
 
     def test_nested_dict(self):
         res = resolve("""
@@ -129,7 +129,8 @@ class TestYayDict(TestCase):
             """)
 
         self.assertEqual(res['out'], ['foo', 'bar', 'baz'])
-        self.assertEqual(res['out2'], ['www.foo.com', 'www.bar.com', 'www.baz.com'])
+        self.assertEqual(
+            res['out2'], ['www.foo.com', 'www.bar.com', 'www.baz.com'])
 
     def test_sample1(self):
         res = resolve("""
@@ -153,9 +154,9 @@ class TestYayDict(TestCase):
             "key4": {
                 "key5": {
                     "key6": "key7",
-                    }
                 }
-            })
+            }
+        })
 
     def test_here(self):
         res = resolve("""
@@ -178,8 +179,9 @@ class TestEmptyDocument(TestCase):
         res = resolve("""
             include "foo"
             """,
-            foo="",
-        )
+                      foo="",
+                      )
+
 
 class TestYayList(TestCase):
 
@@ -191,10 +193,10 @@ class TestYayList(TestCase):
               - e
               """)
         self.assertEqual(res, {"a": [
-          "b",
-          {"c": "d"},
-          "e"
-          ]})
+            "b",
+            {"c": "d"},
+            "e"
+        ]})
 
     def test_list_of_complex_dicts(self):
         res = resolve("""
@@ -205,10 +207,10 @@ class TestYayList(TestCase):
                 - f
             """)
         self.assertEqual(res, {
-          "a": [
-            "b",
-            {"c": ["e", "f"]},
-          ]})
+            "a": [
+                "b",
+                {"c": ["e", "f"]},
+            ]})
 
     def test_list_of_multikey_dicts(self):
         res = resolve("""
@@ -219,10 +221,10 @@ class TestYayList(TestCase):
               - g
               """)
         self.assertEqual(res, {"a": [
-          "b",
-          {"c": "d", "e": "f"},
-          "g",
-          ]})
+            "b",
+            {"c": "d", "e": "f"},
+            "g",
+        ]})
 
     def test_list_of_dicts_with_lists_in(self):
         res = resolve("""
@@ -234,12 +236,11 @@ class TestYayList(TestCase):
                  - g
               """)
         self.assertEqual(res, {
-          "a": [{
-              "b": "c",
-              "d": [ "e", "f", "g" ],
-              }]
-          })
-
+            "a": [{
+                "b": "c",
+                "d": ["e", "f", "g"],
+            }]
+        })
 
     def test_nested_for(self):
         res = resolve("""
@@ -271,6 +272,7 @@ class TestYayList(TestCase):
             """)
         self.assertEqual(list(res.foo.as_iterable()), [1, 2])
 
+
 class TestTemplate(TestCase):
 
     def test_escaping(self):
@@ -281,22 +283,24 @@ class TestTemplate(TestCase):
 
     def test_template_variable_between_scalars(self):
         self.assertEqual(
-          resolve("name: doug\nbar: hello {{ name }} !\n")['bar'],
-          "hello doug !"
-          )
+            resolve("name: doug\nbar: hello {{ name }} !\n")['bar'],
+            "hello doug !"
+        )
 
     def test_template_multiple_variables(self):
         self.assertEqual(
-          resolve("name: doug\nname2: steve\nbar: {{ name }} and {{ name2 }}!\n")['bar'],
-          "doug and steve!"
-          )
+            resolve(
+                "name: doug\nname2: steve\nbar: {{ name }} and {{ name2 }}!\n")['bar'],
+            "doug and steve!"
+        )
 
     def test_multiple_expressions(self):
         t = parse("""
             sitename: example.com
             log_location: /var/log/{{ sitename }}
             """)
-        self.assertEqual(t.get_key("log_location").as_string(), "/var/log/example.com")
+        self.assertEqual(
+            t.get_key("log_location").as_string(), "/var/log/example.com")
         self.assertEqual(t.get_type(), "dictish")
         self.assertEqual(t.get_key("log_location").get_type(), "scalarish")
 
@@ -415,7 +419,8 @@ class TestIdentifier(TestCase):
         t = parse("""
             bar: {{ foo }}
             """)
-        self.assertEqual(t.get_key("bar").as_safe_string(default="default"), "default")
+        self.assertEqual(
+            t.get_key("bar").as_safe_string(default="default"), "default")
 
     def test_get_string(self):
         t = parse("""
@@ -434,7 +439,8 @@ class TestIdentifier(TestCase):
         t = parse("""
             bar: {{ foo }}
             """)
-        self.assertEqual(t.get_key("bar").as_string(default="default"), "default")
+        self.assertEqual(
+            t.get_key("bar").as_string(default="default"), "default")
 
     def test_get_list(self):
         t = parse("""
@@ -505,7 +511,7 @@ class TestIdentifier(TestCase):
                 -  {{ f }}
             """)
         results = t.get_key("bar").get_iterable()
-        self.assertEqual([r.resolve() for r in results], [1,2,3])
+        self.assertEqual([r.resolve() for r in results], [1, 2, 3])
 
     def test_as_dict(self):
         t = parse("""
@@ -636,6 +642,7 @@ class TestNotEqual(TestCase):
 
 
 class TestGreaterThan(TestCase):
+
     def test_gt(self):
         res = resolve("""
             bar: {{ 2 > 1 }}
@@ -701,6 +708,7 @@ class TestLessThan(TestCase):
 
 
 class TestGreaterThanEqual(TestCase):
+
     def test_gt(self):
         res = resolve("""
             bar: {{ 2 >= 1 }}
@@ -787,6 +795,7 @@ class TestAdd(TestCase):
 
 
 class TestSubtract(TestCase):
+
     def test_minus(self):
         t = parse("""
             foo: {{ 1 - 1 }}
@@ -813,6 +822,7 @@ class TestSubtract(TestCase):
 
 
 class TestMultiply(TestCase):
+
     def test_multiply(self):
         t = parse("""
             foo: {{ 2 * 3 }}
@@ -833,6 +843,7 @@ class TestMultiply(TestCase):
 
 
 class TestDivide(TestCase):
+
     def test_divide(self):
         t = parse("""
             foo: {{ 8 / 2 }}
@@ -867,7 +878,6 @@ class TestDivide(TestCase):
         self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
 
 
-
 class TestFloorDivide(TestCase):
 
     def test_divide(self):
@@ -895,7 +905,6 @@ class TestFloorDivide(TestCase):
             foo: {{ bar // baz }}
             """)
         self.assertRaises(errors.ZeroDivisionError, t.get_key("foo").resolve)
-
 
 
 class TestMod(TestCase):
@@ -950,6 +959,7 @@ class TestLshift(TestCase):
 
 
 class TestXor(TestCase):
+
     def test_xor(self):
         t = parse("""
             foo: {{ 6 ^ 2 }}
@@ -973,6 +983,7 @@ class TestBitwiseAnd(TestCase):
 
 
 class TestAnd(TestCase):
+
     def test_and_true_true(self):
         t = parse("""
             foo: {{ 1 and 1 }}
@@ -1044,8 +1055,9 @@ class TestElse(TestCase):
         res = resolve("""
             include (a else "foo") + "_inc"
             """,
-            foo_inc="hello: world\n")
+                      foo_inc="hello: world\n")
         self.assertEqual(res['hello'], 'world')
+
 
 class TestNotIn(TestCase):
 
@@ -1093,6 +1105,7 @@ class TestPower(TestCase):
 
 
 class TestNot(TestCase):
+
     def test_not_true(self):
         t = parse("""
             foo: {{ not 0 }}
@@ -1257,7 +1270,8 @@ class TestFor(TestCase):
                     - nameage: {{p.name}}{{p.age}}
                       agename: {{p.age}}{{p.name}}
             """)
-        self.assertEqual(res['baz'], [{'nameage': 'john28', 'agename': '28john'}])
+        self.assertEqual(
+            res['baz'], [{'nameage': 'john28', 'agename': '28john'}])
 
     def test_for_if_1(self):
         res = resolve("""
@@ -1302,8 +1316,8 @@ class TestFor(TestCase):
                 for b in bar:
                     - {{ b }}
             """)
-        self.assertEqual(res['bar'], [1,2,3])
-        self.assertEqual(res['baz'], [1,2,3])
+        self.assertEqual(res['bar'], [1, 2, 3])
+        self.assertEqual(res['baz'], [1, 2, 3])
 
     def test_nested_foreach(self):
         res = resolve("""
@@ -1335,7 +1349,7 @@ class TestFor(TestCase):
             {'name': 'monkeys', 'env': 'production'},
             {'name': 'badgers', 'env': 'staging'},
             {'name': 'badgers', 'env': 'production'},
-            ])
+        ])
 
     def test_complicated_chained_for(self):
         res = resolve("""
@@ -1407,9 +1421,9 @@ class TestSlicing(TestCase):
 
             """)
 
-        self.assertEqual(res['listb'], [1,2])
-        self.assertEqual(res['listc'], [1,2])
-        self.assertEqual(res['listd'], [1,2])
+        self.assertEqual(res['listb'], [1, 2])
+        self.assertEqual(res['listc'], [1, 2])
+        self.assertEqual(res['listd'], [1, 2])
 
     def test_slice_stride(self):
         res = resolve("""
@@ -1424,7 +1438,7 @@ class TestSlicing(TestCase):
 
             """)
 
-        self.assertEqual(res['listb'], [1,3,5])
+        self.assertEqual(res['listb'], [1, 3, 5])
 
 
 class TestPythonClassMock(ast.PythonClass):
@@ -1441,7 +1455,7 @@ class TestPythonClass(TestCase):
 
     builtins = {
         "TestPythonClassMock": ast.PythonClassFactory(TestPythonClassMock),
-        }
+    }
 
     def test_simple_class(self):
         res = self._resolve("""
@@ -1545,7 +1559,7 @@ class TestPythonCall(TestCase):
                 for i in range(a):
                     - {{ -i }}
             """)
-        self.assertEqual(res['b'], [0,-1,-2,-3,-4])
+        self.assertEqual(res['b'], [0, -1, -2, -3, -4])
 
     def test_replace(self):
         res = resolve("""
@@ -1579,7 +1593,7 @@ class TestMacroCall(TestCase):
             {"SomeOtherItem": {"name": "foo"}},
             {"SomeItem": {"name": "foobar"}},
             {"SomeOtherItem": {"name": "foobar"}},
-            ])
+        ])
 
     def test_macro_call_in_expression(self):
         res = resolve("""
@@ -1598,7 +1612,7 @@ class TestMacroCall(TestCase):
             {"SomeOtherItem": {"name": "foo"}},
             {"SomeItem": {"name": "foobar"}},
             {"SomeOtherItem": {"name": "foobar"}},
-            ])
+        ])
 
     def test_macro_call_in_different_files(self):
         res = resolve("""
@@ -1625,7 +1639,7 @@ class TestMacroCall(TestCase):
             {"SomeOtherItem": {"name": "foo"}},
             {"SomeItem": {"name": "foobar"}},
             {"SomeOtherItem": {"name": "foobar"}},
-            ])
+        ])
 
     def test_macro_call_within_loop(self):
         res = resolve("""
@@ -1682,6 +1696,7 @@ class TestMacroCall(TestCase):
 
         self.assertEqual(res["SomeKey"], "foo")
 
+
 class TestExtend(TestCase):
 
     def test_simple_extend(self):
@@ -1707,7 +1722,7 @@ class TestExtend(TestCase):
         self.assertEquals(res['resources'], [
             {"Foo": {"bar": "baz"}},
             {"Qux": {"bar": "baz"}}
-            ])
+        ])
 
     def test_extend(self):
         res = resolve("""
@@ -1723,7 +1738,7 @@ class TestExtend(TestCase):
             "bar": [],
             "baz": [],
             "qux": [],
-            })
+        })
 
     def test_extend_list_with_variable(self):
         res = resolve("""
@@ -1757,7 +1772,7 @@ class TestInclude(TestCase):
               - 1
               - 2
             """)
-        self.assertEqual(res, {"resources": [1,2,3]})
+        self.assertEqual(res, {"resources": [1, 2, 3]})
 
     def test_include_include(self):
         res = resolve("""
@@ -1785,7 +1800,8 @@ class TestInclude(TestCase):
             hello: qux
             foo: bar
             """)
-        self.assertEqual(res, {"wibble": "wobble", "hello": "world", "foo": "bar"})
+        self.assertEqual(
+            res, {"wibble": "wobble", "hello": "world", "foo": "bar"})
 
     def test_magic_1(self):
         res = resolve("""
@@ -1851,7 +1867,8 @@ class TestInclude(TestCase):
                 include "mem://example.yay"
                 baz: quux
             """)
-        self.assertEqual(res['foo'], {"foo": "bar", "bar": "wibble", "baz": "quux"})
+        self.assertEqual(
+            res['foo'], {"foo": "bar", "bar": "wibble", "baz": "quux"})
 
     def test_include_based_on_var(self):
         self._add("mem://example.yay", """
@@ -1887,7 +1904,6 @@ class TestInclude(TestCase):
             include test
             """)
         self.assertEqual(res['foo'], 'bar')
-
 
 
 class TestSelect(TestCase):
@@ -2061,7 +2077,8 @@ class TestIf(TestCase):
                 quux: zap
             """)
 
-        self.assertEqual(res['lol'], {'foo': 'bar', 'baz': 'qux', 'quux': 'zap'})
+        self.assertEqual(
+            res['lol'], {'foo': 'bar', 'baz': 'qux', 'quux': 'zap'})
 
 
 class TestYayScalar(TestCase):
@@ -2078,7 +2095,7 @@ class TestYayScalar(TestCase):
             """)
         self.assertEqual(t.get_key('foo').as_bool(), True)
 
-    #def test_bool_type_error(self):
+    # def test_bool_type_error(self):
     #    t = parse("""
     #        foo: bar
     #        """)
@@ -2124,14 +2141,14 @@ class TestSet(TestCase):
             set foo = range(5)
             quux: {{ foo }}
             """)
-        self.assertEqual(res, {"quux": [0,1,2,3,4]})
+        self.assertEqual(res, {"quux": [0, 1, 2, 3, 4]})
 
     def test_set_list(self):
         res = resolve("""
             set foo = [1,2,3,4,5]
             quux: {{ foo }}
             """)
-        self.assertEqual(res, {"quux": [1,2,3,4,5]})
+        self.assertEqual(res, {"quux": [1, 2, 3, 4, 5]})
 
     def test_set_dict(self):
         res = resolve("""
@@ -2164,7 +2181,8 @@ class TestSet(TestCase):
             """)
 
         self.assertEqual(res['foo']['wakeup_urls'], ["http//www.example.com/"])
-        self.assertEqual(res['foo']['settings'], {"DSN": "postgres//www.example.com"})
+        self.assertEqual(
+            res['foo']['settings'], {"DSN": "postgres//www.example.com"})
 
     def test_set_in_for(self):
         res = resolve("""
@@ -2218,7 +2236,8 @@ class TestPythonicWrapper(TestCase):
         self.assertEqual(str(self.graph.qux), "a string")
 
     def test_str_default(self):
-        self.assertEqual(self.graph.ribbon.quilt.as_string("default"), "default")
+        self.assertEqual(
+            self.graph.ribbon.quilt.as_string("default"), "default")
 
     def test_dir(self):
         self.assertEqual(dir(self.graph.baz), ["hello"])
@@ -2312,7 +2331,8 @@ class TestLabels(TestCase):
                 name: /etc/toremovelink
                 policy: remove
             """)
-        name = res.get_key("resources").get_key(0).get_key("Link").get_key("name")
+        name = res.get_key("resources").get_key(
+            0).get_key("Link").get_key("name")
         self.assertEqual(name.get_labels(), set([]))
 
     def test_labels_secret(self):
@@ -2322,7 +2342,8 @@ class TestLabels(TestCase):
                 name: /etc/toremovelink
                 policy: remove
             """, labels=("secret", ))
-        name = res.get_key("resources").get_key(0).get_key("Link").get_key("name")
+        name = res.get_key("resources").get_key(
+            0).get_key("Link").get_key("name")
         self.assertEqual(name.get_labels(), set(["secret"]))
         self.assertEqual(name.as_safe_string(), "*****")
 
@@ -2379,23 +2400,22 @@ class TestStanzas(TestCase):
 class TestOpeners(TestCase):
     pass
 
-    #def test_openers_package_compat(self):
-        #res = resolve("""
+    # def test_openers_package_compat(self):
+        # res = resolve("""
             #% include "package://yay.tests/fixtures/hello_world.yay"
             #""")
         #self.assertEqual(res['hello'], 'world')
 
-    #def test_openers_config(self):
-        #res = resolve("""
-            #configure openers:
-                #packages:
-                    #index: http://b.pypi.python.org/simple
-                #memory:
-                    #example:
-                        #hello: world
+    # def test_openers_config(self):
+        # res = resolve("""
+            # configure openers:
+                # packages:
+                    # index: http://b.pypi.python.org/simple
+                # memory:
+                    # example:
+                        # hello: world
 
             #% include 'mem://example'
             #""")
 
         #self.assertEqual(res['hello'], 'world')
-

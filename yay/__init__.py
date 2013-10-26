@@ -13,4 +13,3 @@
 # limitations under the License.
 
 from yay.config import Config, load, load_uri
-

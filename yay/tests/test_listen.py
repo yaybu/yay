@@ -57,4 +57,3 @@ class TestObservation(TestCase):
         g.get_key("template").subscribe(trap)
         g.get_key("var_that_changes").changed()
         trap.assert_called_with()
-

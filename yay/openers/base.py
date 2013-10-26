@@ -24,7 +24,7 @@ from .gpg import Gpg
 
 try:
     unicode = unicode
-except NameError: # pragma: no cover
+except NameError:  # pragma: no cover
     unicode = str
 
 
@@ -34,7 +34,7 @@ def etag_stream(fp):
         block = fp.read(8192)
         if not block:
             break
-        #FIXME: should unicode even get here?
+        # FIXME: should unicode even get here?
         if isinstance(block, unicode):
             block = block.encode("utf-8")
         s.update(block)
@@ -73,6 +73,7 @@ class FileOpener(IOpener):
             raise NotFound("Local file '%s' could not be found" % uri)
 
         class File(FpAdaptor):
+
             @property
             def len(self):
                 return int(os.fstat(self.fp.fileno())[6])
@@ -135,9 +136,11 @@ class UrlOpener(IOpener):
         except request.HTTPError as exc:
             if exc.code == 304:
                 raise NotModified("URL '%s' has not been modified" % uri)
-            raise NotFound("URL '%s' could not be found (HTTP response %s)" % (uri, exc.code))
+            raise NotFound(
+                "URL '%s' could not be found (HTTP response %s)" % (uri, exc.code))
 
         class Resource(FpAdaptor):
+
             @property
             def etag(self):
                 info = self.fp.info()
@@ -299,7 +302,8 @@ class SearchpathFromGraph(object):
         for p, c in zip_longest(previous, current, fillvalue=marker):
             if p != marker:
                 if p != c:
-                    raise ParadoxError("Searchpath changed after we started depending on it")
+                    raise ParadoxError(
+                        "Searchpath changed after we started depending on it")
             else:
                 self._previous.append(c)
             yield c
@@ -320,4 +324,3 @@ class SearchpathFromGraph(object):
                 return
         for val in self._previous:
             yield val
-

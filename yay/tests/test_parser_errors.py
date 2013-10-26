@@ -71,7 +71,6 @@ class TestParserErrors(TestCase):
                 - foo
         """)
 
-
     def test_empty_select_clause(self):
         self._r("Unexpected value", """
         select x:

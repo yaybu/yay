@@ -37,7 +37,8 @@ class Config(ast.Root):
 
     def add(self, data):
         if not isinstance(data, dict):
-            raise errors.ProgrammingError("You must pass a dictionary to Config.add")
+            raise errors.ProgrammingError(
+                "You must pass a dictionary to Config.add")
         bound = ast.bind(data)
         bound.parent = self
         bound.predecessor = self.node
@@ -73,9 +74,8 @@ def load_uri(uri, special_term='yay'):
     c.load_uri(uri)
     return c.resolve()
 
+
 def load(stream, special_term='yay', secret=False):
     c = Config(special_term)
     c.load(stream, secret)
     return c.resolve()
-
-

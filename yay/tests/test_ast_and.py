@@ -81,5 +81,3 @@ class TestAndResolve(TestCase):
     def test_if_false_false(self):
         n = And(Literal(False), Literal(False))
         self.assertEqual(n.resolve(), False)
-
-

@@ -69,37 +69,48 @@ class AST(object):
         self.subscribers = []
 
     def as_bool(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected boolean", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected boolean", anchor=ma(anchor, self.anchor))
 
     def as_int(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected integer", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected integer", anchor=ma(anchor, self.anchor))
 
     def as_float(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected float", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected float", anchor=ma(anchor, self.anchor))
 
     def as_number(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected integer or float", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected integer or float", anchor=ma(anchor, self.anchor))
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected string", anchor=ma(anchor, self.anchor))
 
     def as_string(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expected string", anchor=ma(anchor, self.anchor))
 
     def as_list(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting list", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expecting list", anchor=ma(anchor, self.anchor))
 
     def as_iterable(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting iterable", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expecting iterable", anchor=ma(anchor, self.anchor))
 
     def as_dict(self, default=_DEFAULT, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expecting dictionary", anchor=ma(anchor, self.anchor))
 
     def get_key(self, key, anchor=None):
-        raise errors.TypeError("Expecting dictionary or list", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expecting dictionary or list", anchor=ma(anchor, self.anchor))
 
     def keys(self, anchor=None):
-        raise errors.TypeError("Expecting dictionary", anchor=ma(anchor, self.anchor))
+        raise errors.TypeError(
+            "Expecting dictionary", anchor=ma(anchor, self.anchor))
 
     def get_iterable(self, anchor=None):
         raise errors.TypeError("Expected iterable", anchor=self.anchor)
@@ -108,7 +119,8 @@ class AST(object):
         raise errors.TypeError("Expected constructable", anchor=self.anchor)
 
     def get_type(self):
-        raise errors.TypeError("I don't know who I am, or what my destiny is", anchor=self.anchor)
+        raise errors.TypeError(
+            "I don't know who I am, or what my destiny is", anchor=self.anchor)
 
     def as_digraph(self, visited=None):
         visited = visited or []
@@ -117,7 +129,7 @@ class AST(object):
         visited.append(id(self))
 
         yield '%s [label="%s"];' % (id(self), self.__class__.__name__)
-        #if self.parent:
+        # if self.parent:
         #    yield '%s -> %s [label="parent",style=dotted]' % (id(self), id(self.parent))
         #    for node in self.parent.as_digraph():
         #        yield node
@@ -129,11 +141,11 @@ class AST(object):
                     yield line
             elif isinstance(v, list):
                 for i, v in enumerate(v):
-                    for line in _yield_graph("%s[%d]" % (k,i), v):
+                    for line in _yield_graph("%s[%d]" % (k, i), v):
                         yield line
             elif isinstance(v, dict):
                 for k2, v in v.items():
-                    for line in _yield_graph("%s['%s']" % (k,k2), v):
+                    for line in _yield_graph("%s['%s']" % (k, k2), v):
                         yield line
             elif isinstance(v, (int, float, bool, basestring)):
                 yield '%s -> %s [label="%s"];' % (id(self), id(v), k)
@@ -201,7 +213,8 @@ class AST(object):
 
     def resolve(self):
         if self._resolving:
-            raise errors.CycleError("A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
+            raise errors.CycleError(
+                "A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
         self._resolving = True
         try:
             return self.resolve_once()
@@ -219,7 +232,8 @@ class AST(object):
 
     def expand(self):
         if self._expanding:
-            raise errors.CycleError("A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
+            raise errors.CycleError(
+                "A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
         self._expanding = True
         try:
             return self.expand_once()
@@ -388,19 +402,22 @@ class Scalarish(object):
         try:
             return bool(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected bool", anchor=ma(anchor, self.anchor))
+            raise errors.TypeError(
+                "Expected bool", anchor=ma(anchor, self.anchor))
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
             return int(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected integer", anchor=ma(anchor, self.anchor))
+            raise errors.TypeError(
+                "Expected integer", anchor=ma(anchor, self.anchor))
 
     def as_float(self, default=_DEFAULT, anchor=None):
         try:
             return float(self.resolve())
         except ValueError:
-            raise errors.TypeError("Expected float", anchor=ma(anchor, self.anchor))
+            raise errors.TypeError(
+                "Expected float", anchor=ma(anchor, self.anchor))
 
     def as_number(self, default=_DEFAULT, anchor=None):
         """
@@ -418,7 +435,8 @@ class Scalarish(object):
             try:
                 return float(resolved)
             except ValueError:
-                raise errors.TypeError("Expected integer or float", anchor=ma(anchor, self.anchor))
+                raise errors.TypeError(
+                    "Expected integer or float", anchor=ma(anchor, self.anchor))
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         """ Returns a string that might includes obfuscation where secrets are used """
@@ -444,7 +462,8 @@ class Scalarish(object):
         if isinstance(resolved, (int, float, bool)):
             resolved = str(resolved)
         if not isinstance(resolved, basestring):
-            raise errors.TypeError("Expected string", anchor=ma(anchor, self.anchor))
+            raise errors.TypeError(
+                "Expected string", anchor=ma(anchor, self.anchor))
         return resolved
 
     def get_string_parts(self):
@@ -455,6 +474,7 @@ class Scalarish(object):
 
 
 class Streamish(object):
+
     """
     A mixin for a class that behaves like a stream - i.e. is iterable
 
@@ -494,14 +514,15 @@ class Streamish(object):
         if not self._iterator:
             self._iterator = self._get_source_iterator()
 
-        while len(self._buffer) < index+1:
+        while len(self._buffer) < index + 1:
             self._buffer.append(next(self._iterator))
 
     def get_key(self, index):
         try:
             index = int(index)
         except ValueError:
-            raise errors.TypeError("Expected an integer, '%s' is not an integer" % index, anchor=self.anchor)
+            raise errors.TypeError(
+                "Expected an integer, '%s' is not an integer" % index, anchor=self.anchor)
 
         self._fill_to(index)
         return self._buffer[index]
@@ -522,6 +543,7 @@ class Streamish(object):
         for child in self.get_iterable():
             child.start_listening()
             child.subscribe(self.changed)
+
 
 class Dictish(object):
 
@@ -554,6 +576,7 @@ class Dictish(object):
 
 
 class Proxy(object):
+
     """
     A mixin that forwards requested on to an expanded form
 
@@ -671,7 +694,8 @@ class Proxy(object):
         return labels
 
     def expand_once(self):
-        raise NotImplementedError("%r does not implement expand or expand_once - but proxy types must" % type(self))
+        raise NotImplementedError(
+            "%r does not implement expand or expand_once - but proxy types must" % type(self))
 
     def resolve_once(self):
         return self.expand().resolve()
@@ -683,7 +707,7 @@ class Proxy(object):
         return self.expand().is_secret()
 
     def start_listening(self):
-        #FIXME: It is quite likely (certain, in fact) that we won't be able to
+        # FIXME: It is quite likely (certain, in fact) that we won't be able to
         # rely on expand here - e.g. an expand on an if with a dynamic guard
         # condition wouldn't work here!
         expanded = self.expand()
@@ -720,7 +744,8 @@ class Tripwire(Proxy, AST):
             self.expanding = True
             current = self.expression()
             if current != self.expected:
-                raise errors.ParadoxError("Inconsistent configuration detected - changed from %r to %r" % (self.expected, current), anchor=self.anchor)
+                raise errors.ParadoxError(
+                    "Inconsistent configuration detected - changed from %r to %r" % (self.expected, current), anchor=self.anchor)
             self.expanding = False
         return self.node
 
@@ -812,6 +837,7 @@ class PythonicWrapper(Pythonic, Proxy, AST):
 
 
 class Root(Pythonic, Proxy, AST):
+
     """ The root of the document
     FIXME: This needs thinking about some more
     """
@@ -855,7 +881,8 @@ class Root(Pythonic, Proxy, AST):
         try:
             return self.node.get_key(key)
         except KeyError:
-            raise errors.NoMatching("Key not found '%s'" % key, anchor=self.anchor)
+            raise errors.NoMatching(
+                "Key not found '%s'" % key, anchor=self.anchor)
 
     def expand(self):
         return self.node.expand()
@@ -896,6 +923,7 @@ class Root(Pythonic, Proxy, AST):
 
 
 class Identifier(Proxy, AST):
+
     def __init__(self, identifier):
         super(Identifier, self).__init__()
         self.identifier = identifier
@@ -914,7 +942,8 @@ class Identifier(Proxy, AST):
             except errors.NoMoreContext:
                 # We are at the root of a Subgraph and shouldn't traverse
                 # further.
-                raise errors.NoMatching("Could not find '%s'" % self.identifier)
+                raise errors.NoMatching(
+                    "Could not find '%s'" % self.identifier)
             node = node.parent
 
         assert node == root
@@ -926,7 +955,8 @@ class Identifier(Proxy, AST):
         except errors.NoPredecessor:
             pass
 
-        raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
+        raise errors.NoMatching("Could not find '%s'" %
+                                self.identifier, anchor=self.anchor)
 
     def get_local_labels(self):
         return self.expand().get_labels()
@@ -936,21 +966,27 @@ class Identifier(Proxy, AST):
 
 
 class Literal(Scalarish, AST):
+
     def __init__(self, literal):
         super(Literal, self).__init__()
         self.literal = literal
+
     def resolve_once(self):
         return self.literal
+
     def start_listening(self):
         pass
 
+
 class ParentForm(Scalarish, AST):
     # FIXME: Understand this better...
+
     def __init__(self, expression_list=None):
         super(ParentForm, self).__init__()
         self.expression_list = expression_list
         if expression_list:
             expression_list.parent = self
+
     def resolve_once(self):
         if not self.expression_list:
             return []
@@ -986,7 +1022,9 @@ class UnaryExpr(Scalarish, AST):
         self.inner.start_listening()
         self.inner.subscribe(self.changed)
 
+
 class UnaryMinus(UnaryExpr):
+
     """ The unary - (minus) operator yields the negation of its numeric
     argument. """
 
@@ -994,6 +1032,7 @@ class UnaryMinus(UnaryExpr):
 
 
 class Invert(UnaryExpr):
+
     """ The unary ~ (invert) operator yields the bitwise inversion of its
     plain or long integer argument. The bitwise inversion of x is defined as
     -(x+1). It only applies to integral numbers. """
@@ -1058,24 +1097,32 @@ class Expr(Scalarish, AST):
 
 
 class Equal(Expr):
+
     def resolve_once(self):
         return self.lhs.resolve() == self.rhs.resolve()
 
+
 class NotEqual(Expr):
+
     def resolve_once(self):
         return self.lhs.resolve() != self.rhs.resolve()
+
 
 class LessThan(Expr):
     op = operator.lt
 
+
 class GreaterThan(Expr):
     op = operator.gt
+
 
 class LessThanEqual(Expr):
     op = operator.le
 
+
 class GreaterThanEqual(Expr):
     op = operator.ge
+
 
 class Add(Expr):
     op = operator.add
@@ -1086,7 +1133,9 @@ class Add(Expr):
         except errors.TypeError:
             return self.op(self.lhs.as_string(), self.rhs.as_string())
 
+
 class YayMerged(Expr):
+
     """ Combined scalars and templates """
 
     @classmethod
@@ -1114,7 +1163,7 @@ class YayMerged(Expr):
                 else:
                     m.append(j)
         if len(m) == 1:
-            v= m[0]
+            v = m[0]
         else:
             v = YayMerged(m[0], m[1])
             for i in m[2:]:
@@ -1130,18 +1179,24 @@ class YayMerged(Expr):
         for part in self.rhs.get_string_parts():
             yield part
 
+
 class Subtract(Expr):
     op = operator.sub
+
 
 class Multiply(Expr):
     op = operator.mul
 
+
 class Divide(Expr):
+
     def op(self, lhs, rhs):
         try:
             return operator.truediv(lhs, rhs)
         except ZeroDivisionError:
-            raise errors.ZeroDivisionError("%s / %s - divide by zero is invalid" % (lhs, rhs), anchor=self.rhs.anchor)
+            raise errors.ZeroDivisionError(
+                "%s / %s - divide by zero is invalid" % (lhs, rhs), anchor=self.rhs.anchor)
+
 
 class FloorDivide(Expr):
 
@@ -1149,25 +1204,33 @@ class FloorDivide(Expr):
         try:
             return operator.floordiv(lhs, rhs)
         except ZeroDivisionError:
-            raise errors.ZeroDivisionError("%s // %s - divide by zero is invalid" % (lhs, rhs), anchor=self.rhs.anchor)
+            raise errors.ZeroDivisionError(
+                "%s // %s - divide by zero is invalid" % (lhs, rhs), anchor=self.rhs.anchor)
+
 
 class Mod(Expr):
     op = operator.mod
 
+
 class Lshift(Expr):
     op = operator.lshift
+
 
 class Rshift(Expr):
     op = operator.rshift
 
+
 class Xor(Expr):
     op = operator.xor
+
 
 class BitwiseOr(Expr):
     op = operator.or_
 
+
 class Or(Expr):
     op = lambda self, lhs, rhs: lhs or rhs
+
 
 class Else(Proxy, AST):
 
@@ -1193,6 +1256,7 @@ class Else(Proxy, AST):
 
 class BitwiseAnd(Expr):
     op = operator.and_
+
 
 class And(Expr):
 
@@ -1235,14 +1299,17 @@ class And(Expr):
 
 
 class NotIn(Expr):
+
     def resolve_once(self):
         return self.lhs.resolve() not in self.rhs.resolve()
+
 
 class Power(Expr):
     op = operator.pow
 
 
 class ConditionalExpression(Proxy, AST):
+
     def __init__(self, or_test, if_clause, else_clause):
         super(ConditionalExpression, self).__init__()
         self.or_test = or_test
@@ -1258,7 +1325,9 @@ class ConditionalExpression(Proxy, AST):
         else:
             return self.else_clause.expand()
 
+
 class ListDisplay(Proxy, AST):
+
     def __init__(self, expression_list=None):
         super(ListDisplay, self).__init__()
         self.expression_list = expression_list
@@ -1272,6 +1341,7 @@ class ListDisplay(Proxy, AST):
             lst.anchor = self.anchor
             return lst
         return self.expression_list.expand()
+
 
 class DictDisplay(Dictish, AST):
 
@@ -1311,6 +1381,7 @@ class KeyDatumList(AST):
     def append(self, key_datum):
         self.key_data.append(key_datum)
 
+
 class KeyDatum(AST):
 
     def __init__(self, key, value):
@@ -1318,7 +1389,9 @@ class KeyDatum(AST):
         self.key = key
         self.value = value
 
+
 class AttributeRef(Proxy, AST):
+
     def __init__(self, primary, identifier):
         super(AttributeRef, self).__init__()
         self.primary = primary
@@ -1330,7 +1403,8 @@ class AttributeRef(Proxy, AST):
         try:
             return self.primary.expand().get_key(self.identifier).expand()
         except KeyError:
-            raise errors.NoMatching("Could not find '%s'" % self.identifier, anchor=self.anchor)
+            raise errors.NoMatching(
+                "Could not find '%s'" % self.identifier, anchor=self.anchor)
 
     def get_local_labels(self):
         return self.expand().get_labels()
@@ -1340,6 +1414,7 @@ class AttributeRef(Proxy, AST):
 
 
 class LazyPredecessor(Proxy, AST):
+
     def __init__(self, node, identifier):
         super(LazyPredecessor, self).__init__()
         # This is a sideways reference! No parenting...
@@ -1367,6 +1442,7 @@ class LazyPredecessor(Proxy, AST):
                 raise errors.NoPredecessor
             return True, pred.expand()
         raise errors.NoPredecessor
+
 
 class UseMyPredecessorStandin(Proxy, AST):
     anchor = None
@@ -1402,13 +1478,15 @@ class NoPredecessorStandin(Proxy, AST):
 
 
 class Subscription(Proxy, AST):
+
     def __init__(self, primary, *expression_list):
         super(Subscription, self).__init__()
         self.primary = primary
         primary.parent = self
         self.expression_list = list(expression_list)
         if len(self.expression_list) > 1:
-            raise errors.SyntaxError("Keys must be scalars, not tuples", anchor=self.anchor)
+            raise errors.SyntaxError(
+                "Keys must be scalars, not tuples", anchor=self.anchor)
         for e in self.expression_list:
             e.parent = self
 
@@ -1417,7 +1495,9 @@ class Subscription(Proxy, AST):
         try:
             return self.primary.expand().get_key(key).expand()
         except KeyError:
-            raise errors.NoMatching("Could not find '%s'" % key, anchor=self.anchor)
+            raise errors.NoMatching(
+                "Could not find '%s'" % key, anchor=self.anchor)
+
 
 class SimpleSlicing(Streamish, AST):
 
@@ -1445,7 +1525,9 @@ class SimpleSlicing(Streamish, AST):
         for i in range(lower_bound, upper_bound, stride):
             yield self.primary.expand().get_key(i)
 
+
 class Slice(AST):
+
     def __init__(self, lower_bound=None, upper_bound=None, stride=None):
         super(Slice, self).__init__()
         self.lower_bound = lower_bound
@@ -1453,6 +1535,7 @@ class Slice(AST):
         self.stride = stride or YayScalar(1)
 
 import re
+
 
 class Call(Proxy, AST):
 
@@ -1475,7 +1558,8 @@ class Call(Proxy, AST):
         kwargs = {}
         if self.kwargs:
             for kwarg in self.kwargs.kwargs:
-                k = kwargs[kwarg.identifier.identifier] = kwarg.expression.clone()
+                k = kwargs[
+                    kwarg.identifier.identifier] = kwarg.expression.clone()
 
         try:
             macro = self.primary.expand()
@@ -1503,7 +1587,8 @@ class CallCallable(Proxy, AST):
         super(CallCallable, self).__init__()
         self.primary = primary
         if not self.primary.identifier in self.allowed:
-            raise errors.NoMatching("Could not find '%s'" % self.primary.identifier)
+            raise errors.NoMatching(
+                "Could not find '%s'" % self.primary.identifier)
 
         self.args = args
         for a in args:
@@ -1521,13 +1606,17 @@ class CallCallable(Proxy, AST):
         bound.parent = self
         return bound
 
+
 class ArgumentList(AST):
+
     def __init__(self, args, kwargs=None):
         super(ArgumentList, self).__init__()
         self.args = args
         self.kwargs = kwargs
 
+
 class PositionalArguments(AST):
+
     def __init__(self, *expressions):
         super(PositionalArguments, self).__init__()
         self.args = list(expressions)
@@ -1535,7 +1624,9 @@ class PositionalArguments(AST):
     def append(self, expression):
         self.args.append(expression)
 
+
 class KeywordArguments(AST):
+
     def __init__(self, *keyword_items):
         super(KeywordArguments, self).__init__()
         self.kwargs = list(keyword_items)
@@ -1543,13 +1634,17 @@ class KeywordArguments(AST):
     def append(self, keyword_item):
         self.kwargs.append(keyword_item)
 
+
 class Kwarg(AST):
+
     def __init__(self, identifier, expression):
         super(Kwarg, self).__init__()
         self.identifier = identifier
         self.expression = expression
 
+
 class TargetList(AST):
+
     def __init__(self, *targets):
         super(TargetList, self).__init__()
         self.v = list(targets)
@@ -1557,7 +1652,9 @@ class TargetList(AST):
     def append(self, target):
         self.v.append(target)
 
+
 class ParameterList(AST):
+
     def __init__(self, *defparameters):
         super(ParameterList, self).__init__()
         self.parameter_list = list(defparameters)
@@ -1565,13 +1662,17 @@ class ParameterList(AST):
     def append(self, defparameter):
         self.parameter_list.append(defparameter)
 
+
 class DefParameter(AST):
+
     def __init__(self, parameter, expression=None):
         super(DefParameter, self).__init__()
         self.parameter = parameter
         self.expression = expression
 
+
 class Sublist(AST):
+
     def __init__(self, *parameters):
         super(Sublist, self).__init__()
         self.sublist = list(parameters)
@@ -1579,7 +1680,9 @@ class Sublist(AST):
     def append(self, parameter):
         self.sublist.append(parameter)
 
+
 class YayList(Streamish, AST):
+
     def __init__(self, *items):
         super(YayList, self).__init__()
         self.value = list(items)
@@ -1597,7 +1700,8 @@ class YayList(Streamish, AST):
             raise errors.TypeError("Expected integer", anchor=self.anchor)
 
         if idx < 0:
-            raise errors.TypeError("Index must be greater than 0", anchor=self.anchor)
+            raise errors.TypeError(
+                "Index must be greater than 0", anchor=self.anchor)
         elif idx >= len(self.value):
             raise errors.TypeError("Index out of range", anchor=self.anchor)
 
@@ -1636,14 +1740,16 @@ class YayDict(Dictish, AST):
         if not k in self._ordered_keys:
             self._ordered_keys.append(k)
 
-        # Respect any existing predecessors rather than blindly settings v.predecessor
+        # Respect any existing predecessors rather than blindly settings
+        # v.predecessor
         while v.predecessor and not isinstance(v.predecessor, (NoPredecessorStandin, LazyPredecessor)):
             v = v.predecessor
             v.parent = self
         v.predecessor = predecessor
 
     def merge(self, other_dict):
-        # This function should ONLY be called by parser and ONLY to merge 2 YayDict nodes...
+        # This function should ONLY be called by parser and ONLY to merge 2
+        # YayDict nodes...
         assert isinstance(other_dict, YayDict)
         for k in other_dict.keys():
             self.update(k, other_dict.get_key(k))
@@ -1676,6 +1782,7 @@ class YayDict(Dictish, AST):
 
 
 class YayExtend(Streamish, AST):
+
     def __init__(self, value):
         super(YayExtend, self).__init__()
         self.value = value
@@ -1693,6 +1800,7 @@ class YayExtend(Streamish, AST):
 
 
 class YayScalar(Scalarish, AST):
+
     def __init__(self, value):
         super(YayScalar, self).__init__()
 
@@ -1701,12 +1809,12 @@ class YayScalar(Scalarish, AST):
             return
 
         try:
-             self.value = int(value)
+            self.value = int(value)
         except ValueError:
-             try:
-                 self.value = float(value)
-             except ValueError:
-                 self.value = value
+            try:
+                self.value = float(value)
+            except ValueError:
+                self.value = value
 
     def resolve_once(self):
         return self.value
@@ -1766,7 +1874,7 @@ class YayMultilineScalar(Scalarish, AST):
             return YayMerged(
                 klass.chomp_ast(method, item.lhs),
                 klass.chomp_ast(method, item.rhs),
-                )
+            )
         elif isinstance(item, YayScalar):
             return YayScalar(method(item.value))
         else:
@@ -1782,7 +1890,8 @@ class YayMultilineScalar(Scalarish, AST):
         character separates two non-space characters.
         """
         # Our implementation, and specification, is much simpler than YAMLs
-        # which is uselessly complex. \n's are replaced with spaces, and collapsed
+        # which is uselessly complex. \n's are replaced with spaces, and
+        # collapsed
         v = []
         for line in value.split("\n"):
             if line:
@@ -1953,6 +2062,7 @@ class Directives(Proxy, AST):
             return i
         return self.value.expand()
 
+
 class Include(Proxy, AST):
 
     _get_context_checks_predecessors = True
@@ -1988,7 +2098,7 @@ class Include(Proxy, AST):
             except errors.NoPredecessor:
                 raise KeyError("No such key '%s'" % key)
 
-        #if key in self.detector:
+        # if key in self.detector:
         #    raise KeyError("'%s' not found" % key)
         try:
             self.detector.append(key)
@@ -2004,7 +2114,8 @@ class Include(Proxy, AST):
         self.expanding = True
 
         # Greedy lazyness at its finest
-        # Parse predecessors first, otherwise their contributions to things like the search path won't be considered.
+        # Parse predecessors first, otherwise their contributions to things
+        # like the search path won't be considered.
         try:
             self.predecessor.expand()
         except errors.NoPredecessor:
@@ -2053,10 +2164,10 @@ class Set(Proxy, AST):
 
     def expand_once(self):
         if self.predecessor.get_type() == "streamish":
-             node = YayList()
-             node.anchor = self.anchor
+            node = YayList()
+            node.anchor = self.anchor
         else:
-             node = self.predecessor.expand()
+            node = self.predecessor.expand()
         return node
 
 
@@ -2159,10 +2270,12 @@ class Select(Proxy, AST):
                 t.anchor = self.anchor
                 return True, t
 
-        raise errors.NoMatching("Select does not have key '%s'" % value, anchor=self.anchor)
+        raise errors.NoMatching(
+            "Select does not have key '%s'" % value, anchor=self.anchor)
 
 
 class CaseList(AST):
+
     def __init__(self, *cases):
         super(CaseList, self).__init__()
         self.cases = []
@@ -2172,7 +2285,9 @@ class CaseList(AST):
         case.parent = self
         self.cases.append(case)
 
+
 class Case(AST):
+
     def __init__(self, key, node):
         super(Case, self).__init__()
         self.key = key
@@ -2181,6 +2296,7 @@ class Case(AST):
 
 
 class Prototype(AST):
+
     def __init__(self, node):
         super(Prototype, self).__init__()
         self.node = node
@@ -2190,6 +2306,7 @@ class Prototype(AST):
 
 
 class New(Proxy, AST):
+
     def __init__(self, target, node):
         super(New, self).__init__()
         self.target = target
@@ -2250,6 +2367,7 @@ class Macro(AST):
 
 
 class CallDirective(Proxy, AST):
+
     def __init__(self, target, node):
         super(CallDirective, self).__init__()
         self.target = target
@@ -2266,6 +2384,7 @@ class CallDirective(Proxy, AST):
         context.parent = self
         context.anchor = self.anchor
         return context.expand()
+
 
 class For(Streamish, AST):
 
@@ -2323,7 +2442,9 @@ class Context(Proxy, AST):
     def expand_once(self):
         return self.value.expand()
 
+
 class ListComprehension(Streamish, AST):
+
     def __init__(self, expression, list_for):
         super(ListComprehension, self).__init__()
         self.expression = expression
@@ -2333,12 +2454,15 @@ class ListComprehension(Streamish, AST):
 
     def _get_source_iterator(self, anchor=None):
         for node in self.list_for.expressions.get_iterable(ma(anchor, self.anchor)):
-            ctx = Context(self.expression.clone(), {self.list_for.targets.identifier: node})
+            ctx = Context(self.expression.clone(), {
+                          self.list_for.targets.identifier: node})
             ctx.anchor = self.anchor
             ctx.parent = self
             yield ctx.expand()
 
+
 class ListFor(Streamish, AST):
+
     def __init__(self, targets, expressions, iterator=None):
         super(ListFor, self).__init__()
         self.targets = targets
@@ -2349,55 +2473,73 @@ class ListFor(Streamish, AST):
         if iterator:
             iterator.parent = self
 
+
 class ListIf(AST):
+
     def __init__(self, expression, iterator=None):
         super(ListIf, self).__init__()
         self.expression = expression
         self.iterator = iterator
 
+
 class Comprehension(AST):
+
     def __init__(self, expression, comp_for):
         super(Comprehension, self).__init__()
         self.expression = expression
         self.comp_for = comp_for
 
+
 class CompFor(AST):
+
     def __init__(self, targets, test, iterator=None):
         super(CompFor, self).__init__()
         self.targets = targets
         self.test = test
         self.iterator = iterator
 
+
 class CompIf(AST):
+
     def __init__(self, expression, iterator=None):
         super(CompIf, self).__init__()
         self.expression = expression
         self.iterator = iterator
 
+
 class GeneratorExpression(AST):
+
     def __init__(self, expression, comp_for):
         super(GeneratorExpression, self).__init__()
         self.expression = expression
         self.comp_for = comp_for
 
+
 class DictComprehension(AST):
+
     def __init__(self, key, value, comp_for):
         super(DictComprehension, self).__init__()
         self.key = key
         self.value = value
         self.comp_for = comp_for
 
+
 class SetDisplay(AST):
+
     def __init__(self, v):
         super(SetDisplay, self).__init__()
         self.v = v
 
+
 class StringConversion(AST):
+
     def __init__(self, v):
         super(StringConversion, self).__init__()
         self.v = v
 
+
 class LambdaForm(AST):
+
     def __init__(self, expression, params=None):
         super(LambdaForm, self).__init__()
         self.expression = expression
@@ -2494,6 +2636,7 @@ class PythonClass(Proxy, AST):
         self.members.start_listening()
         self.members.subscribe(self.changed)
 
+
 class PythonIterable(Streamish, AST):
 
     anchor = None
@@ -2516,7 +2659,8 @@ class PythonDict(Dictish, AST):
     def __init__(self, dict):
         super(PythonDict, self).__init__()
         self.dict = dict
-        #FIXME: We should either have a fake anchor or generate one by inspecting the frame
+        # FIXME: We should either have a fake anchor or generate one by
+        # inspecting the frame
         self.anchor = None
 
     def get_key(self, key):
@@ -2551,8 +2695,10 @@ class PythonDict(Dictish, AST):
 
 
 bindings = [
-    (inspect.isgenerator,                                        PythonIterable),
-    (lambda v: isinstance(v, list),                              PythonIterable),
+    (inspect.isgenerator,
+     PythonIterable),
+    (lambda v: isinstance(v, list),
+     PythonIterable),
     (lambda v: isinstance(v, dict),                              PythonDict),
     (lambda v: isinstance(v, (int, float, basestring, bool)),    YayScalar),
 ]
@@ -2565,7 +2711,8 @@ def bind(v):
     for detector, wrapper in bindings:
         if detector(v):
             return wrapper(v)
-    raise errors.TypeError("Encountered unbindable object (type = %r)" % repr(v))
+    raise errors.TypeError(
+        "Encountered unbindable object (type = %r)" % repr(v))
 
 
 AST._predecessor = NoPredecessorStandin()

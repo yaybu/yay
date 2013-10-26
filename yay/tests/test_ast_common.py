@@ -16,6 +16,7 @@ from yay.ast import Literal
 
 
 class DynamicLiteral(Literal):
+
     """
     I am a literal that pretends to be dynamic for testing purposes.
     """
@@ -25,6 +26,7 @@ class DynamicLiteral(Literal):
 
 
 class ComplexLiteral(Literal):
+
     """
     I am a literal that pretends to be more complicated than I am for testing purposes.
 
@@ -33,5 +35,3 @@ class ComplexLiteral(Literal):
 
     def simplify(self):
         return Literal(self.literal)
-
-

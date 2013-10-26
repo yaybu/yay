@@ -27,13 +27,13 @@ class TestASTMultiline(TestCase):
         return (
             YayMultilineScalar(v, c).value,
             YayMultilineScalar(w, c).value,
-            )
+        )
 
     def test_chomp_literal(self):
         self.assertEqual(self._m("|"), (
             'foo bar baz\nquux blor\n',
             'foo bar baz\n\nquux blorp\n',
-            ))
+        ))
 
     def test_chomp_keep(self):
         # NB: the commented result below is the behaviour of pyyaml
@@ -50,7 +50,6 @@ class TestASTMultiline(TestCase):
             'foo bar baz\nquux blor',
             'foo bar baz\n\nquux blorp',
         ))
-
 
     fold = ("Mark McGwire's\n"
             "year was crippled\n"

@@ -81,7 +81,7 @@ class Lexer(object):
         'AS',
         'VALUE',      # represents either a key or value in yamlish
         'MULTILINE',  # the start of a multiline block
-        'MULTILINE_END', # the end of a multiline block
+        'MULTILINE_END',  # the end of a multiline block
         'HYPHEN',     # introduces a list item in yamlish
         'COMMENT',
         'INDENT',
@@ -91,7 +91,7 @@ class Lexer(object):
         'EXTEND',
         'LDBRACE',
         'RDBRACE',
-        'IDENTIFIER', # only in pythonish
+        'IDENTIFIER',  # only in pythonish
         'STRING',
         'INTEGER',
         'FLOAT',
@@ -147,7 +147,6 @@ class Lexer(object):
         r"""\#[^\n]*"""
         pass
 
-
     def t_TEMPLATE_RDBRACE(self, t):
         r"""}}"""
         t.lexer.pop_state()
@@ -169,7 +168,7 @@ class Lexer(object):
                          '(?:                   # Non-triple quoted can contain...
                          [^']                | # a non-quote
                          \\'                   # a backslashded quote
-                         )*'(?!') | """+
+                         )*'(?!') | """ +
                                        r'''               # Double-quote (") strings
                                        """(?:                 # Triple-quoted can contain...
                                        [^"]               | # a non-quote
@@ -330,16 +329,14 @@ class Lexer(object):
         return t
 
     def t_ANY_error(self, t):
-        raise SyntaxError("Unknown symbol %r at line %d" % (t.value[0], t.lineno))
-
+        raise SyntaxError("Unknown symbol %r at line %d" %
+                          (t.value[0], t.lineno))
 
     # The original lex token stream contains WS and NEWLINE characters.
     # WS will only occur before any other tokens on a line.
-
     # "at_line_start" which is True for WS
     # and the first non-WS/non-NEWLINE on a line.  It flags the check so
     # see if the new line has changed indication level.
-
     # yay's syntax has three INDENT states
     # 0) within a command block or a list, so no need to indent
     # 1) within a dictionary, or after a colon in command mode so we may indent, or not
@@ -393,7 +390,7 @@ class Lexer(object):
 
     def indentation_filter(self, tokens):
         """ Track the indentation level and emit the right INDENT / DEDENT events. """
-        levels = [0] # first level is determined by first token
+        levels = [0]  # first level is determined by first token
         token = None
         depth = None
         prev_was_ws = False
@@ -457,7 +454,7 @@ class Lexer(object):
                         i = levels.index(depth)
                     except ValueError:
                         raise WhitespaceError("inconsistent indentation")
-                    for _ in range(i+1, len(levels)):
+                    for _ in range(i + 1, len(levels)):
                         yield self.DEDENT(token.lineno)
                         levels.pop()
             yield token
@@ -472,7 +469,7 @@ class Lexer(object):
                 else:
                     yield self.DEDENT(token.lineno)
 
-    def token_filter(self, add_endmarker = True):
+    def token_filter(self, add_endmarker=True):
         yield self._new_token(self.root_token, 0)
 
         token = None
@@ -487,6 +484,6 @@ class ExpressionLexer(Lexer):
     root_token = "EXPRESSION_START"
 
     def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0, source="<unknown>"):
-        super(ExpressionLexer, self).__init__(debug, optimize, lextab, reflags, source)
+        super(ExpressionLexer, self).__init__(
+            debug, optimize, lextab, reflags, source)
         self.lexer.push_state("TEMPLATE")
-

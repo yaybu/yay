@@ -35,10 +35,12 @@ class TestTransform(TestCase):
         self.assertRaises(SystemExit, main, argv=["a", "b", "c"])
 
     def test_format_validation(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "pyx"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "pyx"], stdin=self.stream)
 
     def test_phase_validation(self):
-        self.assertRaises(SystemExit, main, argv=["-p", "pyx"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-p", "pyx"], stdin=self.stream)
 
     def test_successful_py(self):
         main(argv=["-f", "py"], stdin=self.stream)
@@ -49,7 +51,7 @@ class TestTransform(TestCase):
     def test_successful_dot(self):
         main(argv=["-f", "dot"], stdin=self.stream)
 
-    #def test_successful_dot_with_phase(self):
+    # def test_successful_dot_with_phase(self):
     #    main(argv=["-f", "dot", "-p", "normalized"], stdin=self.stream)
 
 
@@ -67,16 +69,20 @@ class TestTransformParseErrors(TestCase):
             """)
 
     def test_py(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "py"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "py"], stdin=self.stream)
 
     def test_yaml(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)
 
     def test_dot(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "dot"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "dot"], stdin=self.stream)
 
     def test_dot_with_phase(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "dot", "-p", "normalized"], stdin=self.stream)
+        self.assertRaises(SystemExit, main, argv=[
+                          "-f", "dot", "-p", "normalized"], stdin=self.stream)
 
 
 class TestTransformResolveErrors(TestCase):
@@ -87,8 +93,9 @@ class TestTransformResolveErrors(TestCase):
             """)
 
     def test_py(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "py"], stdin=self.stream)
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "py"], stdin=self.stream)
 
     def test_yaml(self):
-        self.assertRaises(SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)
-
+        self.assertRaises(
+            SystemExit, main, argv=["-f", "yaml"], stdin=self.stream)

@@ -71,4 +71,3 @@ class TestEqResolve(TestCase):
     def test_cond_false(self):
         n = Equal(Literal(4), Literal(5))
         self.assertEqual(n.resolve(), False)
-

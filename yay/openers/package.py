@@ -33,4 +33,3 @@ class PackageOpener(IOpener):
             raise NotFound("Package '%s' could not be imported" % package)
         path = os.path.join(os.path.dirname(module.__file__), uri)
         return FileOpener().open(path, etag)
-

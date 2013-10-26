@@ -47,7 +47,7 @@ class TestFileOpener(TestCase):
 
 class TestHttpOpener(TestCase):
     pass
-    #def test_notfound(self):
+    # def test_notfound(self):
     #    uo = UrlOpener()
     #    self.failUnlessRaises(NotFound, uo.open, "http://yay-test-url-that-doesnt-exist.isotoma.com/hello_world")
 
@@ -56,11 +56,13 @@ class TestLazySearchpath(TestCase):
 
     def setUpMock(self, iterable):
         class Mock(object):
+
             def __init__(self, foo):
                 self.foo = foo
+
             def as_iterable(self):
                 for f in self.foo:
-                   yield f
+                    yield f
 
         self.mock = Mock(iterable)
         self.searchpath = SearchpathFromGraph(self.mock)
@@ -82,13 +84,14 @@ class TestLazySearchpath(TestCase):
 
     def test_cant_shrink(self):
         self.setUpMock(["/tmp", "/dev/null"])
-        list(self.searchpath) # only a causality problem if its been accessed already
+        list(self.searchpath)
+             # only a causality problem if its been accessed already
         self.mock.foo.remove("/dev/null")
         self.assertRaises(ParadoxError, list, self.searchpath)
 
     def test_cant_change(self):
         self.setUpMock(["/tmp", "/dev/null"])
-        list(self.searchpath) # only a causality problem if its been accessed already
+        list(self.searchpath)
+             # only a causality problem if its been accessed already
         self.mock.foo = ["/dev/null", "/tmp"]
         self.assertRaises(ParadoxError, list, self.searchpath)
-

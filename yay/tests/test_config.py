@@ -27,8 +27,8 @@ class TestConfig(TestCase):
     def test_create_and_add(self):
         c = config.Config()
         c.add(dict(
-            foo = 1,
-            ))
+            foo=1,
+        ))
         self.assertEqual(c.resolve(), {"foo": 1})
 
     def test_create_and_add_exception(self):
@@ -38,8 +38,8 @@ class TestConfig(TestCase):
     def test_get_context_miss(self):
         c = config.Config()
         c.add(dict(
-           foo = 1,
-           ))
+            foo=1,
+        ))
         self.assertRaises(NoMatching, c.get_context, "foo bar")
 
     def test_get_context_miss_empty(self):
@@ -57,4 +57,3 @@ class TestConfig(TestCase):
             hello: world
             """))
         self.assertEqual(resolved, {"hello": "world"})
-

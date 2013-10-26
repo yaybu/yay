@@ -42,6 +42,7 @@ class MockRoot(ast.Root):
         p = parser.Parser()
         return p.parse(self.data[path], debug=0)
 
+
 def bare_parse(value, debug=False):
     try:
         import yay.parsetab
@@ -51,11 +52,13 @@ def bare_parse(value, debug=False):
     p = parser.Parser()
     return p.parse(value, debug)
 
+
 def parse(value, root=MockRoot, **kwargs):
     r = root(bare_parse(value))
     for k, v in kwargs.items():
         r.add(k, v)
     return r
+
 
 def resolve(value, root=MockRoot, **kwargs):
     r = parse(value, root, **kwargs)
@@ -74,10 +77,13 @@ class TestCase(unittest.TestCase):
 
     def _parse(self, source, labels=()):
         from yay.openers.base import Openers, SearchpathFromGraph
+
         class Config(config.Config):
+
             def setup_openers(self):
                 self.add({"yay": {"searchpath": self.searchpath or []}})
-                self.openers = Openers(searchpath=SearchpathFromGraph(self.yay.searchpath))
+                self.openers = Openers(
+                    searchpath=SearchpathFromGraph(self.yay.searchpath))
         c = Config()
         c.builtins = self.builtins or {}
         c.load(io.StringIO(source), labels=labels)
@@ -95,4 +101,3 @@ class TestCase(unittest.TestCase):
 
     def assertResolves(self, source, expected):
         self.assertEqual(self._resolve(source), expected)
-

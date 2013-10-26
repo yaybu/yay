@@ -115,7 +115,7 @@ class TestAST(TestCase):
         e1, e2, e3 = AST(), AST(), AST()
         e2.value = "e2"
         e3.value = "e3"
-        e1.values = {"e2":e2, "e3":e3}
+        e1.values = {"e2": e2, "e3": e3}
         clone = e1.clone()
 
         self.assertEqual(clone.values['e2'].value, "e2")
@@ -141,8 +141,9 @@ class TestAST(TestCase):
 
     def test_is_secret(self):
         class L(AST):
-             def get_labels(self):
-                 return ["secret"]
+
+            def get_labels(self):
+                return ["secret"]
         self.assertEqual(L().is_secret(), True)
 
 
@@ -164,6 +165,7 @@ class TestRoot(TestCase):
         root.resolve()
         inner.resolve.assert_called_with()
 
+
 class TestIdentifier(TestCase):
 
     def test_resolve(self):
@@ -172,60 +174,79 @@ class TestIdentifier(TestCase):
         identifier.resolve()
         identifier.parent.get_context.assert_called_with("global_var")
 
+
 class TestLiteral(TestCase):
+
     def test_resolve(self):
         self.assertEqual(Literal("hello").resolve(), "hello")
 
+
 class TestPower(TestCase):
+
     def test_resolve(self):
         self.assertEqual(Power(Literal(2), Literal(2)).resolve(), 4)
 
+
 class TestUnary(TestCase):
+
     def test_resolve(self):
         self.assertEqual(UnaryMinus(Literal(2)).resolve(), -2)
 
+
 class TestInvert(TestCase):
+
     def test_resolve(self):
         self.assertEqual(Invert(Literal(2)).resolve(), ~2)
 
+
 class TestNot(TestCase):
+
     def test_resolve(self):
         self.assertEqual(Not(Literal(False)).resolve(), True)
+
 
 class TestConditionalExpression(TestCase):
 
     def test_resolve_if(self):
         self.assertEqual(
-            ConditionalExpression(Literal(True), Literal("IF"), Literal("ELSE")).resolve(),
+            ConditionalExpression(
+                Literal(True), Literal("IF"), Literal("ELSE")).resolve(),
             "IF"
-            )
+        )
 
     def test_resolve_else(self):
         self.assertEqual(
-            ConditionalExpression(Literal(False), Literal("IF"), Literal("ELSE")).resolve(),
+            ConditionalExpression(
+                Literal(False), Literal("IF"), Literal("ELSE")).resolve(),
             "ELSE"
-            )
+        )
+
 
 class TestYayList(TestCase):
+
     def test_resolve(self):
         y = YayList(Literal(1), Literal(2), Literal(3))
-        self.assertEqual(y.resolve(), [1,2,3])
+        self.assertEqual(y.resolve(), [1, 2, 3])
+
 
 class TestYayDict(TestCase):
+
     def test_resolve(self):
         y = YayDict([("a", Literal(1))])
         y.anchor = Mock()
         self.assertEqual(y.resolve(), {"a": 1})
 
     def test_get(self):
-        #FIXME:
+        # FIXME:
         pass
 
     def test_update(self):
-        #FIXME
+        # FIXME
         pass
 
+
 class TestYayExtend(TestCase):
+
     def test_resolve(self):
         y = YayExtend(YayList(Literal(1)))
         y.anchor = None
@@ -233,18 +254,23 @@ class TestYayExtend(TestCase):
         y.parent = Mock()
         self.assertEqual(y.resolve(), [2, 1])
 
+
 class TestFor(TestCase):
+
     def test_resolve(self):
-        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")))
+        f = For(Identifier("x"), YayList(
+            Literal('a'), Literal('b')), YayList(Identifier("x")))
         f.parent = Mock()
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a', 'b'])
 
     def test_resolve_filtered(self):
-        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')), YayList(Identifier("x")), Equal(Identifier("x"), Literal("a")))
+        f = For(Identifier("x"), YayList(Literal('a'), Literal('b')),
+                YayList(Identifier("x")), Equal(Identifier("x"), Literal("a")))
         f.parent = Mock()
         f.anchor = Mock()
         self.assertEqual(f.resolve(), ['a'])
+
 
 class TestContext(TestCase):
 

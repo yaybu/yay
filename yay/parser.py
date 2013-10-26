@@ -17,9 +17,12 @@ from ply import yacc
 
 # Support python 3
 OldYaccProduction = yacc.YaccProduction
+
+
 class YaccProduction(OldYaccProduction):
-    def __getitem__(self,n):
-        if isinstance(n, slice): # pragma: no cover
+
+    def __getitem__(self, n):
+        if isinstance(n, slice):  # pragma: no cover
             return [s.value for s in self.slice[n]]
         return OldYaccProduction.__getitem__(self, n)
 yacc.YaccProduction = YaccProduction
@@ -58,6 +61,7 @@ expressions = {
     "&": ast.BitwiseAnd,
     "not in": ast.NotIn,
 }
+
 
 class BaseParser(object):
 
@@ -101,8 +105,8 @@ class BaseParser(object):
         """ Set the position of p[0] from symbol i """
         p[0].anchor = SpanAnchor(self, p, i)
 
-    ########## EXPRESSIONS
-    ## http://docs.python.org/2/reference/expressions.html
+    # EXPRESSIONS
+    # http://docs.python.org/2/reference/expressions.html
 
     # Atoms are the most basic elements of expressions. The simplest atoms
     # are identifiers or literals. Forms enclosed in reverse quotes or in
@@ -549,7 +553,6 @@ class BaseParser(object):
             p[0] = expressions[p[2]](p[1], p[3])
             p[0].anchor = p[1].anchor
 
-
     def p_a_expr(self, p):
         '''
         a_expr : m_expr
@@ -579,7 +582,7 @@ class BaseParser(object):
         and_expr : shift_expr
                  | and_expr "&" shift_expr
         '''
-        if len(p) ==2:
+        if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = expressions[p[2]](p[1], p[3])
@@ -590,7 +593,7 @@ class BaseParser(object):
         xor_expr : and_expr
                  | xor_expr "^" and_expr
         '''
-        if len(p) ==2:
+        if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = expressions[p[2]](p[1], p[3])
@@ -601,7 +604,7 @@ class BaseParser(object):
         or_expr : xor_expr
                 | or_expr "|" xor_expr
         '''
-        if len(p) ==2:
+        if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = expressions[p[2]](p[1], p[3])
@@ -639,7 +642,7 @@ class BaseParser(object):
         or_test : and_test
                 | or_test OR and_test
         '''
-        if len(p) ==2:
+        if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = expressions[p[2]](p[1], p[3])
@@ -650,7 +653,7 @@ class BaseParser(object):
         and_test : not_test
                  | and_test AND not_test
         '''
-        if len(p) ==2:
+        if len(p) == 2:
             p[0] = p[1]
         else:
             p[0] = expressions[p[2]](p[1], p[3])
@@ -730,7 +733,7 @@ class BaseParser(object):
                 p[0] = ast.ExpressionList(p[1], p[3])
                 p[0].anchor = p[1].anchor
 
-    #### SIMPLE STATEMENTS
+    # SIMPLE STATEMENTS
     # http://docs.python.org/2/reference/simple_stmts.html
 
     def p_target_list(self, p):
@@ -767,7 +770,7 @@ class BaseParser(object):
         '''
         p[0] = p[1]
 
-    #### COMPOUND STATEMENTS
+    # COMPOUND STATEMENTS
     # http://docs.python.org/2/reference/compound_stmts.html
 
     def p_parameter_list(self, p):
@@ -822,7 +825,7 @@ class BaseParser(object):
             p[0] = p[1]
             p[0].append(p[3])
 
-    #### yay \o/
+    # yay \o/
 
     def p_directive(self, p):
         '''
@@ -1224,9 +1227,11 @@ class BaseParser(object):
 
 
 class Parser(BaseParser):
+
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
         value = '\n'.join(value.splitlines(False)) + '\n'
         return super(Parser, self).parse(value, source, tracking, debug)
+
 
 class ExpressionParser(BaseParser):
     Lexer = ExpressionLexer

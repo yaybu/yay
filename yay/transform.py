@@ -38,14 +38,16 @@ def graph_to_yaml(opts, graph):
         sys.exit(1)
 
     # Dump as YAML
-    return yaml.safe_dump(resolved, 
-                     default_flow_style=False)
+    return yaml.safe_dump(resolved,
+                          default_flow_style=False)
+
 
 def graph_to_dot(opts, graph):
     if opts.phase == "normalized":
         graph = graph.normalize_predecessors()
 
     return "\n".join(graph.as_digraph())
+
 
 def graph_to_py(opts, graph):
     import pprint
@@ -65,17 +67,20 @@ usage: %prog [options] [filename]
 Where output is one of "dot", "yaml" or "py"\
 """
 
+
 def main(argv=sys.argv[1:], stdin=sys.stdin):
     converters = {
         "dot": graph_to_dot,
         "yaml": graph_to_yaml,
         "py": graph_to_py,
-        }
+    }
 
     phases = ("initial", "normalized")
     p = optparse.OptionParser(usage=usage)
-    p.add_option('-p', '--phase', action="store", default="initial", help="phase, one of %s" % ",".join(phases))
-    p.add_option('-f', '--format', action="store", default="yaml", help="output format, one of: %s. defaults to 'yaml'" % ", ".join(converters.keys()))
+    p.add_option('-p', '--phase', action="store",
+                 default="initial", help="phase, one of %s" % ",".join(phases))
+    p.add_option('-f', '--format', action="store", default="yaml",
+                 help="output format, one of: %s. defaults to 'yaml'" % ", ".join(converters.keys()))
     opts, args = p.parse_args(argv)
 
     if len(args) == 0:
@@ -94,7 +99,8 @@ def main(argv=sys.argv[1:], stdin=sys.stdin):
         sys.exit(1)
 
     if not opts.format in converters:
-        print("Output format must be one of: %r" % converters.keys(), file=sys.stderr)
+        print("Output format must be one of: %r" %
+              converters.keys(), file=sys.stderr)
         sys.exit(1)
 
     if not opts.phase in phases:
@@ -112,4 +118,3 @@ def main(argv=sys.argv[1:], stdin=sys.stdin):
         sys.exit(1)
 
     print(converters[opts.format](opts, root))
-

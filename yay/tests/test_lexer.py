@@ -24,9 +24,11 @@ from yay.errors import WhitespaceError
 def lt__repr__(self):
     return "<%s(%r)>" % (self.type, self.value)
 
+
 def lt__nonzero__(self):
     # work around some evil code in PLY
     return True
+
 
 def lt__eq__(self, other):
     """ Used in tests only """
@@ -40,6 +42,7 @@ def lt__eq__(self, other):
             return True
     return False
 
+
 def lt__ne__(self, other):
     return not self == other
 
@@ -47,6 +50,7 @@ lex.LexToken.__repr__ = lt__repr__
 lex.LexToken.__nonzero__ = lt__nonzero__
 lex.LexToken.__eq__ = lt__eq__
 lex.LexToken.__ne__ = lt__ne__
+
 
 def t(name, value=None, lineno=0, lexpos=0, orig=None):
     tok = lex.LexToken()
@@ -68,14 +72,18 @@ hyphen = t('HYPHEN', '-')
 plus = t('+', '+')
 colon = t('COLON', ':')
 
+
 def value(x):
     return t('VALUE', x)
+
 
 def identifier(x):
     return t('IDENTIFIER', x)
 
+
 def line(x):
     return t('LINE', x)
+
 
 class TestLexer(TestCase):
 
@@ -99,16 +107,18 @@ class TestLexer(TestCase):
             x = list(x)
         x.pop(0)
         if len(x) != len(y):
-            raise self.failureException("Token lists are of different lengths:\n%s" % self.show_error(x, y))
-        for a, b in zip(x,y):
+            raise self.failureException(
+                "Token lists are of different lengths:\n%s" % self.show_error(x, y))
+        for a, b in zip(x, y):
             if a != b:
-                raise self.failureException("Tokens differ:\n%s" % self.show_error(x,y))
+                raise self.failureException(
+                    "Tokens differ:\n%s" % self.show_error(x, y))
 
-    ##### Base YAY tests
+    # Base YAY tests
 
     def test_simplest(self):
         self.compare(self._lex("""a: b"""), [
-        value('a'), colon, value('b')
+            value('a'), colon, value('b')
         ])
 
     def test_list(self):
@@ -125,7 +135,7 @@ class TestLexer(TestCase):
             hyphen, value('c'), newline,
             hyphen, value('d'), newline,
             dedent,
-            ])
+        ])
 
     def test_simple_indent(self):
         result = self._lex("""
@@ -135,10 +145,9 @@ class TestLexer(TestCase):
         self.compare(result, [
             value('a'), colon, newline,
             indent,
-                value('b'), colon, value('c'), newline,
+            value('b'), colon, value('c'), newline,
             dedent,
         ])
-
 
     def test_list_of_multikey_dicts(self):
         result = self._lex("""
@@ -149,15 +158,15 @@ class TestLexer(TestCase):
               - g
               """)
         self.compare(result, [
-        value('a'), colon, newline,
-        indent,
+            value('a'), colon, newline,
+            indent,
             hyphen, value('b'), newline,
             hyphen, value('c'), colon, value('d'), newline,
             indent,
-                value('e'), colon, value('f'), newline,
+            value('e'), colon, value('f'), newline,
             dedent,
             hyphen, value('g'), newline,
-        dedent,
+            dedent,
         ])
 
     def test_list_of_dicts(self):
@@ -169,11 +178,11 @@ class TestLexer(TestCase):
         """), [
             value('a'), colon, newline,
             indent,
-                hyphen, value('b'), newline,
-                hyphen, value('c'), colon, value('d'), newline,
-                hyphen, value('e'), newline,
+            hyphen, value('b'), newline,
+            hyphen, value('c'), colon, value('d'), newline,
+            hyphen, value('e'), newline,
             dedent,
-            ])
+        ])
 
     def test_initial1(self):
         self.compare(self._lex("""
@@ -181,12 +190,12 @@ class TestLexer(TestCase):
                c:
                  d: e
             """), [
-                value('a'), colon, value('b'), newline,
-                value('c'), colon, newline,
-                indent,
-                    value('d'), colon, value('e'), newline,
-                dedent,
-            ])
+            value('a'), colon, value('b'), newline,
+            value('c'), colon, newline,
+            indent,
+            value('d'), colon, value('e'), newline,
+            dedent,
+        ])
 
     def test_emptydict(self):
         self.compare(self._lex("""
@@ -211,13 +220,13 @@ class TestLexer(TestCase):
               # foo
               - e
             """), [
-                   value('a'), colon, value('b'), newline,
-                   value('c'), colon, newline,
-                   indent,
-                   hyphen, value('d'), newline,
-                   hyphen, value('e'), newline,
-                   dedent,
-            ])
+            value('a'), colon, value('b'), newline,
+            value('c'), colon, newline,
+            indent,
+            hyphen, value('d'), newline,
+            hyphen, value('e'), newline,
+            dedent,
+        ])
 
     def test_sample2(self):
         self.compare(self._lex("""
@@ -229,20 +238,20 @@ class TestLexer(TestCase):
             h:
                 i: j
         """), [
-               value('a'), colon, newline,
-               indent,
-                value('b'), colon, value('c'), newline,
-                value('e'), colon, newline,
-                indent,
-                    hyphen, value('f'), newline,
-                    hyphen, value('g'), newline,
-                dedent,
-                value('h'), colon, newline,
-                indent,
-                    value('i'), colon, value('j'), newline,
-                dedent,
-               dedent
-           ])
+            value('a'), colon, newline,
+            indent,
+            value('b'), colon, value('c'), newline,
+            value('e'), colon, newline,
+            indent,
+            hyphen, value('f'), newline,
+            hyphen, value('g'), newline,
+            dedent,
+            value('h'), colon, newline,
+            indent,
+            value('i'), colon, value('j'), newline,
+            dedent,
+            dedent
+        ])
 
     def test_sample1(self):
         self.compare(self._lex("""
@@ -259,46 +268,46 @@ class TestLexer(TestCase):
                 key5:
                     key6: key7
         """), [
-               value('key1'), colon, value('value1'), t('NEWLINE', '\n\n'),
-               value('key2'), colon, value('value2'), t('NEWLINE', '\n\n'),
-               value('key3'), colon, newline,
-               indent,
-                   hyphen, value('item1'), newline,
-                   hyphen, value('item2'), newline,
-                   hyphen, value('item3'), t('NEWLINE', '\n\n'),
-               dedent,
-               value('key4'), colon, newline,
-               indent,
-                   value('key5'), colon, newline,
-                   indent,
-                       value('key6'), colon, value('key7'), newline,
-                   dedent,
-               dedent,
+            value('key1'), colon, value('value1'), t('NEWLINE', '\n\n'),
+            value('key2'), colon, value('value2'), t('NEWLINE', '\n\n'),
+            value('key3'), colon, newline,
+            indent,
+            hyphen, value('item1'), newline,
+            hyphen, value('item2'), newline,
+            hyphen, value('item3'), t('NEWLINE', '\n\n'),
+            dedent,
+            value('key4'), colon, newline,
+            indent,
+            value('key5'), colon, newline,
+            indent,
+            value('key6'), colon, value('key7'), newline,
+            dedent,
+            dedent,
         ])
 
-    #def test_multiline(self):
-        #self.compare(self._lex("""
-            #foo: |
-               #bar
-               #baz
-               #quux
-            #bar: |
-               #x y z
-               #a b c
+    # def test_multiline(self):
+        # self.compare(self._lex("""
+            # foo: |
+               # bar
+               # baz
+               # quux
+            # bar: |
+               # x y z
+               # a b c
         #"""), [])
 
-    #def test_deep_multiline_file_end(self):
-        #self.compare(self._lex("""
-            #foo:
-                #bar: |
-                    #quux
+    # def test_deep_multiline_file_end(self):
+        # self.compare(self._lex("""
+            # foo:
+                # bar: |
+                    # quux
         #"""), [])
 
-    #def test_multiline_template(self):
-        #self.compare(self._lex("""
-        #foo: |
-          #bar
-          #baz
+    # def test_multiline_template(self):
+        # self.compare(self._lex("""
+        # foo: |
+          # bar
+          # baz
           #{{quux}}
         #"""), [
 
@@ -310,15 +319,15 @@ class TestLexer(TestCase):
             - baz
             - quux
         """), [
-               t('EXTEND', 'extend'), value('foo'), colon, newline,
-               indent,
-               hyphen, value('baz'), newline,
-               hyphen, value('quux'), newline,
-               dedent,
+            t('EXTEND', 'extend'), value('foo'), colon, newline,
+            indent,
+            hyphen, value('baz'), newline,
+            hyphen, value('quux'), newline,
+            dedent,
 
-           ])
+        ])
 
-    ##### command mode tests
+    # command mode tests
 
     def test_command(self):
         result = self._lex("""
@@ -328,7 +337,7 @@ class TestLexer(TestCase):
             t('INCLUDE', 'include'),
             t('STRING', 'foo.yay'),
             newline,
-            ])
+        ])
 
     def test_include_levels(self):
         result = self._lex("""
@@ -342,8 +351,7 @@ class TestLexer(TestCase):
             t('STRING', 'foo.yay'),
             newline,
             dedent,
-            ])
-
+        ])
 
     def test_new(self):
         result = self._lex("""
@@ -352,15 +360,16 @@ class TestLexer(TestCase):
         self.compare(result, [
             t('NEW', 'new'), identifier('Compute'), t(':', ':'),
             newline,
-            ])
+        ])
 
     def test_new_as(self):
         result = self._lex("""
             new Provisioner as foo:
         """)
         self.compare(result, [
-            t('NEW', 'new'), identifier('Provisioner'), t('AS', 'as'), identifier('foo'), t(':', ':'), newline,
-            ])
+            t('NEW', 'new'), identifier('Provisioner'), t(
+                'AS', 'as'), identifier('foo'), t(':', ':'), newline,
+        ])
 
     def test_if(self):
         result = self._lex("""
@@ -368,10 +377,11 @@ class TestLexer(TestCase):
                 foo: 2
         """)
         self.compare(result, [
-            t('IF', 'if'), identifier('selector'), t('EQ', '=='), t('STRING', 'hey'), t(':', ':'),
+            t('IF', 'if'), identifier('selector'), t(
+                'EQ', '=='), t('STRING', 'hey'), t(':', ':'),
             newline,
             indent, value('foo'), colon, value('2'), newline, dedent,
-            ])
+        ])
 
     def test_else(self):
         result = self._lex("""
@@ -379,8 +389,7 @@ class TestLexer(TestCase):
         """)
         self.compare(result, [
             t('ELSE', 'else'), t(':', ':'), newline,
-            ])
-
+        ])
 
     def test_macro(self):
         result = self._lex("""
@@ -390,7 +399,7 @@ class TestLexer(TestCase):
         self.compare(result, [
             t('MACRO', 'macro'), t('IDENTIFIER', 'foo'), t(':', ':'), newline,
             indent, value('x'), colon, value('y'), newline, dedent,
-            ])
+        ])
 
     def test_integer(self):
         result = self._lex("""
@@ -402,7 +411,7 @@ class TestLexer(TestCase):
             t('=', '='),
             t('INTEGER', 2),
             newline,
-            ])
+        ])
 
     def test_addition(self):
         result = self._lex("""
@@ -416,8 +425,7 @@ class TestLexer(TestCase):
             t('+', '+'),
             t('INTEGER', 2),
             newline,
-            ])
-
+        ])
 
     def test_leading_command(self):
         self.compare(self._lex("""
@@ -425,53 +433,53 @@ class TestLexer(TestCase):
 
             a: b
             """), [
-                t('INCLUDE', 'include'), t('STRING', 'foo.yay'),
-                t('NEWLINE', '\n\n'),
-                value('a'), colon, value('b'), newline,
-                ])
+            t('INCLUDE', 'include'), t('STRING', 'foo.yay'),
+            t('NEWLINE', '\n\n'),
+            value('a'), colon, value('b'), newline,
+        ])
 
-    ##### template tests
+    # template tests
 
     def test_single_brace(self):
         self.compare(self._lex("""
             foo: hello {world}
         """), [
-               value('foo'), colon,
-               value('hello {world}'),
-               newline,
-           ])
+            value('foo'), colon,
+            value('hello {world}'),
+            newline,
+        ])
 
     def test_template(self):
         self.compare(self._lex("foo: {{bar}}"), [
-                value('foo'), colon,
-                t('LDBRACE', '{{'),
-                t('IDENTIFIER', 'bar'),
-                t('RDBRACE', '}}'),
+            value('foo'), colon,
+            t('LDBRACE', '{{'),
+            t('IDENTIFIER', 'bar'),
+            t('RDBRACE', '}}'),
         ])
 
     def test_complex_expressions_in_templates(self):
         self.compare(self._lex("""
         a: this {{a+b+c}} is {{foo("bar")}} hard
         """), [
-               value('a'), colon,
-               value('this '),
-               ldbrace,
-               identifier('a'),
-               plus,
-               identifier('b'),
-               plus,
-               identifier('c'),
-               rdbrace,
-               value(' is '),
-               ldbrace,
-               identifier('foo'),
-               t('(', '('),
-               t('STRING', 'bar'),
-               t(')', ')'),
-               rdbrace,
-               value(' hard'),
-               newline,
-            ])
+            value('a'), colon,
+            value('this '),
+            ldbrace,
+            identifier('a'),
+            plus,
+            identifier('b'),
+            plus,
+            identifier('c'),
+            rdbrace,
+            value(' is '),
+            ldbrace,
+            identifier('foo'),
+            t('(', '('),
+            t('STRING', 'bar'),
+            t(')', ')'),
+            rdbrace,
+            value(' hard'),
+            newline,
+        ])
 
     def test_template_in_listitem(self):
         self.compare(self._lex("""
@@ -480,11 +488,11 @@ class TestLexer(TestCase):
           - {{bar}}
           - c
         """), [
-           value('foo'), colon, newline,
-           indent,
-               hyphen, value('a'), newline,
-               hyphen, ldbrace, t('IDENTIFIER', 'bar'), rdbrace, newline,
-               hyphen, value('c'), newline,
+            value('foo'), colon, newline,
+            indent,
+            hyphen, value('a'), newline,
+            hyphen, ldbrace, t('IDENTIFIER', 'bar'), rdbrace, newline,
+            hyphen, value('c'), newline,
             dedent,
         ])
 
@@ -492,14 +500,14 @@ class TestLexer(TestCase):
         self.compare(self._lex("""
         foo: a{b}
         """), [
-               value('foo'), colon, value('a{b}'), newline
-               ])
+            value('foo'), colon, value('a{b}'), newline
+        ])
 
     def test_simple_dict_space(self):
         self.compare(self._lex("""
         a : b
         """), [
-               value('a'), colon, value('b'), newline
+            value('a'), colon, value('b'), newline
         ])
 
     def test_multiline_fold_simple(self):
@@ -511,16 +519,16 @@ a: >
 
 b: c
 """), [
-           value('a'), colon,
-           t('MULTILINE', '>'),
-           value('foo bar baz'),
-           newline,
-           value('quux quuux'),
-           t('NEWLINE', '\n\n'),
-           t('MULTILINE_END'),
-           newline,
-           value('b'), colon, value('c'), newline,
-           ])
+            value('a'), colon,
+            t('MULTILINE', '>'),
+            value('foo bar baz'),
+            newline,
+            value('quux quuux'),
+            t('NEWLINE', '\n\n'),
+            t('MULTILINE_END'),
+            newline,
+            value('b'), colon, value('c'), newline,
+        ])
 
     def test_multiline_inplace(self):
         self.compare(self._lex("""
@@ -530,16 +538,16 @@ b: c
 
         b: c
         """), [
-           value('a'), colon,
-           t('MULTILINE', '>'),
-           value('foo bar baz'),
-           newline,
-           value('quux quuux'),
-           t('NEWLINE', '\n\n'),
-           t('MULTILINE_END'),
-           newline,
-           value('b'), colon, value('c'), newline
-           ])
+            value('a'), colon,
+            t('MULTILINE', '>'),
+            value('foo bar baz'),
+            newline,
+            value('quux quuux'),
+            t('NEWLINE', '\n\n'),
+            t('MULTILINE_END'),
+            newline,
+            value('b'), colon, value('c'), newline
+        ])
 
     def test_multiline_fold_template(self):
         self.compare(self._lex("""
@@ -547,16 +555,17 @@ b: c
           foo {{bar}} baz
           {{quux}} quuux
         """), [
-               value('a'), colon,
-               t('MULTILINE', '>'),
-               value('foo '), ldbrace, t('IDENTIFIER', 'bar'), rdbrace,
-               value(' '), value('baz'),
-               newline,
-               ldbrace, t('IDENTIFIER', 'quux'), rdbrace, value(' '), value('quuux'),
-               newline,
-               t('MULTILINE_END'),
-               newline,
-               ])
+            value('a'), colon,
+            t('MULTILINE', '>'),
+            value('foo '), ldbrace, t('IDENTIFIER', 'bar'), rdbrace,
+            value(' '), value('baz'),
+            newline,
+            ldbrace, t('IDENTIFIER', 'quux'), rdbrace, value(
+                ' '), value('quuux'),
+            newline,
+            t('MULTILINE_END'),
+            newline,
+        ])
 
     def test_multiline_fold(self):
         self.compare(self._lex("""
@@ -565,15 +574,15 @@ b: c
 
           quux quuux
         """), [
-               value('a'), colon,
-               t('MULTILINE', '>'),
-               value('foo bar baz'),
-               t('NEWLINE', '\n\n'),
-               value('quux quuux'),
-               newline,
-               t('MULTILINE_END'),
-               newline,
-               ])
+            value('a'), colon,
+            t('MULTILINE', '>'),
+            value('foo bar baz'),
+            t('NEWLINE', '\n\n'),
+            value('quux quuux'),
+            newline,
+            t('MULTILINE_END'),
+            newline,
+        ])
 
     def test_multiline_literal(self):
         self.compare(self._lex("""
@@ -584,15 +593,15 @@ b: c
 
 
         """), [
-           value('a'), colon,
-           t('MULTILINE', '|'),
-           value('foo bar baz'),
-           t('NEWLINE', '\n\n'),
-           value('quux quuux'),
-           t('NEWLINE', '\n\n\n'),
-           t('MULTILINE_END'),
-           newline,
-           ])
+            value('a'), colon,
+            t('MULTILINE', '|'),
+            value('foo bar baz'),
+            t('NEWLINE', '\n\n'),
+            value('quux quuux'),
+            t('NEWLINE', '\n\n\n'),
+            t('MULTILINE_END'),
+            newline,
+        ])
 
     def test_multiline_literal_complex(self):
         self.compare(self._lex("""
@@ -603,29 +612,29 @@ b: c
             c: x
         d: e
         """), [
-               value('a'),
-               colon,
-               newline,
-               indent,
-                   value('b'),
-                   colon,
-                   t('MULTILINE', '|'),
-                   value('l1'),
-                   newline,
-                   value('l2'),
-                   newline,
-                   t('MULTILINE_END'),
-                   newline,
-                   value('c'),
-                   colon,
-                   value('x'),
-                   newline,
-               dedent,
-               value('d'),
-               colon,
-               value('e'),
-               newline,
-               ])
+            value('a'),
+            colon,
+            newline,
+            indent,
+            value('b'),
+            colon,
+            t('MULTILINE', '|'),
+            value('l1'),
+            newline,
+            value('l2'),
+            newline,
+            t('MULTILINE_END'),
+            newline,
+            value('c'),
+            colon,
+            value('x'),
+            newline,
+            dedent,
+            value('d'),
+            colon,
+            value('e'),
+            newline,
+        ])
 
     def test_multiline_strip(self):
         self.compare(self._lex("""
@@ -636,16 +645,16 @@ b: c
 
 
         """), [
-           value('a'),
-           colon,
-           t('MULTILINE', '|-'),
-           value('foo bar baz'),
-           t('NEWLINE', '\n\n'),
-           value('quux quuux'),
-           t('NEWLINE', '\n\n\n'),
-           t('MULTILINE_END'),
-           newline,
-           ])
+            value('a'),
+            colon,
+            t('MULTILINE', '|-'),
+            value('foo bar baz'),
+            t('NEWLINE', '\n\n'),
+            value('quux quuux'),
+            t('NEWLINE', '\n\n\n'),
+            t('MULTILINE_END'),
+            newline,
+        ])
 
     def test_multiline_strip_with_template(self):
         self.compare(self._lex("""
@@ -656,16 +665,15 @@ b: c
 
 
         """), [
-           value('a'), colon, t('MULTILINE', '|-'),
-           value('foo bar baz'),
-           t('NEWLINE', '\n\n'),
-           value('quux '),
-           ldbrace, identifier('quux'), rdbrace,
-           t('NEWLINE', '\n\n\n'),
-           t('MULTILINE_END'),
-           newline
-           ])
-
+            value('a'), colon, t('MULTILINE', '|-'),
+            value('foo bar baz'),
+            t('NEWLINE', '\n\n'),
+            value('quux '),
+            ldbrace, identifier('quux'), rdbrace,
+            t('NEWLINE', '\n\n\n'),
+            t('MULTILINE_END'),
+            newline
+        ])
 
     def test_multiline_keep(self):
         self.compare(self._lex("""
@@ -676,15 +684,15 @@ b: c
 
 
         """), [
-           value('a'), colon,
-           t('MULTILINE', '|+'),
-           value('foo bar baz'),
-           t('NEWLINE', '\n\n'),
-           value('quux quuux'),
-           t('NEWLINE', '\n\n\n'),
-           t('MULTILINE_END'),
-           newline,
-           ])
+            value('a'), colon,
+            t('MULTILINE', '|+'),
+            value('foo bar baz'),
+            t('NEWLINE', '\n\n'),
+            value('quux quuux'),
+            t('NEWLINE', '\n\n\n'),
+            t('MULTILINE_END'),
+            newline,
+        ])
 
     def test_python_line_continuation(self):
         self.compare(self._lex(r"""
@@ -692,44 +700,44 @@ b: c
            c == d:
              - x
         """), [
-               t('IF', 'if'),
-               identifier('x'),
-               t('EQ', '=='),
-               identifier('y'),
-               t('AND', 'and'),
-               identifier('c'),
-               t('EQ', '=='),
-               identifier('d'),
-               t(':', ':'),
-               newline,
-               indent, hyphen, value('x'), newline, dedent,
-               ])
+            t('IF', 'if'),
+            identifier('x'),
+            t('EQ', '=='),
+            identifier('y'),
+            t('AND', 'and'),
+            identifier('c'),
+            t('EQ', '=='),
+            identifier('d'),
+            t(':', ':'),
+            newline,
+            indent, hyphen, value('x'), newline, dedent,
+        ])
 
     def test_yaml_line_continuation(self):
         self.compare(self._lex(r"""
         a: b \
         x: y
         """), [
-               value('a'), colon, value('b \\'), newline,
-               value('x'), colon, value('y'), newline,
-           ])
+            value('a'), colon, value('b \\'), newline,
+            value('x'), colon, value('y'), newline,
+        ])
 
     def test_quoted_values(self):
         self.compare(self._lex(r"""
         a: "b: c d"
         """), [
-               value('a'), colon, value('b: c d'), newline,
-               ])
+            value('a'), colon, value('b: c d'), newline,
+        ])
 
     def test_templates_in_quotes(self):
         self.compare(self._lex(r"""
         a: "{{foo}}:{{bar}}"
         """), [
-               value('a'), colon,
-               ldbrace, identifier('foo'), rdbrace, value(':'),
-               ldbrace, identifier('bar'), rdbrace,
-               newline
-               ])
+            value('a'), colon,
+            ldbrace, identifier('foo'), rdbrace, value(':'),
+            ldbrace, identifier('bar'), rdbrace,
+            newline
+        ])
 
     def test_colon_key_nospace(self):
         self.compare(self._lex(r"""
@@ -763,7 +771,8 @@ b: c
                indent,
                hyphen, value('a'), newline,
                hyphen, value('b'), newline,
-               t('FOR', 'for'), identifier('i'), t('IN', 'in'), identifier('j'), t(':', ':'), newline,
+               t('FOR', 'for'), identifier('i'), t(
+                   'IN', 'in'), identifier('j'), t(':', ':'), newline,
                indent,
                hyphen, ldbrace, identifier('i'), rdbrace, newline,
                dedent,
@@ -781,10 +790,12 @@ b: c
             - c
         """), [value('a'), colon, newline,
                indent,
-               t('FOR', 'for'), identifier('x'), t('IN', 'in'), identifier('y'), t(':', ':'), newline,
+               t('FOR', 'for'), identifier('x'), t(
+                   'IN', 'in'), identifier('y'), t(':', ':'), newline,
                indent,
                hyphen, value('a'), newline,
-               t('FOR', 'for'), identifier('i'), t('IN', 'in'), identifier('j'), t(':', ':'), newline,
+               t('FOR', 'for'), identifier('i'), t(
+                   'IN', 'in'), identifier('j'), t(':', ':'), newline,
                indent,
                hyphen, ldbrace, identifier('i'), rdbrace, newline,
                dedent,
@@ -797,13 +808,14 @@ b: c
         self.compare(self._lex("""
           a: - "{{x}}"
           b: "y"
-          """),[value('a'), colon, value('- "'), ldbrace, identifier('x'), rdbrace, value('"'),
-                newline,
-                value('b'), colon, value('y'), newline,
-                ])
+          """), [value('a'), colon, value('- "'), ldbrace, identifier('x'), rdbrace, value('"'),
+                 newline,
+                 value('b'), colon, value('y'), newline,
+                 ])
 
     def test_trailing_whitespace(self):
-        self.compare(self._lex("a: b \n"""), [value('a'), colon, value('b'), newline])
+        self.compare(self._lex("a: b \n"""), [
+                     value('a'), colon, value('b'), newline])
 
     def test_trailing_whitespace_before_template(self):
         self.compare(self._lex("a: b {{c}}"), [
@@ -817,4 +829,3 @@ b: c
                 c: d
               e: f
         """)
-

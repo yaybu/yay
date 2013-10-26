@@ -33,11 +33,13 @@ class Anchor(object):
     def long_description(self):
         return "\n".join(self.long_description_lines())
 
+
 class LineAnchor(Anchor):
 
     def text_line(self):
         """ Find the specified line in the input """
-        return self.text.split("\n")[self.lineno-1]
+        return self.text.split("\n")[self.lineno - 1]
+
 
 class ColumnAnchor(LineAnchor):
 
@@ -45,14 +47,14 @@ class ColumnAnchor(LineAnchor):
     know so much about this, other than the start location of the token. """
 
     def __init__(self, parser, token):
-        self.source=parser.source
-        self.text=parser.text
-        self.lineno=token.lineno
-        self.lexpos=token.lexpos
+        self.source = parser.source
+        self.text = parser.text
+        self.lineno = token.lineno
+        self.lexpos = token.lexpos
 
     @property
     def column(self):
-        last_cr = self.text.rfind('\n',0, self.lexpos)
+        last_cr = self.text.rfind('\n', 0, self.lexpos)
         if last_cr < 0:
             last_cr = 0
         return (self.lexpos - last_cr) + 1
@@ -66,8 +68,9 @@ class ColumnAnchor(LineAnchor):
 
     def long_description_lines(self):
         line = "%4d %s" % (self.lineno, self.text_line())
-        pointer = "     %s^" % (" "*(self.column-2),)
+        pointer = "     %s^" % (" " * (self.column - 2),)
         return (line, pointer)
+
 
 class SpanAnchor(ColumnAnchor):
 
@@ -77,20 +80,21 @@ class SpanAnchor(ColumnAnchor):
     def __init__(self, parser, production, index):
         self.source = parser.source
         self.text = parser.text
-        self.lineno=production.lineno(index)
-        self.lexpos=production.lexpos(index)
-        self.linespan=production.linespan(index)
-        self.lexspan=production.lexspan(index)
+        self.lineno = production.lineno(index)
+        self.lexpos = production.lexpos(index)
+        self.linespan = production.linespan(index)
+        self.lexspan = production.lexspan(index)
 
     def text_lines(self):
         """ Find the specified line in the input """
         lines = self.text.split("\n")
-        return lines[self.linespan[0]-1:self.linespan[1]-1]
+        return lines[self.linespan[0] - 1:self.linespan[1] - 1]
 
     def long_description_lines(self):
         if self.linespan[0] == self.linespan[1]:
             line = self.text_line()
-            pointer = "%s%s" % (" "*(self.column-1), "^"*(self.lexspan[1]-self.lexspan[0]+1))
+            pointer = "%s%s" % (
+                " " * (self.column - 1), "^" * (self.lexspan[1] - self.lexspan[0] + 1))
             return (line, pointer)
         else:
             out = []
@@ -101,7 +105,8 @@ class SpanAnchor(ColumnAnchor):
                     marker = " "
                 out.append("%-4d %s %s" % (i, marker, l))
                 if l == self.lineno:
-                    pointer = "%s%s" % (" "*(self.column-1), "^"*(self.lexspan[1]-self.lexspan[0]))
+                    pointer = "%s%s" % (
+                        " " * (self.column - 1), "^" * (self.lexspan[1] - self.lexspan[0]))
                     out.append(pointer)
             return out
 
@@ -139,14 +144,19 @@ class Error(Exception):
 class NoPredecessor(Error):
     pass
 
+
 class NotFound(Error):
+
     """ An asset or referenced file could not be found """
     pass
 
+
 class NotModified(Error):
+
     """ An asset or referenced file has not been modified since last time it
     was opened. Use a cached version or request again without etag. """
     pass
+
 
 class ProgrammingError(Error):
     pass
@@ -162,7 +172,7 @@ class LanguageError(Error):
         error = [self.description]
         if self.anchor:
             error.append(self.anchor.long_description())
-        #else:
+        # else:
         #    error.append("No anchor is available for this error - please file a bug!")
         return "\n".join(error)
     get_string = __str__
@@ -171,11 +181,14 @@ class LanguageError(Error):
 class LexerError(LanguageError):
     pass
 
+
 class WhitespaceError(LexerError):
     pass
 
+
 class ParseError(LanguageError):
     pass
+
 
 class EOFParseError(ParseError):
 
@@ -185,12 +198,12 @@ class EOFParseError(ParseError):
     def __str__(self):
         return "Unexpected end of file in %s" % self.anchor
 
+
 class EOLParseError(ParseError):
 
     def __init__(self, anchor):
         self.anchor = anchor
         self.description = "Unexpected end of line in %s" % self.anchor
-
 
     def __str__(self):
         desc = self.anchor.long_description()
@@ -198,6 +211,7 @@ class EOLParseError(ParseError):
             return "\n".join([self.description, desc])
         else:
             return self.description
+
 
 class UnexpectedSymbolError(ParseError):
 
@@ -207,9 +221,11 @@ class UnexpectedSymbolError(ParseError):
 
     def __str__(self):
         if self.token.value is not None and self.token.value.lower() != self.token.type.lower():
-            short = "Unexpected %s (%r) in %s" % (self.token.type.lower(), self.token.value, self.anchor)
+            short = "Unexpected %s (%r) in %s" % (
+                self.token.type.lower(), self.token.value, self.anchor)
         else:
-            short = "Unexpected '%s' in %s" % (self.token.type.lower(), self.anchor)
+            short = "Unexpected '%s' in %s" % (
+                self.token.type.lower(), self.anchor)
         desc = self.anchor.long_description()
         if desc is not None:
             return "\n".join([short, desc])
@@ -221,25 +237,32 @@ class UnexpectedSymbolError(ParseError):
 class EvaluationError(LanguageError):
     pass
 
+
 class ZeroDivisionError(EvaluationError):
     pass
+
 
 class TypeError(LanguageError):
     pass
 
+
 class CycleError(EvaluationError):
+
     """
     Raise when a value depends on itself
     """
 
+
 class ParadoxError(EvaluationError):
+
     """
     Raised when an include violates causality
     """
 
+
 class NoMatching(EvaluationError):
     pass
 
+
 class NoMoreContext(EvaluationError):
     pass
-

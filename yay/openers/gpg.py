@@ -20,6 +20,7 @@ from yay.errors import NotFound, NotModified, ParadoxError
 
 
 class Gpg(object):
+
     def get_gpg_binary(self):
         # FIXME: Memoize me
         for binary in ('gpg2', 'gpg'):
@@ -27,7 +28,8 @@ class Gpg(object):
                 t = os.path.join(path, binary)
                 if os.path.exists(t):
                     return t
-        raise NotFound("Unable to decrypt GPG encrypted resource as could not find 'gpg' or 'gpg2'")
+        raise NotFound(
+            "Unable to decrypt GPG encrypted resource as could not find 'gpg' or 'gpg2'")
 
     def filter(self, fp):
         data = fp.read()
@@ -42,7 +44,9 @@ class Gpg(object):
             if os.path.exists("/proc/self/fd/0"):
                 env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
-        p = subprocess.Popen([self.get_gpg_binary(), "--use-agent", "--batch", "-d"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
+        p = subprocess.Popen(
+            [self.get_gpg_binary(), "--use-agent", "--batch", "-d"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, env=env)
         stdout, stderr = p.communicate(data)
         if p.returncode != 0:
             msg = "Unable to decrypt resource '%s'" % fp.uri
