@@ -32,10 +32,10 @@ def lt__nonzero__(self):
 
 def lt__eq__(self, other):
     """ Used in tests only """
-    if type(other) == type(""):
+    if isinstance(other, type("")):
         if self.type == other and self.value == other:
             return True
-    elif type(other) != type(self):
+    elif not isinstance(other, type(self)):
         return False
     else:
         if self.type == other.type and self.value == other.value:
@@ -103,7 +103,7 @@ class TestLexer(TestCase):
 
     def compare(self, x, y):
         """ Compare two lists of ts """
-        if type(x) == types.GeneratorType:
+        if isinstance(x, types.GeneratorType):
             x = list(x)
         x.pop(0)
         if len(x) != len(y):

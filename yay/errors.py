@@ -64,7 +64,9 @@ class ColumnAnchor(LineAnchor):
             filename = "standard input"
         else:
             filename = repr(self.source)
-        return "%s at line %d, column %d" % (filename, self.lineno, self.column)
+        return (
+            "%s at line %d, column %d" % (filename, self.lineno, self.column)
+        )
 
     def long_description_lines(self):
         line = "%4d %s" % (self.lineno, self.text_line())

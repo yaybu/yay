@@ -595,7 +595,9 @@ class Proxy(object):
 
     def as_bool(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_bool(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_bool(default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -603,7 +605,9 @@ class Proxy(object):
 
     def as_int(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_int(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_int(default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -611,7 +615,9 @@ class Proxy(object):
 
     def as_float(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_float(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_float(default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -619,7 +625,10 @@ class Proxy(object):
 
     def as_number(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_number(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_number(
+                    default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -627,7 +636,10 @@ class Proxy(object):
 
     def as_safe_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_safe_string(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_safe_string(
+                    default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -635,7 +647,10 @@ class Proxy(object):
 
     def as_string(self, default=_DEFAULT, anchor=None):
         try:
-            return self.expand().as_string(default, anchor=ma(anchor, self.anchor))
+            return (
+                self.expand().as_string(
+                    default, anchor=ma(anchor, self.anchor))
+            )
         except errors.NoMatching:
             if default != _DEFAULT:
                 return default
@@ -1078,7 +1093,9 @@ class Expr(Scalarish, AST):
         if not self.dynamic():
             return True, Literal(self.resolve())
         else:
-            return True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
+            return (
+                True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
+            )
 
     def resolve_once(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
@@ -2699,8 +2716,8 @@ bindings = [
      PythonIterable),
     (lambda v: isinstance(v, list),
      PythonIterable),
-    (lambda v: isinstance(v, dict),                              PythonDict),
-    (lambda v: isinstance(v, (int, float, basestring, bool)),    YayScalar),
+    (lambda v: isinstance(v, dict), PythonDict),
+    (lambda v: isinstance(v, (int, float, basestring, bool)), YayScalar),
 ]
 
 if inspect.isclass(range):

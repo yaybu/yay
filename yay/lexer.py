@@ -35,7 +35,8 @@ class Lexer(object):
 
     root_token = 'DOCUMENT_START'
 
-    def __init__(self, debug=0, optimize=0, lextab='yay.lextab', reflags=0, source="<unknown>"):
+    def __init__(self, debug=0, optimize=0,
+                 lextab='yay.lextab', reflags=0, source="<unknown>"):
         self.lineno = 0
         self.lexpos = 0
         self.source = source
@@ -357,7 +358,7 @@ class Lexer(object):
                 at_line_start = True
 
             elif token.type == "WS":
-                assert token.at_line_start == True
+                assert token.at_line_start
                 at_line_start = True
 
             else:
@@ -483,7 +484,8 @@ class ExpressionLexer(Lexer):
 
     root_token = "EXPRESSION_START"
 
-    def __init__(self, debug=0, optimize=0, lextab='lextab', reflags=0, source="<unknown>"):
+    def __init__(self, debug=0, optimize=0,
+                 lextab='lextab', reflags=0, source="<unknown>"):
         super(ExpressionLexer, self).__init__(
             debug, optimize, lextab, reflags, source)
         self.lexer.push_state("TEMPLATE")
