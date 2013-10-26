@@ -35,10 +35,12 @@ class Lexer(object):
 
     root_token = 'DOCUMENT_START'
 
-    def __init__(self, debug=0, optimize=1, lextab='yay.lextab', reflags=0, source="<unknown>"):
+    def __init__(self, debug=0, optimize=0, lextab='yay.lextab', reflags=0, source="<unknown>"):
         self.lineno = 0
         self.lexpos = 0
         self.source = source
+        if os.path.exists(os.path.join(os.path.dirname(__file__), "lextab.py")):
+            optimize = 1
         self.lexer = lex.lex(module=self, debug=debug, optimize=optimize,
                              lextab=lextab, reflags=reflags,
                              outputdir=os.path.dirname(__file__))

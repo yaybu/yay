@@ -23,7 +23,7 @@ class generate_ply_tabs:
 
         print("Creating lexer")
         from yay.lexer import Lexer
-        Lexer()
+        Lexer(optimize=1)
 
         print("Creating parser")
         from yay.parser import Parser
@@ -31,12 +31,10 @@ class generate_ply_tabs:
 
         if not os.path.exists("yay/parsetab.py"):
             print("FAILED: parsetab not created")
-            os.remove("yay/parsetab.py")
             sys.exit(1)
 
         if not os.path.exists("yay/lextab.py"):
             print("FAILED: lextab not created")
-            os.remove("yay/lextab.py")
             sys.exit(1)
 
 
