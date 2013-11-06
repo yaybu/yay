@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 from distutils.command.sdist import sdist
 from distutils.command.build_py import build_py
 
-version = '3.2.0.dev0'
+version = '3.1.1'
 
 
 class generate_ply_tabs:
