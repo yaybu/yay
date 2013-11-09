@@ -4,13 +4,14 @@ Changelog for yay
 3.1.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- The codebase is now flake8 clean apart from 2 exceptions (defined in
+  setup.cfg). To run flake8 on yay run ``flake8 yay``.
 
 
 3.1.1 (2013-11-06)
 ------------------
 
-- Nothing changed yet.
+- No change release.
 
 
 3.1.0 (2013-11-06)

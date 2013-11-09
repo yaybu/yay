@@ -14,7 +14,6 @@
 
 from yay.transform import main
 from yay.compat import io
-from yay.errors import ProgrammingError, NoMatching
 from yay.tests.base import TestCase
 
 

@@ -13,10 +13,8 @@
 # limitations under the License.
 
 import os
-import sys
 import hashlib
 import base64
-import itertools
 
 from yay.compat import io, request, parse, zip_longest
 from yay.errors import NotFound, NotModified, ParadoxError
@@ -26,6 +24,16 @@ try:
     unicode = unicode
 except NameError:  # pragma: no cover
     unicode = str
+
+
+__all__ = [
+    "SearchpathFromGraph",
+    "Openers",
+    "MemOpener",
+    "UrlOpener",
+    "HomeOpener",
+    "FileOpener",
+]
 
 
 def etag_stream(fp):

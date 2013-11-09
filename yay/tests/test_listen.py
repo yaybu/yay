@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .base import parse, resolve, TestCase
-from yay import errors, ast
-from yay.errors import ParseError
+from .base import parse, TestCase
 import mock
 
 

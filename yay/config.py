@@ -61,7 +61,6 @@ class Config(ast.Root):
         return ast.PythonicWrapper(node)
 
     def resolve(self):
-        __context__ = "Performing full resolve"
         if isinstance(self.node, ast.NoPredecessorStandin):
             return {}
         return self.node.resolve()

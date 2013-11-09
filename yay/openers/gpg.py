@@ -16,7 +16,7 @@ import os
 import subprocess
 
 from yay.compat import io
-from yay.errors import NotFound, NotModified, ParadoxError
+from yay.errors import NotFound
 
 
 class Gpg(object):

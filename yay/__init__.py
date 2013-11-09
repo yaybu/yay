@@ -13,3 +13,9 @@
 # limitations under the License.
 
 from yay.config import Config, load, load_uri
+
+__all__ = [
+    "Config",
+    "load",
+    "load_uri",
+]

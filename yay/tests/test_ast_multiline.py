@@ -14,7 +14,6 @@
 
 from yay.tests.base import TestCase
 from yay.ast import YayMultilineScalar, YayScalar
-from mock import Mock
 
 
 v = "foo bar baz\nquux blor\n"

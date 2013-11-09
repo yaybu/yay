@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-from yay.openers import *
+from yay.openers import *  # NOQA
 from yay.errors import NotModified, NotFound, ParadoxError
 from yay.tests.base import TestCase
 

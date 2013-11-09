@@ -28,7 +28,7 @@
 import os
 from ply import lex
 
-from yay.errors import WhitespaceError, Anchor
+from yay.errors import WhitespaceError
 
 
 class Lexer(object):
@@ -158,7 +158,7 @@ class Lexer(object):
     # Literals
 
     # just too complicated to put literally in a docstring
-    string_expr =  (r"""
+    string_expr = (r"""
                          [uU]?[rR]?
                          (?:              # Single-quote (') strings
                          '''(?:                 # Triple-quoted can contain...
@@ -169,18 +169,19 @@ class Lexer(object):
                          '(?:                   # Non-triple quoted can contain...
                          [^']                | # a non-quote
                          \\'                   # a backslashded quote
-                         )*'(?!') | """ +
-                                       r'''               # Double-quote (") strings
-                                       """(?:                 # Triple-quoted can contain...
-                                       [^"]               | # a non-quote
-                                       \\"                | # a backslashed single
-                                       "{1,2}(?!")          # one or two quotes
-                                       )*""" |
-                                       "(?:                   # Non-triple quoted can contain...
-                                       [^"]                | # a non-quote
-                                       \\"                   # a backslashed quote
-                                       )*"(?!")
-                                       )''')
+                         )*'(?!') | """
+                   r'''
+                         # Double-quote (") strings
+                         """(?:                 # Triple-quoted can contain...
+                         [^"]               | # a non-quote
+                         \\"                | # a backslashed single
+                         "{1,2}(?!")          # one or two quotes
+                         )*""" |
+                         "(?:                   # Non-triple quoted can contain...
+                         [^"]                | # a non-quote
+                         \\"                   # a backslashed quote
+                         )*"(?!")
+                         )''')
 
     @lex.TOKEN(string_expr)
     def t_COMMAND_TEMPLATE_STRING(self, t):
@@ -349,7 +350,6 @@ class Lexer(object):
     def track_tokens_filter(self, tokens):
         # need to do some magic indent stuff
         self.at_line_start = at_line_start = True
-        indent = self.NO_INDENT
         for token in tokens:
 
             token.at_line_start = at_line_start
@@ -363,8 +363,6 @@ class Lexer(object):
 
             else:
                 at_line_start = False
-
-                indent = self.NO_INDENT
 
             yield token
             self.at_line_start = at_line_start

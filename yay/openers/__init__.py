@@ -13,5 +13,15 @@
 # limitations under the License.
 
 
-from .base import *
-from .package import PackageOpener
+from yay.openers.base import *  # NOQA
+from yay.openers.package import PackageOpener
+
+__all__ = [
+    "SearchpathFromGraph",
+    "Openers",
+    "FileOpener",
+    "UrlOpener",
+    "HomeOpener",
+    "MemOpener",
+    "PackageOpener"
+]

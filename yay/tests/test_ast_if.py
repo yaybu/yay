@@ -13,7 +13,6 @@
 # limitations under the License.
 
 from yay.ast import If, Literal
-from yay.tests.test_ast_common import DynamicLiteral, ComplexLiteral
 from yay.tests.base import TestCase
 
 import mock

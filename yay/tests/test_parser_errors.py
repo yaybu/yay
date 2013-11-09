@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay import parser
-from yay.errors import UnexpectedSymbolError, EOLParseError, EOFParseError
+from yay.errors import UnexpectedSymbolError, EOLParseError
 from .base import bare_parse as parse
 from .base import TestCase
 
@@ -39,19 +38,19 @@ class TestParserErrors(TestCase):
 
     def test_missing_open_brace(self):
         # not an error right now, is interpreted as a value
-        res = parse("""
+        parse("""
         x: a}}
         y: z
         """)
 
     def test_use_of_new(self):
-        res = self._r("Unexpected 'new'", """
+        self._r("Unexpected 'new'", """
         extend new:
            - blah
         """)
 
     def test_use_of_extend(self):
-        res = self._r("Unexpected 'extend'", """
+        self._r("Unexpected 'extend'", """
         extend extend:
            - blah
         """)

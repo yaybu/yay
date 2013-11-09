@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay import parser
 from yay.errors import ParseError
-from yay.ast import *
+from yay.ast import *  # NOQA
 
 from .base import bare_parse as parse
 from .base import TestCase
-
-import os
 
 
 class TestParser(TestCase):

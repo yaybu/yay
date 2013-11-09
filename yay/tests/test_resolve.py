@@ -173,7 +173,7 @@ class TestYayDict(TestCase):
 class TestEmptyDocument(TestCase):
 
     def test_empty_document(self):
-        res = resolve("")
+        self.assertEqual(resolve(""), {})
 
     def test_include_empty_document(self):
         res = resolve("""
@@ -181,6 +181,7 @@ class TestEmptyDocument(TestCase):
             """,
                       foo="",
                       )
+        self.assertEqual(res, {})
 
 
 class TestYayList(TestCase):
@@ -493,7 +494,7 @@ class TestIdentifier(TestCase):
             """)
         self.assertRaises(errors.NoMatching, t.get_key("bar").as_dict)
 
-    def test_get_iterable_default(self):
+    def test_get_iterable_default_2(self):
         t = parse("""
             bar: {{ foo }}
             """)
@@ -1205,15 +1206,6 @@ class TestSubscription(TestCase):
             """)
         self.assertEqual(res['bar'], 'hello')
 
-    def test_subscription_variable(self):
-        res = resolve("""
-            a:
-              b: hello
-            c: b
-            bar: {{ a[c] }}
-            """)
-        self.assertEqual(res['bar'], 'hello')
-
     def test_subscription_of_list(self):
         t = parse("""
             foo:
@@ -1724,7 +1716,7 @@ class TestExtend(TestCase):
             {"Qux": {"bar": "baz"}}
         ])
 
-    def test_extend(self):
+    def test_extend_2(self):
         res = resolve("""
             a: []
             extend foo: []
@@ -2320,6 +2312,8 @@ class TestRegression(TestCase):
                 for i in [] if i == "True":
                   - foo
             """)
+
+        self.assertEqual(res['somekey'], [{"a": "- \"1\""}])
 
 
 class TestLabels(TestCase):

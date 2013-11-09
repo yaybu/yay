@@ -2,6 +2,7 @@ nose2
 coverage
 python-coveralls
 mock
+flake8
 
 PyYAML
 

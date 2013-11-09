@@ -25,8 +25,6 @@ from yay.openers import Openers
 from yay.errors import merge_anchors as ma
 from yay.compat import basestring
 
-from itertools import chain
-
 """
 The ``yay.ast`` module contains the classes that make up the graph.
 """
@@ -791,7 +789,7 @@ class Pythonic(object):
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            ref = SliceyThing(self, key)
+            ref = Slice(self, key)
         else:
             ref = Subscription(self, YayScalar(key))
         ref.anchor = None
@@ -944,7 +942,6 @@ class Identifier(Proxy, AST):
         self.identifier = identifier
 
     def expand_once(self):
-        __context__ = "Looking up '%s' in current scope" % self.identifier
         node = self.head
         root = self.root
         while node != root:
@@ -1029,7 +1026,7 @@ class UnaryExpr(Scalarish, AST):
         return self.op(self.inner.as_number())
 
     def get_local_labels(self):
-        labels = super(UnaryEpr, self).get_local_labels()
+        labels = super(UnaryExpr, self).get_local_labels()
         labels.update(self.inner.get_local_labels())
         return labels
 
@@ -1416,7 +1413,6 @@ class AttributeRef(Proxy, AST):
         self.identifier = identifier
 
     def expand_once(self):
-        __context__ = " -> Looking up subkey '%s'" % self.identifier
         try:
             return self.primary.expand().get_key(self.identifier).expand()
         except KeyError:
@@ -1551,8 +1547,6 @@ class Slice(AST):
         self.upper_bound = upper_bound
         self.stride = stride or YayScalar(1)
 
-import re
-
 
 class Call(Proxy, AST):
 
@@ -1575,11 +1569,11 @@ class Call(Proxy, AST):
         kwargs = {}
         if self.kwargs:
             for kwarg in self.kwargs.kwargs:
-                k = kwargs[
+                kwargs[
                     kwarg.identifier.identifier] = kwarg.expression.clone()
 
         try:
-            macro = self.primary.expand()
+            self.primary.expand()
             call = CallDirective(self.primary, None)
             node = Context(call, kwargs)
             node.anchor = self.anchor
@@ -2571,7 +2565,7 @@ class PythonClassFactory(AST):
 
     def construct(self, inner):
         if not issubclass(self.inner, PythonClass):
-            raise errors.TypeError("'%s' is not usable from Yay" % classname)
+            raise errors.TypeError("'%s' is not usable from Yay" % self.inner)
 
         return self.inner(inner)
 

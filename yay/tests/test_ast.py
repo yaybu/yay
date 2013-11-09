@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from yay.ast import *
+from yay.ast import *  # NOQA
 from yay import errors
 from yay.tests.base import TestCase
 from mock import Mock
@@ -136,7 +136,6 @@ class TestAST(TestCase):
         self.assertNotEqual(id(e1), id(e2))
 
     def test_inequality(self):
-        e1 = AST()
         self.assertEqual(AST().__eq__(object()), False)
 
     def test_is_secret(self):

@@ -36,3 +36,6 @@ try:
     basestring = basestring
 except NameError:  # pragma: no cover
     basestring = str
+
+
+__all__ = ["io", "request", "parse", "zip_longest", "basestring"]

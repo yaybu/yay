@@ -10,7 +10,9 @@ install:
   - pip install -r requirements.txt
   - pip install unittest2 || true
 
-script: coverage run $(which nose2)
+script:
+  - coverage run $(which nose2)
+  - flake8 yay
 
 after_success:
   - coveralls
