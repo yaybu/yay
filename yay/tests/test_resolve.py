@@ -1897,6 +1897,22 @@ class TestInclude(TestCase):
             """)
         self.assertEqual(res['foo'], 'bar')
 
+    def test_include_dict_include(self):
+        # https://github.com/yaybu/yaybu/issues/127
+        self._add("mem://search/foo.yay", """
+            """)
+        self._add("mem://search/quux.yay", """
+            """)
+        res = self._resolve("""
+            yay:
+              searchpath:
+                - mem://search/
+            include "foo.yay"
+            x: y
+            include "quux.yay"
+            """)
+        self.assertEqual(res['x'], 'y')
+
 
 class TestSelect(TestCase):
 

@@ -545,6 +545,14 @@ class Streamish(object):
 
 class Dictish(object):
 
+    def expand(self):
+        if self.predecessor:
+            try:
+                self.predecessor.expand()
+            except errors.NoPredecessor:
+                pass
+        return self
+
     def get_iterable(self, anchor=None):
         for key in self.keys(ma(anchor, self.anchor)):
             s = YayScalar(key)
