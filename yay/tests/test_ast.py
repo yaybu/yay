@@ -72,9 +72,6 @@ class TestASTNotImplemented(TestCase):
     def test_resolve_oncce(self):
         self.assertRaises(NotImplementedError, AST().resolve_once)
 
-    def test_start_listening(self):
-        self.assertRaises(NotImplementedError, AST().start_listening)
-
 
 class TestAST(TestCase):
 

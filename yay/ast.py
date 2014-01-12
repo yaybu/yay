@@ -63,9 +63,6 @@ class AST(object):
     _expanding = False
     _get_context_checks_predecessors = False
 
-    def __init__(self):
-        self.subscribers = []
-
     def as_bool(self, default=_DEFAULT, anchor=None):
         raise errors.TypeError(
             "Expected boolean", anchor=ma(anchor, self.anchor))
@@ -244,12 +241,6 @@ class AST(object):
         """
         return self
 
-    def start_listening(self):
-        """
-        Subscribe to events from dependent nodes and any external monitoring sources
-        """
-        raise NotImplementedError(self.start_listening)
-
     def get_context(self, key):
         """
         Look up value of ``key`` and return it.
@@ -336,7 +327,7 @@ class AST(object):
     def __repr_vars(self):
         d = self.__dict__.copy()
         for var in ('anchor', 'parent', '_predecessor',
-                    'successor', 'subscribers', '_ordered_keys',
+                    'successor', '_ordered_keys',
                     '_iterator', '_position', '_buffer', '_dict'):
             if var in d:
                 del d[var]
@@ -368,13 +359,6 @@ class AST(object):
 
     def contains_secrets(self):
         return self.is_secret()
-
-    def subscribe(self, cbl):
-        self.subscribers.append(cbl)
-
-    def changed(self):
-        for subscriber in self.subscribers:
-            subscriber()
 
 
 class Scalarish(object):
@@ -537,11 +521,6 @@ class Streamish(object):
                 return True
         return self.is_secret()
 
-    def start_listening(self):
-        for child in self.get_iterable():
-            child.start_listening()
-            child.subscribe(self.changed)
-
 
 class Dictish(object):
 
@@ -573,12 +552,6 @@ class Dictish(object):
             if self.get_key(key).contains_secrets():
                 return True
         return self.is_secret()
-
-    def start_listening(self):
-        for key in self.keys():
-            c = self.get_key(key)
-            c.start_listening()
-            c.subscribe(self.changed)
 
 
 class Proxy(object):
@@ -727,14 +700,6 @@ class Proxy(object):
     def is_secret(self):
         return self.expand().is_secret()
 
-    def start_listening(self):
-        # FIXME: It is quite likely (certain, in fact) that we won't be able to
-        # rely on expand here - e.g. an expand on an if with a dynamic guard
-        # condition wouldn't work here!
-        expanded = self.expand()
-        expanded.start_listening()
-        expanded.subscribe(self.changed)
-
 
 class Tripwire(Proxy, AST):
 
@@ -829,12 +794,6 @@ class PythonicWrapper(Pythonic, Proxy, AST):
 
     def get_labels(self):
         return self.expand().get_labels()
-
-    def start_listening(self):
-        self.inner.start_listening()
-
-    def subscribe(self, cbl):
-        self.inner.subscribe(cbl)
 
     def get_path(self):
         if not hasattr(self, "parent"):
@@ -994,9 +953,6 @@ class Literal(Scalarish, AST):
     def resolve_once(self):
         return self.literal
 
-    def start_listening(self):
-        pass
-
 
 class ParentForm(Scalarish, AST):
     # FIXME: Understand this better...
@@ -1037,10 +993,6 @@ class UnaryExpr(Scalarish, AST):
         labels = super(UnaryExpr, self).get_local_labels()
         labels.update(self.inner.get_local_labels())
         return labels
-
-    def start_listening(self):
-        self.inner.start_listening()
-        self.inner.subscribe(self.changed)
 
 
 class UnaryMinus(UnaryExpr):
@@ -1110,12 +1062,6 @@ class Expr(Scalarish, AST):
         labels.update(self.lhs.get_local_labels())
         labels.update(self.rhs.get_local_labels())
         return labels
-
-    def start_listening(self):
-        self.lhs.start_listening()
-        self.lhs.subscribe(self.changed)
-        self.rhs.start_listening()
-        self.rhs.subscribe(self.changed)
 
 
 class Equal(Expr):
@@ -1494,9 +1440,6 @@ class NoPredecessorStandin(Proxy, AST):
     def expand(self):
         raise errors.NoPredecessor("Node has no predecessor")
 
-    def start_listening(self):
-        pass
-
 
 class Subscription(Proxy, AST):
 
@@ -1837,9 +1780,6 @@ class YayScalar(Scalarish, AST):
 
     def resolve_once(self):
         return self.value
-
-    def start_listening(self):
-        pass
 
 
 class YayMultilineScalar(Scalarish, AST):
@@ -2588,12 +2528,10 @@ class PythonClassAttributes(Dictish, AST):
         if not key in self.attributes:
             attr = self.attributes[key] = YayScalar(value)
             attr.parent = self
-            attr.changed()
         else:
             attr = self.attributes[key]
             if attr.value != value:
                 attr.value = value
-                attr.changed()
 
     def get_key(self, key):
         return self.attributes[key]
@@ -2645,15 +2583,6 @@ class PythonClass(Proxy, AST):
 
     def get_local_labels(self):
         return AST.get_local_labels(self)
-
-    def changed(self):
-        self.apply()
-        super(PythonClass, self).changed()
-
-    def start_listening(self):
-        super(PythonClass, self).start_listening()
-        self.members.start_listening()
-        self.members.subscribe(self.changed)
 
 
 class PythonIterable(Streamish, AST):
