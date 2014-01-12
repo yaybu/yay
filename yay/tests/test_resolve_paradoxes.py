@@ -36,7 +36,7 @@ class TestResolveParadoxes(TestCase):
         """
         t = parse("""
                 foo: 1
-                include "example" if foo else []
+                include "example" if foo else ""
                 """,
                 example="""
                 foo: 0
@@ -48,7 +48,7 @@ class TestResolveParadoxes(TestCase):
         This should work as foo: is not masked by an import
         """
         t = parse("""
-                include "example" if foo else []
+                include "example" if foo else ""
                 foo: 1
                 """,
                 example="""
@@ -92,6 +92,18 @@ class TestResolveParadoxes(TestCase):
             """)
 
         self.assertEqual(t.get_key("out").get_key("foo").resolve(), "ok")
+
+    def test_if_weird_but_actually_ok(self):
+        # How could this possibly work? Weirdly it actually can. The paradox
+        # resolver will accept that whilst weird, the outcome is still "flip:
+        # 1". So not a paradox.
+        res = parse("""
+            flip: 1
+            flop: {{ flip }}
+            if flop:
+                flip: {{ flop }}
+            """)
+        self.assertEqual(int(res.flip), 1)
 
     def test_if_preventing_itself(self):
         """
@@ -150,9 +162,12 @@ class TestResolveParadoxes(TestCase):
 
         self.assertEqual(t.get_key("never").resolve(), "ever")
 
-    def test_paradoxical_directives_predecessor(self):
-        """ Exercise looking up predecessors of Stanza/Directive nodes, but in a paradox situation """
 
+class TestAdjacentIfs(TestCase):
+
+    """ Exercise looking up predecessors of Stanza/Directive nodes, but in a paradox situation """
+
+    def test_paradoxical_directives_predecessor(self):
         t = parse("""
             lol: foo
 
@@ -163,7 +178,33 @@ class TestResolveParadoxes(TestCase):
                 lol: zinga
             """)
 
-        self.assertRaises(errors.ParadoxError, t.get_key, "lol")
+        self.assertRaises(errors.CycleError, t.get_key, "lol")
+
+    def test_ok_1(self):
+        t = parse("""
+            lol: foo
+
+            if lol == 'foo':
+                bar: baz
+
+            if bar == 'baz':
+                fizz: zinga
+            """)
+
+        self.assertRaises(errors.CycleError, t.get_key, "lol")
+
+    def test_ok_2(self):
+        t = parse("""
+            lol: foo
+
+            if lol == 'foo':
+                bar: baz
+
+            if lol != 'baz':
+                lol: zinga
+            """)
+
+        self.assertRaises(errors.CycleError, t.get_key, "lol")
 
 
 class TestSearchPathParadoxes(TestCase):

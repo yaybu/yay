@@ -309,11 +309,11 @@ class TestParser(TestCase):
                                   Call(Identifier('func'), [
                                       Literal(4),
                                       Identifier('a'),
-                                  ], [
+                                  ], KeywordArguments(
                                       Kwarg(Identifier('foo'), Literal('bar')),
                                       Kwarg(
                                           Identifier('baz'), Literal('quux')),
-                                  ]
+                                  )
                                   )))
 
     def test_set_unary_minus(self):
@@ -541,12 +541,6 @@ class TestParser(TestCase):
                     YayScalar('e'),
                     YayScalar('f')
                 ))])))]))
-        self.assertEqual(res.resolve(), {
-            'a': [
-                'b',
-                {'c': ['e', 'f']},
-            ]
-        })
 
     def test_list_of_multikey_dicts(self):
         res = parse("""
@@ -578,10 +572,6 @@ class TestParser(TestCase):
                 ('d', YayList(YayScalar('e'), YayScalar('f'), YayScalar('g')))
             ])))
         ]))
-        self.assertEqual(res.resolve(), {'a': [
-            {'b': 'c',
-             'd': ['e', 'f', 'g'],
-             }]})
 
     def test_mix(self):
         res = parse("""

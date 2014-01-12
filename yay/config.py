@@ -30,6 +30,7 @@ class Config(ast.Root):
         self.node = None
         self.builtins = {}
         self.node = ast.NoPredecessorStandin()
+        self.node.parent = self
         self.setup_openers()
 
     def setup_openers(self):
@@ -44,10 +45,10 @@ class Config(ast.Root):
         bound.predecessor = self.node
         self.node = bound
 
-    def get_context(self, key):
+    def _get_context(self, key):
         if not isinstance(self.node, ast.NoPredecessorStandin):
             try:
-                return super(Config, self).get_context(key)
+                return super(Config, self)._get_context(key)
             except errors.NoMatching:
                 pass
         if not key in self.builtins:
@@ -64,8 +65,6 @@ class Config(ast.Root):
         if isinstance(self.node, ast.NoPredecessorStandin):
             return {}
         return self.node.resolve()
-
-    get = resolve
 
 
 def load_uri(uri, special_term='yay'):
