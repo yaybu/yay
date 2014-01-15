@@ -81,7 +81,6 @@ setup(
     install_requires = [
         "ply",
         # "gpglib",
-       "gevent>=1.0",
     ],
     entry_points = {
         'console_scripts': [
