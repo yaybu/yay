@@ -1466,6 +1466,19 @@ class TestPythonClass(TestCase):
             """)
         self.assertEqual(res['foo']['hello'], 'world')
 
+    def test_dual_class_peek(self):
+        res = self._resolve("""
+            new TestPythonClassMock as foo:
+                foo: {{ bar.peek }}
+                peek: bar
+
+            new TestPythonClassMock as bar:
+                foo: {{ foo.peek }}
+                peek: bar
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
+        self.assertEqual(res['bar']['hello'], 'world')
+
 
 class TestPrototype(TestCase):
 
