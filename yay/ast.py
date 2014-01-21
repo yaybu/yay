@@ -218,10 +218,10 @@ class AST(object):
 
     def wait(self, callable, *args):
         try:
-            root = self.root
+            executor = self.root.executor
         except:
             return callable(*args)
-        return root.executor.wait(callable, *args)
+        return executor.wait(callable, *args)
 
     @property
     def predecessor(self):
