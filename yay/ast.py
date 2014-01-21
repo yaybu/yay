@@ -744,6 +744,9 @@ class PythonicWrapper(Pythonic, Proxy, AST):
     def parent(self, val):
         pass
 
+    def _get_key(self, key):
+        return self.inner.get_key(key)
+
     def _expand(self):
         return self.inner.expand()
 
@@ -2474,11 +2477,15 @@ class PythonClassFactory(AST):
         super(PythonClassFactory, self).__init__()
         self.inner = inner
 
-    def construct(self, inner):
+    def construct(self, params):
         if not issubclass(self.inner, PythonClass):
             raise errors.TypeError("'%s' is not usable from Yay" % self.inner)
 
-        return self.inner(inner)
+        instance = self.inner(params)
+        instance.anchor = params.anchor
+        instance.parent = params
+        params.predecessor = instance
+        return params
 
 
 class PythonClassAttributes(Dictish, AST):
@@ -2504,7 +2511,7 @@ class PythonClassAttributes(Dictish, AST):
             yield key
 
 
-class PythonClass(Proxy, AST):
+class PythonClass(Dictish, AST):
 
     """
     This is a Mixin for writing nodes that can be created with the ``create`` syntax
@@ -2516,11 +2523,6 @@ class PythonClass(Proxy, AST):
         self.members = PythonClassAttributes()
         self.members.parent = self
 
-        # Node containing metadata provided by the user
-        params.parent = self
-        params.predecessor = self.members
-        params.parent = self
-
         self.params = PythonicWrapper(params)
         self.params.parent = self
         self.stale = True
@@ -2529,20 +2531,16 @@ class PythonClass(Proxy, AST):
         raise NotImplementedError(self.apply)
 
     def _get_key(self, key):
-        try:
-            return self.params.get_key(key)
-        except KeyError:
-            if self.stale:
-                self.apply()
-                self.stale = False
-            return self.members.get_key(key)
-
-    def _expand(self):
         if self.stale:
             self.apply()
             self.stale = False
+        return self.members.get_key(key)
 
-        return self.params.expand()
+    def keys(self, anchor=None):
+        if self.stale:
+            self.apply()
+            self.stale = False
+        return self.members.keys(anchor or self.anchor)
 
     def get_local_labels(self):
         return AST.get_local_labels(self)

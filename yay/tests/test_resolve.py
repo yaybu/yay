@@ -1479,6 +1479,23 @@ class TestPythonClass(TestCase):
         self.assertEqual(res['foo']['hello'], 'world')
         self.assertEqual(res['bar']['hello'], 'world')
 
+    def test_dual_class_peek_2(self):
+        res = self._resolve("""
+            container1:
+                new TestPythonClassMock as server:
+                    foo: bar
+                resources:
+                  - {{ container2.server.hello }}
+
+            container2:
+                new TestPythonClassMock as server:
+                    foo: bar
+                resources:
+                  - {{ container1.server.hello }}
+            """)
+        self.assertEqual(res['container1']['resources'], ['world'])
+        self.assertEqual(res['container2']['resources'], ['world'])
+
 
 class TestPrototype(TestCase):
 
