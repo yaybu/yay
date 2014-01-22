@@ -2535,7 +2535,7 @@ class PythonClass(Dictish, AST):
             return self.params.get_key(key)
         except KeyError:
             if self.stale:
-                self.apply()
+                self.wait(self.apply)
                 self.stale = False
             return self.members.get_key(key)
 
@@ -2544,7 +2544,7 @@ class PythonClass(Dictish, AST):
             yield key
 
         if self.stale:
-            self.apply()
+            self.wait(self.apply)
             self.stale = False
 
         for key in self.members.keys(anchor or self.anchor):
