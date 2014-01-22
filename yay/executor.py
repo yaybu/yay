@@ -1,5 +1,6 @@
 from gevent import getcurrent, Greenlet, GreenletExit
 from gevent.event import AsyncResult
+from gevent.pool import Group
 
 from yay import errors
 
@@ -15,6 +16,10 @@ class Yaylet(Greenlet):
 
         if self._links and not self._notifier:
             self._notifier = self.parent.loop.run_callback(self._notify_links)
+
+
+class YGroup(Group):
+    greenlet_class = Yaylet
 
 
 class PeekySection(object):
@@ -82,6 +87,18 @@ class BaseOperation(object):
                     operations.extend((c for c in op.depends if c.primary_parent == op))
                 else:
                     operations.extend(op.depends)
+
+    def map(self, func, iterable):
+        def _(obj):
+            getcurrent().operation = self
+            return func(obj)
+        return YGroup().imap(_, iterable)
+
+    def map_unordered(self, func, iterable):
+        def _(obj):
+            getcurrent().operation = self
+            return func(obj)
+        return YGroup().imap_unordered(_, iterable)
 
 
 class RootOperation(BaseOperation):

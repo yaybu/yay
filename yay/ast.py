@@ -527,14 +527,11 @@ class Dictish(object):
         return "dictish"
 
     def _resolve(self):
-        # results = {}
-        # g = Group()
-        # g.map(
-        #     lambda k: operator.setitem(results, k, self.get_key(k).resolve()),
-        #     self.get_keys(),
-        #     )
-        # return results
-        return dict((key, self.get_key(key).resolve()) for key in self.keys())
+        results = {}
+        current = self.root.executor.get_current()
+        for k, v in current.map_unordered(lambda k: (k, self.get_key(k).resolve()), self.keys()):
+            results[k] = v
+        return results
 
     def contains_secrets(self):
         for key in self.keys():
