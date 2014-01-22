@@ -470,8 +470,10 @@ class Streamish(object):
     def get_iterable(self, anchor=None):
         idx = 0
         while True:
-            self._fill_to(idx)
-            yield self._buffer[idx]
+            try:
+                yield self.get_key(idx)
+            except KeyError:
+                raise StopIteration
             idx += 1
 
     def _fill_to(self, index):
