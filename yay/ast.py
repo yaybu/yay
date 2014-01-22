@@ -2481,11 +2481,7 @@ class PythonClassFactory(AST):
         if not issubclass(self.inner, PythonClass):
             raise errors.TypeError("'%s' is not usable from Yay" % self.inner)
 
-        instance = self.inner(params)
-        instance.anchor = params.anchor
-        instance.parent = params
-        params.predecessor = instance
-        return params
+        return self.inner(params)
 
 
 class PythonClassAttributes(Dictish, AST):
@@ -2523,24 +2519,37 @@ class PythonClass(Dictish, AST):
         self.members = PythonClassAttributes()
         self.members.parent = self
 
+        params.parent = self
+        params.predecessor = NoPredecessorStandin()
         self.params = PythonicWrapper(params)
-        self.params.parent = self
+
         self.stale = True
 
     def apply(self):
         raise NotImplementedError(self.apply)
 
+    def expand(self):
+        return self
+
     def _get_key(self, key):
-        if self.stale:
-            self.apply()
-            self.stale = False
-        return self.members.get_key(key)
+        try:
+            return self.params.get_key(key)
+        except KeyError:
+            if self.stale:
+                self.apply()
+                self.stale = False
+            return self.members.get_key(key)
 
     def keys(self, anchor=None):
+        for key in self.params.keys(anchor or self.anchor):
+            yield key
+
         if self.stale:
             self.apply()
             self.stale = False
-        return self.members.keys(anchor or self.anchor)
+
+        for key in self.members.keys(anchor or self.anchor):
+            yield key
 
     def get_local_labels(self):
         return AST.get_local_labels(self)

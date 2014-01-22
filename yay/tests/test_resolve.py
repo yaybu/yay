@@ -1440,6 +1440,11 @@ class TestPythonClassMock(ast.PythonClass):
         assert self.params['foo'].as_string() == 'bar'
         assert self.params.foo.as_string() == 'bar'
 
+        try:
+            self.params.resolve()
+        except errors.TypeError:
+            pass
+
         self.members.set('hello', 'world')
 
 
@@ -1454,6 +1459,20 @@ class TestPythonClass(TestCase):
             foo:
               new TestPythonClassMock:
                   foo: bar
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
+
+    def test_simple_class_with_params(self):
+        res = self._resolve("""
+            foo:
+              new TestPythonClassMock:
+                  foo: bar
+                  param1: 1
+                  param2: True
+                  param3:
+                   - foo
+                  param4:
+                    subdict: foo
             """)
         self.assertEqual(res['foo']['hello'], 'world')
 
