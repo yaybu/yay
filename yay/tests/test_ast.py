@@ -69,9 +69,6 @@ class TestASTTypeErrors(TestCase):
 
 class TestAST(TestCase):
 
-    def test_dynamic(self):
-        self.assertEqual(AST().dynamic(), False)
-
     def test_clone_preserve_class(self):
         class ExampleNode(AST):
             pass

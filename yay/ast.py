@@ -134,12 +134,6 @@ class AST(object):
             for node in self.predecessor.as_digraph(visited):
                 yield node
 
-    def dynamic(self):
-        """
-        Does this graph member change over time?
-        """
-        return False
-
     def normalize_predecessors(self):
         """
         Forces inclusion of dependencies and ensures LazyPredecessor and UseMyPredecessorStandin nodes
@@ -176,12 +170,6 @@ class AST(object):
 
             obj.normalize_predecessors()
 
-        return self
-
-    def simplify(self):
-        """
-        Resolve any parts of the graph that are constant
-        """
         return self
 
     def resolve(self):
@@ -941,9 +929,6 @@ class UnaryExpr(Scalarish, AST):
         self.inner = inner
         inner.parent = self
 
-    def dynamic(self):
-        return self.inner.dynamic()
-
     def _resolve(self):
         return self.op(self.inner.as_number())
 
@@ -996,12 +981,6 @@ class Expr(Scalarish, AST):
         lhs.parent = self
         self.rhs = rhs
         rhs.parent = self
-
-    def dynamic(self):
-        for c in (self.lhs, self.rhs):
-            if c.dynamic():
-                return True
-        return False
 
     def _resolve(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
@@ -1158,12 +1137,6 @@ class Else(Proxy, AST):
         self.rhs = rhs
         rhs.parent = self
 
-    def dynamic(self):
-        for c in (self.lhs, self.rhs):
-            if c.dynamic():
-                return True
-        return False
-
     def _expand(self):
         try:
             return self.lhs.expand()
@@ -1176,43 +1149,7 @@ class BitwiseAnd(Expr):
 
 
 class And(Expr):
-
-    """
-    An ``And`` expression behaves much like the ``and`` keyword in python.
-
-    Tree reduction rules
-    --------------------
-
-    If both parts of the expression are constant then the expression can be
-    reduced to a Literal.
-
-    If only one part is constant then it is tested to see if it is False.
-    If so, the entire expression is simplified to ``Literal(False)``. If it is
-    ``True`` then the ``And`` expression is reduced to the dynamic part of the
-    expression.
-
-    If both parts are dynamic then the And cannot be reduced. (However, a new
-    And is returned that has its contents reduced).
-    """
-
     op = lambda self, lhs, rhs: lhs and rhs
-
-    def simplify(self):
-        if self.lhs.dynamic():
-            if self.rhs.dynamic():
-                return And(self.lhs.simplify(), self.rhs.simplify())
-            elif self.rhs.resolve():
-                return self.lhs.simplify()
-            else:
-                return Literal(False)
-
-        elif self.rhs.dynamic():
-            if self.lhs.resolve():
-                return self.rhs.simplify()
-            else:
-                return Literal(False)
-
-        return Literal(self.resolve())
 
 
 class NotIn(Expr):
