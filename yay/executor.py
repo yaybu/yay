@@ -98,6 +98,7 @@ class BaseOperation(object):
         def _(obj):
             getcurrent().operation = self
             return func(obj)
+        #return map(_, iterable)
         return YGroup().imap_unordered(_, iterable)
 
 

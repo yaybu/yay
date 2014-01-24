@@ -519,7 +519,7 @@ class Dictish(object):
     def _resolve(self):
         results = {}
         current = self.root.executor.get_current()
-        for k, v in current.map_unordered(lambda k: (k, self.get_key(k).resolve()), self.keys()):
+        for k, v in current.map_unordered(lambda k: (k, self.get_key(k).resolve()), list(self.keys())):
             results[k] = v
         return results
 

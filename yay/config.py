@@ -61,7 +61,7 @@ class Config(ast.Root):
         node.parent = self
         return ast.PythonicWrapper(node)
 
-    def resolve(self):
+    def _resolve(self):
         if isinstance(self.node, ast.NoPredecessorStandin):
             return {}
         return self.node.resolve()
