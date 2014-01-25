@@ -2237,6 +2237,8 @@ class CallDirective(Proxy, AST):
 
     def _expand(self):
         macro = self.target.expand()
+        if not hasattr(macro, "call"):
+            raise errors.TypeError("Attempting to call the uncallable!", self.anchor)
         clone = macro.node.clone()
         if not self.node:
             clone.parent = self
