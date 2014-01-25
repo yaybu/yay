@@ -1612,6 +1612,14 @@ class TestPythonCall(TestCase):
 
 class TestMacroCall(TestCase):
 
+    def test_cant_call_dict(self):
+        self.assertRaises(errors.TypeError, resolve, """
+            foo: bar
+            r:
+                call foo:
+                    bar: baz
+            """)
+
     def test_macro(self):
         res = resolve("""
             macro SomeMacro:
