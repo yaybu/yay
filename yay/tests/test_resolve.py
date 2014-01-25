@@ -1737,6 +1737,20 @@ class TestMacroCall(TestCase):
 
         self.assertEqual(res["SomeKey"], "foo")
 
+    def test_gh_issue_12(self):
+        res = resolve("""
+            macro m:
+                foo: {{ arg }}
+
+            bar: baz
+
+            r:
+                call m:
+                    arg: {{ bar }}
+            """)
+
+        self.assertEqual(res['r'], {'foo': 'baz'})
+
 
 class TestExtend(TestCase):
 
