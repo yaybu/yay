@@ -415,6 +415,7 @@ class BaseParser(object):
         p[0] = p[1]
         if len(p) == 4:
             p[0].stride = p[3]
+            p[3].parent = p[0]
 
     def p_lower_bound(self, p):
         '''
@@ -456,7 +457,7 @@ class BaseParser(object):
         if len(p) in (2, 3):
             p[0] = ast.ArgumentList(p[1].args)
         else:
-            p[0] = ast.ArgumentList(p[1].args, p[3].kwargs)
+            p[0] = ast.ArgumentList(p[1].args, p[3])
         p[0].anchor = p[1].anchor
 
     def p_argument_list_no_positional(self, p):
@@ -464,7 +465,7 @@ class BaseParser(object):
         argument_list : keyword_arguments
                       | keyword_arguments ","
         '''
-        p[0] = ast.ArgumentList(None, p[1])
+        p[0] = ast.ArgumentList(None, kwargs=p[1])
         p[0].anchor = p[1].anchor
 
     def p_positional_arguments(self, p):

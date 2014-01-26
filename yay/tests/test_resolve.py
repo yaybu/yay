@@ -1440,6 +1440,11 @@ class TestPythonClassMock(ast.PythonClass):
         assert self.params['foo'].as_string() == 'bar'
         assert self.params.foo.as_string() == 'bar'
 
+        try:
+            self.params.resolve()
+        except errors.TypeError:
+            pass
+
         self.members.set('hello', 'world')
 
 
@@ -1457,6 +1462,20 @@ class TestPythonClass(TestCase):
             """)
         self.assertEqual(res['foo']['hello'], 'world')
 
+    def test_simple_class_with_params(self):
+        res = self._resolve("""
+            foo:
+              new TestPythonClassMock:
+                  foo: bar
+                  param1: 1
+                  param2: True
+                  param3:
+                   - foo
+                  param4:
+                    subdict: foo
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
+
     def test_alias(self):
         res = self._resolve("""
             set MyAlias = TestPythonClassMock
@@ -1465,6 +1484,36 @@ class TestPythonClass(TestCase):
                   foo: bar
             """)
         self.assertEqual(res['foo']['hello'], 'world')
+
+    def test_dual_class_peek(self):
+        res = self._resolve("""
+            new TestPythonClassMock as foo:
+                foo: {{ bar.peek }}
+                peek: bar
+
+            new TestPythonClassMock as bar:
+                foo: {{ foo.peek }}
+                peek: bar
+            """)
+        self.assertEqual(res['foo']['hello'], 'world')
+        self.assertEqual(res['bar']['hello'], 'world')
+
+    def test_dual_class_peek_2(self):
+        res = self._resolve("""
+            container1:
+                new TestPythonClassMock as server:
+                    foo: bar
+                resources:
+                  - {{ container2.server.hello }}
+
+            container2:
+                new TestPythonClassMock as server:
+                    foo: bar
+                resources:
+                  - {{ container1.server.hello }}
+            """)
+        self.assertEqual(res['container1']['resources'], ['world'])
+        self.assertEqual(res['container2']['resources'], ['world'])
 
 
 class TestPrototype(TestCase):
@@ -1562,6 +1611,14 @@ class TestPythonCall(TestCase):
 
 
 class TestMacroCall(TestCase):
+
+    def test_cant_call_dict(self):
+        self.assertRaises(errors.TypeError, resolve, """
+            foo: bar
+            r:
+                call foo:
+                    bar: baz
+            """)
 
     def test_macro(self):
         res = resolve("""
@@ -1687,6 +1744,20 @@ class TestMacroCall(TestCase):
             """)
 
         self.assertEqual(res["SomeKey"], "foo")
+
+    def test_gh_issue_12(self):
+        res = resolve("""
+            macro m:
+                foo: {{ arg }}
+
+            bar: baz
+
+            r:
+                call m:
+                    arg: {{ bar }}
+            """)
+
+        self.assertEqual(res['r'], {'foo': 'baz'})
 
 
 class TestExtend(TestCase):

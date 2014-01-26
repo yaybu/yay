@@ -16,7 +16,6 @@ from __future__ import absolute_import
 
 import operator
 import re
-import functools
 import inspect
 
 from yay import errors
@@ -24,43 +23,18 @@ from yay.compat import io
 from yay.openers import Openers
 from yay.errors import merge_anchors as ma
 from yay.compat import basestring
+from yay.executor import Executor
 
 """
 The ``yay.ast`` module contains the classes that make up the graph.
 """
 
-
 _DEFAULT = object()
-
-
-class cached(object):
-
-    def __init__(self, func):
-        self.func = func
-
-    def __call__(descriptor, self):
-        if not hasattr(self, "cache"):
-            self.cache = None
-        if not self.cache:
-            can_cache, result = descriptor.func(self)
-            if not can_cache:
-                return result
-            self.cache = result
-        return self.cache
-
-    def __repr__(self):
-        return self.func.__doc__
-
-    def __get__(self, obj, objtype):
-        return functools.partial(self.__call__, obj)
 
 
 class AST(object):
 
-    lineno = 0
     _predecessor = None
-    _resolving = False
-    _expanding = False
     _get_context_checks_predecessors = False
 
     def as_bool(self, default=_DEFAULT, anchor=None):
@@ -99,9 +73,12 @@ class AST(object):
         raise errors.TypeError(
             "Expecting dictionary", anchor=ma(anchor, self.anchor))
 
-    def get_key(self, key, anchor=None):
+    def get_key(self, key):
+        return self.wait(self._get_key, key)
+
+    def _get_key(self, key):
         raise errors.TypeError(
-            "Expecting dictionary or list", anchor=ma(anchor, self.anchor))
+            "Expecting dictionary or list", anchor=self.anchor)
 
     def keys(self, anchor=None):
         raise errors.TypeError(
@@ -157,12 +134,6 @@ class AST(object):
             for node in self.predecessor.as_digraph(visited):
                 yield node
 
-    def dynamic(self):
-        """
-        Does this graph member change over time?
-        """
-        return False
-
     def normalize_predecessors(self):
         """
         Forces inclusion of dependencies and ensures LazyPredecessor and UseMyPredecessorStandin nodes
@@ -192,6 +163,7 @@ class AST(object):
                     obj.predecessor = obj.predecessor.expand()
                 except errors.NoPredecessor:
                     obj.predecessor = NoPredecessorStandin()
+                    obj.predecessor.parent = self
                     break
 
             obj = obj.predecessor
@@ -200,23 +172,10 @@ class AST(object):
 
         return self
 
-    def simplify(self):
-        """
-        Resolve any parts of the graph that are constant
-        """
-        return self
-
     def resolve(self):
-        if self._resolving:
-            raise errors.CycleError(
-                "A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
-        self._resolving = True
-        try:
-            return self.resolve_once()
-        finally:
-            self._resolving = False
+        return self.wait(self._resolve)
 
-    def resolve_once(self):
+    def _resolve(self):
         """
         Resolve an object into a simple type, like a string or a dictionary.
 
@@ -226,22 +185,18 @@ class AST(object):
         raise NotImplementedError(self.resolve)
 
     def expand(self):
-        if self._expanding:
-            raise errors.CycleError(
-                "A cycle was detected in your configuration and processing cannot continue", anchor=self.anchor)
-        self._expanding = True
-        try:
-            return self.expand_once()
-        finally:
-            self._expanding = False
+        return self.wait(self._expand)
 
-    def expand_once(self):
+    def _expand(self):
         """
         Generate a simplification of this object that can replace it in the graph
         """
         return self
 
     def get_context(self, key):
+        return self.wait(self._get_context, key)
+
+    def _get_context(self, key):
         """
         Look up value of ``key`` and return it.
 
@@ -249,8 +204,18 @@ class AST(object):
         """
         raise errors.NoMatching("Could not find '%s'" % key)
 
+    def wait(self, callable, *args):
+        try:
+            executor = self.root.executor
+        except:
+            return callable(*args)
+        return executor.wait(callable, *args)
+
     @property
     def predecessor(self):
+        if not self._predecessor:
+            self._predecessor = NoPredecessorStandin()
+            self._predecessor.parent = self
         return self._predecessor
 
     @predecessor.setter
@@ -286,7 +251,9 @@ class AST(object):
             if id(v) in mapping:
                 return mapping[id(v)]
 
-            if isinstance(v, AST):
+            if isinstance(v, Literal):
+                child = v
+            elif isinstance(v, AST):
                 child = v.__class__.__new__(v.__class__)
                 mapping[id(v)] = child
 
@@ -337,6 +304,9 @@ class AST(object):
         if self.__class__ != other.__class__:
             return False
         return self.__repr_vars() == other.__repr_vars()
+
+    def __hash__(self):
+        return id(self)
 
     def get_local_labels(self):
         labels = set()
@@ -488,8 +458,10 @@ class Streamish(object):
     def get_iterable(self, anchor=None):
         idx = 0
         while True:
-            self._fill_to(idx)
-            yield self._buffer[idx]
+            try:
+                yield self.get_key(idx)
+            except KeyError:
+                raise StopIteration
             idx += 1
 
     def _fill_to(self, index):
@@ -499,7 +471,7 @@ class Streamish(object):
         while len(self._buffer) < index + 1:
             self._buffer.append(next(self._iterator))
 
-    def get_key(self, index):
+    def _get_key(self, index):
         try:
             index = int(index)
         except ValueError:
@@ -512,7 +484,7 @@ class Streamish(object):
     def get_type(self):
         return "streamish"
 
-    def resolve_once(self):
+    def _resolve(self):
         return [x.resolve() for x in self.get_iterable()]
 
     def contains_secrets(self):
@@ -544,8 +516,12 @@ class Dictish(object):
     def get_type(self):
         return "dictish"
 
-    def resolve_once(self):
-        return dict((key, self.get_key(key).resolve()) for key in self.keys())
+    def _resolve(self):
+        results = {}
+        current = self.root.executor.get_current()
+        for k, v in current.map_unordered(lambda k: (k, self.get_key(k).resolve()), list(self.keys())):
+            results[k] = v
+        return results
 
     def contains_secrets(self):
         for key in self.keys():
@@ -668,7 +644,7 @@ class Proxy(object):
     def get_iterable(self, anchor=None):
         return self.expand().get_iterable(ma(anchor, self.anchor))
 
-    def get_key(self, key):
+    def _get_key(self, key):
         return self.expand().get_key(key)
 
     def construct(self, inner):
@@ -687,11 +663,11 @@ class Proxy(object):
             pass
         return labels
 
-    def expand_once(self):
+    def _expand(self):
         raise NotImplementedError(
             "%r does not implement expand or expand_once - but proxy types must" % type(self))
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.expand().resolve()
 
     def contains_secrets(self):
@@ -699,41 +675,6 @@ class Proxy(object):
 
     def is_secret(self):
         return self.expand().is_secret()
-
-
-class Tripwire(Proxy, AST):
-
-    _get_context_checks_predecessors = True
-
-    def __init__(self, node, expression, expected):
-        super(Tripwire, self).__init__()
-        self.node = node
-        self.expression = expression
-        self.expected = expected
-        self.expanding = False
-
-    def get_context(self, key):
-        p = self.node
-
-        while p and not isinstance(p, (NoPredecessorStandin, )):
-            try:
-                return p.get_context(key)
-            except errors.NoMatching:
-                if p._get_context_checks_predecessors:
-                    break
-            p = p.predecessor
-
-        raise errors.NoMatching("Could not find a macro called '%s'" % key)
-
-    def expand(self):
-        if not self.expanding:
-            self.expanding = True
-            current = self.expression()
-            if current != self.expected:
-                raise errors.ParadoxError(
-                    "Inconsistent configuration detected - changed from %r to %r" % (self.expected, current), anchor=self.anchor)
-            self.expanding = False
-        return self.node
 
 
 class Pythonic(object):
@@ -780,6 +721,7 @@ class PythonicWrapper(Pythonic, Proxy, AST):
     def __init__(self, inner):
         super(PythonicWrapper, self).__init__()
         self.inner = inner
+        self.anchor = self.inner.anchor
 
     @property
     def parent(self):
@@ -789,11 +731,14 @@ class PythonicWrapper(Pythonic, Proxy, AST):
     def parent(self, val):
         pass
 
-    def expand_once(self):
+    def _get_key(self, key):
+        return self.inner.get_key(key)
+
+    def _expand(self):
         return self.inner.expand()
 
     def get_labels(self):
-        return self.expand().get_labels()
+        return self.inner.expand().get_labels()
 
     def get_path(self):
         if not hasattr(self, "parent"):
@@ -827,14 +772,16 @@ class Root(Pythonic, Proxy, AST):
     def __init__(self, node=None):
         super(Root, self).__init__()
         self.openers = Openers(searchpath=[])
+
         self.node = NoPredecessorStandin()
+        self.node.parent = self
+
         if node:
             node.predecessor = self.node
             self.node = node
             node.parent = self
-        else:
-            self.node = NoPredecessorStandin()
-            self.node.parent = self
+
+        self.executor = Executor()
 
     def as_digraph(self, visited=None):
         visited = visited or []
@@ -847,7 +794,7 @@ class Root(Pythonic, Proxy, AST):
     def root(self):
         return self
 
-    def get_context(self, key):
+    def _get_context(self, key):
         p = self.node
         while p and not isinstance(p, NoPredecessorStandin):
             try:
@@ -864,8 +811,11 @@ class Root(Pythonic, Proxy, AST):
             raise errors.NoMatching(
                 "Key not found '%s'" % key, anchor=self.anchor)
 
-    def expand(self):
+    def _expand(self):
         return self.node.expand()
+
+    def get_key(self, key):
+        return self.node.get_key(key)
 
     def get_local_labels(self):
         return ()
@@ -908,7 +858,7 @@ class Identifier(Proxy, AST):
         super(Identifier, self).__init__()
         self.identifier = identifier
 
-    def expand_once(self):
+    def _expand(self):
         node = self.head
         root = self.root
         while node != root:
@@ -950,8 +900,11 @@ class Literal(Scalarish, AST):
         super(Literal, self).__init__()
         self.literal = literal
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.literal
+
+    def clone(self):
+        return self
 
 
 class ParentForm(Scalarish, AST):
@@ -963,7 +916,7 @@ class ParentForm(Scalarish, AST):
         if expression_list:
             expression_list.parent = self
 
-    def resolve_once(self):
+    def _resolve(self):
         if not self.expression_list:
             return []
         return self.expression_list.resolve()
@@ -976,17 +929,7 @@ class UnaryExpr(Scalarish, AST):
         self.inner = inner
         inner.parent = self
 
-    def dynamic(self):
-        return self.inner.dynamic()
-
-    @cached
-    def simplify(self):
-        if not self.dynamic():
-            return True, Literal(self.resolve())
-        else:
-            return True, self.__class__(self.inner.simplify())
-
-    def resolve_once(self):
+    def _resolve(self):
         return self.op(self.inner.as_number())
 
     def get_local_labels(self):
@@ -1039,22 +982,7 @@ class Expr(Scalarish, AST):
         self.rhs = rhs
         rhs.parent = self
 
-    def dynamic(self):
-        for c in (self.lhs, self.rhs):
-            if c.dynamic():
-                return True
-        return False
-
-    @cached
-    def simplify(self):
-        if not self.dynamic():
-            return True, Literal(self.resolve())
-        else:
-            return (
-                True, self.__class__(self.lhs.simplify(), self.rhs.simplify())
-            )
-
-    def resolve_once(self):
+    def _resolve(self):
         return self.op(self.lhs.as_number(), self.rhs.as_number())
 
     def get_local_labels(self):
@@ -1066,13 +994,13 @@ class Expr(Scalarish, AST):
 
 class Equal(Expr):
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.lhs.resolve() == self.rhs.resolve()
 
 
 class NotEqual(Expr):
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.lhs.resolve() != self.rhs.resolve()
 
 
@@ -1095,7 +1023,7 @@ class GreaterThanEqual(Expr):
 class Add(Expr):
     op = operator.add
 
-    def resolve_once(self):
+    def _resolve(self):
         try:
             return self.op(self.lhs.as_number(), self.rhs.as_number())
         except errors.TypeError:
@@ -1138,7 +1066,7 @@ class YayMerged(Expr):
                 v = YayMerged(v, i)
         return v
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.lhs.as_string() + self.rhs.as_string()
 
     def get_string_parts(self):
@@ -1209,13 +1137,7 @@ class Else(Proxy, AST):
         self.rhs = rhs
         rhs.parent = self
 
-    def dynamic(self):
-        for c in (self.lhs, self.rhs):
-            if c.dynamic():
-                return True
-        return False
-
-    def expand(self):
+    def _expand(self):
         try:
             return self.lhs.expand()
         except errors.NoMatching:
@@ -1227,48 +1149,12 @@ class BitwiseAnd(Expr):
 
 
 class And(Expr):
-
-    """
-    An ``And`` expression behaves much like the ``and`` keyword in python.
-
-    Tree reduction rules
-    --------------------
-
-    If both parts of the expression are constant then the expression can be
-    reduced to a Literal.
-
-    If only one part is constant then it is tested to see if it is False.
-    If so, the entire expression is simplified to ``Literal(False)``. If it is
-    ``True`` then the ``And`` expression is reduced to the dynamic part of the
-    expression.
-
-    If both parts are dynamic then the And cannot be reduced. (However, a new
-    And is returned that has its contents reduced).
-    """
-
     op = lambda self, lhs, rhs: lhs and rhs
-
-    def simplify(self):
-        if self.lhs.dynamic():
-            if self.rhs.dynamic():
-                return And(self.lhs.simplify(), self.rhs.simplify())
-            elif self.rhs.resolve():
-                return self.lhs.simplify()
-            else:
-                return Literal(False)
-
-        elif self.rhs.dynamic():
-            if self.lhs.resolve():
-                return self.rhs.simplify()
-            else:
-                return Literal(False)
-
-        return Literal(self.resolve())
 
 
 class NotIn(Expr):
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.lhs.resolve() not in self.rhs.resolve()
 
 
@@ -1287,7 +1173,7 @@ class ConditionalExpression(Proxy, AST):
         self.else_clause = else_clause
         else_clause.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         if self.or_test.resolve():
             return self.if_clause.expand()
         else:
@@ -1302,7 +1188,7 @@ class ListDisplay(Proxy, AST):
         if expression_list:
             expression_list.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         if not self.expression_list:
             lst = YayList()
             lst.parent = self
@@ -1316,6 +1202,8 @@ class DictDisplay(Dictish, AST):
     def __init__(self, key_datum_list=None):
         super(DictDisplay, self).__init__()
         self.key_datum_list = key_datum_list
+        if key_datum_list:
+            key_datum_list.parent = self
         self._dict = None
         self._ordered_keys = None
 
@@ -1329,7 +1217,7 @@ class DictDisplay(Dictish, AST):
                 self._dict[key] = kv.value
                 self._ordered_keys.append(key)
 
-    def get_key(self, key):
+    def _get_key(self, key):
         if not self._dict:
             self._refresh_self()
         return self._dict[key]
@@ -1344,9 +1232,11 @@ class KeyDatumList(AST):
 
     def __init__(self, *key_data):
         super(KeyDatumList, self).__init__()
-        self.key_data = list(key_data)
+        self.key_data = []
+        [self.append(kd) for kd in key_data]
 
     def append(self, key_datum):
+        key_datum.parent = self
         self.key_data.append(key_datum)
 
 
@@ -1355,7 +1245,9 @@ class KeyDatum(AST):
     def __init__(self, key, value):
         super(KeyDatum, self).__init__()
         self.key = key
+        key.parent = self
         self.value = value
+        value.parent = self
 
 
 class AttributeRef(Proxy, AST):
@@ -1366,9 +1258,9 @@ class AttributeRef(Proxy, AST):
         primary.parent = self
         self.identifier = identifier
 
-    def expand_once(self):
+    def _expand(self):
         try:
-            return self.primary.expand().get_key(self.identifier).expand()
+            return self.primary.get_key(self.identifier).expand()
         except KeyError:
             raise errors.NoMatching(
                 "Could not find '%s'" % self.identifier, anchor=self.anchor)
@@ -1392,22 +1284,21 @@ class LazyPredecessor(Proxy, AST):
     def anchor(self):
         return self.expand().anchor
 
-    def get_key(self, key):
+    def _get_key(self, key):
         try:
             predecessor = self.expand()
         except errors.NoPredecessor:
             raise KeyError(key)
         return predecessor.get_key(key)
 
-    @cached
-    def expand_once(self):
+    def _expand(self):
         if self.node.predecessor:
             parent_pred = self.node.predecessor.expand()
             try:
                 pred = parent_pred.get_key(self.identifier)
             except KeyError:
                 raise errors.NoPredecessor
-            return True, pred.expand()
+            return pred.expand()
         raise errors.NoPredecessor
 
 
@@ -1423,13 +1314,13 @@ class UseMyPredecessorStandin(Proxy, AST):
     def predecessor(self):
         return self.node.predecessor
 
-    def get_key(self, key):
+    def _get_key(self, key):
         try:
             return self.expand().get_key(key)
         except errors.NoPredecessor:
             raise KeyError(key)
 
-    def expand_once(self):
+    def _expand(self):
         return self.node.predecessor.expand()
 
 
@@ -1437,7 +1328,7 @@ class NoPredecessorStandin(Proxy, AST):
 
     predecessor = None
 
-    def expand(self):
+    def _expand(self):
         raise errors.NoPredecessor("Node has no predecessor")
 
 
@@ -1454,7 +1345,7 @@ class Subscription(Proxy, AST):
         for e in self.expression_list:
             e.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         key = self.expression_list[0].resolve()
         try:
             return self.primary.expand().get_key(key).expand()
@@ -1495,8 +1386,13 @@ class Slice(AST):
     def __init__(self, lower_bound=None, upper_bound=None, stride=None):
         super(Slice, self).__init__()
         self.lower_bound = lower_bound
+        if self.lower_bound:
+            self.lower_bound.parent = self
         self.upper_bound = upper_bound
+        if self.upper_bound:
+            self.upper_bound.parent = self
         self.stride = stride or YayScalar(1)
+        self.stride.parent = self
 
 
 class Call(Proxy, AST):
@@ -1510,18 +1406,20 @@ class Call(Proxy, AST):
             for arg in self.args:
                 arg.parent = self
         self.kwargs = kwargs
+        if self.kwargs:
+            self.kwargs.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         args = []
         if self.args:
             for arg in self.args:
-                args.append(arg.clone())
+                args.append(arg)
 
         kwargs = {}
         if self.kwargs:
             for kwarg in self.kwargs.kwargs:
                 kwargs[
-                    kwarg.identifier.identifier] = kwarg.expression.clone()
+                    kwarg.identifier.identifier] = kwarg.expression
 
         try:
             self.primary.expand()
@@ -1560,7 +1458,7 @@ class CallCallable(Proxy, AST):
         for k in kwargs:
             k.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         args = [x.resolve() for x in self.args]
         kwargs = dict((k, v.resolve()) for (k, v) in self.kwargs.items())
         result = self.allowed[self.primary.identifier](*args, **kwargs)
@@ -1591,9 +1489,11 @@ class KeywordArguments(AST):
 
     def __init__(self, *keyword_items):
         super(KeywordArguments, self).__init__()
-        self.kwargs = list(keyword_items)
+        self.kwargs = []
+        [self.append(ki) for ki in keyword_items]
 
     def append(self, keyword_item):
+        keyword_item.parent = self
         self.kwargs.append(keyword_item)
 
 
@@ -1602,7 +1502,9 @@ class Kwarg(AST):
     def __init__(self, identifier, expression):
         super(Kwarg, self).__init__()
         self.identifier = identifier
+        self.identifier.parent = self
         self.expression = expression
+        self.expression.parent = self
 
 
 class TargetList(AST):
@@ -1655,7 +1557,7 @@ class YayList(Streamish, AST):
         self.value.append(item)
         item.parent = self
 
-    def get_key(self, idx):
+    def _get_key(self, idx):
         try:
             idx = int(idx)
         except ValueError:
@@ -1695,6 +1597,7 @@ class YayDict(Dictish, AST):
             predecessor = self.get_key(k)
         except KeyError:
             predecessor = LazyPredecessor(self, k)
+            predecessor.parent = self
 
         v.parent = self
         self.values[k] = v
@@ -1713,8 +1616,8 @@ class YayDict(Dictish, AST):
         # This function should ONLY be called by parser and ONLY to merge 2
         # YayDict nodes...
         assert isinstance(other_dict, YayDict)
-        for k in other_dict.keys():
-            self.update(k, other_dict.get_key(k))
+        for k in other_dict._ordered_keys:
+            self.update(k, other_dict.values[k])
 
     def keys(self, anchor=None):
         seen = set()
@@ -1728,12 +1631,12 @@ class YayDict(Dictish, AST):
             if not key in seen:
                 yield key
 
-    def get_context(self, key):
+    def _get_context(self, key):
         if key == "here":
             return self.head
-        return super(YayDict, self).get_context(key)
+        return super(YayDict, self)._get_context(key)
 
-    def get_key(self, key):
+    def _get_key(self, key):
         if key in self.values:
             return self.values[key]
         try:
@@ -1778,7 +1681,7 @@ class YayScalar(Scalarish, AST):
             except ValueError:
                 self.value = value
 
-    def resolve_once(self):
+    def _resolve(self):
         return self.value
 
 
@@ -1901,15 +1804,20 @@ class Stanzas(Proxy, AST):
     def __init__(self, *stanzas):
         super(Stanzas, self).__init__()
         self.value = UseMyPredecessorStandin(self)
+        self.value.parent = self
         for s in stanzas:
             self.append(s)
 
     def append(self, stanza):
-        stanza.predecessor = self.value or NoPredecessorStandin()
+        if self.value:
+            stanza.predecessor = self.value
+        else:
+            p = stanza.predecessor = NoPredecessorStandin()
+            p.parent = self
         stanza.parent = self
         self.value = stanza
 
-    def get_context(self, key):
+    def _get_context(self, key):
         p = self.value
         while p and not isinstance(p, (NoPredecessorStandin, )):
         # while p and p != self.predecessor:
@@ -1931,13 +1839,22 @@ class Stanzas(Proxy, AST):
     def get_type(self):
         return self.value.get_type()
 
-    def expand(self):
+    def _expand(self):
         if self.get_type() == "streamish":
-            i = StanzasIterator(self).expand()
+            i = StanzasIterator(self)
             i.anchor = self.anchor
             i.parent = self
-            return i
+            return i.expand()
         return self.value.expand()
+
+    def keys(self, anchor=None):
+        return self.value.keys(anchor)
+
+    def _get_key(self, key):
+        return self.value.get_key(key)
+
+    def peek(self):
+        return self.value
 
 
 class StanzasIterator(Streamish, AST):
@@ -1984,15 +1901,20 @@ class Directives(Proxy, AST):
     def __init__(self, *directives):
         super(Directives, self).__init__()
         self.value = UseMyPredecessorStandin(self)
+        self.value.parent = self
         for d in directives:
             self.append(d)
 
     def append(self, directive):
         directive.parent = self
-        directive.predecessor = self.value or NoPredecessorStandin()
+        if self.value:
+            directive.predecessor = self.value
+        else:
+            p = directive.predecessor = NoPredecessorStandin()
+            p.parent = self
         self.value = directive
 
-    def get_context(self, key):
+    def _get_context(self, key):
         p = self.value
         while p and p != self.predecessor:
             try:
@@ -2013,13 +1935,16 @@ class Directives(Proxy, AST):
     def get_type(self):
         return self.value.get_type()
 
-    def expand(self):
+    def _expand(self):
         if self.get_type() == "streamish":
-            i = StanzasIterator(self, False).expand()
+            i = StanzasIterator(self, False)
             i.anchor = self.anchor
             i.parent = self
-            return i
+            return i.expand()
         return self.value.expand()
+
+    def _get_key(self, key):
+        return self.value.get_key(key)
 
 
 class Include(Proxy, AST):
@@ -2033,7 +1958,7 @@ class Include(Proxy, AST):
         self.detector = []
         self.expanding = False
 
-    def get_context(self, key):
+    def _get_context(self, key):
         try:
             expanded = self.expand()
         except errors.NoPredecessor:
@@ -2050,28 +1975,10 @@ class Include(Proxy, AST):
 
         raise errors.NoMatching("Could not find '%s'" % key)
 
-    def get_key(self, key):
-        if self.expanding:
-            try:
-                return self.predecessor.get_key(key)
-            except errors.NoPredecessor:
-                raise KeyError("No such key '%s'" % key)
+    def _get_key(self, key):
+        return self.expand().get_key(key)
 
-        # if key in self.detector:
-        #    raise KeyError("'%s' not found" % key)
-        try:
-            self.detector.append(key)
-            return self.expand().get_key(key)
-        finally:
-            self.detector.remove(key)
-
-    @cached
-    def expand(self):
-        if self.expanding:
-            return False, self.predecessor
-
-        self.expanding = True
-
+    def _expand(self):
         # Greedy lazyness at its finest
         # Parse predecessors first, otherwise their contributions to things
         # like the search path won't be considered.
@@ -2080,19 +1987,18 @@ class Include(Proxy, AST):
         except errors.NoPredecessor:
             pass
 
-        expr = self.expr.resolve()
-        expanded = self.root._parse_uri(expr)
-
-        self.expanding = False
+        with self.root.executor.get_current().peek():
+            expr = self.wait(self.expr.as_string)
+            expanded = self.root._parse_uri(expr)
 
         expanded.predecessor = UseMyPredecessorStandin(self)
+        expanded.predecessor.parent = self.parent
         expanded.parent = self.parent
 
-        t = Tripwire(expanded, self.expr.resolve, expr)
-        t.parent = self.parent
-        t.anchor = self.anchor
+        return expanded
 
-        return True, t
+    def peek(self):
+        return self.predecessor
 
 
 class Search(Proxy, AST):
@@ -2102,7 +2008,7 @@ class Search(Proxy, AST):
         self.expr = expr
         expr.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         return self.predecessor.expand()
 
 
@@ -2116,12 +2022,12 @@ class Set(Proxy, AST):
         self.expr = expr
         expr.parent = self
 
-    def get_context(self, key):
+    def _get_context(self, key):
         if key == self.var.identifier:
             return self.expr
-        return super(Set, self).get_context(key)
+        return super(Set, self)._get_context(key)
 
-    def expand_once(self):
+    def _expand(self):
         if self.predecessor.get_type() == "streamish":
             node = YayList()
             node.anchor = self.anchor
@@ -2151,26 +2057,21 @@ class If(Proxy, AST):
         self.on_true = on_true
         self.on_true.parent = self
         self.on_true.predecessor = UseMyPredecessorStandin(self)
+        self.on_true.predecessor.parent = self
 
         if on_false:
             self.on_false = on_false
-            self.on_false.predecessor = UseMyPredecessorStandin(self)
             self.on_false.parent = self
+            self.on_false.predecessor = UseMyPredecessorStandin(self)
+            self.on_false.predecessor.parent = self
         else:
             self.on_false = None
 
         self.passthrough_mode = False
 
-    @cached
-    def expand(self):
-        if self.passthrough_mode:
-            return False, self.predecessor.expand()
-
-        self.passthrough_mode = True
-        try:
-            cond = self.condition.as_bool()
-        finally:
-            self.passthrough_mode = False
+    def _expand(self):
+        with self.root.executor.get_current().peek():
+            cond = self.wait(self.condition.as_bool)
 
         if cond:
             node = self.on_true.expand()
@@ -2183,9 +2084,7 @@ class If(Proxy, AST):
             else:
                 node = self.predecessor.expand()
 
-        t = Tripwire(node, self.condition.as_bool, cond)
-        t.anchor = self.anchor
-        return True, t
+        return node
 
     def add_elif(self, elif_):
         node = self
@@ -2203,6 +2102,9 @@ class If(Proxy, AST):
         node.on_false = else_
         else_.parent = node
 
+    def peek(self):
+        return self.predecessor
+
 
 class Select(Proxy, AST):
 
@@ -2214,23 +2116,19 @@ class Select(Proxy, AST):
         cases.parent = self
         self.expanding = False
 
-    @cached
-    def expand(self):
-        if self.expanding:
-            return False, self.predecessor
-
-        self.expanding = True
-        value = self.expr.as_string()
-        self.expanding = False
+    def _expand(self):
+        with self.root.executor.get_current().peek():
+            value = self.wait(self.expr.as_string)
 
         for case in self.cases.cases:
             if case.key == value:
-                t = Tripwire(case.node.expand(), self.expr.as_string, value)
-                t.anchor = self.anchor
-                return True, t
+                return case.node.expand()
 
         raise errors.NoMatching(
             "Select does not have key '%s'" % value, anchor=self.anchor)
+
+    def peek(self):
+        return self.predecessor
 
 
 class CaseList(AST):
@@ -2272,8 +2170,7 @@ class New(Proxy, AST):
         target.parent = self
         self.node = node
 
-    @cached
-    def expand(self):
+    def _expand(self):
         node = self.target.construct(self.node.clone())
         node.parent = self
         node.anchor = self.anchor
@@ -2284,8 +2181,9 @@ class New(Proxy, AST):
             p = p.predecessor
             p.parent = self
         p.predecessor = UseMyPredecessorStandin(self)
+        p.predecessor.parent = self
 
-        return True, node
+        return node
 
 
 class Ephemeral(Proxy, AST):
@@ -2294,24 +2192,25 @@ class Ephemeral(Proxy, AST):
         super(Ephemeral, self).__init__()
         self.target = target
         self.inner = inner
+        self.inner.parent = self
 
-    def get_context(self, key):
+    def _get_context(self, key):
         if key == self.target.identifier:
             return self.inner
         raise errors.NoMatching("Could not find '%s'" % key)
 
-    def expand_once(self):
+    def _expand(self):
         return self.predecessor.expand()
 
 
 class Self(Proxy, AST):
 
-    def get_context(self, key):
+    def _get_context(self, key):
         if key == "self":
             return self.head
         raise errors.NoMatching("Could not find '%s'" % key)
 
-    def expand_once(self):
+    def _expand(self):
         return self.predecessor.expand()
 
 
@@ -2320,6 +2219,7 @@ class Macro(AST):
     def __init__(self, node):
         super(Macro, self).__init__()
         self.node = node
+        node.parent = self
 
     def call(self, params):
         pass
@@ -2332,9 +2232,13 @@ class CallDirective(Proxy, AST):
         self.target = target
         target.parent = self
         self.node = node
+        if node:
+            node.parent = self
 
-    def expand_once(self):
+    def _expand(self):
         macro = self.target.expand()
+        if not hasattr(macro, "call"):
+            raise errors.TypeError("Attempting to call the uncallable!", self.anchor)
         clone = macro.node.clone()
         if not self.node:
             clone.parent = self
@@ -2388,17 +2292,17 @@ class Context(Proxy, AST):
         # evaluated in the original context.
         self.context = context
 
-    def get_context(self, key):
+    def _get_context(self, key):
         """
         If ``key`` is provided by this node return it, otherwise fall
         back to default implementation.
         """
         val = self.context.get(key, None)
         if not val:
-            val = super(Context, self).get_context(key)
+            val = super(Context, self)._get_context(key)
         return val
 
-    def expand_once(self):
+    def _expand(self):
         return self.value.expand()
 
 
@@ -2511,11 +2415,11 @@ class PythonClassFactory(AST):
         super(PythonClassFactory, self).__init__()
         self.inner = inner
 
-    def construct(self, inner):
+    def construct(self, params):
         if not issubclass(self.inner, PythonClass):
             raise errors.TypeError("'%s' is not usable from Yay" % self.inner)
 
-        return self.inner(inner)
+        return self.inner(params)
 
 
 class PythonClassAttributes(Dictish, AST):
@@ -2533,7 +2437,7 @@ class PythonClassAttributes(Dictish, AST):
             if attr.value != value:
                 attr.value = value
 
-    def get_key(self, key):
+    def _get_key(self, key):
         return self.attributes[key]
 
     def keys(self, anchor=None):
@@ -2541,7 +2445,7 @@ class PythonClassAttributes(Dictish, AST):
             yield key
 
 
-class PythonClass(Proxy, AST):
+class PythonClass(Dictish, AST):
 
     """
     This is a Mixin for writing nodes that can be created with the ``create`` syntax
@@ -2553,33 +2457,37 @@ class PythonClass(Proxy, AST):
         self.members = PythonClassAttributes()
         self.members.parent = self
 
-        # Node containing metadata provided by the user
         params.parent = self
-        params.predecessor = self.members
-        params.parent = self
-
+        params.predecessor = NoPredecessorStandin()
         self.params = PythonicWrapper(params)
-        self.params.parent = self
+
         self.stale = True
 
     def apply(self):
         raise NotImplementedError(self.apply)
 
-    def get_key(self, key):
+    def expand(self):
+        return self
+
+    def _get_key(self, key):
         try:
             return self.params.get_key(key)
         except KeyError:
             if self.stale:
-                self.apply()
+                self.wait(self.apply)
                 self.stale = False
             return self.members.get_key(key)
 
-    def expand_once(self):
+    def keys(self, anchor=None):
+        for key in self.params.keys(anchor or self.anchor):
+            yield key
+
         if self.stale:
-            self.apply()
+            self.wait(self.apply)
             self.stale = False
 
-        return self.params.expand()
+        for key in self.members.keys(anchor or self.anchor):
+            yield key
 
     def get_local_labels(self):
         return AST.get_local_labels(self)
@@ -2611,11 +2519,12 @@ class PythonDict(Dictish, AST):
         # inspecting the frame
         self.anchor = None
 
-    def get_key(self, key):
+    def _get_key(self, key):
         try:
             obj = bind(self.dict[key])
             obj.parent = self
             obj.predecessor = LazyPredecessor(self, key)
+            obj.predecessor.parent = self.parent
             return obj
         except KeyError:
             pass
@@ -2661,6 +2570,3 @@ def bind(v):
             return wrapper(v)
     raise errors.TypeError(
         "Encountered unbindable object (type = %r)" % repr(v))
-
-
-AST._predecessor = NoPredecessorStandin()

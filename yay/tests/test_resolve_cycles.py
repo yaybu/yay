@@ -112,16 +112,6 @@ class TestResolveCycles(TestCase):
             """)
         self.assertEqual(res.foo.resolve(), ['foo', 'foo'])
 
-    def test_if(self):
-        res = parse("""
-            flip: 1
-            flop: {{ flip }}
-            if flop:
-                flip: {{ flop }}
-            """)
-        self.assertRaises(errors.CycleError, int, res.flip)
-        self.assertRaises(errors.CycleError, res.resolve)
-
     def test_oh_please_make_it_stop(self):
         res = parse("""
             flip: {{ inside.loft }}

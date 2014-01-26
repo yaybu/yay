@@ -84,8 +84,12 @@ class TestCase(unittest.TestCase):
                 self.add({"yay": {"searchpath": self.searchpath or []}})
                 self.openers = Openers(
                     searchpath=SearchpathFromGraph(self.yay.searchpath))
+
         c = Config()
-        c.builtins = self.builtins or {}
+        if self.builtins:
+            for k, v in self.builtins.items():
+                c.builtins[k] = v
+                v.parent = c
         c.load(io.StringIO(source), labels=labels)
         return c
 
