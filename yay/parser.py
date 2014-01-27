@@ -977,7 +977,9 @@ class BaseParser(object):
         '''
         prototype_directive : PROTOTYPE expression_list ":" NEWLINE INDENT stanzas DEDENT
         '''
-        p[0] = ast.Ephemeral(p[2], ast.Prototype(p[6]))
+        proto = ast.Prototype(p[6])
+        proto.anchor = SpanAnchor(self, p, 1)
+        p[0] = ast.Ephemeral(p[2], proto)
         self.anchor(p, 1)
 
     def p_select_directive(self, p):

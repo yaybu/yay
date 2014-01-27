@@ -3,6 +3,7 @@ coverage
 python-coveralls
 mock
 flake8
+gevent
 
 PyYAML
 
