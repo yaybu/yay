@@ -1445,7 +1445,7 @@ class TestPythonClassMock(ast.PythonClass):
         except errors.TypeError:
             pass
 
-        self.members.set('hello', 'world')
+        self.members['hello'] = 'world'
 
 
 class TestPythonClass(TestCase):
