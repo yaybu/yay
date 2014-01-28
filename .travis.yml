@@ -18,8 +18,9 @@ matrix:
     - python: "3.3"
 
 install:
+  - sudo apt-get install cython
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then sudo apt-get install libev-dev; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then sudo apt-get install libev-dev cython; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install cffi; fi
   - pip install $GEVENT
   - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install git+git://github.com/gevent-on-pypy/pypycore@master#egg=pypycore; fi
