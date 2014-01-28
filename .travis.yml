@@ -1,16 +1,17 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
 
 matrix:
   include:
+    - python: "2.6"
+      env: GEVENT=gevent==1.0
+    - python: "2.7"
+      env: GEVENT=gevent==1.0
     - python: "3.2"
-      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip#egg=gevent
+      env: GEVENT=git://github.com/surfly/gevent@master#egg=gevent
     - python: "3.3"
-      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip#egg=gevent
+      env: GEVENT=git://github.com/surfly/gevent@master#egg=gevent
     - python: "pypy"
-      env: EXTRA_REQUIREMENTS="cffi https://github.com/gevent-on-pypy/pypycore/archive/master.zip https://github.com/schmir/gevent/archive/pypy-hacks.zip" GEVENT_LOOP=pypycore.loop
+      env: GEVENT="cffi git://github.com/schmir/gevent@pypy-hacks#egg=gevent git://github.com/gevent-on-pypy/pypycore@master#egg=pypycore" GEVENT_LOOP=pypycore.loop
 
   allow_failures:
     - python: "pypy"
@@ -18,7 +19,8 @@ matrix:
 
 install:
   - sudo apt-get install libev4 cython
-  - pip install $EXTRA_REQUIREMENTS -r requirements.txt
+  - pip install $GEVENT
+  - pip install -r requirements.txt
   - pip install unittest2 || true
 
 script:
