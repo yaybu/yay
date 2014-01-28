@@ -1,4 +1,5 @@
 language: python
+python: []
 
 matrix:
   include:
