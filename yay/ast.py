@@ -2422,29 +2422,6 @@ class PythonClassFactory(AST):
         return self.inner(params)
 
 
-class PythonClassAttributes(Dictish, AST):
-
-    def __init__(self):
-        super(PythonClassAttributes, self).__init__()
-        self.attributes = {}
-
-    def set(self, key, value):
-        if not key in self.attributes:
-            attr = self.attributes[key] = YayScalar(value)
-            attr.parent = self
-        else:
-            attr = self.attributes[key]
-            if attr.value != value:
-                attr.value = value
-
-    def _get_key(self, key):
-        return self.attributes[key]
-
-    def keys(self, anchor=None):
-        for key in self.attributes.keys():
-            yield key
-
-
 class PythonClass(Dictish, AST):
 
     """
@@ -2454,8 +2431,11 @@ class PythonClass(Dictish, AST):
     def __init__(self, params):
         super(PythonClass, self).__init__()
         # Object to exposed metadata exported by this class to yay
-        self.members = PythonClassAttributes()
-        self.members.parent = self
+
+        self.members = {}
+
+        self.members_wrapped = PythonDict(self.members)
+        self.members_wrapped.parent = self
 
         params.parent = self
         params.predecessor = NoPredecessorStandin()
@@ -2476,7 +2456,7 @@ class PythonClass(Dictish, AST):
             if self.stale:
                 self.wait(self.apply)
                 self.stale = False
-            return self.members.get_key(key)
+            return self.members_wrapped.get_key(key)
 
     def keys(self, anchor=None):
         for key in self.params.keys(anchor or self.anchor):
@@ -2486,7 +2466,7 @@ class PythonClass(Dictish, AST):
             self.wait(self.apply)
             self.stale = False
 
-        for key in self.members.keys(anchor or self.anchor):
+        for key in self.members_wrapped.keys(anchor or self.anchor):
             yield key
 
     def get_local_labels(self):
