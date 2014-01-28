@@ -46,7 +46,7 @@ class BaseOperation(object):
     def peek(self):
         return PeekySection(self)
 
-    def purge(self):
+    def purge_one(self):
         if self.id in self.monitor.operations:
             del self.monitor.operations[self.id]
         for dep in self.depends:
@@ -57,6 +57,11 @@ class BaseOperation(object):
                 dep.depends.remove(self)
             if dep.primary_parent == self:
                 dep.primary_parent = None
+
+    def purge_rdepends(self):
+        rdepends = list(self.rdepends)
+        self.purge_one()
+        [d.purge_rdepends() for d in rdepends]
 
     def add_dependency(self, dep):
         # FIXME: Can has weakrefs or something?
@@ -170,11 +175,11 @@ class Operation(BaseOperation):
             for c, op in p.walk_children():
                 if op.method.startswith("as_"):
                     checks.append(op)
-                op.purge()
+                op.purge_one()
 
             if p.method.startswith("as_"):
                 checks.append(p)
-            p.purge()
+            p.purge_one()
 
         getcurrent().operation = self
 
