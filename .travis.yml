@@ -11,17 +11,19 @@ matrix:
     - python: "3.3"
       env: GEVENT=git+git://github.com/surfly/gevent@master#egg=gevent
     - python: "pypy"
-      env: GEVENT="cffi git+git://github.com/schmir/gevent@pypy-hacks#egg=gevent git+git://github.com/gevent-on-pypy/pypycore@master#egg=pypycore" GEVENT_LOOP=pypycore.loop
+      env: GEVENT=git+git://github.com/schmir/gevent@pypy-hacks#egg=gevent GEVENT_LOOP=pypycore.loop
 
   allow_failures:
     - python: "pypy"
     - python: "3.3"
 
 install:
-  - sudo apt-get install libev4 cython
+  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then sudo apt-get install libev4 cython; fi
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install cffi; fi
   - pip install $GEVENT
+  - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install git+git://github.com/gevent-on-pypy/pypycore@master#egg=pypycore; fi
   - pip install -r requirements.txt
-  - pip install unittest2 || true
 
 script:
   - coverage run $(which nose2)
