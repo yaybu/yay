@@ -6,9 +6,9 @@ python:
 matrix:
   include:
     - python: "3.2"
-      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip
+      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip#egg=gevent
     - python: "3.3"
-      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip
+      env: EXTRA_REQUIREMENTS=https://github.com/surfly/gevent/archive/master.zip#egg=gevent
     - python: "pypy"
       env: EXTRA_REQUIREMENTS="cffi https://github.com/gevent-on-pypy/pypycore/archive/master.zip https://github.com/schmir/gevent/archive/pypy-hacks.zip" GEVENT_LOOP=pypycore.loop
 
