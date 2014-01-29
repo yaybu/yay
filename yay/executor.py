@@ -236,39 +236,44 @@ class Executor(object):
         except AttributeError:
             return self.root
 
+    def get_operation(self, callable, *args):
+        return self.operations[(callable, args)]
+
     def execute(self, callable, *args):
         id = (callable, args)
-        if id in self.operations:
-            op = self.operations[id]
-            c = p = self.get_current()
 
-            if op.ready():
-                p.add_dependency(op)
-                return op
+        try:
+            op = self.get_operation(callable, *args)
+        except KeyError:
+            op = Operation(self, callable, *args)
+            self.operations[id] = op
+            op.start()
+            return op
 
-            while c.primary_parent is not None:
-                if c != op:
-                    c = c.primary_parent
-                    continue
+        c = p = self.get_current()
 
-                if hasattr(op.node, "peek"):
-                    pr = op.node.peek()
-                    child = self.execute(getattr(pr, op.method), *args)
-                    return child
-
-                op.result.set_exception(errors.CycleError(
-                    "A cyclic dependency was detected in your configration and processing cannot continue",
-                    anchor=op.node.anchor,
-                ))
-                return op
-
+        if op.ready():
             p.add_dependency(op)
             return op
 
-        child = Operation(self, callable, *args)
-        self.operations[id] = child
-        child.start()
-        return child
+        while c.primary_parent is not None:
+            if c != op:
+                c = c.primary_parent
+                continue
+
+            if hasattr(op.node, "peek"):
+                pr = op.node.peek()
+                child = self.execute(getattr(pr, op.method), *args)
+                return child
+
+            op.result.set_exception(errors.CycleError(
+                "A cyclic dependency was detected in your configration and processing cannot continue",
+                anchor=op.node.anchor,
+            ))
+            return op
+
+        p.add_dependency(op)
+        return op
 
     def wait(self, callable, *args):
         child = self.execute(callable, *args)
