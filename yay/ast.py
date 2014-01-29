@@ -2441,8 +2441,6 @@ class PythonClass(Dictish, AST):
         params.predecessor = NoPredecessorStandin()
         self.params = PythonicWrapper(params)
 
-        self.stale = True
-
     def apply(self):
         raise NotImplementedError(self.apply)
 
@@ -2453,19 +2451,13 @@ class PythonClass(Dictish, AST):
         try:
             return self.params.get_key(key)
         except KeyError:
-            if self.stale:
-                self.wait(self.apply)
-                self.stale = False
+            self.wait(self.apply)
             return self.members_wrapped.get_key(key)
 
     def keys(self, anchor=None):
         for key in self.params.keys(anchor or self.anchor):
             yield key
-
-        if self.stale:
-            self.wait(self.apply)
-            self.stale = False
-
+        self.wait(self.apply)
         for key in self.members_wrapped.keys(anchor or self.anchor):
             yield key
 
