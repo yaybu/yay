@@ -36,7 +36,8 @@ class PeekySection(object):
 
 class BaseOperation(object):
 
-    def __init__(self):
+    def __init__(self, monitor):
+        self.monitor = monitor
         self.depends = []
         self.rdepends = []
         self.peeks = []
@@ -122,9 +123,7 @@ class RootOperation(BaseOperation):
 class Operation(BaseOperation):
 
     def __init__(self, monitor, callable, *args):
-        super(Operation, self).__init__()
-
-        self.monitor = monitor
+        super(Operation, self).__init__(monitor)
 
         self.id = (callable, args)
 
@@ -228,7 +227,7 @@ class Executor(object):
 
     def __init__(self):
         self.operations = {}
-        self.root = RootOperation()
+        self.root = RootOperation(self)
 
     def get_current(self):
         try:
