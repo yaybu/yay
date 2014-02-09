@@ -38,12 +38,6 @@ class generate_ply_tabs:
             sys.exit(1)
 
 
-class sdist_with_ply(generate_ply_tabs, sdist):
-    def run(self, *args, **kwargs):
-        self.build_ply_tabs()
-        sdist.run(self, *args, **kwargs)
-
-
 class build_py_with_ply(generate_ply_tabs, build_py):
     def run(self, *args, **kwargs):
         self.build_ply_tabs()
@@ -77,7 +71,6 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-    setup_requires = ['ply'],
     install_requires = [
         "ply",
         # "gpglib",
@@ -89,7 +82,6 @@ setup(
             ],
         },
     cmdclass = {
-        'sdist': sdist_with_ply,
         'build_py': build_py_with_ply,
         },
     )

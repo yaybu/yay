@@ -19,7 +19,7 @@ matrix:
     - python: "3.3"
 
 install:
-  - if [[ $TRAVIS_SOLO != 'yes' ]]; then pip install python-coveralls; fi
+  - if [[ $TRAVIS_SOLO != 'yes' ]]; then pip install coveralls; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install cython==0.19.2; fi
   - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then sudo apt-get install libev-dev; fi
   - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2; fi
