@@ -1282,7 +1282,7 @@ class LazyPredecessor(Proxy, AST):
 
     @property
     def anchor(self):
-        return self.expand().anchor
+        return self.node.predecessor.anchor
 
     def _get_key(self, key):
         try:
