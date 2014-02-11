@@ -57,7 +57,7 @@ class ColumnAnchor(LineAnchor):
             last_cr = 0
         return (self.lexpos - last_cr) + 1
 
-    def __str__(self):
+    def header(self):
         if self.source is None:
             filename = "standard input"
         else:
@@ -66,10 +66,13 @@ class ColumnAnchor(LineAnchor):
             "%s at line %d, column %d" % (filename, self.lineno, self.column)
         )
 
+    def __str__(self):
+        return self.header()
+
     def long_description_lines(self):
         line = "%4d %s" % (self.lineno, self.text_line())
         pointer = "     %s^" % (" " * (self.column - 2),)
-        return (line, pointer)
+        return (self.header(), line, pointer)
 
 
 class SpanAnchor(ColumnAnchor):
@@ -95,9 +98,9 @@ class SpanAnchor(ColumnAnchor):
             line = self.text_line()
             pointer = "%s%s" % (
                 " " * (self.column - 1), "^" * (self.lexspan[1] - self.lexspan[0] + 1))
-            return (line, pointer)
+            return (self.header(), line, pointer)
         else:
-            out = []
+            out = [self.header()]
             for i, l in enumerate(self.text_lines(), start=self.linespan[0]):
                 if l == self.lineno:
                     marker = "*"
@@ -119,7 +122,6 @@ class AnchorCollection(object):
     def long_description(self):
         descriptions = []
         for anchor in self.collection:
-            descriptions.append("  " + str(anchor))
             for line in anchor.long_description_lines():
                 descriptions.append("    " + line)
         return '\n'.join(descriptions)
