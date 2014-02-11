@@ -2341,6 +2341,20 @@ class TestSearchPath(TestCase):
             """)
         self.assertEqual(res['foo'], 'bar')
 
+    def test_openers_search_pre_with_adjacent(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._parse("""
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+                options:
+                   foo: baz
+            include "example.yay"
+            """)
+        self.assertEqual(res.yay.options.foo.resolve(), 'baz')
+
     def test_openers_search_post(self):
         self._add("mem://foodir/example.yay", """
             foo: bar
@@ -2352,6 +2366,20 @@ class TestSearchPath(TestCase):
                   - {{ 'mem://foodir/' }}
             """)
         self.assertEqual(res['foo'], 'bar')
+
+    def test_openers_search_post_with_adjacent(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._parse("""
+            include "example.yay"
+            yay:
+                searchpath:
+                  - {{ 'mem://foodir/' }}
+                options:
+                  foo: bar
+            """)
+        self.assertEqual(res.yay.options.foo.resolve(), 'bar')
 
     def test_openers_search_mid(self):
         self._add("mem://foodir/example.yay", """
@@ -2367,6 +2395,26 @@ class TestSearchPath(TestCase):
                   - {{ 'mem://foodir/' }}
             """)
         self.assertEqual(res['foo'], 'bar')
+
+    def test_openers_search_mid_with_adjacent(self):
+        self._add("mem://foodir/example.yay", """
+            foo: bar
+            """)
+        res = self._parse("""
+            yay:
+                searchpath:
+                  - {{ 'mem://bardir/' }}
+                options:
+                  foo: bar
+            include "example.yay"
+            yay:
+                extend searchpath:
+                  - {{ 'mem://foodir/' }}
+                options:
+                  bar: foo
+            """)
+        self.assertEqual(res.yay.options.foo.resolve(), 'bar')
+        self.assertEqual(res.yay.options.bar.resolve(), 'foo')
 
 
 class TestExpressionParsing(TestCase):
