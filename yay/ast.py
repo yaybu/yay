@@ -1291,7 +1291,7 @@ class LazyPredecessor(Proxy, AST):
             raise KeyError(key)
         return predecessor.get_key(key)
 
-    def _expand(self):
+    def expand(self):
         if self.node.predecessor:
             parent_pred = self.node.predecessor.expand()
             try:
