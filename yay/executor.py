@@ -265,6 +265,16 @@ class Executor(object):
                 child = self.execute(getattr(pr, op.method), *args)
                 return child
 
+            #print "Cycle:", op.id
+            #c = self.get_current()
+            #while c != op:
+            #    print c.id
+            #    c = c.primary_parent
+            #print "Cycle:", c.id
+            #while c != None:
+            #    print c.id
+            #    c = c.primary_parent
+
             op.result.set_exception(errors.CycleError(
                 "A cyclic dependency was detected in your configration and processing cannot continue",
                 anchor=op.node.anchor,

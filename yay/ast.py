@@ -282,7 +282,8 @@ class AST(object):
         return _clone(None, self)
 
     def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
+        return "<%s %s>" % (self.__class__.__name__, id(self))
+        #return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
 
     def __clone_vars(self):
         d = self.__dict__.copy()
@@ -1320,9 +1321,9 @@ class UseMyPredecessorStandin(Proxy, AST):
         except errors.NoPredecessor:
             raise KeyError(key)
 
-    def _expand(self):
+    def expand(self):
         return self.node.predecessor.expand()
-
+    _expand = expand
 
 class NoPredecessorStandin(Proxy, AST):
 
@@ -1943,8 +1944,12 @@ class Directives(Proxy, AST):
             return i.expand()
         return self.value.expand()
 
+    def keys(self, anchor=None):
+        return self.value.keys(anchor)
+
     def _get_key(self, key):
         return self.value.get_key(key)
+
 
 
 class Include(Proxy, AST):
