@@ -1325,6 +1325,7 @@ class UseMyPredecessorStandin(Proxy, AST):
         return self.node.predecessor.expand()
     _expand = expand
 
+
 class NoPredecessorStandin(Proxy, AST):
 
     predecessor = None
@@ -1949,7 +1950,6 @@ class Directives(Proxy, AST):
 
     def _get_key(self, key):
         return self.value.get_key(key)
-
 
 
 class Include(Proxy, AST):
