@@ -1,3 +1,5 @@
+import logging
+
 from gevent import getcurrent, Greenlet, GreenletExit
 from gevent.event import AsyncResult
 from gevent.pool import Group
@@ -233,6 +235,7 @@ class Executor(object):
     def __init__(self):
         self.operations = {}
         self.root = RootOperation(self)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def get_current(self):
         try:
@@ -249,6 +252,7 @@ class Executor(object):
         try:
             op = self.get_operation(callable, *args)
         except KeyError:
+            self.logger.debug("MISS %r" % (id, ))
             op = Operation(self, callable, *args)
             self.operations[id] = op
             op.start()
@@ -257,6 +261,7 @@ class Executor(object):
         c = p = self.get_current()
 
         if op.ready():
+            self.logger.debug("HIT %r" % (id, ))
             p.add_dependency(op)
             return op
 
@@ -266,6 +271,7 @@ class Executor(object):
                 continue
 
             if hasattr(op.node, "peek"):
+                self.logger.debug("PEEK %r" % (id, ))
                 pr = op.node.peek()
                 child = self.execute(getattr(pr, op.method), *args)
                 return child
@@ -280,11 +286,15 @@ class Executor(object):
             #    print c.id
             #    c = c.primary_parent
 
+            self.logger.debug("CYCLE %r" % (id, ))
+
             op.result.set_exception(errors.CycleError(
                 "A cyclic dependency was detected in your configration and processing cannot continue",
                 anchor=op.node.anchor,
             ))
             return op
+
+        self.logger.debug("QUEUE %r" % (id, ))
 
         p.add_dependency(op)
         return op
