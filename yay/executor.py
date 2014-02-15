@@ -183,8 +183,13 @@ class Operation(BaseOperation):
         getcurrent().operation = self
 
         for op in checks:
-            current_val = op.get()
-            new_val = self.monitor.wait(getattr(op.node, op.method))
+            try:
+                current_val = op.get()
+                new_val = self.monitor.wait(getattr(op.node, op.method))
+            except Exception as e:
+                self.result.set_exception(e)
+                return
+
             if new_val != current_val:
                 self.result.set_exception(errors.ParadoxError(
                     "Inconsistent configuration detected - changed from %r to %r" % (current_val, new_val), anchor=op.node.anchor))
