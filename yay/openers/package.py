@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
+import pkgutil
 
-from yay.errors import NotFound
-from .base import IOpener, FileOpener
+from yay.errors import NotFound, NotModified
+from yay.compat import io
+from .base import IOpener, etag_stream
 
 
 class PackageOpener(IOpener):
@@ -26,10 +26,19 @@ class PackageOpener(IOpener):
 
     def open(self, uri, etag=None):
         package, uri = uri.lstrip("package://").split("/", 1)
-        try:
-            __import__(package)
-            module = sys.modules[package]
-        except ImportError:
+
+        data = pkgutil.get_data(package, uri)
+        if data is None:
             raise NotFound("Package '%s' could not be imported" % package)
-        path = os.path.join(os.path.dirname(module.__file__), uri)
-        return FileOpener().open(path, etag)
+
+        fp = io.StringIO(data)
+        fp.len = len(data)
+        fp.labels = ()
+
+        new_etag = etag_stream(io.StringIO(data))
+        if etag and new_etag == etag:
+            raise NotModified("'%s' hasnt changed" % uri)
+        fp.etag = new_etag
+        fp.uri = uri
+
+        return fp
