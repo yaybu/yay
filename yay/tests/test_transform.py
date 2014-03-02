@@ -45,6 +45,11 @@ class TestTransform(TestCase):
         main(argv=["-f", "py"], stdin=self.stream)
 
     def test_successful_yaml(self):
+        try:
+            import yaml
+        except ImportError:
+            # Only run this test if yaml is available
+            pass
         main(argv=["-f", "yaml"], stdin=self.stream)
 
     def test_successful_dot(self):
