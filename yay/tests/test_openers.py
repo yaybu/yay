@@ -13,6 +13,9 @@
 # limitations under the License.
 
 
+import tempfile
+import os
+
 from yay.openers import *  # NOQA
 from yay.errors import NotModified, NotFound, ParadoxError
 from yay.tests.base import TestCase
@@ -23,8 +26,17 @@ if __file__.endswith(".pyc"):
 
 class TestFileOpener(TestCase):
 
+    def setUp(self):
+        fp = tempfile.NamedTemporaryFile(delete=False)
+        self.file = fp.name
+        fp.write('# Copyright 2010-2013 Isotoma Limited')
+        fp.close()
+
+    def tearDown(self):
+        os.unlink(self.file)
+
     def test_read(self):
-        fp = FileOpener().open(__file__)
+        fp = FileOpener().open(self.file)
         data = fp.read().decode("utf-8").splitlines()
         self.failUnlessEqual(data[0], "# Copyright 2010-2013 Isotoma Limited")
 
@@ -34,14 +46,14 @@ class TestFileOpener(TestCase):
 
     def test_etag(self):
         fo = FileOpener()
-        fp = fo.open(__file__)
+        fp = fo.open(self.file)
         etag = fp.etag
         fp.close()
 
-        self.failUnlessRaises(NotModified, fo.open, __file__, etag)
+        self.failUnlessRaises(NotModified, fo.open, self.file, etag)
 
     def test_len(self):
-        fp = FileOpener().open(__file__)
+        fp = FileOpener().open(self.file)
         self.failUnlessEqual(len(fp.read()), fp.len)
 
 
