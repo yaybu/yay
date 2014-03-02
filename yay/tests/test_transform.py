@@ -46,7 +46,7 @@ class TestTransform(TestCase):
 
     def test_successful_yaml(self):
         try:
-            import yaml
+            import yaml  # noqa
         except ImportError:
             # Only run this test if yaml is available
             pass
