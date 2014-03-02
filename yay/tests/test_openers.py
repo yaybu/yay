@@ -29,7 +29,7 @@ class TestFileOpener(TestCase):
     def setUp(self):
         fp = tempfile.NamedTemporaryFile(delete=False)
         self.file = fp.name
-        fp.write('# Copyright 2010-2013 Isotoma Limited')
+        fp.write(b'# Copyright 2010-2013 Isotoma Limited')
         fp.close()
 
     def tearDown(self):
