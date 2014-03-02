@@ -49,7 +49,7 @@ class TestTransform(TestCase):
             import yaml  # noqa
         except ImportError:
             # Only run this test if yaml is available
-            pass
+            return
         main(argv=["-f", "yaml"], stdin=self.stream)
 
     def test_successful_dot(self):
