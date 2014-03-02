@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 try:
     from imp import reload
@@ -105,3 +102,21 @@ class TestCase(unittest.TestCase):
 
     def assertResolves(self, source, expected):
         self.assertEqual(self._resolve(source), expected)
+
+    if not hasattr(unittest.TestCase, "addCleanup"):
+        def __init__(self, *args, **kwargs):
+            self.cleanups = []
+            super(TestCase, self).__init__(*args, **kwargs)
+
+        def addCleanup(self, func, *args, **kwargs):
+            self.cleanups.append((func, args, kwargs))
+
+        def tearDown(self):
+            for func, args, kwargs in reversed(self.cleanups):
+                try:
+                    func(*args, **kwargs)
+                except:
+                    pass
+
+        def assertIn(self, a, b):
+            assert a in b, "%r not in %r" % (a, b)
