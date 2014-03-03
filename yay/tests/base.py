@@ -123,6 +123,7 @@ class TestCase(unittest.TestCase):
 
         def assertRegex(self, text, expected_regex, msg=None):
             """Fail the test unless the text matches the regular expression."""
+            import re
             if isinstance(expected_regex, basestring):
                 expected_regex = re.compile(expected_regex)
             if not expected_regex.search(text):
