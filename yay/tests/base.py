@@ -121,14 +121,14 @@ class TestCase(unittest.TestCase):
         def assertIn(self, a, b):
             assert a in b, "%r not in %r" % (a, b)
 
-        def assertRegex(self, text, expected_regex, msg=None):
-            """Fail the test unless the text matches the regular expression."""
+        def assertRaisesRegexp(self, expected_exception, expected_regex, callable, *args, **kwargs):
             import re
             if isinstance(expected_regex, basestring):
                 expected_regex = re.compile(expected_regex)
-            if not expected_regex.search(text):
-                msg = msg or "Regex didn't match"
-                msg = '%s: %r not found in %r' % (msg, expected_regex.pattern, text)
-                raise self.failureException(msg)
-
-        assertRaisesRegexp = assertRegex
+            try:
+                callable(*args, **kwargs)
+            except expected_exception:
+                e = sys.exc_info()[1]
+                assert expected_regex.search(str(e)), "'%s' does not match regex" % e
+            else:
+                assert False, "Exception %r not raised" % expected_exception
