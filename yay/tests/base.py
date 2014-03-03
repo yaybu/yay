@@ -123,8 +123,7 @@ class TestCase(unittest.TestCase):
 
         def assertRaisesRegexp(self, expected_exception, expected_regex, callable, *args, **kwargs):
             import re
-            if isinstance(expected_regex, basestring):
-                expected_regex = re.compile(expected_regex)
+            expected_regex = re.compile(expected_regex)
             try:
                 callable(*args, **kwargs)
             except expected_exception:
