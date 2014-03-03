@@ -20,6 +20,8 @@ except:
     pass
 import os
 import tempfile
+import sys
+import re
 
 from yay.compat import io
 from yay import parser, ast, config
@@ -122,7 +124,6 @@ class TestCase(unittest.TestCase):
             assert a in b, "%r not in %r" % (a, b)
 
         def assertRaisesRegexp(self, expected_exception, expected_regex, callable, *args, **kwargs):
-            import re
             expected_regex = re.compile(expected_regex)
             try:
                 callable(*args, **kwargs)
