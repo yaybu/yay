@@ -33,10 +33,8 @@ from yay.errors import WhitespaceError
 
 class Lexer(object):
 
-    root_token = 'DOCUMENT_START'
-
     def __init__(self, debug=0, optimize=0,
-                 lextab='yay.lextab', reflags=0, source="<unknown>"):
+                 lextab='yay.lextab', reflags=0, source="<unknown>", root_token='DOCUMENT_START'):
         self.lineno = 0
         self.lexpos = 0
         self.source = source
@@ -46,6 +44,10 @@ class Lexer(object):
                              lextab=lextab, reflags=reflags,
                              outputdir=os.path.dirname(__file__))
         self.token_stream = None
+
+        self.root_token = root_token
+        if self.root_token == "EXPRESSION_START":
+            self.lexer.push_state("TEMPLATE")
 
     def input(self, s, add_endmarker=True):
         self.lexer.input(s)
@@ -476,14 +478,3 @@ class Lexer(object):
         tokens = self.track_tokens_filter(tokens)
         for token in self.indentation_filter(tokens):
             yield token
-
-
-class ExpressionLexer(Lexer):
-
-    root_token = "EXPRESSION_START"
-
-    def __init__(self, debug=0, optimize=0,
-                 lextab='lextab', reflags=0, source="<unknown>"):
-        super(ExpressionLexer, self).__init__(
-            debug, optimize, lextab, reflags, source)
-        self.lexer.push_state("TEMPLATE")

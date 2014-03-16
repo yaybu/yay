@@ -31,7 +31,7 @@ yacc.YaccProduction = YaccProduction
 # be nice to only turn this on if we're in debug mode
 yacc.Grammar.unused_terminals = lambda self: ()
 
-from .lexer import Lexer, ExpressionLexer
+from .lexer import Lexer
 from . import ast
 from .errors import (Anchor, ColumnAnchor, SpanAnchor,
                      EOLParseError, EOFParseError,
@@ -63,12 +63,13 @@ expressions = {
 }
 
 
-class BaseParser(object):
+class Parser(object):
 
     start = 'root'
     Lexer = Lexer
 
-    def __init__(self, lexer=None):
+    def __init__(self, lexer=None, root_token="DOCUMENT_START"):
+        self.root_token = root_token
         self.lexer = lexer or self.Lexer
         self.tokens = self.lexer.tokens
 
@@ -89,11 +90,15 @@ class BaseParser(object):
                                 )
 
     def parse(self, value, source="<unknown>", tracking=True, debug=False):
+        if self.root_token == "DOCUMENT_START":
+            # If parsing a full document then split the lines - this handows
+            # the unix/widnows \r\n thing.
+            value = '\n'.join(value.splitlines(False)) + '\n'
         self.errors = 0
         self.source = source
         self.text = value
         rv = self.parser.parse(value,
-                               lexer=self.lexer(source=source),
+                               lexer=self.lexer(source=source, root_token=self.root_token),
                                tracking=tracking,
                                debug=debug
                                )
@@ -1227,14 +1232,3 @@ class BaseParser(object):
                 raise EOLParseError(anchor)
             else:
                 raise UnexpectedSymbolError(p, anchor)
-
-
-class Parser(BaseParser):
-
-    def parse(self, value, source="<unknown>", tracking=True, debug=False):
-        value = '\n'.join(value.splitlines(False)) + '\n'
-        return super(Parser, self).parse(value, source, tracking, debug)
-
-
-class ExpressionParser(BaseParser):
-    Lexer = ExpressionLexer

@@ -56,7 +56,7 @@ class Config(ast.Root):
         return self.builtins[key]
 
     def parse_expression(self, expression):
-        p = parser.ExpressionParser()
+        p = parser.Parser(root_token="EXPRESSION_START")
         node = p.parse(expression)
         node.parent = self
         return ast.PythonicWrapper(node)

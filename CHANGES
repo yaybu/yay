@@ -1,11 +1,21 @@
 Changelog for yay
 =================
 
-3.1.2 (unreleased)
+3.2.0 (unreleased)
 ------------------
+
+- The resolver now uses gevent. Dictionary keys are now resolved in parallel.
+  This means in the face of blocking IO operations, the resolver can continue
+  to deal with other parts of the graph.
+
+- Simple event listening scheme based on the resolver operation cache. Combine
+  with the PythonClass to build scripts that react to external events.
 
 - The codebase is now flake8 clean apart from 2 exceptions (defined in
   setup.cfg). To run flake8 on yay run ``flake8 yay``.
+
+- The expression parser/lexer are no longer subclasses. This avoids clashes
+  over lextab.py/parsetab.py.
 
 
 3.1.1 (2013-11-06)
