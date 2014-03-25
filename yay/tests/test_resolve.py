@@ -2162,6 +2162,12 @@ class TestIf(TestCase):
 
 class TestYayScalar(TestCase):
 
+    def test_roundtrip_float(self):
+        res = parse("""
+            foo: 13.10
+            """)
+        self.assertEqual(res.foo.as_string(), "13.10")
+
     def test_resolve(self):
         res = resolve("""
             foo: 1

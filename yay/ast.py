@@ -296,7 +296,7 @@ class AST(object):
         d = self.__dict__.copy()
         for var in ('anchor', 'parent', '_predecessor',
                     'successor', '_ordered_keys',
-                    '_iterator', '_position', '_buffer', '_dict'):
+                    '_iterator', '_position', '_buffer', '_dict', '_orig_value'):
             if var in d:
                 del d[var]
         return d
@@ -1668,6 +1668,8 @@ class YayScalar(Scalarish, AST):
     def __init__(self, value):
         super(YayScalar, self).__init__()
 
+        self._orig_value = value
+
         if isinstance(value, (int, float)):
             self.value = value
             return
@@ -1679,6 +1681,9 @@ class YayScalar(Scalarish, AST):
                 self.value = float(value)
             except ValueError:
                 self.value = value
+
+    def as_string(self, default=_DEFAULT, anchor=None):
+        return str(self._orig_value)
 
     def _resolve(self):
         return self.value
