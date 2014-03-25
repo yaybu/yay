@@ -19,6 +19,9 @@ class Yaylet(Greenlet):
         if self._links and not self._notifier:
             self._notifier = self.parent.loop.run_callback(self._notify_links)
 
+        if not isinstance(exception, (errors.Error, KeyError, StopIteration)):
+            self.parent.handle_error(self, *exc_info)
+
 
 class YGroup(Group):
     greenlet_class = Yaylet
