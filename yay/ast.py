@@ -1683,7 +1683,9 @@ class YayScalar(Scalarish, AST):
                 self.value = value
 
     def as_string(self, default=_DEFAULT, anchor=None):
-        return str(self._orig_value)
+        if not isinstance(self._orig_value, basestring):
+             return str(self._orig_value)
+        return self._orig_value
 
     def _resolve(self):
         return self.value
