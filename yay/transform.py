@@ -98,12 +98,12 @@ def main(argv=sys.argv[1:], stdin=sys.stdin):
         p.print_usage()
         sys.exit(1)
 
-    if not opts.format in converters:
+    if opts.format not in converters:
         print("Output format must be one of: %r" %
               converters.keys(), file=sys.stderr)
         sys.exit(1)
 
-    if not opts.phase in phases:
+    if opts.phase not in phases:
         print("Phase must be one of: %r" % opts.phase, file=sys.stderr)
         sys.exit(1)
 

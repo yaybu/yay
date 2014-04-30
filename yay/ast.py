@@ -283,7 +283,7 @@ class AST(object):
 
     def __repr__(self):
         return "<%s %s>" % (self.__class__.__name__, id(self))
-        #return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
+        # return "<%s %s>" % (self.__class__.__name__, self.__repr_vars())
 
     def __clone_vars(self):
         d = self.__dict__.copy()
@@ -1445,7 +1445,7 @@ class CallCallable(Proxy, AST):
     def __init__(self, primary, args=None, kwargs=None):
         super(CallCallable, self).__init__()
         self.primary = primary
-        if not self.primary.identifier in self.allowed:
+        if self.primary.identifier not in self.allowed:
             raise errors.NoMatching(
                 "Could not find '%s'" % self.primary.identifier)
 
@@ -1601,7 +1601,7 @@ class YayDict(Dictish, AST):
         v.parent = self
         self.values[k] = v
 
-        if not k in self._ordered_keys:
+        if k not in self._ordered_keys:
             self._ordered_keys.append(k)
 
         # Respect any existing predecessors rather than blindly settings
@@ -1627,7 +1627,7 @@ class YayDict(Dictish, AST):
         except errors.NoPredecessor:
             pass
         for key in self._ordered_keys:
-            if not key in seen:
+            if key not in seen:
                 yield key
 
     def _get_context(self, key):
@@ -1684,7 +1684,7 @@ class YayScalar(Scalarish, AST):
 
     def as_string(self, default=_DEFAULT, anchor=None):
         if not isinstance(self._orig_value, basestring):
-             return str(self._orig_value)
+            return str(self._orig_value)
         return self._orig_value
 
     def _resolve(self):
@@ -1825,8 +1825,8 @@ class Stanzas(Proxy, AST):
 
     def _get_context(self, key):
         p = self.value
-        while p and not isinstance(p, (NoPredecessorStandin, )):
         # while p and p != self.predecessor:
+        while p and not isinstance(p, (NoPredecessorStandin, )):
             try:
                 return p.get_context(key)
             except errors.NoMatching:

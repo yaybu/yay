@@ -51,7 +51,7 @@ class Config(ast.Root):
                 return super(Config, self)._get_context(key)
             except errors.NoMatching:
                 pass
-        if not key in self.builtins:
+        if key not in self.builtins:
             raise errors.NoMatching(key)
         return self.builtins[key]
 

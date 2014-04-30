@@ -97,13 +97,13 @@ class TestLazySearchpath(TestCase):
     def test_cant_shrink(self):
         self.setUpMock(["/tmp", "/dev/null"])
         list(self.searchpath)
-             # only a causality problem if its been accessed already
+        # only a causality problem if its been accessed already
         self.mock.foo.remove("/dev/null")
         self.assertRaises(ParadoxError, list, self.searchpath)
 
     def test_cant_change(self):
         self.setUpMock(["/tmp", "/dev/null"])
         list(self.searchpath)
-             # only a causality problem if its been accessed already
+        # only a causality problem if its been accessed already
         self.mock.foo = ["/dev/null", "/tmp"]
         self.assertRaises(ParadoxError, list, self.searchpath)

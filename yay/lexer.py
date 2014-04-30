@@ -408,7 +408,7 @@ class Lexer(object):
                     depth = 0
 
             if token.type == 'WS':
-#                assert depth == levels[0]
+                # assert depth == levels[0]
                 depth = len(token.value)
                 prev_was_ws = True
                 if prev_was_block:
@@ -440,7 +440,7 @@ class Lexer(object):
                     # at the same level
                     pass
                 elif depth > levels[-1]:
-                    #raise IndentationError("indentation increase but not in new block")
+                    # raise IndentationError("indentation increase but not in new block")
                     levels.append(depth)
                     if self.lexer.lexstate != 'BLOCK':
                         yield self.INDENT(token.lineno)

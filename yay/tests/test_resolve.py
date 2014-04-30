@@ -2530,27 +2530,3 @@ class TestStanzas(TestCase):
               - d
             """)
         self.assertEqual(res['resources'], ['a', 'b', 'c', 'd'])
-
-
-class TestOpeners(TestCase):
-    pass
-
-    # def test_openers_package_compat(self):
-        # res = resolve("""
-            #% include "package://yay.tests/fixtures/hello_world.yay"
-            #""")
-        #self.assertEqual(res['hello'], 'world')
-
-    # def test_openers_config(self):
-        # res = resolve("""
-            # configure openers:
-                # packages:
-                    # index: http://b.pypi.python.org/simple
-                # memory:
-                    # example:
-                        # hello: world
-
-            #% include 'mem://example'
-            #""")
-
-        #self.assertEqual(res['hello'], 'world')

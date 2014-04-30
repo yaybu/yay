@@ -109,7 +109,7 @@ class BaseOperation(object):
         def _(obj):
             getcurrent().operation = self
             return func(obj)
-        #return map(_, iterable)
+        # return map(_, iterable)
         return YGroup().imap_unordered(_, iterable)
 
 
@@ -279,15 +279,15 @@ class Executor(object):
                 child = self.execute(getattr(pr, op.method), *args)
                 return child
 
-            #print "Cycle:", op.id
-            #c = self.get_current()
-            #while c != op:
-            #    print c.id
-            #    c = c.primary_parent
-            #print "Cycle:", c.id
-            #while c != None:
-            #    print c.id
-            #    c = c.primary_parent
+            # print "Cycle:", op.id
+            # c = self.get_current()
+            # while c != op:
+            #     print c.id
+            #     c = c.primary_parent
+            # print "Cycle:", c.id
+            # while c != None:
+            #     print c.id
+            #     c = c.primary_parent
 
             self.logger.debug("CYCLE %r" % (id, ))
 

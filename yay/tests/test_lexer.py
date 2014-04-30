@@ -286,32 +286,32 @@ class TestLexer(TestCase):
         ])
 
     # def test_multiline(self):
-        # self.compare(self._lex("""
-            # foo: |
-               # bar
-               # baz
-               # quux
-            # bar: |
-               # x y z
-               # a b c
-        #"""), [])
+    #    # self.compare(self._lex("""
+    #        # foo: |
+    #           # bar
+    #           # baz
+    #           # quux
+    #        # bar: |
+    #           # x y z
+    #           # a b c
+    #    #"""), [])
 
     # def test_deep_multiline_file_end(self):
-        # self.compare(self._lex("""
-            # foo:
-                # bar: |
-                    # quux
-        #"""), [])
+    #    # self.compare(self._lex("""
+    #        # foo:
+    #            # bar: |
+    #                # quux
+    #    #"""), [])
 
     # def test_multiline_template(self):
-        # self.compare(self._lex("""
-        # foo: |
-          # bar
-          # baz
-          #{{quux}}
-        #"""), [
-
-        #])
+    #    # self.compare(self._lex("""
+    #    # foo: |
+    #      # bar
+    #      # baz
+    #      #{{quux}}
+    #    #"""), [
+    #
+    #    #])
 
     def test_extend(self):
         self.compare(self._lex("""

@@ -40,7 +40,7 @@ class TestASTMultiline(TestCase):
         # I'm happy to leave this - D
         self.assertEqual(self._m("|+"), (
             'foo bar baz\nquux blor\n',
-            #'foo bar baz\n\nquux blorp\n\n\n',
+            # 'foo bar baz\n\nquux blorp\n\n\n',
             'foo bar baz\n\nquux blorp\n\n',
         ))
 

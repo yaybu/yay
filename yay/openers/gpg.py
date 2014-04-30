@@ -40,7 +40,7 @@ class Gpg(object):
         # GPG_TTY is not required if using seahorse-agent.
         # This is not used on OSX as there is no /proc/self/fd/0
         env = os.environ.copy()
-        if not "GPG_TTY" in env:
+        if "GPG_TTY" not in env:
             if os.path.exists("/proc/self/fd/0"):
                 env['GPG_TTY'] = os.readlink('/proc/self/fd/0')
 
@@ -50,7 +50,7 @@ class Gpg(object):
         stdout, stderr = p.communicate(data)
         if p.returncode != 0:
             msg = "Unable to decrypt resource '%s'" % fp.uri
-            if not "GPG_AGENT_INFO" in os.environ:
+            if "GPG_AGENT_INFO" not in os.environ:
                 msg += "\nGPG Agent not running so your GPG key may not be available"
             raise NotFound(msg)
 
