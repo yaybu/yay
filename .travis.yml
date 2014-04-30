@@ -17,7 +17,6 @@ matrix:
       env: GEVENT=git+git://github.com/surfly/gevent@master#egg=gevent
 
   allow_failures:
-    - python: "3.3"
     - python: "3.4"
 
 install:
