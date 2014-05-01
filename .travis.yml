@@ -16,8 +16,6 @@ matrix:
     - python: "pypy"
       env: GEVENT=git+git://github.com/surfly/gevent@master#egg=gevent
 
-  allow_failures:
-    - python: "3.4"
 
 install:
   - if [[ $TRAVIS_PYTHON_VERSION == 3* ]]; then pip install cython==0.20.1; fi
